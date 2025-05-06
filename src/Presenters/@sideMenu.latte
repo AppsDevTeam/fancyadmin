@@ -1,0 +1,52 @@
+<div class="side-panel z-1 delay-animate">
+    <div class="menu">
+        <a class="logo" n:href="Dashboard:default">
+            {if $icon}
+                <img src="{$icon}" style="max-height: 36px; max-width: 36px">
+            {else}
+                <svg width="36" height="32" viewBox="0 0 36 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M28.9001 26.249H7.09984C3.45951 26.249 0.5 23.2616 0.5 19.5868V6.66217C0.5 2.9875 3.45951 0 7.09984 0H28.9001C32.5405 0 35.5 2.9875 35.5 6.66217V19.5868C35.5 23.2616 32.5405 26.249 28.9001 26.249ZM7.09984 3.06461C5.13379 3.06461 3.53593 4.67755 3.53593 6.66217V19.5868C3.53593 21.5714 5.13379 23.1844 7.09984 23.1844H28.9001C30.8662 23.1844 32.4641 21.5714 32.4641 19.5868V6.66217C32.4641 4.67755 30.8662 3.06461 28.9001 3.06461H7.09984Z" fill="#42B6A4"/>
+                    <path d="M26.5729 31.8523H9.42724C8.58659 31.8523 7.90576 31.1651 7.90576 30.3166C7.90576 29.468 8.58659 28.7808 9.42724 28.7808H26.5799C27.4204 28.7808 28.1013 29.468 28.1013 30.3166C28.1013 31.1651 27.4204 31.8523 26.5799 31.8523H26.5729Z" fill="#42B6A4"/>
+                </svg>
+            {/if}
+        </a>
+
+        {* Dashboard *}
+        <a n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_DASHBOARD)" n:href=":Portal:Dashboard:" n:class="item, $presenter->isLinkCurrent(':Portal:Dashboard:*') ? active">
+            <div class="icon"><i class="fa-solid fa-chart-simple"></i></div>
+            <div class="title">{_app.modules.web.sideMenu.dashboard}</div>
+        </a>
+
+        {* Reports *}
+        <div n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_REPORTS)" n:class="item, $presenter->isLinkCurrent(':Portal:Reports:*') ? active">
+            <div class="icon"><i class="fa-solid fa-file-chart-column"></i></div>
+            <div class="title">{_app.modules.web.sideMenu.reports}</div>
+            <div class="submenu">
+                <div class="submenu-heading">{_app.modules.web.sideMenu.reports}</div>
+                <a n:href=":Portal:Reports:products" n:class="item, $presenter->isLinkCurrent(':Portal:Reports:products') ? active">
+                    <div class="icon"><i class="fa-solid fa-box"></i></div>
+                    <div class="item-title">{_app.modules.web.sideMenu.products}</div>
+                </a>
+                <a n:href=":Portal:Reports:branches" n:class="item, $presenter->isLinkCurrent(':Portal:Reports:branches') ? active">
+                    <div class="icon"><i class="fa-solid fa-sitemap"></i></div>
+                    <div class="item-title">{_app.modules.web.sideMenu.branches}</div>
+                </a>
+            </div>
+        </div>
+
+        {* Management *}
+        <div n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" class="item" href="#">
+            <div class="icon"><i class="fa-solid fa-gears"></i></div>
+            <div class="title">{_app.modules.web.sideMenu.management}</div>
+            <div class="submenu">
+                <div class="submenu-heading">{_app.modules.web.sideMenu.management}</div>
+                <a class="item" n:href=":Portal:Users:">
+                    <div class="icon"><i class="fa-solid fa-user"></i></div>
+                    <div class="item-title">{_app.modules.web.sideMenu.users}</div>
+                </a>
+            </div>
+        </div>
+
+        {include @userButton.latte}
+    </div>
+</div>

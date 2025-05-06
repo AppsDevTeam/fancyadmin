@@ -1,0 +1,36 @@
+{*
+ * @param Paginator $paginator
+ * @param array     $steps
+ * @param string    $iconPrefix
+ *}
+
+{var $link = [$control->getParent(), link]}
+
+<div class="d-flex justify-content-center" {*n:if="$paginator->pageCount > 1"*}>
+	{if $paginator->isFirst()}
+	<a class="first btn btn-sm btn-default disabled bg-white">
+		{else}
+		<a class="btn btn-sm btn-default ajax bg-white" href="{$link('page!', ['page' => $paginator->page - 1])}" rel="prev">
+			{/if}
+			<i n:block = "icon-arrow-left" class="{$iconPrefix}chevron-left"></i>
+		</a>
+
+		<div class="btn-group btn-group-sm">
+			{foreach $steps as $step}
+				{if $step == $paginator->page}
+					<a class="btn btn-sm first active">{$step}</a>
+				{else}
+					<a class="btn btn-sm ajax" href="{$link('page!', ['page' => $step])}">{$step}</a>
+				{/if}
+
+				{if $iterator->nextValue > $step + 1}<span style="padding-top: 15px">…</span>{/if}
+			{/foreach}
+		</div>
+
+		{if $paginator->isLast()}
+		<a class="first btn btn-sm btn-default disabled bg-white">
+			{else}
+			<a class="btn btn-sm btn-default ajax bg-white" href="{$link('page!', ['page' => $paginator->page + 1])}" rel="next">
+				{/if}
+				<i n:block = "icon-arrow-right" class="{$iconPrefix}chevron-right"></i></a>
+</div>

@@ -1,0 +1,33 @@
+{
+  "name": "adt/fancyadmin",
+  "type": "library",
+  "description": "",
+  "homepage": "https://www.appsdevteam.com",
+  "license": ["MIT"],
+  "require": {
+    "php": ">=8.0",
+    "kdyby/autowired": "^3.0",
+    "ublaboo/datagrid": "^6.10",
+    "adt/ajax-select": "^3.2",
+    "contributte/translation": "^2.0",
+    "adt/query-object-data-source": "^2.0",
+    "adt/doctrine-forms": "^2.0",
+    "adt/doctrine-authenticator": "^1.7",
+    "nettrine/extensions-atlantic18": "dev-orm3",
+    "adt/utils": "^2.0",
+    "adt/nette-forms-phone-number": "^1.6",
+    "voda/date-input": "^2.2"
+  },
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18",
+      "no-api": true
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "ADT\\FancyAdmin\\": "src/"
+    }
+  }
+}

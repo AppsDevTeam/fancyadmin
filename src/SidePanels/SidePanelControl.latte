@@ -1,0 +1,9 @@
+{ifset $fileName}
+	{import $fileName}
+{/ifset}
+
+{ifset body}
+	{include body}
+{else}
+	{control form}
+{/ifset}

@@ -1,0 +1,15 @@
+{**
+ * @param Filter                         $filter
+ * @param Nette\Forms\Controls\TextInput $input
+ *}
+
+{default $required = false}
+
+{if $outer}
+	<div class="form-group-filter mr-2">
+		{label $input, class => 'filter-range-delimiter control-label text-left' /}
+		{input $input required => $required}
+	</div>
+{else}
+	{input $input}
+{/if}

@@ -1,0 +1,13 @@
+{**
+ * @param Filter                        $filter
+ * @param Nette\Forms\Controls\Checkbox $input
+ *}
+
+{if $outer}
+	<div class="form-group-filter mr-2 mb-3">
+		{label $input class => 'form-label' /}
+		{input $input class => 'form-control form-control-sm', data-size => 'sm'}
+	</div>
+{else}
+	{input $input}
+{/if}
