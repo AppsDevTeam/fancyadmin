@@ -4,7 +4,6 @@ namespace ADT\FancyAdmin\Presenters;
 
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
 
-use ADT\FancyAdmin\Model\Queries\Factories\CompanyTransactionQueryFactory;
 use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
 use ADT\FancyAdmin\Forms\GridFilter\GridFilterFormFactory;
 use App\UI\Portal\Components\Panels\GridFilterPanelControl\GridFilterPanelControlFactory;
@@ -127,8 +126,7 @@ abstract class AuthPresenter extends BasePresenter
 		$gridFilter = $this->getParameter('editId')
 			? $this->gridFilterQueryFactory->create()->byId($this->getParameter('editId'))->fetchOneOrNull()
 			: (new GridFilter())
-				->setGrid($this->gridFilterClass)
-				->setCompany($this->securityUser->getIdentity()->getFilteredCompany());
+				->setGrid($this->gridFilterClass);
 
 		$form = $this->gridFilterFormFactory->create()
 			->setEntity($gridFilter)

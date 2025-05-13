@@ -64,13 +64,6 @@ class User extends BaseEntity implements DoctrineAuthenticatorIdentity, CreatedB
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	protected Collection $roles;
 
-	#[ORM\ManyToOne(targetEntity: Company::class)]
-	#[JoinColumn(nullable: true)]
-	protected ?Company $filteredCompany;
-
-	#[ORM\OneToMany(targetEntity: UserCompany::class, mappedBy: 'user', cascade: ["persist"])]
-	protected Collection $userCompanies;
-
 	#[ORM\Column(nullable:false)]
 	protected bool $isCustomer = false;
 
@@ -231,44 +224,7 @@ class User extends BaseEntity implements DoctrineAuthenticatorIdentity, CreatedB
 	public function getRoles(): array
 	{
 		//ziskame primo nastavene role uzivatele
-		$roles = $this->roles->toArray();
-		//budeme jeste pridavat role od jendotlivych vazeb na company
-		foreach ($this->getUserCompanies() as $userCompany) {
-			$roles[] = $userCompany->getRole();
-		}
-		return $roles;
-	}
-
-	/**
-	 * @return Company[]
-	 */
-	public function getCompanies(): array
-	{
-		$companies = [];
-		foreach ($this->getUserCompanies() as $userCompany) {
-			$companies[] = $userCompany->getCompany();
-		}
-
-		return $companies;
-	}
-
-	public function getFilteredCompany(): ?Company
-	{
-		return $this->filteredCompany;
-	}
-
-	public function setFilteredCompany(?Company $filteredCompany): self
-	{
-		$this->filteredCompany = $filteredCompany;
-		return $this;
-	}
-
-	/**
-	 * @return UserCompany
-	 */
-	public function getUserCompanies(): array
-	{
-		return $this->userCompanies->toArray();
+		return  $this->roles->toArray();
 	}
 
 	public function getIsCustomer(): bool
@@ -357,14 +313,9 @@ class User extends BaseEntity implements DoctrineAuthenticatorIdentity, CreatedB
 		return array_any($this->getRoles(), fn(AclRole $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
 	}
 
-	public function addUserCompany(UserCompany $userCompany): static
-	{
-		$this->userCompanies->add($userCompany);
-		return $this;
-	}
-
 	public function getRole(): AclRole
 	{
+		// TODO
 		/** @var UserCompany $userCompany */
 		$userCompany = $this->userCompanies->filter(fn(UserCompany $userCompany) => $userCompany->getCompany() === $this->securityUser->getIdentity()->getFilteredCompany())->first();
 

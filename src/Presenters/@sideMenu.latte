@@ -17,23 +17,6 @@
             <div class="title">{_app.modules.web.sideMenu.dashboard}</div>
         </a>
 
-        {* Reports *}
-        <div n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_REPORTS)" n:class="item, $presenter->isLinkCurrent(':Portal:Reports:*') ? active">
-            <div class="icon"><i class="fa-solid fa-file-chart-column"></i></div>
-            <div class="title">{_app.modules.web.sideMenu.reports}</div>
-            <div class="submenu">
-                <div class="submenu-heading">{_app.modules.web.sideMenu.reports}</div>
-                <a n:href=":Portal:Reports:products" n:class="item, $presenter->isLinkCurrent(':Portal:Reports:products') ? active">
-                    <div class="icon"><i class="fa-solid fa-box"></i></div>
-                    <div class="item-title">{_app.modules.web.sideMenu.products}</div>
-                </a>
-                <a n:href=":Portal:Reports:branches" n:class="item, $presenter->isLinkCurrent(':Portal:Reports:branches') ? active">
-                    <div class="icon"><i class="fa-solid fa-sitemap"></i></div>
-                    <div class="item-title">{_app.modules.web.sideMenu.branches}</div>
-                </a>
-            </div>
-        </div>
-
         {* Management *}
         <div n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" class="item" href="#">
             <div class="icon"><i class="fa-solid fa-gears"></i></div>

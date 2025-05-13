@@ -5,7 +5,7 @@
   "homepage": "https://www.appsdevteam.com",
   "license": ["MIT"],
   "require": {
-    "php": ">=8.0",
+    "php": ">=8.4",
     "kdyby/autowired": "^3.0",
     "ublaboo/datagrid": "^6.10",
     "adt/ajax-select": "^3.2",
@@ -21,8 +21,7 @@
   "repositories": [
     {
       "type": "git",
-      "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18",
-      "no-api": true
+      "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18"
     }
   ],
   "autoload": {

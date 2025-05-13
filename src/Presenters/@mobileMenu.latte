@@ -5,40 +5,8 @@
             <span>{_app.modules.web.sideMenu.dashboard}</span>
         </a>
     </div>
-    <div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_REPORTS)" class="col">
-        {var $isSubmenuReportsOpened = $presenter->isLinkCurrent(':Portal:Reports:products')
-            || $presenter->isLinkCurrent(':Portal:Reports:branches')
-        }
-        <a n:class="sub-menu-toggle, $isSubmenuReportsOpened ? active" href="#submenu-reports">
-            <i class="fa-solid fa-file-chart-column"></i>
-            <span>{_app.modules.web.sideMenu.reports}</span>
-        </a>
-    </div>
-    <div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_OVERVIEWS)" class="col">
-        {var $isSubmenuOverviewOpened = $presenter->isLinkCurrent(':Portal:Orders:')
-            || $presenter->isLinkCurrent(':Portal:CashOperations:')
-            || $presenter->isLinkCurrent(':Portal:Shift:')
-            || $presenter->isLinkCurrent(':Portal:Tab:')
-            || $presenter->isLinkCurrent(':Portal:WarehouseOperations:')
-        }
-        <a n:class="sub-menu-toggle, $isSubmenuOverviewOpened ? active" href="#submenu-overview">
-            <i class="fa-solid fa-money-bill-simple-wave"></i>
-            <span>{_app.modules.web.sideMenu.overview}</span>
-        </a>
-    </div>
     <div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" class="col">
-        {var $isSubmenuAdminOpened = $presenter->isLinkCurrent(':Portal:Branches:')
-        || $presenter->isLinkCurrent(':Portal:Categories:')
-        || $presenter->isLinkCurrent(':Portal:CompanyCurrencies:')
-        || $presenter->isLinkCurrent(':Portal:Devices:')
-        || $presenter->isLinkCurrent(':Portal:Products:')
-        || $presenter->isLinkCurrent(':Portal:ProductGroups:')
-        || $presenter->isLinkCurrent(':Portal:Users:')
-        || $presenter->isLinkCurrent(':Portal:Announcements:')
-        || $presenter->isLinkCurrent(':Portal:EventShows:')
-        || $presenter->isLinkCurrent(':Portal:EventZones:')
-        || $presenter->isLinkCurrent(':Portal:Warehouses:')
-        }
+        {var $isSubmenuAdminOpened = $presenter->isLinkCurrent(':Portal:Users:')}
         <a n:class="sub-menu-toggle, $isSubmenuAdminOpened ? active" href="#submenu-admin">
             <i class="fa-solid fa-gears"></i>
             <span>{_app.modules.web.sideMenu.management}</span>
@@ -49,74 +17,9 @@
     </div>
 </div>
 
-<div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_REPORTS)" id="submenu-reports" n:class="sub-menu, d-sm-none">
-    <a href={plink :Portal:Reports:products} n:class="$presenter->isLinkCurrent(':Portal:Reports:products') ? active">
-        <i class="fa-solid fa-box"></i><span>{_app.modules.web.sideMenu.products}</span>
-    </a>
-    <a n:href=":Portal:Reports:branches" n:class="$presenter->isLinkCurrent(':Portal:Reports:branches') ? active">
-        <i class="fa-solid fa-box"></i><span>{_app.modules.web.sideMenu.branches}</span>
-    </a>
-</div>
-
-<div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_OVERVIEWS)" id="submenu-overview" n:class="sub-menu, d-sm-none">
-    <a n:href=":Portal:Orders:" n:class="$presenter->isLinkCurrent(':Portal:Orders:') ? active">
-        <i class="fa-solid fa-bell-concierge"></i><span>{_app.modules.web.sideMenu.orders}</span>
-    </a>
-    <a n:href=":Portal:Orders:" n:class="$presenter->isLinkCurrent(':Portal:Orders:refunds') ? active">
-        <i class="fa-solid fa-bell-concierge"></i><span>{_app.modules.web.sideMenu.refundOrders}</span>
-    </a>
-    <a n:href=":Portal:CashOperations:" n:class="$presenter->isLinkCurrent(':Portal:CashOperations:') ? active">
-        <i class="fa-solid fa-sack-dollar"></i><span>{_app.modules.web.sideMenu.cashOperation}</span>
-    </a>
-    <a n:href=":Portal:Shift:" n:class="$presenter->isLinkCurrent(':Portal:Shift:') ? active">
-        <i class="fa-solid fa-bell-concierge"></i><span>{_app.modules.web.sideMenu.shift}</span>
-    </a>
-    <a n:href=":Portal:Tab:" n:class="$presenter->isLinkCurrent(':Portal:Tab:') ? active">
-        <i class="fa-solid fa-badge-check"></i><span>{_app.modules.web.sideMenu.tabs}</span>
-    </a>
-    <a n:href=":Portal:WarehouseOperations:" n:class="$presenter->isLinkCurrent(':Portal:WarehouseOperations:') ? active" n:if="$presenter->getSelectedCompany()?->isAllowedForPlan(ADT\FancyAdmin\Model\Enums\CompanyPlanActionEnum::COMPANY_WAREHOUSE_OPERATION_SECTION)">
-        <i class="fa-solid fa-warehouse-full"></i><span>{_app.modules.web.sideMenu.warehouseOperations}</span>
-    </a>
-</div>
 
 <div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" id="submenu-admin" n:class="sub-menu, d-sm-none">
-    <a href={plink :Portal:Branches:} n:class="$presenter->isLinkCurrent(':Portal:Branches:') ? active">
-        <i class="fa-solid fa-sitemap"></i><span>{_app.modules.web.sideMenu.branches}</span>
-    </a>
-    <a n:href=":Portal:Categories:" n:class="$presenter->isLinkCurrent(':Portal:Categories:') ? active">
-        <i class="fa-solid fa-list"></i><span>{_app.modules.web.sideMenu.categories}</span>
-    </a>
-    <a n:href=":Portal:CompanyCurrencies:" n:class="$presenter->isLinkCurrent(':Portal:CompanyCurrencies:') ? active">
-        <i class="fa-solid fa-coins"></i><span>{_app.modules.web.sideMenu.currencies}</span>
-    </a>
-    <a n:href=":Portal:Devices:" n:class="$presenter->isLinkCurrent(':Portal:Devices:') ? active">
-        <i class="fa-solid fa-mobile-screen"></i><span>{_app.modules.web.sideMenu.devices}</span>
-    </a>
-    <a n:href=":Portal:Products:" n:class="$presenter->isLinkCurrent(':Portal:Products:') ? active">
-        <i class="fa-solid fa-box"></i><span>{_app.modules.web.sideMenu.products}</span>
-    </a>
-    <a n:href=":Portal:ProductGroups:" n:class="$presenter->isLinkCurrent(':Portal:ProductGroups:') ? active">
-        <i class="fa-solid fa-box-taped"></i><span>{_app.modules.web.sideMenu.productGroups}</span>
-    </a>
     <a n:href=":Portal:Users:" n:class="$presenter->isLinkCurrent(':Portal:Users:') ? active">
         <i class="fa-solid fa-user"></i><span>{_app.modules.web.sideMenu.users}</span>
-    </a>
-    <a n:href=":Portal:Companies:" n:class="$presenter->isLinkCurrent(':Portal:Companies:') ? active">
-        <i class="fa-solid fa-building"></i><span>{_app.modules.web.sideMenu.companies}</span>
-    </a>
-    <a n:if="$presenter->getSelectedCompany()?->isAllowedForPlan(ADT\FancyAdmin\Model\Enums\CompanyPlanActionEnum::COMPANY_SITE_PLAN_SECTION)" n:href=":Portal:CompanySitePlans:" n:class="$presenter->isLinkCurrent(':Portal:CompanySitePlans:') ? active">
-        <i class="fa-solid fa-object-group"></i><span>{_app.modules.web.sideMenu.companySitePlans}</span>
-    </a>
-    <a n:if="$presenter->getSelectedCompany()?->isAllowedForPlan(ADT\FancyAdmin\Model\Enums\CompanyPlanActionEnum::ANNOUNCEMENT_SECTION)" n:href=":Portal:Announcements:" n:class="$presenter->isLinkCurrent(':Portal:Announcements:') ? active">
-        <i class="fa-solid fa-newspaper"></i><span>{_app.modules.web.sideMenu.announcement}</span>
-    </a>
-    <a n:if="$presenter->getSelectedCompany()?->isAllowedForPlan(ADT\FancyAdmin\Model\Enums\CompanyPlanActionEnum::EVENT_SHOW_SECTION)" n:href=":Portal:EventShows:" n:class="$presenter->isLinkCurrent(':Portal:EventShows:') ? active">
-        <i class="fa-solid fa-theater-masks"></i><span>{_app.modules.web.sideMenu.eventShows}</span>
-    </a>
-    <a n:if="$presenter->getSelectedCompany()?->isAllowedForPlan(ADT\FancyAdmin\Model\Enums\CompanyPlanActionEnum::EVENT_ZONE_SECTION)" n:href=":Portal:EventZones:" n:class="$presenter->isLinkCurrent(':Portal:EventZones:') ? active">
-        <i class="fa-solid fa-map-location-dot"></i><span>{_app.modules.web.sideMenu.eventZones}</span>
-    </a>
-    <a n:if="$presenter->getSelectedCompany()?->isAllowedForPlan(ADT\FancyAdmin\Model\Enums\CompanyPlanActionEnum::COMPANY_WAREHOUSE_SECTION)" n:href=":Portal:Warehouses:" n:class="$presenter->isLinkCurrent(':Portal:Warehouses:') ? active">
-        <i class="fa-solid fa-warehouse"></i><span>{_app.modules.web.sideMenu.warehouses}</span>
     </a>
 </div>

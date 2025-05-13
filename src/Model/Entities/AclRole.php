@@ -50,9 +50,6 @@ class AclRole extends BaseEntity implements Role
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isVisitor = false;
 
-	#[ORM\OneToMany(targetEntity: UserCompany::class, mappedBy: 'role')]
-	protected Collection $userCompanies;
-
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isLimitedToBranch = false;
 

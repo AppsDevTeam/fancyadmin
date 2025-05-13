@@ -1,0 +1,12 @@
+{form form}
+	{include errors}
+
+	<div class="inputs-wrap">
+		{formPair email}
+		{formPair password}
+		<a href="{plink "Sign:LostPassword"}" class="linkInForm">
+			<span class="d-none d-sm-inline">{_app.modules.web.presenters.sign.in.renewLink}</span>
+		</a>
+		{input submit}
+	</div>
+{/form}
