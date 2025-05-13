@@ -11,15 +11,9 @@ use ADT\FancyAdmin\Forms\NewPassword\NewPasswordForm;
 use ADT\FancyAdmin\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\Forms\SignIn\SignInFormFactory;
-use Kdyby\Autowired\Attributes\Autowire;
 
 class SignPresenter extends BasePresenter
 {
-	#[Autowire]
-	protected PasswordRecoveryQueryFactory $passwordRecoveryQueryFactory;
-
-	protected PasswordRecovery $passwordRecovery;
-
 	public function startup(): void
 	{
 		parent::startup();

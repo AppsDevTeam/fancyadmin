@@ -4,7 +4,7 @@ namespace ADT\FancyAdmin\Presenters;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineAuthenticator\SecurityUser;
-use Contributte\Translation\Translator;
+use ADT\FancyAdmin\Model\Translator;
 use Exception;
 use Kdyby\Autowired\Attributes\Autowire;
 use Kdyby\Autowired\AutowireComponentFactories;

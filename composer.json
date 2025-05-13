@@ -5,7 +5,7 @@
   "homepage": "https://www.appsdevteam.com",
   "license": ["MIT"],
   "require": {
-    "php": ">=8.0",
+    "php": ">=8.3",
     "kdyby/autowired": "^3.0",
     "ublaboo/datagrid": "^6.10",
     "adt/ajax-select": "^3.2",
@@ -16,12 +16,13 @@
     "nettrine/extensions-atlantic18": "dev-orm3",
     "adt/utils": "^2.0",
     "adt/nette-forms-phone-number": "^1.6",
-    "voda/date-input": "^2.2"
+    "voda/date-input": "^2.2",
+    "adt/route-port": "^3.0"
   },
   "repositories": [
     {
       "type": "git",
-      "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18"
+      "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18.git"
     }
   ],
   "autoload": {
