@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Core;
 
+use Closure;
 use ADT\Routing\RouteList;
 
 trait FancyAdminRouter

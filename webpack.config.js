@@ -13,7 +13,7 @@ module.exports = (env) => {
 	const isProduction = false;//process.env.NODE_ENV;
 	const module = 'admin';
 	const entryPoints = {
-		admin: './src/assets/js/app.js',
+		admin: './assets/js/app.js',
 	};
 
 	const config = {
