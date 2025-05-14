@@ -1,25 +1,25 @@
 <div class="row bottom-mobile-menu d-sm-none">
-    <div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_DASHBOARD)" class="col">
-        <a n:href=":Portal:Dashboard:" n:class="$presenter->isLinkCurrent(':Portal:Dashboard:') ? active">
+    <div  class="col">
+        <a href="#" n:class="false ? active">
             <i class="fa-solid fa-chart-simple"></i>
             <span>{_app.modules.web.sideMenu.dashboard}</span>
         </a>
     </div>
-    <div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" class="col">
-        {var $isSubmenuAdminOpened = $presenter->isLinkCurrent(':Portal:Users:')}
+    <div  class="col">
+        {var $isSubmenuAdminOpened = false}
         <a n:class="sub-menu-toggle, $isSubmenuAdminOpened ? active" href="#submenu-admin">
             <i class="fa-solid fa-gears"></i>
             <span>{_app.modules.web.sideMenu.management}</span>
         </a>
     </div>
     <div class="col">
-        {include @userButton.latte}
+        {*{include @userButton.latte}*}
     </div>
 </div>
 
 
-<div n:if="$user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" id="submenu-admin" n:class="sub-menu, d-sm-none">
-    <a n:href=":Portal:Users:" n:class="$presenter->isLinkCurrent(':Portal:Users:') ? active">
+<div  id="submenu-admin" n:class="sub-menu, d-sm-none">
+    <a href="#" n:class="false ? active">
         <i class="fa-solid fa-user"></i><span>{_app.modules.web.sideMenu.users}</span>
     </a>
 </div>

@@ -1,12 +1,15 @@
 {form form}
+	{var ADT\FancyAdmin\Model\Administration $administration = $presenter->getAdministration()}
 	{include errors}
 
 	<div class="inputs-wrap">
 		{formPair email}
 		{formPair password}
-		<a href="{plink "Sign:LostPassword"}" class="linkInForm">
-			<span class="d-none d-sm-inline">{_app.modules.web.presenters.sign.in.renewLink}</span>
-		</a>
+		{if $administration->isLostPasswordEnabled()}
+			<a href="{plink "Sign:LostPassword"}" class="linkInForm">
+				<span class="d-none d-sm-inline">{_app.modules.web.presenters.sign.in.renewLink}</span>
+			</a>
+		{/if}
 		{input submit}
 	</div>
 {/form}

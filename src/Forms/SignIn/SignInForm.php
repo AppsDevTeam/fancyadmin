@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Forms\SignIn;
 
+use ADT\FancyAdmin\Model\Administration;
 use ADT\Forms\Form;
 use ADT\FancyAdmin\Model\Entities\User;
 use App\Model\Exceptions\AuthenticationUserNotActiveException;
@@ -18,6 +19,9 @@ class SignInForm extends BaseForm
 {
 	#[Autowire]
 	protected Authenticator $authenticator;
+
+	#[Autowire]
+	protected Administration $administration;
 
 	protected ?User $user = null;
 

@@ -1,0 +1,204 @@
+$color_1: #555;
+$borderRadius: 4px;
+
+.structFilter {
+	min-height: 20px;
+	padding: 6px;
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+
+	background-color: white;
+	border-radius: $borderRadius;
+	border: 1px solid $secondary-darker;
+
+	.evo-searchFilters {
+		a {
+			height: 38px;
+			display: inline-flex;
+			align-items: center;
+			color: $black;
+			padding: 0 8px;
+
+			> div {
+				display: inline-flex;
+				height: 25px;
+
+				> span {
+					background-color: #ececef;
+					color: #737278;
+					border-radius: 2px;
+					margin-right: 1px;
+					padding: 0 6px;
+					font-size: 13px;
+					display: inline-flex;
+					align-items: center;
+				}
+			}
+		}
+	}
+}
+.evo-bNew {
+	display: inline-flex;
+	height: 38px;
+	align-items: center;
+	justify-content: center;
+	padding: 0 8px;
+
+	> i {
+		margin-right: 5px;
+	}
+}
+
+.evo-bAdd {
+	display: inline-flex;
+	height: 38px;
+	align-items: center;
+	justify-content: center;
+	padding: 0 8px;
+}
+
+.evo-bDel {
+	display: inline-flex;
+	height: 38px;
+	align-items: center;
+	justify-content: center;
+	padding: 0 8px;
+}
+.evo-bSubmit {
+	display: inline-flex;
+	height: 38px;
+	align-items: center;
+	justify-content: center;
+	padding: 0 8px;
+}
+
+.evo-lBold {
+	font-weight: bold;
+}
+.evo-lLight {
+	font-weight: normal;
+}
+.evo-editFilter {
+	$inputHeight: 32px;
+
+	display: inline-flex;
+	align-items: center;
+	height: 38px;
+
+	&:after {
+		clear: left;
+	}
+	select {
+		font-size: 1.1em;
+	}
+	input {
+		font-size: 1.1em;
+	}
+	span#value {
+		margin-right: 5px;
+	}
+	#value {
+		display: flex;
+		flex-direction: column;
+
+		label {
+			width: 220px;
+			margin-right: 0;
+			background-color: #fff;
+			z-index: 1;
+			border-left: 1px solid $secondary-darker;
+			border-right: 1px solid $secondary-darker;
+		}
+		label:last-child {
+			border-bottom: 1px solid $secondary-darker;
+		}
+
+		input[type="radio"] {
+			margin-left: 5px;
+		}
+	}
+	input[type="number"]#value {
+		width: 6em;
+	}
+	input[type="time"]#value {
+		width: 6em;
+	}
+	input[type="time"]#value2 {
+		width: 6em;
+	}
+	input.hasDatepicker {
+		width: 8em;
+	}
+
+	> * {
+		border: none;
+	}
+
+	> input {
+		padding: 6px 12px;
+		font-size: 14px;
+		line-height: 1.42857143;
+		color: $color_1;
+		border-top: 1px solid $secondary-darker;
+		border-bottom: 1px solid $secondary-darker;
+		height: $inputHeight;
+	}
+	> select {
+		padding: 0 9px;
+		font-size: 14px;
+		color: #555;
+		border-top: 1px solid $secondary-darker;
+		border-bottom: 1px solid $secondary-darker;
+		height: $inputHeight;
+		background-color: #fff;
+
+		&:focus-visible {
+			outline: none;
+		}
+	}
+
+	> span {
+		display: inline-flex;
+		align-items: center;
+		height: $inputHeight;
+		background-color: white;
+		border-top: 1px solid $secondary-darker;
+		border-bottom: 1px solid $secondary-darker;
+
+		> label {
+			margin-right: 10px;
+			white-space: nowrap;
+
+			> input[type="checkbox"] {
+				margin: 0 5px;
+			}
+		}
+	}
+
+	> *:not([type="hidden"]):last-child {
+		border-right: 1px solid $secondary-darker;
+		border-top-right-radius: $borderRadius;
+		border-bottom-right-radius: $borderRadius;
+	}
+
+	> input[id="delimiter"] {
+		width: 80px;
+		border-left: 1px solid $secondary-darker;
+	}
+
+	> *:first-child {
+		border-left: 1px solid $secondary-darker;
+		border-top-left-radius: $borderRadius;
+		border-bottom-left-radius: $borderRadius;
+	}
+
+	.as-Txt {
+		display: inline-flex;
+		align-items: center;
+		border-top: 1px solid $secondary-darker;
+		border-bottom: 1px solid $secondary-darker;
+		height: $inputHeight;
+		background-color: white;
+	}
+}

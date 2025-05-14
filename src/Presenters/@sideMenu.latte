@@ -1,7 +1,7 @@
 <div class="side-panel z-1 delay-animate">
     <div class="menu">
-        <a class="logo" n:href="Dashboard:default">
-            {if $icon}
+        <a class="logo" href="#">
+            {if isset($icon) && $icon}
                 <img src="{$icon}" style="max-height: 36px; max-width: 36px">
             {else}
                 <svg width="36" height="32" viewBox="0 0 36 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -12,24 +12,24 @@
         </a>
 
         {* Dashboard *}
-        <a n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_DASHBOARD)" n:href=":Portal:Dashboard:" n:class="item, $presenter->isLinkCurrent(':Portal:Dashboard:*') ? active">
+        <a  href="#" n:class="item, false ? active">
             <div class="icon"><i class="fa-solid fa-chart-simple"></i></div>
             <div class="title">{_app.modules.web.sideMenu.dashboard}</div>
         </a>
 
         {* Management *}
-        <div n:if="$user->isAllowed(ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MANAGEMENT)" class="item" href="#">
+        <div  class="item" href="#">
             <div class="icon"><i class="fa-solid fa-gears"></i></div>
             <div class="title">{_app.modules.web.sideMenu.management}</div>
             <div class="submenu">
                 <div class="submenu-heading">{_app.modules.web.sideMenu.management}</div>
-                <a class="item" n:href=":Portal:Users:">
+                <a class="item" href="#">
                     <div class="icon"><i class="fa-solid fa-user"></i></div>
                     <div class="item-title">{_app.modules.web.sideMenu.users}</div>
                 </a>
             </div>
         </div>
 
-        {include @userButton.latte}
+        {*{include @userButton.latte}*}
     </div>
 </div>

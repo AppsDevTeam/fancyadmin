@@ -5,13 +5,12 @@ namespace ADT\FancyAdmin\Forms\Base;
 use ADT\DoctrineForms\Form;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
-use ADT\FancyAdmin\Model\Security\SecurityUser;
+use \ADT\DoctrineAuthenticator\SecurityUser;
 use ADT\FancyAdmin\Presenters\BasePresenter;
 use Contributte\Translation\Translator;
-use Kdyby\Autowired\Attributes\Autowire;
+use Doctrine\ORM\EntityManagerInterface;
 use Kdyby\Autowired\AutowireComponentFactories;
 use Kdyby\Autowired\AutowireProperties;
-use Nette\Http\Url;
 
 /**
  * @property BasePresenter $presenter
@@ -21,21 +20,16 @@ abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 	use AutowireProperties;
 	use AutowireComponentFactories;
 
-	#[Autowire]
-	protected EntityManager $em;
-
-	#[Autowire]
-	protected Translator $translator;
-
-	#[Autowire]
-	protected SecurityUser $securityUser;
-
 	public bool $emptyHiddenToggleControls = true;
 
 	protected ?BaseEntity $presenterMainEntity = null;
 	protected ?string $modalHtmlId = null;
 
-	public function __construct()
+	public function __construct(
+		protected EntityManager $em,
+		protected Translator $translator,
+		protected SecurityUser $securityUser
+	)
 	{
 		$this->setOnBeforeInitForm(function (Form $form) {
 			$form->setEntityManager($this->em);
@@ -64,5 +58,10 @@ abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 	{
 		$this->modalHtmlId = $htmlId;
 		return $this;
+	}
+
+	public function getEntityManager(): EntityManagerInterface
+	{
+		return $this->em;
 	}
 }

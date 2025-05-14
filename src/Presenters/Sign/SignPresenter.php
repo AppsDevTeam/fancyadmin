@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Presenters\Sign;
 
+use ADT\FancyAdmin\Model\Administration;
 use ADT\FancyAdmin\Model\Entities\PasswordRecovery;
 use ADT\FancyAdmin\Presenters\BasePresenter;
 use App\Model\Queries\Factories\PasswordRecoveryQueryFactory;
@@ -11,9 +12,16 @@ use ADT\FancyAdmin\Forms\NewPassword\NewPasswordForm;
 use ADT\FancyAdmin\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\Forms\SignIn\SignInFormFactory;
+use Nette\Utils\Json;
 
 class SignPresenter extends BasePresenter
 {
+	public function __construct(
+		protected Administration $administration
+	){
+		parent::__construct();
+	}
+
 	public function startup(): void
 	{
 		parent::startup();
@@ -34,6 +42,11 @@ class SignPresenter extends BasePresenter
 		}
 	}
 
+	public function renderIn(): void
+	{
+		$this->template->setFile(__DIR__ . '/in.latte');
+	}
+
 	public function actionOut(): void
 	{
 		if ($this->getUser()->isLoggedIn()) {
@@ -41,10 +54,6 @@ class SignPresenter extends BasePresenter
 		}
 
 		$this->redirect('in', ['redrawBody' => true]);
-	}
-
-	public function actionResetPassword(): void
-	{
 	}
 
 	public function actionNewPassword(string $token): void
@@ -60,6 +69,11 @@ class SignPresenter extends BasePresenter
 			$this->flashMessageError('app.forms.signIn.errors.expiredRecovery');
 			$this->redirect(':Portal:Sign:in');
 		}
+	}
+
+	public function renderNewPassword(): void
+	{
+		$this->template->setFile(__DIR__ . '/newPassword.latte');
 	}
 
 

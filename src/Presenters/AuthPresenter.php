@@ -51,11 +51,6 @@ abstract class AuthPresenter extends BasePresenter
 		$this->primaryTemplate = true;
 	}
 
-	public function beforeRender(): void
-	{
-		parent::beforeRender();
-	}
-
 	/**
 	 * @throws ReflectionException
 	 * @throws ForbiddenRequestException

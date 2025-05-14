@@ -1,0 +1,25 @@
+if [ ! -f "$PWD/.env" ]; then
+	echo ".env file does not exist, exiting!"
+	exit 1
+fi
+
+# https://github.com/bashup/dotenv
+source $(dirname ${BASH_SOURCE[0]})/../lib/dotenv
+
+.env -f $PWD/.env parse
+# we have to copy the array, because it's changed everytime ".env" is called
+parsed=("${REPLY[@]}")
+
+# because of possible spaces in env variables we have to loop through indices instead of values
+for i in ${!parsed[@]}; do
+	IFS='=' read -r ENV_NAME ENV_VALUE <<< "${parsed[$i]}"
+	# https://stackoverflow.com/questions/3601515/how-to-check-if-a-variable-is-set-in-bash
+	if [ ! -z ${!ENV_NAME+x} ]; then
+		# in this case we set env variable over shell or we are inside makefile
+		envs+="
+$ENV_NAME=${!ENV_NAME}"
+	else
+		# in this case we want to load env variable from .env file
+		.env -f $PWD/.env export $ENV_NAME
+	fi
+done

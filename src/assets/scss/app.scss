@@ -1,0 +1,21 @@
+@import 'variables';
+@import '~bootstrap/scss/bootstrap';
+
+@import '~select2/src/scss/core';
+//@import '~select2-bootstrap-5-theme/src/include-all';
+@import 'fontawesome';
+@import 'daterangepicker';
+@import 'jquery-ui/datepicker';
+
+@import 'base';
+@import 'buttons';
+
+@import "fonts";
+@import 'layout';
+@import 'login';
+@import 'sidepanel';
+@import 'navbar';
+@import 'datagrid';
+@import 'theme';
+@import 'select2';
+@import 'structured-filter.scss';

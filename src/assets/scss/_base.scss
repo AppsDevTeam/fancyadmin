@@ -1,0 +1,32 @@
+@each $size, $container-max-width in $container-max-widths {
+	.maxw-#{$size} {
+		max-width: $container-max-width;
+	}
+}
+
+
+/* ====================
+ *  Universal classes
+ * ==================*/
+
+h1 {
+	font-size: 40px;
+	font-weight: 500;
+	margin-bottom: 0;
+}
+
+h2 {
+	font-size: 30px;
+	font-weight: 500;
+	margin-bottom: 0;
+}
+
+@include media-breakpoint-down(sm) {
+	h1 {
+		font-size: 30px;
+	}
+
+	h2 {
+		font-size: 22px;
+	}
+}

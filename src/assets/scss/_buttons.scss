@@ -1,0 +1,50 @@
+@property --button-primary-color {
+	syntax: '<color>';
+	inherits: false;
+	initial-value: #fff;
+}
+
+.btn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	border: none;
+	border-radius: 20px;
+	height: 49px;
+	font-size: 16px;
+
+	&.btn-primary {
+		--button-primary-color: var(--primaryColor);
+		background: linear-gradient(90deg, var(--primaryColorDark20) 0%, var(--button-primary-color) 100%);
+		transition: --button-primary-color .5s;
+
+		border: none;
+		color: white;
+
+		&:hover {
+			--button-primary-color: var(--primaryColorDark20);
+		}
+	}
+
+	&.btn-secondary {
+		color: $black;
+		background-color: transparent;
+		border-radius: 20px;
+		border: 1px solid #D1E4E4;
+
+		&:active,
+		&:hover {
+			border: 1px solid #A8CCCC;
+		}
+	}
+
+	&.btn-danger {
+		color: white;
+		background-color: $bg-danger;
+
+		&:active,
+		&:hover {
+			background-color: $bg-danger-dark-10;
+		}
+	}
+}

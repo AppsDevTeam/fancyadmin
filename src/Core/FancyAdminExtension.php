@@ -2,56 +2,54 @@
 
 namespace ADT\FancyAdmin\Core;
 
-use ADT\FancyAdmin\Model\Translator;
+use ADT\FancyAdmin\Forms\LostPassword\LostPasswordForm;
+use ADT\FancyAdmin\Forms\LostPassword\LostPasswordFormFactory;
+use ADT\FancyAdmin\Forms\NewPassword\NewPasswordForm;
+use ADT\FancyAdmin\Forms\NewPassword\NewPasswordFormFactory;
+use ADT\FancyAdmin\Forms\SignIn\SignInForm;
+use ADT\FancyAdmin\Forms\SignIn\SignInFormFactory;
+use ADT\FancyAdmin\Model\Administration;
 
 class FancyAdminExtension extends \Nette\DI\CompilerExtension
 {
-	/* TODO */
-	const ERROR_MODE_SILENT = 'silent';
-	const ERROR_MODE_EXCEPTION = 'exception';
-
-	/**
-	 * @return array
-	 */
-	static function errorModes() {
-		return [ self::ERROR_MODE_SILENT, self::ERROR_MODE_EXCEPTION ];
-	}
+	private $defaults = [
+		'title' => 'Administrace',
+		'homepagePresenter' => '',
+		'signPresenter' => '',
+		'lostPasswordEnabled' => false,
+	];
 
 	public function loadConfiguration() {
-		$config = $this->validateConfig(
-			[
+		$this->validateConfig($this->defaults);
+		$builder = $this->getContainerBuilder();
 
-			],
-			$this->config
-		);
+		$builder->addFactoryDefinition($this->prefix('signInFormFactory'))
+			->setImplement(SignInFormFactory::class);
 
-		$this->getContainerBuilder()
-			->addDefinition($this->prefix('translator'))
-			->setType(Translator::class)
-			->setArguments([ $config ]);
-	}
+		$builder->addDefinition($this->prefix('signInForm'))
+			->setFactory(SignInForm::class, []);
 
-	public function validateConfig(array $expected, ?array $config = NULL, $name = NULL): array {
-		$config = parent::validateConfig($expected, $config, $name);
+		$builder->addFactoryDefinition($this->prefix('newPasswordFormFactory'))
+			->setImplement(NewPasswordFormFactory::class);
 
-/*		if (empty($config['remote']['api'])) {
-			throw new \Nette\UnexpectedValueException('Specify remote API endpoint.');
-		}
+		$builder->addDefinition($this->prefix('newPasswordForm'))
+			->setFactory(NewPasswordForm::class);
 
-		if (empty($config['remote']['key']) || !(is_string($config['remote']['key']) || is_array($config['remote']['key']))) {
-			throw new \Nette\UnexpectedValueException('Specify authentication key as string or method (e.g. [@ServiceClass, method]).');
-		}
+		$builder->addFactoryDefinition($this->prefix('lostPasswordFormFactory'))
+			->setImplement(LostPasswordFormFactory::class);
 
-		if (!in_array($config['error']['mode'], static::errorModes(), TRUE)) {
-			throw new \Nette\UnexpectedValueException(
-				'Error mode can be either "' . static::ERROR_MODE_SILENT . '" or "' . static::ERROR_MODE_EXCEPTION . '".'
-			);
-		}
+		$builder->addDefinition($this->prefix('lostPasswordForm'))
+			->setFactory(LostPasswordForm::class);
 
-		if ($config['error']['mode'] === static::ERROR_MODE_SILENT && empty($config['error']['logDir'])) {
-			throw new \Nette\UnexpectedValueException('Specify mail log directory.');
-		}*/
+		$builder->addDefinition($this->prefix('administration'))
+			->setFactory(Administration::class, array_merge($this->config, [
+				'title' => $this->config['title'],
+				'homepagePresenter' => $this->config['homepagePresenter'],
+				'signPresenter' => $this->config['signPresenter'],
+				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
+			]));
 
-		return $config;
+		/*$builder->addDefinition($this->prefix('gridFactory'))
+			->setFactory(BaseGrid::class);*/
 	}
 }

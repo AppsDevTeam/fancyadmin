@@ -1,0 +1,89 @@
+@import '~bootstrap/scss/functions';
+
+// Default variable overrides come here
+
+@import "~bootstrap/scss/variables";
+@import "~bootstrap/scss/mixins";
+
+
+/* ====================
+ *  Colors
+ * ==================*/
+
+$primary: var(--primaryColor);
+$primary-dark: var(--primaryColorDark);
+
+$secondary: var(--secondaryColor);
+$secondary-dark: var(--secondaryColorDark);
+$secondary-darker: var(--secondaryColorDarker);
+
+$ternary: var(--ternaryColor);
+$ternary-text: var(--ternaryTextColor);
+
+$background: white;
+$background-dark: darken($background, 5);
+$background-darker: darken($background, 10);
+
+$login-background: rgb(255, 255, 255);
+
+$heading-color: #333333;
+$body-color: #333333;
+$black: #333333;
+$text-primary: #333333;
+$xxx: #acacac;
+$color-light-gray: #E7E6E9;
+
+$success: rgb(40, 200, 133);
+$warning: rgb(249, 179, 0);
+$error: rgb(255, 66, 66);
+
+$whitish-30: rgba(242, 243, 246, 0.30);
+$whitish-30-no-alpha: #5d6876;
+$bg-whitish-30-no-alpha: $whitish-30-no-alpha;
+
+$background-color: var(--secondaryColor);
+$bg-danger: #bb2d3b;
+$bg-danger-dark-10: darken($bg-danger, 10%);
+
+/* ====================
+ *  Fonts
+ * ==================*/
+
+$fs-body: 0.9rem;
+
+
+/* ====================
+ *  Other
+ * ==================*/
+
+//$fast-transition: .3s;
+//$slow-transition: .6s;
+
+
+/* ====================
+ *  Portal structure
+ * ==================*/
+
+$navbar-height: 80px;
+$side-panel-width: 70px;
+
+// border-radius
+$br-container: 20px;
+$br-element: 10px;
+$br-thumbnail: 3px;
+
+// inputs
+$padding-input: 15px;
+
+// buttons
+$btn-font-size: $fs-body;
+$btn-line-height: normal;
+$btn-border-radius: $br-container;
+$btn-padding-y: 15px;
+$btn-padding-x: 25px;
+
+$paddingTableRowY: 18px;
+$cardPadding: 30px;
+
+$input-color-focus: #F2F3F6;
+

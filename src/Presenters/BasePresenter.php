@@ -4,12 +4,14 @@ namespace ADT\FancyAdmin\Presenters;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineAuthenticator\SecurityUser;
-use ADT\FancyAdmin\Model\Translator;
+use ADT\FancyAdmin\Model\Administration;
+use Contributte\Translation\Translator;
 use Exception;
 use Kdyby\Autowired\Attributes\Autowire;
 use Kdyby\Autowired\AutowireComponentFactories;
 use Kdyby\Autowired\AutowireProperties;
 use Nette\Application\UI\Presenter;
+use Nette\Utils\Json;
 use ReflectionClass as T;
 
 abstract class BasePresenter extends Presenter
@@ -28,7 +30,23 @@ abstract class BasePresenter extends Presenter
 	#[Autowire]
 	protected SecurityUser $securityUser;
 
+	#[Autowire]
+	protected Administration $administration;
+
+	protected bool $primaryTemplate = false;
+
 	public array $allowedMethods = ['GET', 'POST', 'HEAD'];
+
+	public function isLogged(): bool
+	{
+		return $this->getUser()->isLoggedIn();
+	}
+
+	protected function beforeRender(): void
+	{
+		$this->template->primaryTemplate = $this->primaryTemplate;
+		$this->template->jsComponentsConfig = Json::encode([]);
+	}
 
 	/**
 	 * @template T of \ReflectionClass|\ReflectionMethod
@@ -43,7 +61,6 @@ abstract class BasePresenter extends Presenter
 			$this->error();
 		}
 	}
-
 
 
 	/************************
@@ -111,5 +128,10 @@ abstract class BasePresenter extends Presenter
 		$dir = dirname($this->getReflection()->getFileName());
 		$list[] = "$dir/$this->view.Latte";
 		return $list;
+	}
+
+	public function getAdministration(): Administration
+	{
+		return $this->administration;
 	}
 }

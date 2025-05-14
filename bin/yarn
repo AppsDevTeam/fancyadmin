@@ -1,0 +1,11 @@
+#!/bin/bash
+
+path=$(dirname "$(readlink "$0" || echo "$0")")
+
+source $path/include/env
+
+command="mkdir -p .yarn && cp /usr/src/yarn.cjs .yarn/ && YARN_CACHE_FOLDER=/usr/src/project/.yarn/cache yarn $@"
+
+test -t 0 && USE_TTY="-t"
+
+docker run --rm -i ${USE_TTY} -u $(id -u $SUDO_USER):$(id -u $SUDO_USER) -v $PROJECT_ROOT:/usr/src/project -v $path/lib/yarn-3.2.0.cjs:/usr/src/yarn.cjs -v $PWD:/usr/src/app -w /usr/src/app --network host --pid=host node:${NODE_VERSION:-current} bash -c "$command"

@@ -1,0 +1,208 @@
+:root {
+  --bs-bg-opacity: 1;
+  --bs-dark-rgb: 16, 30, 42;
+  --bs-body-font-size: $fs-body;
+  --bs-font-sans-serif: "Roboto";
+  --bs-link-color-rgb: 36, 21, 86;
+  --bs-btn-bg: $datagrid-color;
+  //--bs-link-color-rgb: 36, 21, 86;
+  --side-panel-width: #{$side-panel-width};
+}
+
+body {
+    background-color: $background-color;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+body:has(.side-panel) .container {
+  left: var(--side-panel-width);
+  transition: left .5s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+
+  .btn {
+    padding: 10px 18px;
+    font-size: $fs-body;
+  }
+
+  .btn-icon {
+    border: 0;
+    border-radius: 20px;
+    border: solid 1px $secondary-darker;
+
+    &:hover {
+      background-color: white;
+    }
+  }
+
+  .btn-link {
+    --bs-btn-font-weight: 500;
+
+    color: $body-color;
+    border: 2px solid #d2d2d2;
+    text-decoration: none;
+  }
+}
+
+.snippet-flashes {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  pointer-events: none;
+
+  .alert {
+    border-radius: 20px;
+    border: 0;
+    display: inline-flex;
+    align-items: stretch;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: normal;
+    pointer-events: all;
+    max-width: min(calc(100vw - 50px), 1300px);
+    box-shadow: 0px 0px 20px 0px rgba(109, 109, 109, 0.45);
+    padding: 20px 30px;
+    gap: 30px;
+
+    &:before {
+      margin: 10px 0;
+      font-size: 30px;
+      font-family: "Font Awesome 6 Pro";
+    }
+
+    &.alert-success {
+      background-color: $success;
+      color: white;
+
+      .alert-close-btn {
+        display: none;
+      }
+
+      &:before {
+        content: "";
+      }
+    }
+
+    &.alert-warning {
+      background-color: $warning;
+      color: white;
+
+      &:before {
+        content: "\f05a";
+      }
+    }
+
+    &.alert-danger {
+      background-color: $error;
+      color: white;
+
+      &:before {
+        content: "\f057";
+      }
+    }
+
+    .alert-text {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding-top: 17px;
+      margin-bottom: 10px;
+    }
+
+    .alert-close-btn {
+      display: flex;
+      width: 161px;
+      padding: 10px 25px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      border: 0;
+      margin-top: 6px;
+
+      border-radius: 20px;
+      background: #FFF;
+    }
+  }
+}
+
+$sidePanelTemplateAnimation: .4s;
+
+
+.side-panel-template-backdrop {
+  position: fixed;
+  background-color: rgb(0 0 0 / 0%);
+  transition: all $sidePanelTemplateAnimation ease;
+  pointer-events: none;
+  inset: 0;
+  z-index: 9010;
+}
+
+body:has(.side-panel-template-container form) {
+  .side-panel-template-backdrop {
+    pointer-events: all;
+    background-color: rgb(0 0 0 / 30%);
+  }
+}
+
+.side-panel-template-container {
+  position: fixed;
+  width: 100vw;
+  max-width: 610px;
+  right: -610px;
+  top: 0;
+  bottom: 0;
+  padding: 40px;
+  overflow: auto;
+
+  background-color: white;
+  z-index: 9020;
+  box-shadow: 0 0 0 0 black;
+
+  transition: right .4s ease;
+
+  &:has(form) {
+    right: 0;
+    box-shadow: 0 0 45px -10px black;
+  }
+
+  .btn-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+
+  [type="submit"] {
+    width: 100%;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+span.empty {
+  font-style: italic;
+  color: rgb(153, 153, 153);
+}

@@ -1,0 +1,25 @@
+compressionLevel: 0
+
+enableGlobalCache: false
+
+globalFolder: ./.yarn
+
+nmMode: hardlinks-local
+
+nodeLinker: node-modules
+
+npmScopes:
+  fortawesome:
+    npmAlwaysAuth: true
+    npmAuthToken: "__FORTAWESOME_TOKEN__"
+    npmRegistryServer: "https://npm.fontawesome.com/"
+
+packageExtensions:
+  adt-js-components@*:
+    peerDependencies:
+      "@popperjs/core": "*"
+  select2-bootstrap-5-theme@*:
+    peerDependencies:
+      "@popperjs/core": "*"
+
+yarnPath: ./.yarn/yarn.cjs

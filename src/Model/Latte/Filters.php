@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Latte;
 
-use ADT\FancyAdmin\Model\Translator;
+use Contributte\Translation\Translator;
 use Latte\ContentType;
 use Latte\Runtime\FilterInfo;
 
@@ -66,7 +66,7 @@ class Filters
 		return $value === null ? '<i class="fa-regular fa-square" style="color: #999999"></i>' : ($value ? '<i class="fa-solid fa-square-check" style="color: #28C885"></i>' : '<i class="fa-solid fa-square-xmark" style="color: #FF4242"></i>');
 	}
 
-	public function darken(string $hexColor, int $percent): string
+	public static function darken(string $hexColor, int $percent): string
 	{
 		// Odstranit "#" z barvy, pokud je přítomna
 		$hexColor = ltrim($hexColor, '#');
@@ -134,7 +134,7 @@ class Filters
 		return sprintf('#%02x%02x%02x', round($r), round($g), round($b));
 	}
 
-	public function lighten(string $hexColor, int $percent)
+	public static function lighten(string $hexColor, int $percent)
 	{
 		// Odstranit "#" z barvy, pokud je přítomna
 		$hexColor = ltrim($hexColor, '#');

@@ -1,0 +1,146 @@
+.bg-primary-variant {
+	background-color: $ternary;
+	color: $ternary-text;
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-size: cover;
+		opacity: 0.1;
+	}
+}
+
+.container-login {
+	width: 100%;
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 15px;
+
+	@include media-breakpoint-down(sm) {
+		& {
+			padding: 0;
+
+			.wrap-login {
+				background-color: initial;
+
+				img {
+					max-width: 156px;
+				}
+			}
+
+			.login-form {
+				gap: 0;
+			}
+		}
+	}
+}
+
+.wrap-login {
+	position: relative;
+	width: 100%;
+	max-width: 500px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 50px;
+	background-color: rgba($login-background, 0.3);
+	border-radius: $br-container;
+	padding: 80px 40px;
+
+	img {
+		width: 226px;
+		height: auto;
+	}
+}
+
+.login-form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 60px;
+	align-self: stretch;
+
+	.inputs-wrap {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: flex-start;
+		gap: 20px;
+		align-self: stretch;
+	}
+
+
+	div:has(> .form-control),
+	div:has(> .form-check) {
+		width: 100%;
+		margin-bottom: 0 !important;
+
+		label {
+			font-size: $fs-body;
+			line-height: normal;
+			color: white;
+		}
+
+		.form-control {
+			width: 100%;
+			display: flex;
+			padding: $padding-input;
+			align-items: center;
+			gap: 10px;
+			font-size: $fs-body;
+			//-webkit-text-fill-color: white;
+			border: none;
+			border-radius: $br-container;
+			//box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset;
+			//-webkit-box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset;
+			outline: none; // firefox fix
+			background-color: rgba($login-background, 0.3);
+			color: $ternary-text;
+			-webkit-text-fill-color: $ternary-text;
+			&::placeholder {
+				color: $ternary-text;
+			}
+			&:focus {
+				//box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset !important;
+				//-webkit-box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset !important;
+				background-color: rgba($login-background, 0.4) !important;
+			}
+
+			//&:autofill,
+			//&:-moz-autofill,
+			//&:-moz-autofill-preview,
+			&:-webkit-autofill,
+			&:-webkit-autofill:hover,
+			&:-webkit-autofill:focus,
+			&:-webkit-autofill:active {
+				transition: background-color 5000s ease-in-out 0s;
+			}
+
+			&.input-company {
+				-webkit-text-fill-color: #8A8A8A;
+				background: rgba(242, 243, 246, 0.80);
+				box-shadow: none;
+				outline: none;
+				&:focus {
+					box-shadow: none !important;
+				}
+			}
+		}
+	}
+
+	.linkInForm {
+		color: $ternary-text;
+	}
+
+
+}
+

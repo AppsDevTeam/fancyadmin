@@ -11,7 +11,7 @@
 	<link rel="manifest" href="/manifest.webmanifest"/>
 	<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
 	<link rel="icon" type="image/png" href="/favicon/favicon.png">
-	<link rel="stylesheet" href="{$basePath}/dist/app/css/app.css{v}">
+	<link rel="stylesheet" href="{$basePath}/dist/admin/css/admin.css{v}">
 </head>
 
 <body data-app-body data-adt-js-components="{$jsComponentsConfig}" data-adt-messaging data-adt-translate
@@ -20,11 +20,11 @@
 	<style>
         body {
             --primaryColor: #42b6a4;
-            --primaryColorDark: {="#42b6a4"|noescape|darken,5};
-            --primaryColorDark20: {="#42b6a4"|noescape|darken,10};
+            --primaryColorDark: {=ADT\FancyAdmin\Model\Latte\Filters::darken("#42b6a4", 5)|noescape};
+            --primaryColorDark20: {=ADT\FancyAdmin\Model\Latte\Filters::darken("#42b6a4", 10)|noescape};
             --secondaryColor: {="#f1f7f7"|noescape};
-            --secondaryColorDark: {="#f1f7f7"|noescape|darken,5};
-            --secondaryColorDarker: {="#f1f7f7"|noescape|darken,10};
+            --secondaryColorDark: {=ADT\FancyAdmin\Model\Latte\Filters::darken("#f1f7f7", 5)|noescape};
+            --secondaryColorDarker: {=ADT\FancyAdmin\Model\Latte\Filters::darken("#f1f7f7", 10)|noescape};
             --ternaryColor: #101D40;
             --ternaryTextColor: #ffffff;
         }
@@ -91,7 +91,7 @@
 		</div>
 	</div>
 </div>
-<script src="{$basePath}/dist/app/js/app.js{v}"></script>
+<script src="{$basePath}/dist/admin/js/admin.js{v}"></script>
 {block scripts}{/block}
 </body>
 </html>
