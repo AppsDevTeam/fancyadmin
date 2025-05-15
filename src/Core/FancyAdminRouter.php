@@ -2,28 +2,56 @@
 
 namespace ADT\FancyAdmin\Core;
 
+use ADT\FancyAdmin\Model\Administration;
+use ADT\Routing\Route;
 use Closure;
 use ADT\Routing\RouteList;
 
-trait FancyAdminRouter
+class FancyAdminRouter
 {
-	abstract public static function getAdminHost(): string;
+	public function __construct(
+		protected Administration $administration
+	) {}
 
-	public static function createAdminRouteModule(): RouteList {
+	public function getAdminHost(): string
+	{
+		$adminHostPath = $this->administration->getAdminHostPath();
+
+		$host = explode('/', $adminHostPath);
+		if ($host[0] !== '') {
+			$adminHostPath = 'https://' . $adminHostPath;
+		}
+
+		return $adminHostPath;
+	}
+
+	public function createAdminRouteModule(): RouteList {
 		$adminModule = new RouteList('Admin');
 
-		self::createAdminRoute($adminModule, 'sign/<action>[/<id>]', [
+		$this->createAdminRoute($adminModule, 'sign/in', [
 			'presenter' => 'Sign',
-			'action' => 'default',
+			'action' => 'in',
 		]);
+
+		$this->createAdminRoute($adminModule, 'sign/out', [
+			'presenter' => 'Sign',
+			'action' => 'out',
+		]);
+
+		if ($this->administration->isLostPasswordEnabled()) {
+			$this->createAdminRoute($adminModule, 'sign/lost-password', [
+				'presenter' => 'Sign',
+				'action' => 'lostPassword',
+			]);
+		}
 
 		return $adminModule;
 	}
 
-	private static function createAdminRoute(RouteList $adminModule, string $mask, Closure|array|string $metadata = [], int|bool $oneWay = 0): void
+	private function createAdminRoute(RouteList $adminModule, string $mask, Closure|array|string $metadata = [], int|bool $oneWay = 0): void
 	{
 		$adminModule->addRoute(
-			'https://' . self::getAdminHost() . '/' . $mask,
+			$this->getAdminHost() . '/' . $mask,
 			$metadata,
 			$oneWay
 		);

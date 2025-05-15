@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\DI;
 
+use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordForm;
 use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordFormFactory;
 use ADT\FancyAdmin\UI\Forms\NewPassword\NewPasswordForm;
@@ -13,9 +14,8 @@ use ADT\FancyAdmin\Model\Administration;
 class FancyAdminExtension extends \Nette\DI\CompilerExtension
 {
 	private $defaults = [
-		'title' => 'Administrace',
+		'adminHostPath' => '/admin',
 		'homepagePresenter' => '',
-		'signPresenter' => '',
 		'lostPasswordEnabled' => false,
 	];
 
@@ -41,14 +41,15 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension
 		$builder->addDefinition($this->prefix('lostPasswordForm'))
 			->setFactory(LostPasswordForm::class);
 
+		$builder->addDefinition($this->prefix('fancyAdminRouter'))
+			->setFactory(FancyAdminRouter::class);
+
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(Administration::class, array_merge($this->config, [
-				'title' => $this->config['title'],
+				'adminHostPath' => $this->config['adminHostPath'],
 				'homepagePresenter' => $this->config['homepagePresenter'],
-				'signPresenter' => $this->config['signPresenter'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
 			]));
-
 		/*$builder->addDefinition($this->prefix('gridFactory'))
 			->setFactory(BaseGrid::class);*/
 	}

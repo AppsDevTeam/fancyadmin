@@ -5,20 +5,19 @@ namespace ADT\FancyAdmin\Model;
 class Administration
 {
 	public function __construct(
-		protected string $title,
+		protected string $adminHostPath,
 		protected string $homepagePresenter,
-		protected string $signPresenter,
 		protected bool $lostPasswordEnabled
 	) {}
+
+	public function getAdminHostPath(): string
+	{
+		return $this->adminHostPath;
+	}
 
 	public function getHomepagePresenter(): string
 	{
 		return $this->homepagePresenter;
-	}
-
-	public function getSignPresenter(): string
-	{
-		return $this->signPresenter;
 	}
 
 	public function isLostPasswordEnabled(): bool

@@ -19,7 +19,7 @@ global.jQuery = $;
 
 import {Chart} from "chart.js/auto";
 import Nette from 'nette-forms';
-//import '../../../vendor/nasext/dependent-select-box/client-side/dependentSelectBox'
+import '../../vendor/nasext/dependent-select-box/client-side/dependentSelectBox'
 Nette.initOnLoad();
 window.Nette = Nette;
 window.Chart = Chart;
@@ -50,7 +50,7 @@ if ($.nette.ext('history')) {
 }
 
 $.nette.ext('live').after(function($el) {
-    $('[data-dependentselectbox]').dependentSelectBox();
+   $('[data-dependentselectbox]').dependentSelectBox();
 });
 
 import 'daterangepicker';

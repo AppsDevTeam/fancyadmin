@@ -6,7 +6,7 @@
 		{formPair email}
 		{formPair password}
 		{if $administration->isLostPasswordEnabled()}
-			<a href="{plink "Sign:LostPassword"}" class="linkInForm">
+			<a href="{plink "Sign:lostPassword"}" class="linkInForm">
 				<span class="d-none d-sm-inline">{_app.modules.web.presenters.sign.in.renewLink}</span>
 			</a>
 		{/if}

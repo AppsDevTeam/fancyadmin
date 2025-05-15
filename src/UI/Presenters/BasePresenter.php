@@ -134,4 +134,12 @@ abstract class BasePresenter extends Presenter
 	{
 		return $this->administration;
 	}
+
+	public function afterRender(): void
+	{
+		if (!$this->isControlInvalid()) {
+			$this->redrawControl('title');
+			$this->redrawControl('body');
+		}
+	}
 }

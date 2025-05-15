@@ -105,4 +105,9 @@ class SignPresenter extends BasePresenter
 	public function actionLostPassword(): void
 	{
 	}
+
+	public function renderLostPassword(): void
+	{
+		$this->template->setFile(__DIR__ . '/lostPassword.latte');
+	}
 }
