@@ -7,7 +7,7 @@
 		{formPair password}
 		{if $administration->isLostPasswordEnabled()}
 			<a href="{plink "Sign:lostPassword"}" class="linkInForm">
-				<span class="d-none d-sm-inline">{_app.modules.web.presenters.sign.in.renewLink}</span>
+				<span class="d-none d-sm-inline">{_fcadmin.signIn.links.lostPassword}</span>
 			</a>
 		{/if}
 		{input submit}

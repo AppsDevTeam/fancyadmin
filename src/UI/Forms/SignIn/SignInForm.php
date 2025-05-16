@@ -13,16 +13,16 @@ use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Authenticator;
+use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
 class SignInForm extends BaseForm
 {
 	protected Authenticator $authenticator;
 
-	#[Autowire]
 	protected Administration $administration;
 
-	protected ?User $user = null;
+	protected $user = null;
 
 	public function initForm(Form $form): void
 	{
@@ -38,7 +38,7 @@ class SignInForm extends BaseForm
 			->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.password')
 			->setRequired('fcadmin.forms.signIn.errors.passwordRequired');
 
-		$form->addSubmit('submit', 'app.forms.signIn.labels.logIn')
+		$form->addSubmit('submit', 'fcadmin.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';
 
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
@@ -49,9 +49,9 @@ class SignInForm extends BaseForm
 		try {
 			$this->user = $this->authenticator->verifyCredentials($values->email, $values->password);
 		} catch (AuthenticationException $e) {
-			$this->form->addError('app.forms.signIn.errors.wrongEmailOrPassword');
+			$this->form->addError('fcadmin.forms.signIn.errors.wrongEmailOrPassword');
 		} catch (AuthenticationUserNotActiveException $e) {
-			$this->form->addError('app.forms.signIn.errors.suspendedAccount');
+			$this->form->addError('fcadmin.forms.signIn.errors.suspendedAccount');
 		}
 	}
 
@@ -62,7 +62,7 @@ class SignInForm extends BaseForm
 	public function processForm(): void
 	{
 		$this->presenter->user->login($this->user);
-		$this->presenter->redirect(':Portal:Dashboard:', ['redrawBody' => true]);
+		$this->presenter->redirect($this->administration->getHomepagePresenter(), ['redrawBody' => true]);
 	}
 
 	public function getEntityClass(): ?string
@@ -75,4 +75,11 @@ class SignInForm extends BaseForm
 		$this->authenticator = $authenticator;
 		return $this;
 	}
+
+	public function setAdministration(Administration $administration): SignInForm
+	{
+		$this->administration = $administration;
+		return $this;
+	}
+
 }

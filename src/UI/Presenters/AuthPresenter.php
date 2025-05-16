@@ -4,13 +4,10 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
 
-use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
-use ADT\FancyAdmin\Forms\GridFilter\GridFilterFormFactory;
 use ADT\FancyAdmin\Presenters\BaseEntity;
 use ADT\FancyAdmin\Presenters\GridFilter;
 use ADT\FancyAdmin\UI\Presenters\BasePresenter;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
-use App\UI\Portal\Components\Panels\GridFilterPanelControl\GridFilterPanelControlFactory;
 use ADT\FancyAdmin\SidePanels\SidePanelControl;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\Attributes\Persistent;
@@ -23,12 +20,6 @@ use ReflectionException;
 abstract class AuthPresenter extends BasePresenter
 {
 	use RedrawSidePanel;
-
-	#[Autowire]
-	protected GridFilterFormFactory $gridFilterFormFactory;
-
-	#[Autowire]
-	protected GridFilterQueryFactory $gridFilterQueryFactory;
 
 	#[Persistent]
 	public ?string $gridFilterClass = null;
@@ -46,7 +37,7 @@ abstract class AuthPresenter extends BasePresenter
 		parent::startup();
 
 		if (!$this->isLogged()) {
-			$this->redirect(':Portal:Sign:in');
+			$this->redirect(':Admin:Sign:in');
 		}
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
@@ -111,28 +102,5 @@ abstract class AuthPresenter extends BasePresenter
 				}
 			}
 		}
-	}
-
-	public function createComponentGridFilterSidePanel(GridFilterPanelControlFactory $factory): SidePanelControl
-	{
-		if ($this->getParameter('columns')) {
-			$this->gridFilterParameters = Json::decode($this->getParameter('columns'), forceArrays: true);
-		}
-		if ($this->getParameter('gridFilterClass')) {
-			$this->gridFilterClass = $this->getParameter('gridFilterClass');
-		}
-
-		$gridFilter = $this->getParameter('editId')
-			? $this->gridFilterQueryFactory->create()->byId($this->getParameter('editId'))->fetchOneOrNull()
-			: (new GridFilter())
-				->setGrid($this->gridFilterClass);
-
-		$form = $this->gridFilterFormFactory->create()
-			->setEntity($gridFilter)
-			->setFilterList($this->gridFilterParameters);
-
-		return $factory->create()
-			->setEntity($gridFilter)
-			->setForm($form);
 	}
 }

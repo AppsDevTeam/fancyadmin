@@ -12,55 +12,25 @@
                         <img src="{$user->getIdentity()->getGravatar()}" alt="gravatar" />
                     </div>
                     <div class="col-auto">
-                        <div>{$user->getIdentity()->getFullName()}</div>
+                        <div>{$user->getIdentity()->getFirstName()}</div>
                         <div>{$user->getIdentity()->getEmail()}</div>
                     </div>
                 </div>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li n:if="$presenter->getSelectedCompanyId() && $user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MY_ACCOUNT)" class="dropdown-item">
+            <li class="dropdown-item">
                 <div>
                     <div>
                         <i class="fa-solid fa-user-lock"></i>
                     </div>
                     <div>
-                        <a n:href=":Portal:Account:myAccount">{_app.modules.web.navbar.account.myAccount}</a>
-                    </div>
-                </div>
-            </li>
-            <li n:if="$presenter->getSelectedCompanyId() && $user->isAllowed(\ADT\FancyAdmin\Model\Enums\AclResourceEnum::CUSTOMER_MY_ACCOUNT)" class="dropdown-item">
-                <div>
-                    <div>
-                        <i class="fa-solid fa-building"></i>
-                    </div>
-                    <div>
-                        <a n:href=":editCompany!" class="ajax">{_app.modules.web.navbar.account.settingCompany}</a>
-                    </div>
-                </div>
-            </li>
-            <li class="dropdown-item" id="add-button">
-                <div>
-                    <div>
-                        <i class="fa-solid fa-desktop-arrow-down"></i>
-                    </div>
-                    <div>
-                        {_app.modules.web.navbar.account.addToDesktop}
-                    </div>
-                </div>
-            </li>
-            <li class="dropdown-item" data-adt-notifications>
-                <div>
-                    <div>
-                        <i class="fa-solid fa-bell"></i>
-                    </div>
-                    <div>
-                        {_app.modules.web.navbar.account.enableNotifications}
+                        <a href="#">{_app.modules.web.navbar.account.myAccount}</a>
                     </div>
                 </div>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li class="logout-item">
-                <a class="dropdown-item" n:href=":Portal:Sign:out">
+                <a class="dropdown-item" n:href=":Admin:Sign:out">
                     <div>
                         <div>
                             <i class="fa-solid fa-right-to-bracket"></i>

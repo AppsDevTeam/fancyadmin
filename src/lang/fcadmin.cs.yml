@@ -1,5 +1,9 @@
 forms:
+  # Sign Form
   signIn:
+    links:
+      lostPassword: Zapomenuté heslo
+
     labels:
       email: E-mail
       password: Heslo
@@ -12,3 +16,14 @@ forms:
       wrongEmailOrPassword: Nesprávný e-mail nebo heslo.
       suspendedAccount: Váš účet byl dočasně znepřístupněn či byl zrušen
       expiredRecovery: Token pro nastavení hesla již expiroval
+
+  # Lost password Form
+  lostPassword:
+    labels:
+      email: E-mail
+      submit: Odeslat link pro obnovu
+    messages:
+      success: E-mail pro obnovu odeslán
+      error: E-mail pro obnovu se nepodařilo odeslat
+    errors:
+      emailRequired: E-mail je povinný

@@ -27,7 +27,7 @@ class SignPresenter extends BasePresenter
 		parent::startup();
 
 		if ($this->isLogged() && !in_array($this->getAction(), ['out'])) {
-			$this->redirect('Dashboard:');
+			$this->redirect($this->administration->getHomepagePresenter());
 		}
 	}
 
@@ -67,7 +67,7 @@ class SignPresenter extends BasePresenter
 
 		if (! $this->passwordRecovery->isValid()) {
 			$this->flashMessageError('app.forms.signIn.errors.expiredRecovery');
-			$this->redirect(':Portal:Sign:in');
+			$this->redirect(':Admin:Sign:in');
 		}
 	}
 

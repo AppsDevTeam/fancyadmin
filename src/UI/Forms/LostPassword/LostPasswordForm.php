@@ -24,10 +24,10 @@ class LostPasswordForm extends BaseForm
 		$form->getElementPrototype()->class[] = 'login-form';
 
 		$form->addEmail('email', null)
-			->setHtmlAttribute('placeholder', 'app.forms.lostPassword.labels.email')
-			->setRequired('app.forms.lostPassword.errors.emailRequired');
+			->setHtmlAttribute('placeholder', 'fcadmin.forms.lostPassword.labels.email')
+			->setRequired('fcadmin.forms.lostPassword.errors.emailRequired');
 
-		$form->addSubmit('submit', 'app.forms.lostPassword.labels.submit');
+		$form->addSubmit('submit', 'fcadmin.forms.lostPassword.labels.submit');
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn ';
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'w-100';
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
@@ -40,15 +40,15 @@ class LostPasswordForm extends BaseForm
 			if ($user) {
 				try {
 					$this->userService->sendPasswordRecoveryMail($user, PasswordRecovery::PASSWORD_RECOVERY_VALID_FOR);
-					$this->presenter->flashMessageSuccess('app.forms.lostPassword.messages.success');
+					$this->presenter->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
 				} catch (ORMException $e) {
-					$this->presenter->flashMessageError('app.forms.lostPassword.messages.error');
+					$this->presenter->flashMessageError('fcadmin.forms.lostPassword.messages.error');
 					$this->presenter->redirect('this');
 				}
 				$this->presenter->redirect('Sign:In');
 			}
 		}
-		$this->presenter->flashMessageError('app.forms.lostPassword.messages.error');
+		$this->presenter->flashMessageError('fcadmin.forms.lostPassword.messages.error');
 		$this->presenter->redirect('this');
 	}
 

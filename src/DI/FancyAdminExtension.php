@@ -10,8 +10,9 @@ use ADT\FancyAdmin\UI\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\Model\Administration;
+use Contributte\Translation\DI\TranslationProviderInterface;
 
-class FancyAdminExtension extends \Nette\DI\CompilerExtension
+class FancyAdminExtension extends \Nette\DI\CompilerExtension implements TranslationProviderInterface
 {
 	private $defaults = [
 		'adminHostPath' => '/admin',
@@ -31,7 +32,8 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension
 			->setImplement(SignInFormFactory::class)
 			->getResultDefinition()
 			->setFactory(SignInForm::class)
-			->addSetup('setAuthenticator', ['@'.$this->config['authenticator']]);
+			->addSetup('setAuthenticator', ['@' . $this->config['authenticator']])
+			->addSetup('setAdministration', ['@' . Administration::class]);
 
 		$builder->addFactoryDefinition($this->prefix('newPasswordFormFactory'))
 			->setImplement(NewPasswordFormFactory::class);
@@ -54,21 +56,10 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension
 				'homepagePresenter' => $this->config['homepagePresenter'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
 			]);
-		/*$builder->addDefinition($this->prefix('gridFactory'))
-			->setFactory(BaseGrid::class);*/
 	}
 
-	public function beforeCompile()
+	public function getTranslationResources(): array
 	{
-		$builder = $this->getContainerBuilder();
-
-		if (!$builder->hasDefinition('translation.translationProvider.default')) {
-			return;
-		}
-
-		$def = $builder->getDefinition('translation.translationProvider.default');
-
-		// Přidáme další cestu
-		$def->addSetup('addResource', [__DIR__ . '/../lang']);
+		return [__DIR__ . '/../lang'];
 	}
 }
