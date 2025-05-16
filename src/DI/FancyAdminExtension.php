@@ -17,6 +17,10 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension
 		'adminHostPath' => '/admin',
 		'homepagePresenter' => '',
 		'lostPasswordEnabled' => false,
+		'authenticator' => \Nette\Security\Authenticator::class,
+		'forms' => [
+			'signInFactory' => SignInFormFactory::class
+		]
 	];
 
 	public function loadConfiguration() {
@@ -24,10 +28,10 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension
 		$builder = $this->getContainerBuilder();
 
 		$builder->addFactoryDefinition($this->prefix('signInFormFactory'))
-			->setImplement(SignInFormFactory::class);
-
-		$builder->addDefinition($this->prefix('signInForm'))
-			->setFactory(SignInForm::class, []);
+			->setImplement(SignInFormFactory::class)
+			->getResultDefinition()
+			->setFactory(SignInForm::class)
+			->addSetup('setAuthenticator', ['@'.$this->config['authenticator']]);
 
 		$builder->addFactoryDefinition($this->prefix('newPasswordFormFactory'))
 			->setImplement(NewPasswordFormFactory::class);
@@ -45,12 +49,26 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension
 			->setFactory(FancyAdminRouter::class);
 
 		$builder->addDefinition($this->prefix('administration'))
-			->setFactory(Administration::class, array_merge($this->config, [
+			->setFactory(Administration::class, [
 				'adminHostPath' => $this->config['adminHostPath'],
 				'homepagePresenter' => $this->config['homepagePresenter'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
-			]));
+			]);
 		/*$builder->addDefinition($this->prefix('gridFactory'))
 			->setFactory(BaseGrid::class);*/
+	}
+
+	public function beforeCompile()
+	{
+		$builder = $this->getContainerBuilder();
+
+		if (!$builder->hasDefinition('translation.translationProvider.default')) {
+			return;
+		}
+
+		$def = $builder->getDefinition('translation.translationProvider.default');
+
+		// Přidáme další cestu
+		$def->addSetup('addResource', [__DIR__ . '/../lang']);
 	}
 }

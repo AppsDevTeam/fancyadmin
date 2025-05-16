@@ -8,16 +8,15 @@ use ADT\FancyAdmin\Model\Administration;
 use ADT\Forms\Form;
 use ADT\FancyAdmin\Model\Entities\User;
 use App\Model\Exceptions\AuthenticationUserNotActiveException;
-use App\Model\Security\Authenticator;
 use ADT\FancyAdmin\UI\Forms\Base\BaseForm;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
+use Nette\Security\Authenticator;
 use Nette\Utils\ArrayHash;
 
 class SignInForm extends BaseForm
 {
-	#[Autowire]
 	protected Authenticator $authenticator;
 
 	#[Autowire]
@@ -31,13 +30,13 @@ class SignInForm extends BaseForm
 
 		$form->addText('email')
 			->setHtmlAttribute('id', 'login-form-input-email')
-			->setHtmlAttribute('placeholder', 'app.forms.signIn.labels.email')
-			->setRequired('app.forms.signIn.errors.emailRequired');
+			->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.email')
+			->setRequired('fcadmin.forms.signIn.errors.emailRequired');
 
 		$form->addPassword('password')
 			->setHtmlAttribute('id', 'login-form-input-password')
-			->setHtmlAttribute('placeholder', 'app.forms.signIn.labels.password')
-			->setRequired('app.forms.signIn.errors.passwordRequired');
+			->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.password')
+			->setRequired('fcadmin.forms.signIn.errors.passwordRequired');
 
 		$form->addSubmit('submit', 'app.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';
@@ -69,5 +68,11 @@ class SignInForm extends BaseForm
 	public function getEntityClass(): ?string
 	{
 		return null;
+	}
+
+	public function setAuthenticator(Authenticator $authenticator): self
+	{
+		$this->authenticator = $authenticator;
+		return $this;
 	}
 }

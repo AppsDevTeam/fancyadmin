@@ -1,0 +1,14 @@
+forms:
+  signIn:
+    labels:
+      email: E-mail
+      password: Heslo
+      rememberMe: Pamatuj si mne
+      logIn: Přihlásit
+
+    errors:
+      emailRequired: Je nutné vyplnit e-mail.
+      passwordRequired: Je nutné vyplnit heslo.
+      wrongEmailOrPassword: Nesprávný e-mail nebo heslo.
+      suspendedAccount: Váš účet byl dočasně znepřístupněn či byl zrušen
+      expiredRecovery: Token pro nastavení hesla již expiroval
