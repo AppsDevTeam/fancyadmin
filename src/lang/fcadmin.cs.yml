@@ -1,3 +1,8 @@
+layout:
+  sideMenu:
+    user:
+      logout: Odhlásit se
+
 forms:
   # Sign Form
   signIn:

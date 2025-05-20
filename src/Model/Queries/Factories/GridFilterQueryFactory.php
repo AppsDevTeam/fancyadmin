@@ -1,9 +1,8 @@
 <?php
 
-
-use ADT\FancyAdmin\Model\Queries\GridFilterQuery;
+namespace ADT\FancyAdmin\Model\Queries\Factories;
 
 interface GridFilterQueryFactory
 {
-	public function create(): GridFilterQuery;
+	public function create(): \ADT\FancyAdmin\Model\Queries\GridFilterQuery;
 }

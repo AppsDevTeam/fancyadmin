@@ -1,25 +1,36 @@
+{varType ADT\FancyAdmin\Model\Menu\NavbarMenu $navbarMenu}
+
 <div class="row bottom-mobile-menu d-sm-none">
-    <div  class="col">
-        <a href="#" n:class="false ? active">
-            <i class="fa-solid fa-chart-simple"></i>
-            <span>{_app.modules.web.sideMenu.dashboard}</span>
-        </a>
-    </div>
-    <div  class="col">
-        {var $isSubmenuAdminOpened = false}
-        <a n:class="sub-menu-toggle, $isSubmenuAdminOpened ? active" href="#submenu-admin">
-            <i class="fa-solid fa-gears"></i>
-            <span>{_app.modules.web.sideMenu.management}</span>
-        </a>
-    </div>
+    {foreach $navbarMenu->getMenuItems() as $menuItemKey => $menuItem}
+        <div class="col">
+            {if $menuItem->getLink()}
+                <a n:href="$menuItem->getLink()" n:class="$menuItem->isCurrent($presenter) ? active">
+                    <i class="fa-solid fa-{$menuItem->getFaIcon()}"></i>
+                    <span>{_$menuItem->getLabel()}</span>
+                </a>
+            {else}
+                <a href="#submenu-{_$menuItem->getLabel()|webalize}-{$menuItemKey}" n:class="$menuItem->isCurrent($presenter) ? active">
+                    <i class="fa-solid fa-{$menuItem->getFaIcon()}"></i>
+                    <span>{_$menuItem->getLabel()}</span>
+                </a>
+            {/if}
+        </div>
+    {/foreach}
     <div class="col">
-        {*{include @userButton.latte}*}
+        {include @userButton.latte}
     </div>
 </div>
 
 
-<div  id="submenu-admin" n:class="sub-menu, d-sm-none">
-    <a href="#" n:class="false ? active">
-        <i class="fa-solid fa-user"></i><span>{_app.modules.web.sideMenu.users}</span>
-    </a>
-</div>
+{foreach $navbarMenu->getMenuItems() as $menuItemKey => $menuItem}
+    {if $menuItem->getSubmenu()}
+        {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
+        <div id="submenu-{_$menuItem->getLabel()|webalize}-{$menuItemKey}" n:class="sub-menu, d-sm-none">
+            {foreach $subMenu->getSubMenuItems() as $subMenuItem}
+                <a n:href="$subMenuItem->getLink() ?? '#'" n:class="$subMenuItem->isCurrent($presenter) ? active">
+                    <i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i><span>{_$subMenuItem->getLabel()}</span>
+                </a>
+            {/foreach}
+        </div>
+    {/if}
+{/foreach}

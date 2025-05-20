@@ -5,17 +5,12 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Grids\Base;
 
 use ADT\DoctrineComponents\QueryObject;
-use ADT\FancyAdmin\Grids\Base\DeleteParams;
-use ADT\FancyAdmin\Grids\Base\EditParams;
 use ADT\FancyAdmin\UI\Presenters\BasePresenter;
-use ADT\FancyAdmin\UI\Grids\Base\DataGrid;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\latte\Filters;
 use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
-use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
 use ADT\FancyAdmin\Model\Queries\Filters\IsActiveInterface;
-use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\DeleteService;
 use Closure;
 use Contributte\Translation\Translator;
@@ -42,26 +37,14 @@ abstract class BaseGrid extends Control
 	use AutowireProperties;
 	use AutowireComponentFactories;
 
-	#[Autowire]
-	protected Translator $translator;
-
-	#[Autowire]
-	protected IQueryObjectDataSourceFactory $queryObjectDataSource;
-
-	#[Autowire]
-	protected SecurityUser $securityUser;
-
-	#[Autowire]
-	protected EntityManager $em;
-
-	#[Autowire]
-	protected DeleteService $deleteService;
-
-	#[Autowire]
-	protected GridFilterQueryFactory $gridFilterQueryFactory;
-
-	#[Autowire]
-	protected Filters $filters;
+	public function __construct(
+		protected Translator $translator,
+		protected IQueryObjectDataSourceFactory $queryObjectDataSource,
+		protected \ADT\DoctrineAuthenticator\SecurityUser $securityUser,
+		protected EntityManager $em,
+		protected DeleteService $deleteService,
+		protected \GridFilterQueryFactory $gridFilterQueryFactory,
+	) {}
 
 	/** @var callable */
 	protected $onDelete;

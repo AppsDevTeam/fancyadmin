@@ -5,40 +5,27 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
-use Contributte\Translation\Exceptions\InvalidArgument;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
-use Nette\Security\Role;
 
+/** @mixin IAclRole */
 #[ORM\Entity]
-class AclRole extends BaseEntity implements Role
+trait AclRole
 {
 	use Identifier;
-
-	const int ID_SALESPERSON = 4;
-
-	const array TYPES_TRANSLATABLE = [
-		'admin' => 'app.appGeneral.model.enum.aclRole.admin',
-		'owner' => 'app.appGeneral.model.enum.aclRole.owner',
-		'branch leader' => 'app.appGeneral.model.enum.aclRole.branchLeader',
-		'salesperson' => 'app.appGeneral.model.enum.aclRole.salesPerson',
-		'supervision' => 'app.appGeneral.model.enum.aclRole.supervision',
-	];
 
 	#[ORM\Column(unique: true, nullable: false)]
 	protected string $name;
 
-	#[ORM\ManyToMany(targetEntity: AclResource::class, inversedBy: 'roles', cascade: ["persist"])]
+	#[ORM\ManyToMany(targetEntity: 'AclResource', inversedBy: 'roles', cascade: ["persist"])]
 	#[JoinColumn(onDelete: "RESTRICT")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	protected Collection $resources;
 
-	#[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'roles')]
+	#[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'roles')]
 	protected Collection $users;
 
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
@@ -64,13 +51,13 @@ class AclRole extends BaseEntity implements Role
 		return $this->name;
 	}
 
-	public function addUser(User $user): static
+	public function addUser(IUser $user): static
 	{
 		$this->users->add($user);
 		return $this;
 	}
 
-	public function addResource(AclResource $resource): static
+	public function addResource(IAclResource $resource): static
 	{
 		if ($this->resources->contains($resource)) {
 			return $this;
@@ -80,7 +67,7 @@ class AclRole extends BaseEntity implements Role
 		return $this;
 	}
 
-	public function removeResource(AclResource $resource): static
+	public function removeResource(IAclResource $resource): static
 	{
 		if (!$this->resources->contains($resource)) {
 			return $this;
@@ -98,7 +85,7 @@ class AclRole extends BaseEntity implements Role
 
 	public function getName(): string
 	{
-		return $this->translate(static::TYPES_TRANSLATABLE[$this->name]);
+		return $this->name;
 	}
 
 	/**
@@ -152,7 +139,7 @@ class AclRole extends BaseEntity implements Role
 
 	public function isAllowed(string $aclResource): bool
 	{
-		return array_any($this->getResources(), fn(AclResource $_resource) => $_resource->getName() === $aclResource);
+		return array_any($this->getResources(), fn(IAclResource $_resource) => $_resource->getName() === $aclResource);
 	}
 
 	public function isVisitor(): bool
@@ -160,7 +147,7 @@ class AclRole extends BaseEntity implements Role
 		return $this->isVisitor;
 	}
 
-	public function setIsVisitor(bool $isVisitor): AclRole
+	public function setIsVisitor(bool $isVisitor): static
 	{
 		$this->isVisitor = $isVisitor;
 		return $this;

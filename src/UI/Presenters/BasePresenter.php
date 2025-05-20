@@ -46,6 +46,7 @@ abstract class BasePresenter extends Presenter
 	{
 		$this->template->primaryTemplate = $this->primaryTemplate;
 		$this->template->jsComponentsConfig = Json::encode([]);
+		$this->template->navbarMenu = $this->administration->getNavbarMenu();
 	}
 
 	/**

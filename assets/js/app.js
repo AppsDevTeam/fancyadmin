@@ -104,5 +104,6 @@ import './fullscreen';
 import './structured-filter';
 import './filteredSearch'
 import 'forms-replicator';
-import './sideMenu'
 */
+
+import './sideMenu'

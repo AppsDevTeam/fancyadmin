@@ -1,5 +1,5 @@
 <div class="bottom-menu">
-    <div class="user dropdown">
+    <div class="d-flex dropdown justify-content-center user">
         <button class="btn btn-avatar" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fa-solid fa-xl fa-user"></i>
             <img src="{$user->getIdentity()->getGravatar()}" alt="gravatar" />
@@ -36,7 +36,7 @@
                             <i class="fa-solid fa-right-to-bracket"></i>
                         </div>
                         <div>
-                            {_app.appGeneral.labels.logout}
+                            {_fcadmin.layout.sideMenu.user.logout}
                         </div>
                     </div>
                 </a>

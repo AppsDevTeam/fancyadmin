@@ -1,3 +1,4 @@
+{varType ADT\FancyAdmin\Model\Menu\NavbarMenu $navbarMenu}
 <div class="side-panel z-1 delay-animate">
     <div class="menu">
         <a class="logo" href="#">
@@ -11,24 +12,32 @@
             {/if}
         </a>
 
-        {* Dashboard *}
-        <a  href="#" n:class="item, false ? active">
-            <div class="icon"><i class="fa-solid fa-chart-simple"></i></div>
-            <div class="title">{_app.modules.web.sideMenu.dashboard}</div>
-        </a>
-
-        {* Management *}
-        <div  class="item" href="#">
-            <div class="icon"><i class="fa-solid fa-gears"></i></div>
-            <div class="title">{_app.modules.web.sideMenu.management}</div>
-            <div class="submenu">
-                <div class="submenu-heading">{_app.modules.web.sideMenu.management}</div>
-                <a class="item" href="#">
-                    <div class="icon"><i class="fa-solid fa-user"></i></div>
-                    <div class="item-title">{_app.modules.web.sideMenu.users}</div>
+        {foreach $navbarMenu->getMenuItems() as $menuItem}
+            {if $menuItem->getLink()}
+                <a n:href="$menuItem->getLink()" n:class="item, $menuItem->isCurrent($presenter) ? active">
+                    <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
+                    <div class="title">{_$menuItem->getLabel()}</div>
                 </a>
-            </div>
-        </div>
+            {else}
+                <span href="#" n:class="item, $menuItem->isCurrent($presenter) ? active">
+                    <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
+                    <div class="title">{_$menuItem->getLabel()}</div>
+                    {if $menuItem->getSubmenu()}
+                        {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
+                        <div class="submenu">
+                            <div class="submenu-heading">{_$subMenu->getTitle()}</div>
+                            {foreach $subMenu->getSubMenuItems() as $subMenuItem}
+                                <a class="item" n:href="$subMenuItem->getLink()">
+                                    <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
+                                    <div class="item-title">{_$subMenuItem->getLabel()}</div>
+                                </a>
+                            {/foreach}
+                        </div>
+                    {/if}
+                </span>
+            {/if}
+
+        {/foreach}
 
         {include @userButton.latte}
     </div>

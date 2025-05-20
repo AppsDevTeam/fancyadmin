@@ -3,6 +3,8 @@
 namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
+use ADT\FancyAdmin\Model\Services\DeleteService;
 use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordForm;
 use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordFormFactory;
 use ADT\FancyAdmin\UI\Forms\NewPassword\NewPasswordForm;
@@ -11,6 +13,7 @@ use ADT\FancyAdmin\UI\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\Model\Administration;
 use Contributte\Translation\DI\TranslationProviderInterface;
+use Nette\Application\LinkGenerator;
 
 class FancyAdminExtension extends \Nette\DI\CompilerExtension implements TranslationProviderInterface
 {
@@ -18,6 +21,7 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 		'adminHostPath' => '/admin',
 		'homepagePresenter' => '',
 		'lostPasswordEnabled' => false,
+		'navbarMenuFactory' => NavbarMenuFactory::class,
 		'authenticator' => \Nette\Security\Authenticator::class,
 		'forms' => [
 			'signInFactory' => SignInFormFactory::class
@@ -50,11 +54,16 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);
 
+		$builder->addDefinition($this->prefix('deleteService'))
+			->setFactory(DeleteService::class);
+
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(Administration::class, [
 				'adminHostPath' => $this->config['adminHostPath'],
 				'homepagePresenter' => $this->config['homepagePresenter'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
+				'navbarMenuFactory' => '@' . $this->config['navbarMenuFactory'],
+				'linkGenerator' => '@' . LinkGenerator::class,
 			]);
 	}
 

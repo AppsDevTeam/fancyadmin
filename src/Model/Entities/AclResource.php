@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+/** @mixin  IAclResource */
 #[ORM\Entity]
-class AclResource extends BaseEntity
+trait AclResource
 {
 	use Identifier;
 
@@ -21,7 +21,7 @@ class AclResource extends BaseEntity
 	#[ORM\Column(nullable: true)]
 	protected ?string $title = null;
 
-	#[ORM\ManyToMany(targetEntity: AclRole::class, mappedBy: 'resources', cascade: ["persist"])]
+	#[ORM\ManyToMany(targetEntity: 'AclRole', mappedBy: 'resources', cascade: ["persist"])]
 	protected Collection $roles;
 
 	public function __construct()
@@ -29,7 +29,7 @@ class AclResource extends BaseEntity
 		$this->roles = new ArrayCollection();
 	}
 
-	public function addRole(AclRole $role): static
+	public function addRole(IAclRole $role): static
 	{
 		if ($this->roles->contains($role)) {
 			return $this;
@@ -39,7 +39,7 @@ class AclResource extends BaseEntity
 		return $this;
 	}
 
-	public function removeRole(AclRole $role): static
+	public function removeRole(IAclRole $role): static
 	{
 		if (!$this->roles->contains($role)) {
 			return $this;
