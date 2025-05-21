@@ -4,6 +4,8 @@ namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
+use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
+use ADT\FancyAdmin\Model\Queries\GridFilterQuery;
 use ADT\FancyAdmin\Model\Services\DeleteService;
 use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordForm;
 use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordFormFactory;
@@ -12,6 +14,7 @@ use ADT\FancyAdmin\UI\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\UI\Grids\Base\BaseGrid;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\Application\LinkGenerator;
 
@@ -38,6 +41,9 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 			->setFactory(SignInForm::class)
 			->addSetup('setAuthenticator', ['@' . $this->config['authenticator']])
 			->addSetup('setAdministration', ['@' . Administration::class]);
+
+		$builder->addFactoryDefinition('gridFilterQueryFactory')
+			->setImplement(GridFilterQueryFactory::class);
 
 		$builder->addFactoryDefinition($this->prefix('newPasswordFormFactory'))
 			->setImplement(NewPasswordFormFactory::class);
