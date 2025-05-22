@@ -42,9 +42,6 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 			->addSetup('setAuthenticator', ['@' . $this->config['authenticator']])
 			->addSetup('setAdministration', ['@' . Administration::class]);
 
-		$builder->addFactoryDefinition('gridFilterQueryFactory')
-			->setImplement(GridFilterQueryFactory::class);
-
 		$builder->addFactoryDefinition($this->prefix('newPasswordFormFactory'))
 			->setImplement(NewPasswordFormFactory::class);
 

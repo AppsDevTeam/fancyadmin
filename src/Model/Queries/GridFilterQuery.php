@@ -4,13 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\FancyAdmin\Model\Entities\GridFilter;
-use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
-
-/**
- * @extends BaseQuery<GridFilter>
- */
-class GridFilterQuery extends BaseQuery
+trait GridFilterQuery
 {
 	public function applySecurityFilter(): void
 	{

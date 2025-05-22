@@ -5,20 +5,18 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedBy;
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedByInterface;
+use ADT\FancyAdmin\Model\Entities\Attributes\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
 use ADT\DoctrineForms\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\UniqueConstraint;
 
-#[ORM\Entity]
 #[UniqueConstraint(fields: ["grid", "name"])]
-class GridFilter extends Entity implements CreatedByInterface
+trait GridFilter
 {
 	use Identifier;
-	use CreatedBy;
+	use CreatedByNullable;
 	use CreatedAt;
 
 	#[ORM\Column(nullable: false)]

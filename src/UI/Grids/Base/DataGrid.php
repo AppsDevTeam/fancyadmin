@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Grids\Base;
 
 use ADT\DoctrineComponents\QueryObjectByMode;
-use ADT\FancyAdmin\Model\Entities\GridFilter;
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
 use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
+use ADT\FancyAdmin\Model\Queries\Interfaces\IGridFilterQueryFactory;
 use ADT\FancyAdmin\Model\Utils;
 use ADT\FancyAdmin\UI\Forms\Base\FormRenderer;
 use ADT\FancyAdmin\Forms\GridFilter\GridFilterForm;
@@ -43,7 +43,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 		'ajax datagrid-edit'
 	];
 
-	protected GridFilterQueryFactory $gridFilterQueryFactory;
+	protected IGridFilterQueryFactory $gridFilterQueryFactory;
 
 	public const TEMPLATE_DEFAULT = 'DataGrid.Latte';
 
@@ -133,7 +133,6 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 		$this->template->toolbarButons = $this->toolbarButtons;
 		$this->template->gridFilterColumns = Json::encode($this->getGridFilterFields());
 		$this->template->gridClass = $gridClass;
-		$this->template->selectedGridFilter = $this->getSessionData(self::SELECTED_GRID_FILTER_SESSION_KEY);
 		$this->template->temporaryGridFilter = $this->getSessionData(self::TEMPORARY_GRID_FILTER_SESSION_KEY);
 		$this->template->gridFilters = $this->gridFilterQueryFactory->create()->byGrid($gridClass)->fetch();
 
@@ -264,7 +263,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 				if (empty($field['type'])) {
 					$field['type'] = 'text';
 
-					if (!empty($this->filters[$id]) && $this->filters[$id] instanceof FilterSelect) {
+					if (!empty($this->filters[$id]) && $this->filters[$id] instanceof FilteBarSelect) {
 						$field['type'] = 'list';
 						$options = $this->filters[$id]->getOptions();
 						$field['list'] = array_map(function ($value, $key) {
@@ -362,7 +361,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 			->setAttribute('data-filter-fields', Json::encode($fields));
 	}
 
-	public function setGridFilterQuery(GridFilterQueryFactory $queryFactory): self
+	public function setGridFilterQuery(IGridFilterQueryFactory $queryFactory): self
 	{
 		$this->gridFilterQueryFactory = $queryFactory;
 		return $this;

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Grids\Base;
 
 use ADT\DoctrineComponents\QueryObject;
+use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
+use ADT\FancyAdmin\Model\Queries\Interfaces\IGridFilterQueryFactory;
 use ADT\FancyAdmin\UI\Presenters\BasePresenter;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\latte\Filters;
-use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
 use ADT\FancyAdmin\Model\Queries\Filters\IsActiveInterface;
 use ADT\FancyAdmin\Model\Services\DeleteService;
 use Closure;
@@ -37,14 +38,23 @@ abstract class BaseGrid extends Control
 	use AutowireProperties;
 	use AutowireComponentFactories;
 
-	public function __construct(
-		protected Translator $translator,
-		protected IQueryObjectDataSourceFactory $queryObjectDataSource,
-		protected \ADT\DoctrineAuthenticator\SecurityUser $securityUser,
-		protected EntityManager $em,
-		protected DeleteService $deleteService,
-		protected \GridFilterQueryFactory $gridFilterQueryFactory,
-	) {}
+	#[Autowire]
+	protected Translator $translator;
+
+	#[Autowire]
+	protected IQueryObjectDataSourceFactory $queryObjectDataSource;
+
+	#[Autowire]
+	protected \ADT\DoctrineAuthenticator\SecurityUser $securityUser;
+
+	#[Autowire]
+	protected EntityManager $em;
+
+	#[Autowire]
+	protected DeleteService $deleteService;
+
+	#[Autowire]
+	protected IGridFilterQueryFactory $gridFilterQueryFactory;
 
 	/** @var callable */
 	protected $onDelete;
@@ -95,7 +105,7 @@ abstract class BaseGrid extends Control
 
 		if ($grid->getTemplateFile() === $grid->getOriginalTemplateFile()) {
 			$_reflectionClass = new \ReflectionClass($this);
-			$grid->setTemplateFile(dirname($_reflectionClass->getFileName()) . 'BaseGrid.php/' . $_reflectionClass->getShortName() . '.Latte');
+			$grid->setTemplateFile(dirname($_reflectionClass->getFileName()) . '/' . $_reflectionClass->getShortName() . '.latte');
 		}
 
 		return $grid;
@@ -114,7 +124,7 @@ abstract class BaseGrid extends Control
 		return $this['grid'];
 	}
 
-	protected function createQueryObject(): BaseQuery
+	protected function createQueryObject(): QueryObject
 	{
 		/** @var BaseQuery $queryObject */
 		$queryObject = $this->getDic()->getByType($this->getQueryObjectFactoryClass())->create();
