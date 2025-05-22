@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Controls\SidePanel;
 
 use ADT\DoctrineForms\Form;
-use ADT\FancyAdmin\UI\Forms\Base\BaseForm;
+use ADT\FancyAdmin\UI\Forms\BaseForm;
 use ADT\FancyAdmin\UI\RenderToStringTrait;
 use Exception;
 use Nette\Application\UI\Control;
