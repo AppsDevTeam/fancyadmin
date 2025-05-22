@@ -9,8 +9,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/** @mixin  IAclResource */
-#[ORM\Entity]
 trait AclResource
 {
 	use Identifier;
@@ -29,7 +27,7 @@ trait AclResource
 		$this->roles = new ArrayCollection();
 	}
 
-	public function addRole(IAclRole $role): static
+	public function addRole(AclRoleInterface $role): static
 	{
 		if ($this->roles->contains($role)) {
 			return $this;
@@ -39,7 +37,7 @@ trait AclResource
 		return $this;
 	}
 
-	public function removeRole(IAclRole $role): static
+	public function removeRole(AclRoleInterface $role): static
 	{
 		if (!$this->roles->contains($role)) {
 			return $this;

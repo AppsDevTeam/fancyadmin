@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-interface IAclResource
+interface AclResourceInterface
 {
 	// Identifikátor
 	public function getId(): ?int;
@@ -18,6 +18,6 @@ interface IAclResource
 	public function setTitle(?string $title): static;
 
 	// Role management
-	public function addRole(IAclRole $role): static;
-	public function removeRole(IAclRole $role): static;
+	public function addRole(AclRoleInterface $role): static;
+	public function removeRole(AclRoleInterface $role): static;
 }

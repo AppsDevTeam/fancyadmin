@@ -2,24 +2,24 @@
 
 namespace ADT\FancyAdmin\Model\Entities\Attributes;
 
-use ADT\FancyAdmin\Model\Entities\IUser;
+use ADT\FancyAdmin\Model\Entities\IdentityInterface;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 
 trait UpdatedBy
 {
-	#[ManyToOne(targetEntity: 'User', cascade: ["persist"])]
+	#[ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
-	protected ?IUser $updatedBy = null;
+	protected ?IdentityInterface $updatedBy = null;
 
-	public function setUpdatedBy(?IUser $updatedBy): static
+	public function setUpdatedBy(?IdentityInterface $updatedBy): static
 	{
 		$this->updatedBy = $updatedBy;
 
 		return $this;
 	}
 
-	public function getUpdatedBy(): ?IUser
+	public function getUpdatedBy(): ?IdentityInterface
 	{
 		return $this->updatedBy;
 	}

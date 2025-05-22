@@ -7,8 +7,10 @@ namespace ADT\FancyAdmin\Model\Entities;
 use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Attributes\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
+use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
+use App\Model\Entities\Profile;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
@@ -16,15 +18,16 @@ use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToMany;
 
-/** @mixin IUser */
-#[ORM\Entity]
-trait User
+trait Identity
 {
 	use Identifier;
 	use CreatedAt;
 	use UpdatedAt;
 	use CreatedByNullable;
 	use UpdatedBy;
+	use IsActive;
+
+	abstract protected function getProfile();
 
 	#[ORM\Column(nullable:false)]
 	protected string $firstName;
@@ -41,20 +44,11 @@ trait User
 	#[ORM\Column(nullable: true)]
 	protected ?string $password = null;
 
-	#[ORM\Column(nullable: false, options: ["default" => 1])]
-	protected bool $isActive = true;
+	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist"])]
+	protected Collection $profiles;
 
 	protected string $authToken;
-
-	#[ManyToMany(targetEntity: 'AclRole', inversedBy: 'users', cascade: ["persist"])]
-	#[JoinColumn(onDelete: "RESTRICT")]
-	#[InverseJoinColumn(onDelete: "RESTRICT")]
-	protected Collection $roles;
-
-	public function __construct()
-	{
-		$this->roles = new ArrayCollection();
-	}
+	public ?string $context = null;
 
 	public function getPassword(): ?string
 	{
@@ -111,17 +105,6 @@ trait User
 		return $this;
 	}
 
-	public function getIsActive(): bool
-	{
-		return $this->isActive;
-	}
-
-	public function setIsActive(bool $isActive): self
-	{
-		$this->isActive = $isActive;
-		return $this;
-	}
-
 	public function getFullName(): string
 	{
 		return $this->firstName . " " . $this->lastName;
@@ -142,21 +125,12 @@ trait User
 		$this->authToken = $token;
 	}
 
-	public function addRole(IAclRole $role): static
-	{
-		if ($this->roles->contains($role)) {
-			return $this;
-		}
-		$this->roles->add($role);
-		return $this;
-	}
-
 	/**
-	 * @return IAclRole[]
+	 * @return AclRoleInterface[]
 	 */
 	public function getRoles(): array
 	{
-		return $this->roles->toArray();
+		return $this->getProfile()->getRoles();
 	}
 
 	public function isAllowed(string $aclResource): bool
@@ -164,24 +138,9 @@ trait User
 		return array_any($this->getRoles(), fn(IAclRole $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
 	}
 
-	public function getGravatar()
-	{
-		return '//www.gravatar.com/avatar/' . md5($this->getEmail()) . '?s=90&d=mp';
-	}
-
 	public function isAdmin(): bool
 	{
 		return array_any($this->getRoles(), fn(IAclRole $role) => $role->getIsAdmin());
-	}
-
-	public function isVisitor(): bool
-	{
-		return array_any($this->getRoles(), fn(IAclRole $role) => $role->isVisitor());
-	}
-
-	public function isCustomer(): bool
-	{
-		return array_any($this->getRoles(), fn(IAclRole $role) => $role->getIsCustomer());
 	}
 
 	public function getAuthMetadata(): array
@@ -191,5 +150,39 @@ trait User
 
 	public function setAuthMetadata(array $metadata): void
 	{
+	}
+
+	/**
+	 * @return Profile[]
+	 */
+	public function getAllowedProfiles(?string $context = null): array
+	{
+		$context = $context ?: $this->context;
+
+		$profiles = [];
+		/** @var ProfileInterface $_profile */
+		foreach ($this->profiles as $_profile) {
+			if (!$_profile->getIsActive()) {
+				continue;
+			}
+
+			if ($context && !$_profile->isAllowedContext($context)) {
+				continue;
+			}
+
+			$profiles[] = $_profile;
+		}
+
+		return $profiles;
+	}
+
+	public function setContext(string $context): void
+	{
+		$this->context = $context;
+	}
+
+	public function isAllowedContext(string $context): bool
+	{
+		return (bool) $this->getAllowedProfiles($context);
 	}
 }

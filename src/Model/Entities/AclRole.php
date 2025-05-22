@@ -11,8 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
 
-/** @mixin IAclRole */
-#[ORM\Entity]
 trait AclRole
 {
 	use Identifier;
@@ -25,24 +23,11 @@ trait AclRole
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	protected Collection $resources;
 
-	#[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'roles')]
-	protected Collection $users;
-
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isAdmin = false;
 
-	#[ORM\Column(nullable: false, options: ["default" => 0])]
-	protected bool $isCustomer = false;
-
-	#[ORM\Column(nullable: false, options: ["default" => 0])]
-	protected bool $isVisitor = false;
-
-	#[ORM\Column(nullable: false, options: ["default" => 0])]
-	protected bool $isLimitedToBranch = false;
-
 	public function __construct()
 	{
-		$this->users = new ArrayCollection();
 		$this->resources = new ArrayCollection();
 	}
 
@@ -51,13 +36,7 @@ trait AclRole
 		return $this->name;
 	}
 
-	public function addUser(IUser $user): static
-	{
-		$this->users->add($user);
-		return $this;
-	}
-
-	public function addResource(IAclResource $resource): static
+	public function addResource(AclResourceInterface $resource): static
 	{
 		if ($this->resources->contains($resource)) {
 			return $this;
@@ -67,7 +46,7 @@ trait AclRole
 		return $this;
 	}
 
-	public function removeResource(IAclResource $resource): static
+	public function removeResource(AclResourceInterface $resource): static
 	{
 		if (!$this->resources->contains($resource)) {
 			return $this;
@@ -89,30 +68,11 @@ trait AclRole
 	}
 
 	/**
-	 * @return AclResource[]
+	 * @return AclResourceInterface[]
 	 */
 	public function getResources(): array
 	{
 		return $this->resources->toArray();
-	}
-
-	/**
-	 * @return User[]
-	 */
-	public function getUsers(): array
-	{
-		return $this->users->toArray();
-	}
-
-	public function getIsCustomer(): bool
-	{
-		return $this->isCustomer;
-	}
-
-	public function setIsCustomer(bool $isCustomer): self
-	{
-		$this->isCustomer = $isCustomer;
-		return $this;
 	}
 
 	public function getIsAdmin(): bool
@@ -126,30 +86,8 @@ trait AclRole
 		return $this;
 	}
 
-	public function getIsLimitedToBranch(): bool
-	{
-		return $this->isLimitedToBranch;
-	}
-
-	public function setIsLimitedToBranch(bool $isLimitedToBranch): static
-	{
-		$this->isLimitedToBranch = $isLimitedToBranch;
-		return $this;
-	}
-
 	public function isAllowed(string $aclResource): bool
 	{
 		return array_any($this->getResources(), fn(IAclResource $_resource) => $_resource->getName() === $aclResource);
-	}
-
-	public function isVisitor(): bool
-	{
-		return $this->isVisitor;
-	}
-
-	public function setIsVisitor(bool $isVisitor): static
-	{
-		$this->isVisitor = $isVisitor;
-		return $this;
 	}
 }

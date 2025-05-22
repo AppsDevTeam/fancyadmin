@@ -14,8 +14,7 @@ use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Nette\Utils\Random;
 
-#[Entity]
-class PasswordRecovery extends BaseEntity
+trait PasswordRecovery
 {
 	use Identifier;
 	use Timestampable;
@@ -31,9 +30,9 @@ class PasswordRecovery extends BaseEntity
 	#[Column(nullable: false)]
 	protected string $token;
 
-	#[ManyToOne(targetEntity: User::class)]
+	#[ManyToOne(targetEntity: Identity::class)]
 	#[JoinColumn(nullable: true)]
-	protected ?User $user = null;
+	protected ?Identity $identity = null;
 
 	#[Column(nullable: true)]
 	protected ?DateTimeImmutable $usedAt = null;
@@ -53,14 +52,14 @@ class PasswordRecovery extends BaseEntity
 		return $this;
 	}
 
-	public function getUser(): ?User
+	public function getIdentity(): ?Identity
 	{
-		return $this->user;
+		return $this->identity;
 	}
 
-	public function setUser(?User $user): static
+	public function setUser(?Identity $identity): static
 	{
-		$this->user = $user;
+		$this->identity = $identity;
 		return $this;
 	}
 
@@ -91,11 +90,9 @@ class PasswordRecovery extends BaseEntity
 		return $this->validUntil;
 	}
 
-
 	public function isValid(): bool
 	{
-
-//		Omezujeme jenom validitu u password Recovery
+		// Omezujeme jenom validitu u password Recovery
 		if ($this->validUntil < (new DateTimeImmutable('now'))) {
 			return false;
 		}

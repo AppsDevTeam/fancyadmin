@@ -7,7 +7,7 @@ namespace ADT\FancyAdmin\Model\Entities;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
 use DateTimeImmutable;
 
-interface IUser extends DoctrineAuthenticatorIdentity
+interface IdentityInterface extends DoctrineAuthenticatorIdentity
 {
 	// Identifier
 	public function getId(): ?int;
@@ -21,12 +21,12 @@ interface IUser extends DoctrineAuthenticatorIdentity
 	public function setUpdatedAt(DateTimeImmutable $updatedAt): static;
 
 	// CreatedByNullable
-	public function getCreatedBy(): ?IUser;
-	public function setCreatedBy(?IUser $createdBy): static;
+	public function getCreatedBy(): ?IdentityInterface;
+	public function setCreatedBy(?IdentityInterface $createdBy): static;
 
 	// UpdatedBy
-	public function getUpdatedBy(): ?IUser;
-	public function setUpdatedBy(?IUser $updatedBy): static;
+	public function getUpdatedBy(): ?IdentityInterface;
+	public function setUpdatedBy(?IdentityInterface $updatedBy): static;
 
 	// Basic identity
 	public function getPassword(): ?string;
@@ -55,22 +55,9 @@ interface IUser extends DoctrineAuthenticatorIdentity
 	public function getAuthToken(): ?string;
 	public function setAuthToken(string $token): void;
 
-	// Roles and permissions
-	public function addRole(IAclRole $role): static;
-
-	/**
-	 * @return AclRole[]
-	 */
-	public function getRoles(): array;
-
 	public function isAllowed(string $aclResource): bool;
 
 	public function isAdmin(): bool;
-	public function isVisitor(): bool;
-	public function isCustomer(): bool;
-
-	// Gravatar
-	public function getGravatar();
 
 	// Auth metadata
 	public function getAuthMetadata(): array;
