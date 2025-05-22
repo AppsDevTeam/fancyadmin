@@ -5,19 +5,11 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Grids\Base;
 
 use ADT\DoctrineComponents\QueryObjectByMode;
-use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
 use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
-use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
 use ADT\FancyAdmin\Model\Queries\Interfaces\IGridFilterQueryFactory;
-use ADT\FancyAdmin\Model\Utils;
-use ADT\FancyAdmin\UI\Forms\Base\FormRenderer;
-use ADT\FancyAdmin\Forms\GridFilter\GridFilterForm;
-use ADT\FancyAdmin\UI\Grids\Base\BaseGrid;
-use ADT\FancyAdmin\UI\Grids\Base\DataGridPaginator;
-use DateTimeImmutable;
+use ADT\Forms\BootstrapFormRenderer;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
-use Kdyby\Autowired\Attributes\Autowire;
 use Nette;
 use Nette\Application\UI\Form;
 use Nette\Utils\Json;
@@ -26,7 +18,6 @@ use Ublaboo\DataGrid\Column\ColumnDateTime;
 use Ublaboo\DataGrid\Column\ColumnNumber;
 use Ublaboo\DataGrid\Export\ExportCsv;
 use Ublaboo\DataGrid\Filter\FilterMultiSelect;
-use Ublaboo\DataGrid\Filter\FilterSelect;
 use Ublaboo\DataGrid\Utils\ArraysHelper;
 
 /**
@@ -34,7 +25,6 @@ use Ublaboo\DataGrid\Utils\ArraysHelper;
  */
 class DataGrid extends \Ublaboo\DataGrid\DataGrid
 {
-	use RedrawSidePanel;
 
 	const string SELECTED_GRID_FILTER_SESSION_KEY = 'selectedGridFilter';
 	const string TEMPORARY_GRID_FILTER_SESSION_KEY = 'temporaryGridFilter';
@@ -86,7 +76,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 	public function createComponentFilter(): Form
 	{
 		$form = parent::createComponentFilter();
-		$form->setRenderer(new FormRenderer($form));
+		$form->setRenderer(new BootstrapFormRenderer($form));
 		return $form;
 	}
 

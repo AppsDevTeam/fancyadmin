@@ -47,6 +47,8 @@ class SidePanelControl extends Control
 	{
 		$form = ($this->formFactory)();
 
+		$this->setSize($form->getSidePanelSize());
+
 		$form->setOnBeforeInitForm(function (Form $form) {
 			$url = new Url($this->getPresenter()->getHttpRequest()->getUrl());
 			if ($form->getEntity() && !is_callable($form->getEntity())) {

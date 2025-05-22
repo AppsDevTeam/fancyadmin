@@ -3,7 +3,6 @@
 namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\Model\Entities\IdentityInterface;
-use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
@@ -12,7 +11,7 @@ use ReflectionException;
 
 abstract class AuthPresenter extends BasePresenter
 {
-	use RedrawSidePanel;
+	use SidePanel;
 
 	#[Persistent]
 	public ?string $gridFilterClass = null;
@@ -75,17 +74,6 @@ abstract class AuthPresenter extends BasePresenter
 	public function handleEditGridFilter(): void
 	{
 		$this->redrawSidePanel('gridFilter');
-	}
-
-	public function handleEdit(IdentityInterface $identity): void
-	{
-		$this->entity = $identity;
-		$this->redrawSidePanel('identity');
-	}
-
-	public function handleNew(): void
-	{
-		$this->redrawSidePanel('identity');
 	}
 
 	public function handleRemoveGridFilter(): void

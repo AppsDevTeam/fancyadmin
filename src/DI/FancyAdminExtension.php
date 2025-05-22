@@ -89,35 +89,41 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 
 	private function validateTraitInterfaceCompliance(): void
 	{
-		$traitInterfaceMap = [
-			Identity::class => IdentityInterface::class,
-			AclResource::class => AclResourceInterface::class,
-			AclRole::class     => AclRoleInterface::class,
-		];
+		try {
+			$traitInterfaceMap = [
+				Identity::class => IdentityInterface::class,
+				AclResource::class => AclResourceInterface::class,
+				AclRole::class => AclRoleInterface::class,
+			];
 
-		$loader = new RobotLoader();
-		$loader->addDirectory(__DIR__ . '/../../../../../app/model/Entities');
-		$loader->acceptFiles = ['*.php'];
-		$loader->rebuild();
+			$loader = new RobotLoader();
+			$loader->addDirectory(__DIR__ . '/../../../../../app/Model/Entities');
+			$loader->acceptFiles = ['*.php'];
+			$loader->rebuild();
 
-		foreach (array_keys($loader->getIndexedClasses()) as $class) {
-			if (!class_exists($class)) {
-				continue;
-			}
+			foreach (array_keys($loader->getIndexedClasses()) as $class) {
+				if (!class_exists($class)) {
+					continue;
+				}
 
-			$reflection = new \ReflectionClass($class);
+				$reflection = new \ReflectionClass($class);
 
-			if (!$reflection->isInstantiable() || $reflection->isAbstract()) {
-				continue;
-			}
+				if (!$reflection->isInstantiable() || $reflection->isAbstract()) {
+					continue;
+				}
 
-			$usedTraits = $this->class_uses_recursive($class);
+				$usedTraits = $this->class_uses_recursive($class);
 
-			foreach ($traitInterfaceMap as $trait => $interface) {
-				if (in_array($trait, $usedTraits, true) && !$reflection->implementsInterface($interface)) {
-					throw new \RuntimeException("Třída {$class} používá {$trait}, ale neimplementuje požadované rozhraní {$interface}.");
+				foreach ($traitInterfaceMap as $trait => $interface) {
+					if (in_array($trait, $usedTraits, true) && !$reflection->implementsInterface($interface)) {
+						throw new \RuntimeException("Třída {$class} používá {$trait}, ale neimplementuje požadované rozhraní {$interface}.");
+					}
 				}
 			}
+		} catch (\RuntimeException $e) {
+			throw $e;
+		} catch (\Exception $e) {
+			throw $e;
 		}
 	}
 

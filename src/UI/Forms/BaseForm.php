@@ -3,10 +3,8 @@
 namespace ADT\FancyAdmin\UI\Forms;
 
 use ADT\DoctrineForms\Form;
-use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
-use \ADT\DoctrineAuthenticator\SecurityUser;
-use ADT\FancyAdmin\UI\Presenters\BasePresenter;
+use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
 use ADT\FancyAdmin\UI\Forms\Base\EntityForm;
 use ADT\FancyAdmin\UI\Forms\Base\FormRenderer;
 use ADT\Forms\BootstrapFormRenderer;
@@ -39,5 +37,20 @@ abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 	protected function getEntityManager(): EntityManagerInterface
 	{
 		return $this->em;
+	}
+
+	public function getSidePanelSize(): SidePanelSize
+	{
+		return SidePanelSize::Medium;
+	}
+
+	public function initEntity()
+	{
+		if (!$this->getEntityClass()) {
+			return null;
+		}
+		$entity = new ($this->getEntityClass());
+		$this->em->persist($entity);
+		return $entity;
 	}
 }
