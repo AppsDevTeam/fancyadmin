@@ -6,7 +6,7 @@ namespace ADT\FancyAdmin\UI\Forms\SignIn;
 
 use ADT\FancyAdmin\Model\Administration;
 use ADT\Forms\Form;
-use ADT\FancyAdmin\Model\Entities\User;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use App\Model\Exceptions\AuthenticationUserNotActiveException;
 use ADT\FancyAdmin\UI\Forms\Base\BaseForm;
 use Kdyby\Autowired\Attributes\Autowire;
@@ -22,7 +22,7 @@ class SignInForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
 
 	protected Administration $administration;
 
-	protected $user = null;
+	protected $identity = null;
 
 	public function initForm(Form $form): void
 	{
@@ -47,7 +47,7 @@ class SignInForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
 	public function validateForm(ArrayHash $values): void
 	{
 		try {
-			$this->user = $this->authenticator->verifyCredentials($values->email, $values->password);
+			$this->identity = $this->authenticator->verifyCredentials($values->email, $values->password, null);
 		} catch (AuthenticationException $e) {
 			$this->form->addError('fcadmin.forms.signIn.errors.wrongEmailOrPassword');
 		} catch (AuthenticationUserNotActiveException $e) {
@@ -61,7 +61,7 @@ class SignInForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
 	 */
 	public function processForm(): void
 	{
-		$this->presenter->user->login($this->user);
+		$this->presenter->user->login($this->identity);
 		$this->presenter->redirect($this->administration->getHomepagePresenter(), ['redrawBody' => true]);
 	}
 

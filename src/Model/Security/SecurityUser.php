@@ -3,11 +3,11 @@
 namespace ADT\FancyAdmin\Model\Security;
 
 use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\User;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use Nette\Security\Authorizator;
 
 /**
- * @method User getIdentity()
+ * @method Identity getIdentity()
  */
 class SecurityUser extends \ADT\DoctrineAuthenticator\SecurityUser
 {

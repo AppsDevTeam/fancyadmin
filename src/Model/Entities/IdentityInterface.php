@@ -44,9 +44,6 @@ interface IdentityInterface extends DoctrineAuthenticatorIdentity
 	public function getPhoneNumber(): ?string;
 	public function setPhoneNumber(?string $phoneNumber): self;
 
-	public function getIsActive(): bool;
-	public function setIsActive(bool $isActive): self;
-
 	public function getFullName(): string;
 
 	// Auth

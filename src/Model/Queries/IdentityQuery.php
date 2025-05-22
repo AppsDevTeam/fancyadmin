@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\FancyAdmin\Model\Entities\IAclRole;
-use ADT\FancyAdmin\Model\Entities\IUser;
+use ADT\FancyAdmin\Model\Entities\AclRoleInterface;
+use ADT\FancyAdmin\Model\Entities\IdentityInterface;
 use Doctrine\ORM\QueryBuilder;
 
 /**
- * @extends \ADT\DoctrineComponents\QueryObject<IUser>
+ * @extends \ADT\DoctrineComponents\QueryObject<IdentityInterface>
  */
-trait UserQuery
+trait IdentityQuery
 {
 	const string ROLE_ALIAS = 'r';
 
@@ -50,12 +50,12 @@ trait UserQuery
 		return $this;
 	}
 
-	public function byAclRole(string|array|IAclRole|null $role): static
+	public function byAclRole(string|array|AclRoleInterface|null $role): static
 	{
 		if ($role) {
 			$this->joinAclRole();
 			$this->filter[] = function (QueryBuilder $qb) use ($role) {
-				$role = $role instanceof IAclRole ? [$role->getName()] : ((array) $role);
+				$role = $role instanceof AclRoleInterface ? [$role->getName()] : ((array) $role);
 
 				$qb->andWhere(static::ROLE_ALIAS . '.name IN (:roles)')
 					->setParameter('roles', $role);
