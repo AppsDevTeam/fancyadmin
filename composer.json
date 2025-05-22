@@ -18,13 +18,17 @@
     "adt/nette-forms-phone-number": "^1.6",
     "voda/date-input": "^2.2",
     "adt/route-port": "^3.0",
-    "nasext/dependent-select-box": "^2.1"
+    "nasext/dependent-select-box": "^6.0"
   },
   "repositories": [
     {
       "type": "git",
       "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18.git"
-    }
+    },
+    {
+			"type": "git",
+			"url": "https://github.com/AppsDevTeam/DependentSelectBox"
+		}
   ],
   "autoload": {
     "psr-4": {
