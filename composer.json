@@ -26,9 +26,9 @@
       "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18.git"
     },
     {
-			"type": "git",
-			"url": "https://github.com/AppsDevTeam/DependentSelectBox"
-		}
+      "type": "git",
+      "url": "https://github.com/AppsDevTeam/DependentSelectBox"
+    }
   ],
   "autoload": {
     "psr-4": {
