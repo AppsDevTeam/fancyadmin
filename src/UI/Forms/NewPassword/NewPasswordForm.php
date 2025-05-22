@@ -6,15 +6,13 @@ namespace ADT\FancyAdmin\UI\Forms\NewPassword;
 
 use ADT\Forms\Form;
 use ADT\FancyAdmin\Model\Entities\PasswordRecovery;
-use App\Model\Exceptions\AuthenticationUserNotActiveException;
-use App\Model\Security\Authenticator;
-use ADT\FancyAdmin\UI\Forms\Base\BaseForm;
+use ADT\FancyAdmin\UI\Forms\BaseForm;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
-class NewPasswordForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
+class NewPasswordForm extends BaseForm
 {
 	protected PasswordRecovery $passwordRecovery;
 

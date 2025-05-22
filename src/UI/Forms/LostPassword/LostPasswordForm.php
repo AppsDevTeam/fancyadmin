@@ -4,14 +4,12 @@ namespace ADT\FancyAdmin\UI\Forms\LostPassword;
 
 use ADT\Forms\Form;
 use ADT\FancyAdmin\Model\Entities\PasswordRecovery;
-use App\Model\Queries\Factories\UserQueryFactory;
-use App\Model\Services\UserService;
-use ADT\FancyAdmin\UI\Forms\Base\BaseForm;
+use ADT\FancyAdmin\UI\Forms\BaseForm;
 use Doctrine\ORM\Exception\ORMException;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Utils\ArrayHash;
 
-class LostPasswordForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
+class LostPasswordForm extends BaseForm
 {
 	#[Autowire]
 	protected UserService $userService;

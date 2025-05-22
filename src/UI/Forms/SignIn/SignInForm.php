@@ -6,17 +6,13 @@ namespace ADT\FancyAdmin\UI\Forms\SignIn;
 
 use ADT\FancyAdmin\Model\Administration;
 use ADT\Forms\Form;
-use ADT\FancyAdmin\Model\Entities\Identity;
-use App\Model\Exceptions\AuthenticationUserNotActiveException;
-use ADT\FancyAdmin\UI\Forms\Base\BaseForm;
-use Kdyby\Autowired\Attributes\Autowire;
+use ADT\FancyAdmin\UI\Forms\BaseForm;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Authenticator;
-use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
-class SignInForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
+class SignInForm extends BaseForm
 {
 	protected Authenticator $authenticator;
 
