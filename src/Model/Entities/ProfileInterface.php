@@ -11,4 +11,6 @@ interface ProfileInterface
 	public function addRole(AclRoleInterface $role): static;
 	public function isAllowed(string $resource): bool;
 	public function isAllowedContext(string $context): bool;
+	public function getIsActive(): bool;
+	public function setIsActive(bool $isActive): static;
 }

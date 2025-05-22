@@ -14,7 +14,7 @@ trait IsActive
 		return $this->isActive;
 	}
 
-	public function setIsActive(bool $isActive): self
+	public function setIsActive(bool $isActive): static
 	{
 		$this->isActive = $isActive;
 		return $this;

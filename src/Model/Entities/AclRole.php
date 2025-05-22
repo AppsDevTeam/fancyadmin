@@ -88,6 +88,6 @@ trait AclRole
 
 	public function isAllowed(string $aclResource): bool
 	{
-		return array_any($this->getResources(), fn(IAclResource $_resource) => $_resource->getName() === $aclResource);
+		return array_any($this->getResources(), fn(AclResourceInterface $_resource) => $_resource->getName() === $aclResource);
 	}
 }

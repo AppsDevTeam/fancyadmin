@@ -10,13 +10,8 @@ use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
 use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
-use App\Model\Entities\Profile;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping\InverseJoinColumn;
-use Doctrine\ORM\Mapping\JoinColumn;
-use Doctrine\ORM\Mapping\ManyToMany;
 
 trait Identity
 {
@@ -135,12 +130,12 @@ trait Identity
 
 	public function isAllowed(string $aclResource): bool
 	{
-		return array_any($this->getRoles(), fn(IAclRole $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
+		return array_any($this->getRoles(), fn(AclRoleInterface $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
 	}
 
 	public function isAdmin(): bool
 	{
-		return array_any($this->getRoles(), fn(IAclRole $role) => $role->getIsAdmin());
+		return array_any($this->getRoles(), fn(AclRoleInterface $role) => $role->getIsAdmin());
 	}
 
 	public function getAuthMetadata(): array
