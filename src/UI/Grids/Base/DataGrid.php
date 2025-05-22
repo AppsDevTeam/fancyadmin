@@ -45,7 +45,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 
 	protected IGridFilterQueryFactory $gridFilterQueryFactory;
 
-	public const TEMPLATE_DEFAULT = 'DataGrid.Latte';
+	public const TEMPLATE_DEFAULT = 'DataGrid.latte';
 
 	public $strictSessionFilterValues = false;
 
@@ -70,7 +70,7 @@ class DataGrid extends \Ublaboo\DataGrid\DataGrid
 
 	public function getOriginalTemplateFile(): string
 	{
-		return __DIR__ . 'DataGrid.php/' . $this->templateType;
+		return __DIR__ . '/' . $this->templateType;
 	}
 
 	/**

@@ -180,4 +180,9 @@ trait Identity
 	{
 		return (bool) $this->getAllowedProfiles($context);
 	}
+
+	public function getGravatar()
+	{
+		return '//www.gravatar.com/avatar/' . md5($this->getEmail()) . '?s=90&d=mp';
+	}
 }

@@ -347,32 +347,42 @@
 													{if $itemsDetail && $itemsDetail->shouldBeRendered($row)}
 														{$itemsDetail->renderButton($row)|noescape}
 													{/if}
-													{php $actionButtonRendered = false}
-													{foreach array_filter($actions, fn($action) => in_array($action->getClass($row), \App\UI\Portal\Components\Grids\Base\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true)) as $key => $action}
+
+													{php $dropdownActions = []}
+													{php $nonDropdownActions = []}
+
+													{foreach $actions as $key => $action}
 														{if $row->hasAction($key)}
-															{include action}
+															{if in_array($action->getClass($row), ADT\FancyAdmin\UI\Grids\Base\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true)}
+																{php $nonDropdownActions[$key] = $action}
+															{else}
+																{php $dropdownActions[$key] = $action}
+															{/if}
 														{/if}
 													{/foreach}
-													{var $dropdownActions = array_filter($actions, fn($action) => !in_array($action->getClass($row), \App\UI\Portal\Components\Grids\Base\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key))}
-													{dump array_keys($dropdownActions)}
-													{foreach $dropdownActions as $key => $action}
-                                                        {if !$actionButtonRendered}
-                                                            <button type="button" class="btn btn-sm" data-action="{$key}" data-bs-toggle="dropdown">
-                                                                <i class="fa fa-ellipsis-h"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu dropdown-menu-right">
 
-                                                            {php $actionButtonRendered = true}
-                                                        {/if}
-
-                                                        {include action}
-                                                        {if $actionButtonRendered && $iterator->isLast()}
-                                                            </div>
-                                                        {/if}
+													{* Render non-dropdown action buttons *}
+													{foreach $nonDropdownActions as $key => $action}
+														{include action}
 													{/foreach}
+
+													{* Render dropdown button and menu if needed *}
+													{if $dropdownActions}
+														<button type="button" class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+															<i class="fa fa-ellipsis-h"></i>
+														</button>
+														<div class="dropdown-menu dropdown-menu-right">
+															{foreach $dropdownActions as $key => $action}
+																{include action}
+															{/foreach}
+														</div>
+													{/if}
+
+													{* Sort handle *}
 													<span class="handle-sort btn btn-xs btn-default" n:if="$control->isSortable()">
-														<i n:block = "icon-arrows-v" class="{$iconPrefix}arrows-v"></i>
+														<i n:block="icon-arrows-v" class="{$iconPrefix}arrows-v"></i>
 													</span>
+													{* Inline edit *}
 													{if $inlineEdit && $row->hasInlineEdit()}
 														{$inlineEdit->renderButton($row)|noescape}
 													{/if}

@@ -2,18 +2,11 @@
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
+use ADT\FancyAdmin\Model\Entities\IdentityInterface;
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
-
-use ADT\FancyAdmin\Presenters\BaseEntity;
-use ADT\FancyAdmin\Presenters\GridFilter;
-use ADT\FancyAdmin\UI\Presenters\BasePresenter;
-use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
-use ADT\FancyAdmin\SidePanels\SidePanelControl;
-use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
-use Nette\Utils\Json;
 use ReflectionClass;
 use ReflectionException;
 
@@ -27,7 +20,7 @@ abstract class AuthPresenter extends BasePresenter
 	#[Persistent]
 	public array $gridFilterParameters = [];
 
-	protected ?BaseEntity $entity = null;
+	protected $entity = null;
 
 	/**
 	 * @throws InvalidLinkException
@@ -82,6 +75,17 @@ abstract class AuthPresenter extends BasePresenter
 	public function handleEditGridFilter(): void
 	{
 		$this->redrawSidePanel('gridFilter');
+	}
+
+	public function handleEdit(IdentityInterface $identity): void
+	{
+		$this->entity = $identity;
+		$this->redrawSidePanel('identity');
+	}
+
+	public function handleNew(): void
+	{
+		$this->redrawSidePanel('identity');
 	}
 
 	public function handleRemoveGridFilter(): void

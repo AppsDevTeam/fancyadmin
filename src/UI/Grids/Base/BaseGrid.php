@@ -136,7 +136,7 @@ abstract class BaseGrid extends Control
 		return $queryObject;
 	}
 
-	private function createBaseEntityQueryObject(): BaseQuery
+	private function createBaseEntityQueryObject(): QueryObject
 	{
 		if (method_exists($this, 'getBaseEntityQueryFactoryClass')) {
 			$queryObjectFactory = $this->getDic()->getByType($this->getBaseEntityQueryFactoryClass());
