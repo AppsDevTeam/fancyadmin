@@ -7,7 +7,7 @@ namespace ADT\FancyAdmin\Model\Entities;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
 use DateTimeImmutable;
 
-interface IdentityInterface extends DoctrineAuthenticatorIdentity, IEntity
+interface IdentityInterface extends DoctrineAuthenticatorIdentity
 {
 	// Identifier
 	public function getId(): ?int;

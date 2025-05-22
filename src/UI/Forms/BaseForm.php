@@ -3,16 +3,14 @@
 namespace ADT\FancyAdmin\UI\Forms;
 
 use ADT\DoctrineForms\Form;
-use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
-use ADT\FancyAdmin\UI\Forms\Base\EntityForm;
-use ADT\FancyAdmin\UI\Forms\Base\FormRenderer;
+use ADT\FancyAdmin\Model\Security\SecurityUserInterface;
 use ADT\Forms\BootstrapFormRenderer;
 use Contributte\Translation\Translator;
 use Doctrine\ORM\EntityManagerInterface;
 use Kdyby\Autowired\Attributes\Autowire;
 use Kdyby\Autowired\AutowireComponentFactories;
 use Kdyby\Autowired\AutowireProperties;
+use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
 
 abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 {
@@ -24,6 +22,9 @@ abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 
 	#[Autowire]
 	protected Translator $translator;
+
+	#[Autowire]
+	protected SecurityUserInterface $securityUser;
 
 	protected function createComponentForm(): Form
 	{

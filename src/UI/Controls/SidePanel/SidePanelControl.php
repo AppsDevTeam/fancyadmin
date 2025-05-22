@@ -45,6 +45,7 @@ class SidePanelControl extends Control
 	 */
 	protected function createComponentForm(): BaseForm
 	{
+		/** @var BaseForm $form */
 		$form = ($this->formFactory)();
 
 		$this->setSize($form->getSidePanelSize());

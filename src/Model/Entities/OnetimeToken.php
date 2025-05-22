@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Attributes\Timestampable;
+use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping\Column;
@@ -14,32 +15,33 @@ use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Nette\Utils\Random;
 
-trait PasswordRecovery
+trait OnetimeToken
 {
 	use Identifier;
-	use Timestampable;
+	use CreatedAt;
+	use UpdatedAt;
 
 	/*
-	  * Konstanty pro nastaveni jak dlouho je validni request pro obnovu hesla a jak dlouho je validni request v pripade
+	 * Konstanty pro nastaveni jak dlouho je validni request pro obnovu hesla a jak dlouho je validni request v pripade
 	 * vytvareni novehe uzivatele
 	 */
 	const int PASSWORD_RECOVERY_VALID_FOR = 1; //hour
 	const int PASSWORD_CREATION_VALID_FOR = 72; //hours (3 days)
 
-
 	#[Column(nullable: false)]
 	protected string $token;
 
-	#[ManyToOne(targetEntity: Identity::class)]
-	#[JoinColumn(nullable: true)]
-	protected ?Identity $identity = null;
+	#[Column(nullable: false)]
+	protected string $type;
+
+	#[Column(nullable: false)]
+	protected int $objectId;
 
 	#[Column(nullable: true)]
 	protected ?DateTimeImmutable $usedAt = null;
 
 	#[Column(nullable: false)]
 	protected DateTimeImmutable $validUntil;
-
 
 	public function getToken(): string
 	{
@@ -49,17 +51,6 @@ trait PasswordRecovery
 	public function setToken(string $token): static
 	{
 		$this->token = $token;
-		return $this;
-	}
-
-	public function getIdentity(): ?Identity
-	{
-		return $this->identity;
-	}
-
-	public function setUser(?Identity $identity): static
-	{
-		$this->identity = $identity;
 		return $this;
 	}
 
@@ -98,5 +89,27 @@ trait PasswordRecovery
 		}
 
 		return true;
+	}
+
+	public function getType(): string
+	{
+		return $this->type;
+	}
+
+	public function setType(string $type): static
+	{
+		$this->type = $type;
+		return $this;
+	}
+
+	public function getObjectId(): int
+	{
+		return $this->objectId;
+	}
+
+	public function setObjectId(?int $objectId): static
+	{
+		$this->objectId = $objectId;
+		return $this;
 	}
 }
