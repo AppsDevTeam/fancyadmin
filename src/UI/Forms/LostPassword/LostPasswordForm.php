@@ -11,7 +11,7 @@ use Doctrine\ORM\Exception\ORMException;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Utils\ArrayHash;
 
-class LostPasswordForm extends BaseForm
+class LostPasswordForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
 {
 	#[Autowire]
 	protected UserService $userService;

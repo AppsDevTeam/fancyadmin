@@ -16,7 +16,7 @@ use Nette\Security\Authenticator;
 use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
-class SignInForm extends BaseForm
+class SignInForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
 {
 	protected Authenticator $authenticator;
 

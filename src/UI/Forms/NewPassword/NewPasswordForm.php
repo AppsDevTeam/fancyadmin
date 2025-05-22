@@ -14,7 +14,7 @@ use Nette\Security\AuthenticationException;
 use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
-class NewPasswordForm extends BaseForm
+class NewPasswordForm extends \ADT\FancyAdmin\UI\Forms\BaseForm
 {
 	protected PasswordRecovery $passwordRecovery;
 
