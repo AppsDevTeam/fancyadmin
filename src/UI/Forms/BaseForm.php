@@ -45,7 +45,7 @@ abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 		return SidePanelSize::Medium;
 	}
 
-	public function initEntity()
+	protected function initEntity()
 	{
 		if (!$this->getEntityClass()) {
 			return null;
