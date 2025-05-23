@@ -54,4 +54,9 @@ abstract class BaseForm extends \ADT\DoctrineForms\BaseForm
 		$this->em->persist($entity);
 		return $entity;
 	}
+
+	public function getRedirect($entity = null): ?array
+	{
+		return null;
+	}
 }

@@ -45,25 +45,28 @@ class SidePanelControl extends Control
 	 */
 	protected function createComponentForm(): BaseForm
 	{
-		/** @var BaseForm $form */
-		$form = ($this->formFactory)();
+		/** @var BaseForm $baseForm */
+		$baseForm = ($this->formFactory)();
 
-		$this->setSize($form->getSidePanelSize());
+		$this->setSize($baseForm->getSidePanelSize());
 
-		$form->setOnBeforeInitForm(function (Form $form) {
+		$baseForm->setOnBeforeInitForm(function (Form $form) {
 			$url = new Url($this->getPresenter()->getHttpRequest()->getUrl());
 			if ($form->getEntity() && !is_callable($form->getEntity())) {
 				$url->setQueryParameter('editId', $form->getEntity()->getId());
 			}
 			$form->setAction((string) $url);
 		})
-			->setOnSuccess(function (Form $form) {
-				$this->getPresenter()->redrawControl('sidePanelContainer');
-				$this->getPresenter()->redrawControl('container');
+			->setOnSuccess(function (Form $form) use ($baseForm) {
 				$this->getPresenter()->flashMessageSuccess($form->getEntity() ? 'app.sidePanels.control.itemEdit' : 'app.sidePanels.control.itemAdd');
+				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
+					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
+				} else {
+					$this->getPresenter()->redrawControl('sidePanelContainer');
+				}
 			});
 
-		return $form;
+		return $baseForm;
 	}
 
 	public function setSize(SidePanelSize $size): self
