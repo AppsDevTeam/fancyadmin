@@ -123,8 +123,8 @@ abstract class Mailer implements Mail\Mailer
 	public function sendAccountCreationEmail(Identity $identity): void
 	{
 		$this->em->beginTransaction();
-		
-		$onetimeToken = new $this->getOnetimeTokenClass();
+
+		$onetimeToken = new ($this->getOnetimeTokenClass());
 		$passwordRecovery = $onetimeToken
 			->setUser($identity)
 			->setToken($onetimeToken::generateRandomToken())
@@ -142,7 +142,7 @@ abstract class Mailer implements Mail\Mailer
 		);
 		$message->addTo($identity->getEmail());
 		$this->send($message);
-		
+
 		$this->em->commit();
 	}
 
@@ -155,7 +155,7 @@ abstract class Mailer implements Mail\Mailer
 	{
 		$this->em->beginTransaction();
 
-		$onetimeToken = new $this->getOnetimeTokenClass();
+		$onetimeToken = new ($this->getOnetimeTokenClass());
 		$passwordRecovery = $onetimeToken
 			->setObjectId($identity->getId())
 			->setType('login') // TODO
