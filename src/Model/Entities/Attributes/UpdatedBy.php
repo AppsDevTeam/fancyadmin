@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Entities\Attributes;
 
-use ADT\FancyAdmin\Model\Entities\IdentityInterface;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 
@@ -10,16 +10,16 @@ trait UpdatedBy
 {
 	#[ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
-	protected ?IdentityInterface $updatedBy = null;
+	protected ?Identity $updatedBy = null;
 
-	public function setUpdatedBy(?IdentityInterface $updatedBy): static
+	public function setUpdatedBy(?Identity $updatedBy): static
 	{
 		$this->updatedBy = $updatedBy;
 
 		return $this;
 	}
 
-	public function getUpdatedBy(): ?IdentityInterface
+	public function getUpdatedBy(): ?Identity
 	{
 		return $this->updatedBy;
 	}

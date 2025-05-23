@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Entities\Attributes;
 
-use ADT\FancyAdmin\Model\Entities\IdentityInterface;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 
@@ -10,15 +10,15 @@ trait CreatedByNullable
 {
 	#[ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
-	protected ?IdentityInterface $createdBy = null;
+	protected ?Identity $createdBy = null;
 
-	public function setCreatedBy(?IdentityInterface $createdBy): static
+	public function setCreatedBy(?Identity $createdBy): static
 	{
 		$this->createdBy = $createdBy;
 		return $this;
 	}
 
-	public function getCreatedBy(): IdentityInterface
+	public function getCreatedBy(): Identity
 	{
 		return $this->createdBy;
 	}

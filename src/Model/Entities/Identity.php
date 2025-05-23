@@ -4,185 +4,59 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedByNullable;
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
-use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\Collection;
+use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
+use DateTimeImmutable;
 
-trait Identity
+interface Identity extends DoctrineAuthenticatorIdentity
 {
-	use Identifier;
-	use CreatedAt;
-	use UpdatedAt;
-	use CreatedByNullable;
-	use UpdatedBy;
-	use IsActive;
+	// Identifier
+	public function getId(): ?int;
 
-	abstract protected function getProfile();
+	// CreatedAt
+	public function getCreatedAt(): DateTimeImmutable;
+	public function setCreatedAt(DateTimeImmutable $createdAt): self;
 
-	#[ORM\Column(nullable:false)]
-	protected string $firstName;
+	// UpdatedAt
+	public function getUpdatedAt(): DateTimeImmutable;
+	public function setUpdatedAt(DateTimeImmutable $updatedAt): static;
 
-	#[ORM\Column(nullable:false)]
-	protected string $lastName;
+	// CreatedByNullable
+	public function getCreatedBy(): ?Identity;
+	public function setCreatedBy(?Identity $createdBy): static;
 
-	#[ORM\Column(unique: true, nullable:false)]
-	protected string $email;
+	// UpdatedBy
+	public function getUpdatedBy(): ?Identity;
+	public function setUpdatedBy(?Identity $updatedBy): static;
 
-	#[ORM\Column(unique: true, nullable:true)]
-	protected ?string $phoneNumber;
+	// Basic identity
+	public function getPassword(): ?string;
+	public function setPassword(?string $password): self;
 
-	#[ORM\Column(nullable: true)]
-	protected ?string $password = null;
+	public function getFirstName(): string;
+	public function setFirstName(?string $firstName): self;
 
-	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist"])]
-	protected Collection $profiles;
+	public function getLastName(): string;
+	public function setLastName(?string $lastName): self;
 
-	protected string $authToken;
-	public ?string $context = null;
+	public function getEmail(): string;
+	public function setEmail(?string $email): self;
 
-	public function getPassword(): ?string
-	{
-		return $this->password;
-	}
+	public function getPhoneNumber(): ?string;
+	public function setPhoneNumber(?string $phoneNumber): self;
 
-	public function setPassword(?string $password): self
-	{
-		$this->password = $password;
-		return $this;
-	}
+	public function getFullName(): string;
 
-	public function getFirstName(): string
-	{
-		return $this->firstName;
-	}
+	// Auth
+	public function getAuthObjectId(): string;
 
-	public function setFirstName(?string $firstName): self
-	{
-		$this->firstName = $firstName;
-		return $this;
-	}
+	public function getAuthToken(): ?string;
+	public function setAuthToken(string $token): void;
 
-	public function getLastName(): string
-	{
-		return $this->lastName;
-	}
+	public function isAllowed(string $aclResource): bool;
 
-	public function setLastName(?string $lastName): self
-	{
-		$this->lastName = $lastName;
-		return $this;
-	}
+	public function isAdmin(): bool;
 
-	public function getEmail(): string
-	{
-		return $this->email;
-	}
-
-	public function setEmail(?string $email): self
-	{
-		$this->email = $email;
-		return $this;
-	}
-
-	public function getPhoneNumber(): ?string
-	{
-		return $this->phoneNumber;
-	}
-
-	public function setPhoneNumber(?string $phoneNumber): self
-	{
-		$this->phoneNumber = $phoneNumber;
-		return $this;
-	}
-
-	public function getFullName(): string
-	{
-		return $this->firstName . " " . $this->lastName;
-	}
-
-	public function getAuthObjectId(): string
-	{
-		return (string) $this->getId();
-	}
-
-	public function getAuthToken(): ?string
-	{
-		return $this->authToken;
-	}
-
-	public function setAuthToken(string $token): void
-	{
-		$this->authToken = $token;
-	}
-
-	/**
-	 * @return AclRoleInterface[]
-	 */
-	public function getRoles(): array
-	{
-		return $this->getProfile()->getRoles();
-	}
-
-	public function isAllowed(string $aclResource): bool
-	{
-		return array_any($this->getRoles(), fn(AclRoleInterface $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
-	}
-
-	public function isAdmin(): bool
-	{
-		return array_any($this->getRoles(), fn(AclRoleInterface $role) => $role->getIsAdmin());
-	}
-
-	public function getAuthMetadata(): array
-	{
-		return [];
-	}
-
-	public function setAuthMetadata(array $metadata): void
-	{
-	}
-
-	/**
-	 * @return Profile[]
-	 */
-	public function getAllowedProfiles(?string $context = null): array
-	{
-		$context = $context ?: $this->context;
-
-		$profiles = [];
-		/** @var ProfileInterface $_profile */
-		foreach ($this->profiles as $_profile) {
-			if (!$_profile->getIsActive()) {
-				continue;
-			}
-
-			if ($context && !$_profile->isAllowedContext($context)) {
-				continue;
-			}
-
-			$profiles[] = $_profile;
-		}
-
-		return $profiles;
-	}
-
-	public function setContext(string $context): void
-	{
-		$this->context = $context;
-	}
-
-	public function isAllowedContext(string $context): bool
-	{
-		return (bool) $this->getAllowedProfiles($context);
-	}
-
-	public function getGravatar()
-	{
-		return '//www.gravatar.com/avatar/' . md5($this->getEmail()) . '?s=90&d=mp';
-	}
+	// Auth metadata
+	public function getAuthMetadata(): array;
+	public function setAuthMetadata(array $metadata): void;
 }

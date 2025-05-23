@@ -14,7 +14,7 @@ use Nette\Security\AuthenticationException;
 use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
-class NewPasswordForm extends BaseForm
+trait NewPasswordForm
 {
 	public function initForm(Form $form): void
 	{

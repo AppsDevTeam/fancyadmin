@@ -3,8 +3,6 @@
 namespace ADT\FancyAdmin\Core;
 
 use ADT\FancyAdmin\Model\Administration;
-use ADT\Routing\Route;
-use Closure;
 use ADT\Routing\RouteList;
 
 class FancyAdminRouter

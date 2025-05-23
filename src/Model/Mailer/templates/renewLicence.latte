@@ -1,0 +1,22 @@
+{layout @layout.latte}
+
+{block content}
+
+
+    <tr>
+        <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+
+            <div style="font-family:Roboto, Helvetica, Arial, sans-serif, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#555555;">{_'app.emails.common.salutation'}</div>
+
+        </td>
+    </tr>
+
+    <tr>
+        <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+
+            <div style="font-family:Roboto, Helvetica, Arial, sans-serif, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#555555;">v příloze vám posíláme proforma fakturu pro úhradu vaší licence na další období. Úhradu můžete provést také přes platební bránu na tomto odkazu: <a href="{$link}">{$link}</a></div> {* TODO TRANSLATE *}
+
+        </td>
+    </tr>
+
+{/block}

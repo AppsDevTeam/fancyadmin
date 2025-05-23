@@ -4,44 +4,40 @@ namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Entities\AclResource;
-use ADT\FancyAdmin\Model\Entities\AclResourceInterface;
+use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
 use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\AclRoleInterface;
-use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\IdentityInterface;
+use ADT\FancyAdmin\Model\Entities\AclRoleTrait;
+use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
-use ADT\FancyAdmin\Model\Queries\Factories\GridFilterQueryFactory;
-use ADT\FancyAdmin\Model\Queries\GridFilterQuery;
 use ADT\FancyAdmin\Model\Services\DeleteService;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
-use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordForm;
-use ADT\FancyAdmin\UI\Forms\LostPassword\LostPasswordFormFactory;
-use ADT\FancyAdmin\UI\Forms\NewPassword\NewPasswordForm;
-use ADT\FancyAdmin\UI\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\Model\Administration;
-use ADT\FancyAdmin\UI\Grids\Base\BaseGrid;
 use Contributte\Translation\DI\TranslationProviderInterface;
-use Doctrine\ORM\EntityManagerInterface;
 use Nette\Application\LinkGenerator;
+use Nette\DI\CompilerExtension;
 use Nette\Loaders\RobotLoader;
+use Nette\Security\Authenticator;
+use ReflectionClass;
+use RuntimeException;
 
-class FancyAdminExtension extends \Nette\DI\CompilerExtension implements TranslationProviderInterface
+class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
-	private $defaults = [
+	private array $defaults = [
 		'adminHostPath' => '/admin',
 		'homepagePresenter' => '',
 		'lostPasswordEnabled' => false,
 		'navbarMenuFactory' => NavbarMenuFactory::class,
-		'authenticator' => \Nette\Security\Authenticator::class,
+		'authenticator' => Authenticator::class,
 		'forms' => [
 			'signInFactory' => SignInFormFactory::class
 		]
 	];
 
-	public function loadConfiguration() {
+	public function loadConfiguration(): void
+	{
 		$this->validateConfig($this->defaults);
 		$builder = $this->getContainerBuilder();
 
@@ -56,18 +52,6 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 			->setImplement(SidePanelControlFactory::class)
 			->getResultDefinition()
 			->setFactory(SidePanelControl::class);
-
-		$builder->addFactoryDefinition($this->prefix('newPasswordFormFactory'))
-			->setImplement(NewPasswordFormFactory::class);
-
-		$builder->addDefinition($this->prefix('newPasswordForm'))
-			->setFactory(NewPasswordForm::class);
-
-		$builder->addFactoryDefinition($this->prefix('lostPasswordFormFactory'))
-			->setImplement(LostPasswordFormFactory::class);
-
-		$builder->addDefinition($this->prefix('lostPasswordForm'))
-			->setFactory(LostPasswordForm::class);
 
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);
@@ -89,41 +73,35 @@ class FancyAdminExtension extends \Nette\DI\CompilerExtension implements Transla
 
 	private function validateTraitInterfaceCompliance(): void
 	{
-		try {
-			$traitInterfaceMap = [
-				Identity::class => IdentityInterface::class,
-				AclResource::class => AclResourceInterface::class,
-				AclRole::class => AclRoleInterface::class,
-			];
+		$traitInterfaceMap = [
+			IdentityTrait::class => IdentityTrait::class,
+			AclResourceTrait::class => AclResource::class,
+			AclRoleTrait::class     => AclRole::class,
+		];
 
-			$loader = new RobotLoader();
-			$loader->addDirectory(__DIR__ . '/../../../../../app/Model/Entities');
-			$loader->acceptFiles = ['*.php'];
-			$loader->rebuild();
+		$loader = new RobotLoader();
+		$loader->addDirectory(__DIR__ . '/../../../../../app/model/Entities');
+		$loader->acceptFiles = ['*.php'];
+		$loader->rebuild();
 
-			foreach (array_keys($loader->getIndexedClasses()) as $class) {
-				if (!class_exists($class)) {
-					continue;
-				}
+		foreach (array_keys($loader->getIndexedClasses()) as $class) {
+			if (!class_exists($class)) {
+				continue;
+			}
 
-				$reflection = new \ReflectionClass($class);
+			$reflection = new ReflectionClass($class);
 
-				if (!$reflection->isInstantiable() || $reflection->isAbstract()) {
-					continue;
-				}
+			if (!$reflection->isInstantiable() || $reflection->isAbstract()) {
+				continue;
+			}
 
-				$usedTraits = $this->class_uses_recursive($class);
+			$usedTraits = $this->class_uses_recursive($class);
 
-				foreach ($traitInterfaceMap as $trait => $interface) {
-					if (in_array($trait, $usedTraits, true) && !$reflection->implementsInterface($interface)) {
-						throw new \RuntimeException("Třída {$class} používá {$trait}, ale neimplementuje požadované rozhraní {$interface}.");
-					}
+			foreach ($traitInterfaceMap as $trait => $interface) {
+				if (in_array($trait, $usedTraits, true) && !$reflection->implementsInterface($interface)) {
+					throw new RuntimeException("Třída $class používá $trait, ale neimplementuje požadované rozhraní $interface.");
 				}
 			}
-		} catch (\RuntimeException $e) {
-			throw $e;
-		} catch (\Exception $e) {
-			throw $e;
 		}
 	}
 

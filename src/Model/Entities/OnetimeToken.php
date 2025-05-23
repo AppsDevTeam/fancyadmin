@@ -4,112 +4,27 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
-use ADT\FancyAdmin\Model\Entities\Base\BaseEntity;
 use DateTimeImmutable;
-use Doctrine\ORM\Mapping\Column;
-use Doctrine\ORM\Mapping\Entity;
-use Doctrine\ORM\Mapping\JoinColumn;
-use Doctrine\ORM\Mapping\ManyToOne;
-use Nette\Utils\Random;
 
-trait OnetimeToken
+interface OnetimeToken
 {
-	use Identifier;
-	use CreatedAt;
-	use UpdatedAt;
-
 	/*
 	 * Konstanty pro nastaveni jak dlouho je validni request pro obnovu hesla a jak dlouho je validni request v pripade
 	 * vytvareni novehe uzivatele
 	 */
 	const int PASSWORD_RECOVERY_VALID_FOR = 1; //hour
 	const int PASSWORD_CREATION_VALID_FOR = 72; //hours (3 days)
-
-	#[Column(nullable: false)]
-	protected string $token;
-
-	#[Column(nullable: false)]
-	protected string $type;
-
-	#[Column(nullable: false)]
-	protected int $objectId;
-
-	#[Column(nullable: true)]
-	protected ?DateTimeImmutable $usedAt = null;
-
-	#[Column(nullable: false)]
-	protected DateTimeImmutable $validUntil;
-
-	public function getToken(): string
-	{
-		return $this->token;
-	}
-
-	public function setToken(string $token): static
-	{
-		$this->token = $token;
-		return $this;
-	}
-
-	public function getUsedAt(): ?DateTimeImmutable
-	{
-		return $this->usedAt;
-	}
-
-	public function setUsedAt(?DateTimeImmutable $usedAt): static
-	{
-		$this->usedAt = $usedAt;
-		return $this;
-	}
-
-	public static function generateRandomToken(): string
-	{
-		return Random::generate(32, 'a-zA-Z0-9');
-	}
-
-	public function setValidUntil(DateTimeImmutable $validUntil): static
-	{
-		$this->validUntil = $validUntil;
-		return $this;
-	}
-
-	public function getValidUntil(): DateTimeImmutable
-	{
-		return $this->validUntil;
-	}
-
-	public function isValid(): bool
-	{
-		// Omezujeme jenom validitu u password Recovery
-		if ($this->validUntil < (new DateTimeImmutable('now'))) {
-			return false;
-		}
-
-		return true;
-	}
-
-	public function getType(): string
-	{
-		return $this->type;
-	}
-
-	public function setType(string $type): static
-	{
-		$this->type = $type;
-		return $this;
-	}
-
-	public function getObjectId(): int
-	{
-		return $this->objectId;
-	}
-
-	public function setObjectId(?int $objectId): static
-	{
-		$this->objectId = $objectId;
-		return $this;
-	}
+	
+	public function getToken(): string;
+	public function setToken(string $token): static;
+	public function getObjectId(): int;
+	public function setObjectId(int $obejctId): static;
+	public function getUsedAt(): ?DateTimeImmutable;
+	public function setUsedAt(?DateTimeImmutable $usedAt): static;
+	public static function generateRandomToken(): string;
+	public function setValidUntil(DateTimeImmutable $validUntil): static;
+	public function getValidUntil(): DateTimeImmutable;
+	public function isValid(): bool;
+	public function getType(): string;
+	public function setType(string $type): static;
 }

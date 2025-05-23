@@ -2,10 +2,10 @@
 
 namespace ADT\FancyAdmin\Model\Entities\Attributes;
 
-use ADT\FancyAdmin\Model\Entities\IdentityInterface;
+use ADT\FancyAdmin\Model\Entities\Identity;
 
 interface CreatedByNullInterface
 {
-	public function setCreatedBy(?IdentityInterface $createdBy): static;
-	public function getCreatedBy(): ?IdentityInterface;
+	public function setCreatedBy(?Identity $createdBy): static;
+	public function getCreatedBy(): ?Identity;
 }

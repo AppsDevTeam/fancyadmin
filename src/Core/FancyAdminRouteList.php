@@ -3,7 +3,6 @@
 namespace ADT\FancyAdmin\Core;
 
 use ADT\FancyAdmin\Model\Administration;
-use ADT\Routing\Route;
 use ADT\Routing\TranslatorInterface;
 use Closure;
 use ADT\Routing\RouteList;
