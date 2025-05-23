@@ -62,6 +62,7 @@ class SidePanelControl extends Control
 				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
 					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
 				} else {
+					$this->getPresenter()->redrawControl('container');
 					$this->getPresenter()->redrawControl('sidePanelContainer');
 				}
 			});
