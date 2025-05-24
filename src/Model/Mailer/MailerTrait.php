@@ -21,7 +21,7 @@ use Nette\Mail;
 use Nette\Mail\Message;
 use TijsVerkoyen\CssToInlineStyles;
 
-abstract class Mailer implements Mail\Mailer
+trait MailerTrait
 {
 	use SingleRecipient;
 
@@ -122,28 +122,26 @@ abstract class Mailer implements Mail\Mailer
 	 */
 	public function sendAccountCreationEmail(Identity $identity): void
 	{
-		$this->em->beginTransaction();
-
+		/** @var OnetimeToken $onetimeToken */
 		$onetimeToken = new ($this->getOnetimeTokenClass());
-		$passwordRecovery = $onetimeToken
-			->setUser($identity)
+		$onetimeToken
+			->setObjectId($identity->getId())
+			->setType('login')
 			->setToken($onetimeToken::generateRandomToken())
 			->setValidUntil((new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours')));
-		$this->em->persist($passwordRecovery);
+		$this->em->persist($onetimeToken);
 		$this->em->flush();
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
 			'Vytvoření účtu', // TODO translate
 			[
-				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['token' => $passwordRecovery->getToken()]),
-				'validTill' => $this->translator->translate('app.emails.passwordRecovery.validTill', ['date' => $passwordRecovery->getValidUntil()->format('j. n. Y G:i')])
+				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
+				'validTill' => $this->translator->translate('app.emails.passwordRecovery.validTill', ['date' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')])
 			]
 		);
 		$message->addTo($identity->getEmail());
 		$this->send($message);
-
-		$this->em->commit();
 	}
 
 	/**
@@ -155,21 +153,22 @@ abstract class Mailer implements Mail\Mailer
 	{
 		$this->em->beginTransaction();
 
+		/** @var OnetimeToken $onetimeToken */
 		$onetimeToken = new ($this->getOnetimeTokenClass());
-		$passwordRecovery = $onetimeToken
+		$onetimeToken
 			->setObjectId($identity->getId())
 			->setType('login') // TODO
 			->setToken($onetimeToken::generateRandomToken())
 			->setValidUntil(new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'));
-		$this->em->persist($passwordRecovery);
+		$this->em->persist($onetimeToken);
 		$this->em->flush();
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',
 			'app.emails.passwordRecovery.subject',
 			[
-				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $passwordRecovery->getToken()]),
-				'validTill' => $this->translator->translate('app.emails.passwordRecovery.validTill', ['date' => $passwordRecovery->getValidUntil()->format('j. n. Y G:i')])
+				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
+				'validTill' => $this->translator->translate('app.emails.passwordRecovery.validTill', ['date' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')])
 			]
 		);
 		$message->addTo($identity->getEmail());
