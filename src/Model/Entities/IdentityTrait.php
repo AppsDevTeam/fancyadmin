@@ -10,6 +10,7 @@ use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
 use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
+use App\Model\Entities\Profile;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 
@@ -184,5 +185,11 @@ trait IdentityTrait
 	public function getGravatar(): string
 	{
 		return '//www.gravatar.com/avatar/' . md5($this->getEmail()) . '?s=90&d=mp';
+	}
+
+	public function addProfile(Profile $profile): static
+	{
+		$this->profiles->add($profile);
+		return $this;
 	}
 }
