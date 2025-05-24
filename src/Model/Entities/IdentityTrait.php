@@ -10,7 +10,7 @@ use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
 use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
-use App\Model\Entities\Profile;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 
@@ -45,6 +45,11 @@ trait IdentityTrait
 
 	protected string $authToken;
 	public ?string $context = null;
+
+	public function __construct()
+	{
+		$this->profiles = new ArrayCollection();
+	}
 
 	public function getPassword(): ?string
 	{
