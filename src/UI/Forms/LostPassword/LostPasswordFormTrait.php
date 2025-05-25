@@ -17,7 +17,7 @@ use Nette\Application\LinkGenerator;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Utils\ArrayHash;
 
-trait LostPasswordForm
+trait LostPasswordFormTrait
 {
 	abstract protected function getIdentity(string $email): ?Identity;
 	
@@ -48,7 +48,7 @@ trait LostPasswordForm
 			$this->presenter->redirect('this');
 		}
 		
-		$this->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
+		$this->mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
 		$this->presenter->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
 		$this->presenter->redirect('Sign:In');
 	}
@@ -56,5 +56,10 @@ trait LostPasswordForm
 	public function getEntityClass(): ?string
 	{
 		return null;
+	}
+
+	protected function getTemplateFilename(): ?string
+	{
+		return __DIR__ . '/LostPasswordForm.latte';
 	}
 }

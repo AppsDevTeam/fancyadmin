@@ -18,6 +18,8 @@ trait BasePresenterTrait
 {
 	use AutowireProperties;
 	use AutowireComponentFactories;
+	
+	abstract protected function getTranslator(): \Nette\Localization\Translator;
 
 	const DEFAULT_AUTO_CLOSE_DURATION = 3000;
 
@@ -83,7 +85,7 @@ trait BasePresenterTrait
 	private function flashMessageCommon(string $message, string $type, ?int $autoCloseDuration = null)
 	{
 		$this->redrawControl('flashes');
-		$flash = parent::flashMessage($this->translator->translate($message), $type);
+		$flash = parent::flashMessage($this->getTranslator()->translate($message), $type);
 		$flash->closeDuration = $autoCloseDuration ?? self::DEFAULT_AUTO_CLOSE_DURATION;
 		return $flash;
 	}

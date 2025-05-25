@@ -29,7 +29,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 {
 	private array $defaults = [
 		'adminHostPath' => '/admin',
-		'homepagePresenter' => '',
+		'homepagePresenter' => 'Home:default',
 		'lostPasswordEnabled' => true,
 		'navbarMenuFactory' => NavbarMenuFactory::class,
 		'authenticator' => Authenticator::class,

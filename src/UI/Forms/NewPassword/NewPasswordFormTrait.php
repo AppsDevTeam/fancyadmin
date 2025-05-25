@@ -14,7 +14,7 @@ use Nette\Security\AuthenticationException;
 use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 
-trait NewPasswordForm
+trait NewPasswordFormTrait
 {
 	public function initForm(Form $form): void
 	{
@@ -48,11 +48,16 @@ trait NewPasswordForm
 
 		$this->em->flush();
 
-		$this->presenter->redirect(':Portal:Dashboard:', ['do' => 'redrawBody']);
+		$this->presenter->redirect(':Portal:Home:', ['do' => 'redrawBody']);
 	}
 
 	public function getEntityClass(): ?string
 	{
 		return null;
+	}
+
+	protected function getTemplateFilename(): ?string
+	{
+		return __DIR__ . '/NewPasswordForm.latte';
 	}
 }
