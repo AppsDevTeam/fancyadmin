@@ -4,23 +4,20 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
+use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
 use ReflectionClass;
 use ReflectionException;
 
-abstract class AuthPresenter extends BasePresenter
+trait AuthPresenterTrait
 {
-	use RedrawSidePanel;
-
 	#[Persistent]
 	public ?string $gridFilterClass = null;
 
 	#[Persistent]
 	public array $gridFilterParameters = [];
-
-	protected $entity = null;
 
 	/**
 	 * @throws InvalidLinkException
@@ -30,7 +27,7 @@ abstract class AuthPresenter extends BasePresenter
 		parent::startup();
 
 		if (!$this->isLogged()) {
-			$this->redirect(':Admin:Sign:in');
+			$this->redirect(':Portal:Sign:in');
 		}
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
@@ -46,7 +43,7 @@ abstract class AuthPresenter extends BasePresenter
 	public function checkRequirements($element): void
 	{
 		parent::checkRequirements($element);
-		if ($this->securityUser->isLoggedIn()) {
+		if ($this->getUser()->isLoggedIn()) {
 			$this->validateSecurityAttributes();
 		}
 	}
@@ -77,19 +74,12 @@ abstract class AuthPresenter extends BasePresenter
 		$this->redrawSidePanel('gridFilter');
 	}
 
-	public function handleEdit(Identity $identity): void
-	{
-		$this->entity = $identity;
-		$this->redrawSidePanel('identity');
-	}
-
-	public function handleNew(): void
-	{
-		$this->redrawSidePanel('identity');
-	}
-
 	public function handleRemoveGridFilter(): void
 	{
+		if ($gridFilter = $this->gridFilterQueryFactory->create()->byId($this->getParameter('removeId'))->fetchOneOrNull()) {
+			$this->em->remove($gridFilter);
+			$this->em->flush();
+		}
 	}
 
 	public function afterRender(): void
@@ -97,14 +87,20 @@ abstract class AuthPresenter extends BasePresenter
 		if (!$this->isControlInvalid()) {
 			$this->redrawControl('title');
 			$this->redrawControl('sideMenu');
-			if ($this->getParameter('redrawBody')) {
-				$this->redrawControl('body');
-			} else {
-				$this->redrawControl('container');
-				if ($this->getFlashSession()->get('flash')) {
-					$this->redrawControl('flashes');
-				}
+			$this->redrawControl('container');
+			$this->redrawControl('sidePanelContainer');
+			if ($this->getFlashSession()->get('flash')) {
+				$this->redrawControl('flashes');
 			}
 		}
+	}
+
+	/**
+	 * @throws AbortException
+	 */
+	public function redrawSidePanel(?string $name = null): never
+	{
+		$this->getPresenter()->payload->snippets[$this->getSnippetId('sidePanel')] = $this[$name ? $name . ucfirst('sidePanel') : 'sidePanel']->renderToString();
+		$this->getPresenter()->sendPayload();
 	}
 }

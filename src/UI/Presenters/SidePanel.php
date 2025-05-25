@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
+use ADT\DoctrineComponents\QueryObject;
 use ADT\FancyAdmin\Model\Entities\IEntity;
 use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
@@ -16,20 +17,9 @@ trait SidePanel
 {
 	abstract protected function getEntity(): IEntity|callable|null;
 	abstract protected function getForm(): BaseForm;
-	abstract protected function getQueryObject(): BaseQuery;
+	abstract protected function getQueryObject(): QueryObject;
 	abstract protected function getPresenter(): Presenter;
 	abstract public function getSnippetId(string $name): string;
-
-	/**
-	 * @throws AbortException
-	 */
-	public function redrawSidePanel(?string $sidePanelName = null): void
-	{
-		$this->getPresenter()->payload->snippets[$this->getSnippetId('sidePanel')] = $this[
-		$sidePanelName ? ($sidePanelName . 'SidePanel') : 'sidePanel'
-		]->renderToString();
-		$this->getPresenter()->sendPayload();
-	}
 
 	/**
 	 * @throws ReflectionException
