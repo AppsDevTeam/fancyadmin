@@ -48,7 +48,7 @@ trait NewPasswordForm
 
 		$this->em->flush();
 
-		$this->presenter->redirect(':Portal:Dashboard:', ['redrawBody' => true]);
+		$this->presenter->redirect(':Portal:Dashboard:', ['do' => 'redrawBody']);
 	}
 
 	public function getEntityClass(): ?string

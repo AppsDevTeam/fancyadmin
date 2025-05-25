@@ -5,7 +5,7 @@ namespace ADT\FancyAdmin\Model\Menu;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\LinkGenerator;
 
-abstract class NavbarMenuFactory
+interface NavbarMenuFactory
 {
-	abstract public function create(): NavbarMenu;
+	public function create(): NavbarMenu;
 }

@@ -12,7 +12,7 @@ interface OnetimeToken
 	 * Konstanty pro nastaveni jak dlouho je validni request pro obnovu hesla a jak dlouho je validni request v pripade
 	 * vytvareni novehe uzivatele
 	 */
-	const int PASSWORD_RECOVERY_VALID_FOR = 1; //hour
+	const int PASSWORD_RECOVERY_VALID_FOR = 24; //hour
 	const int PASSWORD_CREATION_VALID_FOR = 72; //hours (3 days)
 	
 	public function getToken(): string;

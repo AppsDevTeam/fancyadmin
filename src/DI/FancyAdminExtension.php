@@ -7,7 +7,11 @@ use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\AclRoleTrait;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\IdentityTrait;
+use ADT\FancyAdmin\Model\Entities\Profile;
+use ADT\FancyAdmin\Model\Entities\ProfileTrait;
+use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\Model\Services\DeleteService;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
@@ -56,6 +60,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);
 
+		$builder->addFactoryDefinition($this->prefix('navbarMenuFactory'))
+			->setImplement($this->config['navbarMenuFactory'])
+			->getResultDefinition()
+			->setFactory(NavbarMenu::class);
+
 		$builder->addDefinition($this->prefix('deleteService'))
 			->setFactory(DeleteService::class);
 
@@ -74,9 +83,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	private function validateTraitInterfaceCompliance(): void
 	{
 		$traitInterfaceMap = [
-			IdentityTrait::class => IdentityTrait::class,
 			AclResourceTrait::class => AclResource::class,
-			AclRoleTrait::class     => AclRole::class,
+			AclRoleTrait::class => AclRole::class,
+			IdentityTrait::class => Identity::class,
+			ProfileTrait::class => Profile::class,
 		];
 
 		$loader = new RobotLoader();

@@ -14,21 +14,12 @@ use Nette\Application\UI\Presenter;
 use Nette\Utils\Json;
 use ReflectionClass as T;
 
-abstract class BasePresenter extends Presenter
+trait BasePresenterTrait
 {
 	use AutowireProperties;
 	use AutowireComponentFactories;
 
 	const DEFAULT_AUTO_CLOSE_DURATION = 3000;
-
-	#[Autowire]
-	protected Translator $translator;
-
-	#[Autowire]
-	protected EntityManager $em;
-
-	#[Autowire]
-	protected SecurityUser $securityUser;
 
 	#[Autowire]
 	protected Administration $administration;
@@ -49,18 +40,9 @@ abstract class BasePresenter extends Presenter
 		$this->template->navbarMenu = $this->administration->getNavbarMenu();
 	}
 
-	/**
-	 * @template T of \ReflectionClass|\ReflectionMethod
-	 * @param T $element
-	 * @return void
-	 */
-	public function checkRequirements(\ReflectionClass|\ReflectionMethod $element): void
+	public function handleRedrawBody(): void
 	{
-		parent::checkRequirements($element);
-
-		if (!method_exists($this, 'action' . ucfirst($this->getAction()))) {
-			$this->error();
-		}
+		$this->redrawControl('body');
 	}
 
 
@@ -104,31 +86,6 @@ abstract class BasePresenter extends Presenter
 		$flash = parent::flashMessage($this->translator->translate($message), $type);
 		$flash->closeDuration = $autoCloseDuration ?? self::DEFAULT_AUTO_CLOSE_DURATION;
 		return $flash;
-	}
-
-	/**
-	 * Formats layout template file names.
-	 * @return array
-	 */
-	public function formatLayoutTemplateFiles(): array
-	{
-		$list = parent::formatLayoutTemplateFiles();
-		$dir = dirname($this->getReflection()->getFileName());
-		$list[] = "$dir/../@layout.Latte";
-		$list[] = __DIR__ . "/@layout.latte";
-		return $list;
-	}
-
-	/**
-	 * Formats view template file names.
-	 * @return array
-	 */
-	public function formatTemplateFiles(): array
-	{
-		$list = parent::formatTemplateFiles();
-		$dir = dirname($this->getReflection()->getFileName());
-		$list[] = "$dir/$this->view.Latte";
-		return $list;
 	}
 
 	public function getAdministration(): Administration
