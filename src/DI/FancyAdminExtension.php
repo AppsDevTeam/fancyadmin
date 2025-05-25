@@ -16,8 +16,6 @@ use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\Model\Services\DeleteService;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
-use ADT\FancyAdmin\UI\Forms\SignIn\SignInForm;
-use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\Model\Administration;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\Application\LinkGenerator;
@@ -32,25 +30,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	private array $defaults = [
 		'adminHostPath' => '/admin',
 		'homepagePresenter' => '',
-		'lostPasswordEnabled' => false,
+		'lostPasswordEnabled' => true,
 		'navbarMenuFactory' => NavbarMenuFactory::class,
 		'authenticator' => Authenticator::class,
-		'forms' => [
-			'signInFactory' => SignInFormFactory::class
-		]
 	];
 
 	public function loadConfiguration(): void
 	{
 		$this->validateConfig($this->defaults);
 		$builder = $this->getContainerBuilder();
-
-		$builder->addFactoryDefinition($this->prefix('signInFormFactory'))
-			->setImplement(SignInFormFactory::class)
-			->getResultDefinition()
-			->setFactory(SignInForm::class)
-			->addSetup('setAuthenticator', ['@' . $this->config['authenticator']])
-			->addSetup('setAdministration', ['@' . Administration::class]);
 
 		$builder->addFactoryDefinition($this->prefix('sidePanelControlFactory'))
 			->setImplement(SidePanelControlFactory::class)

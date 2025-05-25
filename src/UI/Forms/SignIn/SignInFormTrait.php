@@ -4,21 +4,26 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Forms\SignIn;
 
+use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\Forms\Form;
 use ADT\FancyAdmin\UI\Forms\BaseForm;
+use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Authenticator;
 use Nette\Utils\ArrayHash;
 
-class SignInForm extends BaseForm
+trait SignInFormTrait
 {
-	protected Authenticator $authenticator;
+	abstract public function getAuthenticator(): DoctrineAuthenticator;
+	abstract public function getContext(): ?string;
 
+	#[Autowire]
 	protected Administration $administration;
 
-	protected $identity = null;
+	protected Identity $identity;
 
 	public function initForm(Form $form): void
 	{
@@ -43,7 +48,7 @@ class SignInForm extends BaseForm
 	public function validateForm(ArrayHash $values): void
 	{
 		try {
-			$this->identity = $this->authenticator->verifyCredentials($values->email, $values->password, null);
+			$this->identity = $this->authenticator->authenticate($values->email, $values->password, $this->getContext());
 		} catch (AuthenticationException $e) {
 			$this->form->addError('fcadmin.forms.signIn.errors.wrongEmailOrPassword');
 		} catch (AuthenticationUserNotActiveException $e) {
@@ -58,7 +63,13 @@ class SignInForm extends BaseForm
 	public function processForm(): void
 	{
 		$this->presenter->user->login($this->identity);
-		$this->presenter->redirect($this->administration->getHomepagePresenter(), ['redrawBody' => true]);
+		$this->presenter->redirect('Home:default', ['do' => 'redrawBody']);
+	}
+
+	public function render(): void
+	{
+		$this->template->administration = $this->administration;
+		parent::render();
 	}
 
 	public function getEntityClass(): ?string
@@ -66,16 +77,8 @@ class SignInForm extends BaseForm
 		return null;
 	}
 
-	public function setAuthenticator(Authenticator $authenticator): self
+	protected function getTemplateFilename(): ?string
 	{
-		$this->authenticator = $authenticator;
-		return $this;
+		return __DIR__ . '/SignInForm.latte';
 	}
-
-	public function setAdministration(Administration $administration): SignInForm
-	{
-		$this->administration = $administration;
-		return $this;
-	}
-
 }
