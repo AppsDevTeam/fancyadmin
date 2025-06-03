@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-trait GridFilterQuery
+trait GridFilterQueryTrait
 {
-	public function applySecurityFilter(): void
-	{
-		// TODO
-	}
-
 	public function byGrid(string $grid): self
 	{
 		return $this->by('grid', $grid);

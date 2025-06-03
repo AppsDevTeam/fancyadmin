@@ -23,7 +23,9 @@
     "adt/single-recipient-mailer": "^5.1",
     "adt/background-queue": "^5.0",
     "adt/mailer": "^3.2",
-    "tijsverkoyen/css-to-inline-styles": "^2.3"
+    "tijsverkoyen/css-to-inline-styles": "^2.3",
+    "adt/doctrine-components": "^3.0",
+    "nette/application": "^3.2"
   },
   "repositories": [
     {

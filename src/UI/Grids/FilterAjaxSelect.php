@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Grids\Base;
+namespace ADT\FancyAdmin\UI\Grids;
 
 use Nette;
 use Ublaboo\DataGrid\Filter\Filter;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Grids\Base;
+namespace ADT\FancyAdmin\UI\Grids;
 
 use Nette;
 

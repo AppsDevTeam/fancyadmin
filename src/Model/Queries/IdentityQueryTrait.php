@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\FancyAdmin\Model\Entities\Identity;
-use Doctrine\ORM\QueryBuilder;
+use ADT\FancyAdmin\Model\Queries\Filters\IsActiveFilterTrait;
 
 trait IdentityQueryTrait
 {
+	use IsActiveFilterTrait;
+
 	public function setDefaultOrder(): void
 	{
 		$this->orderBy(['firstName' => 'ASC', 'lastName' => 'ASC']);

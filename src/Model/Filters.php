@@ -1,10 +1,12 @@
 <?php
 
-namespace ADT\FancyAdmin\Model\Latte;
+namespace ADT\FancyAdmin\Model;
 
-use Contributte\Translation\Translator;
+use Exception;
 use Latte\ContentType;
 use Latte\Runtime\FilterInfo;
+use Nette\Localization\Translator;
+use Nette\Utils\DateTime;
 
 class Filters
 {
@@ -31,7 +33,7 @@ class Filters
 		}
 
 		$format = html_entity_decode($format);
-		return \Nette\Utils\DateTime::from($time)->format($format);
+		return DateTime::from($time)->format($format);
 	}
 
 	public function datetime($time, string $format = 'j. n. Y&nbsp;H:i')
@@ -41,13 +43,35 @@ class Filters
 		}
 
 		$format = html_entity_decode($format);
-		return \Nette\Utils\DateTime::from($time)->format($format);
+		return DateTime::from($time)->format($format);
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public function time($time, string $format = 'H:i')
 	{
 		$format = html_entity_decode($format);
-		return \Nette\Utils\DateTime::from($time)->format($format);
+		return DateTime::from($time)->format($format);
+	}
+
+	public function price(float $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null)
+	{
+		if ($currency) {
+			$currency = html_entity_decode($currency);
+		}
+
+		if ($decimalSymbol === null) {
+			$decimalSymbol = $this->translator->translate('app.appGeneral.model.filters.decimalSeparator');
+		}
+
+		if ($thousandsSeparator === null) {
+			$thousandsSeparator = $this->translator->translate('app.appGeneral.model.filters.thousandsSeparator');
+		}
+
+		$price = self::number($price, $decimals, $decimalSymbol, $thousandsSeparator);
+
+		return trim($price . ' ' . $currency);
 	}
 
 	public function ifEmpty(FilterInfo $info, $string)

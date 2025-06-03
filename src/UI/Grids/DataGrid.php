@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Grids\Base;
+namespace ADT\FancyAdmin\UI\Grids;
 
 use ADT\DoctrineComponents\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
-use ADT\FancyAdmin\Model\Queries\Interfaces\IGridFilterQueryFactory;
 use ADT\Forms\BootstrapFormRenderer;
+use App\UI\Portal\Components\Grids\BaseGrid;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Nette;
