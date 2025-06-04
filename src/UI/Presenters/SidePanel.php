@@ -3,13 +3,10 @@
 namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\DoctrineComponents\QueryObject;
+use ADT\DoctrineForms\BaseForm;
 use ADT\FancyAdmin\Model\Entities\IEntity;
-use ADT\FancyAdmin\Model\Queries\Base\BaseQuery;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
-use ADT\FancyAdmin\UI\Forms\BaseForm;
-use Nette\Application\AbortException;
 use Nette\Application\UI\Presenter;
 use ReflectionException;
 
