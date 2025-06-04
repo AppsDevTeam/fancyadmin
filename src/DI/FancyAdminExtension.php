@@ -13,7 +13,6 @@ use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
-use ADT\FancyAdmin\Model\Services\DeleteService;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
 use ADT\FancyAdmin\Model\Administration;
@@ -52,9 +51,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setImplement($this->config['navbarMenuFactory'])
 			->getResultDefinition()
 			->setFactory(NavbarMenu::class);
-
-		$builder->addDefinition($this->prefix('deleteService'))
-			->setFactory(DeleteService::class);
 
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(Administration::class, [
