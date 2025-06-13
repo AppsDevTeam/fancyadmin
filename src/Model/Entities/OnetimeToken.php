@@ -27,4 +27,6 @@ interface OnetimeToken
 	public function isValid(): bool;
 	public function getType(): string;
 	public function setType(string $type): static;
+	public function getIpAddress(): string;
+	public function setIpAddress(string $ipAddress): static;
 }

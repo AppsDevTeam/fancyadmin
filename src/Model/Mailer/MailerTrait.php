@@ -159,6 +159,7 @@ trait MailerTrait
 			->setObjectId($identity->getId())
 			->setType('login') // TODO
 			->setToken($onetimeToken::generateRandomToken())
+			->setIpAddress($_SERVER['REMOTE_ADDR'])
 			->setValidUntil(new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'));
 		$this->em->persist($onetimeToken);
 		$this->em->flush();

@@ -32,6 +32,9 @@ trait OnetimeTokenTrait
 	#[Column(nullable: false)]
 	protected DateTimeImmutable $validUntil;
 
+	#[Column(nullable: false)]
+	protected string $ipAddress;
+
 	public function getToken(): string
 	{
 		return $this->token;
@@ -99,6 +102,17 @@ trait OnetimeTokenTrait
 	public function setObjectId(?int $objectId): static
 	{
 		$this->objectId = $objectId;
+		return $this;
+	}
+
+	public function getIpAddress(): string
+	{
+		return $this->ipAddress;
+	}
+
+	public function setIpAddress(string $ipAddress): static
+	{
+		$this->ipAddress = $ipAddress;
 		return $this;
 	}
 }
