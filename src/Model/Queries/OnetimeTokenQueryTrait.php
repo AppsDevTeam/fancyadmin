@@ -50,7 +50,7 @@ trait OnetimeTokenQueryTrait
 		return $this->by('ipAddress', $ipAddress);
 	}
 
-	public function byCreatedBetween(?\DateTimeImmutable $from = null, \DateTimeImmutable $to = null): static
+	public function byCreatedBetween(?\DateTimeImmutable $from = null, ?\DateTimeImmutable $to = null): static
 	{
 		return $this->by('createdAt', [$from, $to], QueryObjectByMode::BETWEEN);
 	}
