@@ -10,7 +10,6 @@
     "ublaboo/datagrid": "^6.10|^7.0",
     "adt/ajax-select": "^4.0",
     "contributte/translation": "^2.0",
-    "adt/query-object-data-source": "^2.0",
     "adt/doctrine-forms": "^2.0",
     "adt/doctrine-authenticator": "^2.0",
     "nettrine/extensions-atlantic18": "dev-orm3",
