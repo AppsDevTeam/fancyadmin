@@ -2,8 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\DoctrineComponents\QueryObjectByMode;
-use App\Model\Entities\Company;
+use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use Doctrine\ORM\QueryBuilder;
 
 trait OnetimeTokenQueryTrait

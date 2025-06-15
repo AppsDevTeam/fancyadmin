@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
-use ADT\DoctrineComponents\QueryObject;
+use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineForms\BaseForm;
 use ADT\FancyAdmin\Model\Entities\IEntity;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;

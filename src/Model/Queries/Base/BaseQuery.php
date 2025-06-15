@@ -6,8 +6,8 @@ namespace ADT\FancyAdmin\Model\Queries\Base;
 
 use ADT\Components\AjaxSelect\Interfaces\OrByIdFilterInterface;
 use ADT\Components\AjaxSelect\Traits\OrByIdFilterTrait;
-use ADT\DoctrineComponents\QueryObject;
-use ADT\DoctrineComponents\QueryObjectByMode;
+use ADT\DoctrineComponents\QueryObject\QueryObject;
+use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Queries\Filters\IsActiveInterface;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 
