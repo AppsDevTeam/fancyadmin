@@ -23,8 +23,8 @@ trait OnetimeTokenTrait
 	#[Column(nullable: false)]
 	protected string $type;
 
-	#[Column(nullable: false)]
-	protected int $objectId;
+	#[Column(nullable: true)]
+	protected ?int $objectId = null;
 
 	#[Column(nullable: true)]
 	protected ?DateTimeImmutable $usedAt = null;
@@ -94,7 +94,7 @@ trait OnetimeTokenTrait
 		return $this;
 	}
 
-	public function getObjectId(): int
+	public function getObjectId(): ?int
 	{
 		return $this->objectId;
 	}

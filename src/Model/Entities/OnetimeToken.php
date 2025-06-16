@@ -17,8 +17,8 @@ interface OnetimeToken
 	
 	public function getToken(): string;
 	public function setToken(string $token): static;
-	public function getObjectId(): int;
-	public function setObjectId(int $obejctId): static;
+	public function getObjectId(): ?int;
+	public function setObjectId(?int $objectId): static;
 	public function getUsedAt(): ?DateTimeImmutable;
 	public function setUsedAt(?DateTimeImmutable $usedAt): static;
 	public static function generateRandomToken(): string;
