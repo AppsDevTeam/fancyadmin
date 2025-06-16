@@ -7,7 +7,6 @@
   "require": {
     "php": ">=8.3",
     "kdyby/autowired": "^3.0",
-    "ublaboo/datagrid": "^6.10|^7.0",
     "adt/ajax-select": "^4.0",
     "contributte/translation": "^2.0",
     "adt/doctrine-forms": "^2.0",
