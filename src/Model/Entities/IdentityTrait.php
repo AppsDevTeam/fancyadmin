@@ -40,7 +40,7 @@ trait IdentityTrait
 	#[ORM\Column(nullable: true)]
 	protected ?string $password = null;
 
-	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist"])]
+	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist", "remove"], orphanRemoval: true)]
 	protected Collection $profiles;
 
 	protected string $authToken;
