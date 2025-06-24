@@ -21,7 +21,7 @@ trait ProfileTrait
 	protected Identity $identity;
 
 	#[ManyToMany(targetEntity: 'AclRole')]
-	#[JoinColumn(onDelete: "RESTRICT")]
+	#[JoinColumn(onDelete: "CASCADE")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	protected Collection $roles;
 
