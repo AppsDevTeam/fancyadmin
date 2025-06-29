@@ -7,6 +7,7 @@ use ADT\DoctrineForms\BaseForm;
 use ADT\FancyAdmin\Model\Entities\IEntity;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
+use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
 use Nette\Application\UI\Presenter;
 use ReflectionException;
 
@@ -16,6 +17,7 @@ trait SidePanel
 	abstract protected function getForm(): BaseForm;
 	abstract protected function getQueryObject(): QueryObject;
 	abstract protected function getPresenter(): Presenter;
+	abstract protected function getSidePanelSize(): SidePanelSize;
 	abstract public function getSnippetId(string $name): string;
 
 	/**
@@ -29,6 +31,7 @@ trait SidePanel
 		}
 
 		return $factory->create()
+			->setSize($this->getSidePanelSize())
 			->setFormFactory(fn() => $this->getForm()->setEntity($entity));
 	}
 }
