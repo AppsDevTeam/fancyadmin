@@ -9,7 +9,6 @@ use ADT\FancyAdmin\UI\RenderToStringTrait;
 use ADT\Forms\BaseForm;
 use Exception;
 use Nette\Application\UI\Control;
-use Nette\Application\UI\Template;
 use Nette\Http\Url;
 
 class SidePanelControl extends Control
@@ -21,16 +20,10 @@ class SidePanelControl extends Control
 
 	private SidePanelSize $size = SidePanelSize::Medium;
 
-	protected function createTemplate(?string $class = null): Template
-	{
-		$template = parent::createTemplate();
-		$template->size = $this->size->value;
-		$template->setFile(__DIR__ . '/SidePanelControl.latte');
-		return $template;
-	}
-
 	public function render(): void
 	{
+		$this->template->size = $this->size->value;
+		$this->template->setFile(__DIR__ . '/SidePanelControl.latte');
 		$this->template->render();
 	}
 
@@ -47,8 +40,6 @@ class SidePanelControl extends Control
 	{
 		/** @var BaseForm $baseForm */
 		$baseForm = ($this->formFactory)();
-
-		$this->setSize($baseForm->getSidePanelSize());
 
 		$baseForm->setOnBeforeInitForm(function (Form $form) {
 			$url = new Url($this->getPresenter()->getHttpRequest()->getUrl());
