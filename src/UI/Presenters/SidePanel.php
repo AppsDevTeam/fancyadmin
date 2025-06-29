@@ -17,7 +17,6 @@ trait SidePanel
 	abstract protected function getForm(): BaseForm;
 	abstract protected function getQueryObject(): QueryObject;
 	abstract protected function getPresenter(): Presenter;
-	abstract protected function getSidePanelSize(): SidePanelSize;
 	abstract public function getSnippetId(string $name): string;
 
 	/**
@@ -33,5 +32,10 @@ trait SidePanel
 		return $factory->create()
 			->setSize($this->getSidePanelSize())
 			->setFormFactory(fn() => $this->getForm()->setEntity($entity));
+	}
+
+	protected function getSidePanelSize(): SidePanelSize
+	{
+		return SidePanelSize::Medium;
 	}
 }
