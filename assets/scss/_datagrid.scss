@@ -73,45 +73,45 @@
 			}
 		}
 
-			tbody > tr > td:first-child,
-			thead > tr > th:not(.table-header-divider):first-child
-			{
-				position: sticky;
-				left: 0;
+		tbody > tr > td:first-child,
+		thead > tr > th:not(.table-header-divider):first-child
+		{
+			position: sticky;
+			left: 0;
+			width: 300px;
+			max-width: min(30%, 300px);
+
+			> div {
 				width: 300px;
-				max-width: min(30%, 300px);
+				max-width: min(30vw, 300px);
+				white-space: normal;
+				overflow: hidden;
+				line-height: 18px;
 
-				> div {
-					width: 300px;
-					max-width: 100%;
-					white-space: normal;
-					overflow: hidden;
-					line-height: 18px;
-
-					&.is-clamped:after {
-						content: "...";
-						position: absolute;
-						bottom: 0;
-						right: 0;
-						background: white;
-						padding-left: 0.5em;
-						color: black;
-					}
-				}
-
-				&:after {
-					content: " ";
-					display: flex;
+				&.is-clamped:after {
+					content: "...";
 					position: absolute;
-					right: calc(var(--actionShadowWidthLeft) * -1);
-					width: var(--actionShadowWidthLeft);
-					top: 0;
 					bottom: 0;
-					transition: all 0.2s;
-					box-shadow: inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) #b3b3b3;
-					pointer-events: none;
+					right: 0;
+					background: white;
+					padding-left: 0.5em;
+					color: black;
 				}
 			}
+
+			&:after {
+				content: " ";
+				display: flex;
+				position: absolute;
+				right: calc(var(--actionShadowWidthLeft) * -1);
+				width: var(--actionShadowWidthLeft);
+				top: 0;
+				bottom: 0;
+				transition: all 0.2s;
+				box-shadow: inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) #b3b3b3;
+				pointer-events: none;
+			}
+		}
 
 		td {
 			padding: $paddingTableRowY $cardPadding;
