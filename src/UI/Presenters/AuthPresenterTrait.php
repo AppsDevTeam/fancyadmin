@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
+use Doctrine\ORM\EntityManagerInterface;
 use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
@@ -13,6 +14,8 @@ use ReflectionException;
 
 trait AuthPresenterTrait
 {
+	abstract protected function getEntityManager(): EntityManagerInterface;
+
 	#[Persistent]
 	public ?string $gridFilterClass = null;
 
@@ -77,8 +80,8 @@ trait AuthPresenterTrait
 	public function handleRemoveGridFilter(): void
 	{
 		if ($gridFilter = $this->gridFilterQueryFactory->create()->byId($this->getParameter('removeId'))->fetchOneOrNull()) {
-			$this->em->remove($gridFilter);
-			$this->em->flush();
+			$this->getEntityManager()->remove($gridFilter);
+			$this->getEntityManager()->flush();
 		}
 	}
 
