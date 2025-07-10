@@ -16,7 +16,7 @@ trait SidePanel
 	abstract protected function getEntity(): IEntity|callable|null;
 	abstract protected function getForm(): BaseForm;
 	abstract protected function getQueryObject(): QueryObject;
-	abstract protected function getPresenter(): Presenter;
+	abstract protected function getPresenter(): ?Presenter;
 	abstract public function getSnippetId(string $name): string;
 
 	/**
