@@ -8,11 +8,9 @@ use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Administration;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\Forms\Form;
-use ADT\FancyAdmin\UI\Forms\BaseForm;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
-use Nette\Security\Authenticator;
 use Nette\Utils\ArrayHash;
 
 trait SignInFormTrait
@@ -63,7 +61,11 @@ trait SignInFormTrait
 	public function processForm(): void
 	{
 		$this->presenter->user->login($this->identity);
-		$this->presenter->redirect('Home:default', ['do' => 'redrawBody']);
+		if ($selectedCompany = $this->presenter->user->getIdentity()->getFilteredCompany()?->getId()) {
+			$this->presenter->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
+		} else {
+			$this->presenter->redirect('Dashboard:default', ['do' => 'redrawBody']);
+		}
 	}
 
 	public function render(): void
