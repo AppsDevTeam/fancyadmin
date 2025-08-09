@@ -13,6 +13,7 @@ use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use Nette\Security\Passwords;
 
 trait IdentityTrait
 {
@@ -33,6 +34,9 @@ trait IdentityTrait
 
 	#[ORM\Column(unique: true, nullable:true)]
 	protected ?string $email = null;
+
+	#[ORM\Column(nullable:true)]
+	protected ?string $username = null;
 
 	#[ORM\Column(unique: true, nullable:true)]
 	protected ?string $phoneNumber = null;
@@ -58,7 +62,7 @@ trait IdentityTrait
 
 	public function setPassword(?string $password): static
 	{
-		$this->password = $password;
+		$this->password = new Passwords()->hash($password);
 		return $this;
 	}
 
@@ -92,6 +96,9 @@ trait IdentityTrait
 	public function setEmail(?string $email): static
 	{
 		$this->email = $email;
+		if ($email) {
+			$this->username = $email;
+		}
 		return $this;
 	}
 
@@ -195,6 +202,17 @@ trait IdentityTrait
 	public function addProfile(Profile $profile): static
 	{
 		$this->profiles->add($profile);
+		return $this;
+	}
+
+	public function getUsername(): ?string
+	{
+		return $this->username;
+	}
+
+	public function setUsername(?string $username): static
+	{
+		$this->username = $username;
 		return $this;
 	}
 }

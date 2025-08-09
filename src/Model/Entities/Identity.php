@@ -41,6 +41,10 @@ interface Identity extends DoctrineAuthenticatorIdentity
 	public function getEmail(): ?string;
 	public function setEmail(?string $email): static;
 
+	public function getUsername(): ?string;
+	public function setUsername(?string $username): static;
+
+
 	public function getPhoneNumber(): ?string;
 	public function setPhoneNumber(?string $phoneNumber): static;
 
