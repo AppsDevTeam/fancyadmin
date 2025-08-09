@@ -30,19 +30,19 @@ interface Identity extends DoctrineAuthenticatorIdentity
 
 	// Basic identity
 	public function getPassword(): ?string;
-	public function setPassword(?string $password): self;
+	public function setPassword(?string $password): static;
 
 	public function getFirstName(): string;
-	public function setFirstName(?string $firstName): self;
+	public function setFirstName(?string $firstName): static;
 
 	public function getLastName(): string;
-	public function setLastName(?string $lastName): self;
+	public function setLastName(?string $lastName): static;
 
-	public function getEmail(): string;
-	public function setEmail(?string $email): self;
+	public function getEmail(): ?string;
+	public function setEmail(?string $email): static;
 
 	public function getPhoneNumber(): ?string;
-	public function setPhoneNumber(?string $phoneNumber): self;
+	public function setPhoneNumber(?string $phoneNumber): static;
 
 	public function getFullName(): string;
 

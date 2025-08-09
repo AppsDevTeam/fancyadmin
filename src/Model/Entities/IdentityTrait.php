@@ -31,11 +31,11 @@ trait IdentityTrait
 	#[ORM\Column(nullable:false)]
 	protected string $lastName;
 
-	#[ORM\Column(unique: true, nullable:false)]
-	protected string $email;
+	#[ORM\Column(unique: true, nullable:true)]
+	protected ?string $email = null;
 
 	#[ORM\Column(unique: true, nullable:true)]
-	protected ?string $phoneNumber;
+	protected ?string $phoneNumber = null;
 
 	#[ORM\Column(nullable: true)]
 	protected ?string $password = null;
@@ -56,7 +56,7 @@ trait IdentityTrait
 		return $this->password;
 	}
 
-	public function setPassword(?string $password): self
+	public function setPassword(?string $password): static
 	{
 		$this->password = $password;
 		return $this;
@@ -67,7 +67,7 @@ trait IdentityTrait
 		return $this->firstName;
 	}
 
-	public function setFirstName(?string $firstName): self
+	public function setFirstName(?string $firstName): static
 	{
 		$this->firstName = $firstName;
 		return $this;
@@ -78,18 +78,18 @@ trait IdentityTrait
 		return $this->lastName;
 	}
 
-	public function setLastName(?string $lastName): self
+	public function setLastName(?string $lastName): static
 	{
 		$this->lastName = $lastName;
 		return $this;
 	}
 
-	public function getEmail(): string
+	public function getEmail(): ?string
 	{
 		return $this->email;
 	}
 
-	public function setEmail(?string $email): self
+	public function setEmail(?string $email): static
 	{
 		$this->email = $email;
 		return $this;
@@ -100,7 +100,7 @@ trait IdentityTrait
 		return $this->phoneNumber;
 	}
 
-	public function setPhoneNumber(?string $phoneNumber): self
+	public function setPhoneNumber(?string $phoneNumber): static
 	{
 		$this->phoneNumber = $phoneNumber;
 		return $this;
