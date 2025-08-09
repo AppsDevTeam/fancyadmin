@@ -48,7 +48,7 @@ trait NewPasswordFormTrait
 
 		$this->em->flush();
 
-		$this->presenter->redirect(':Portal:Home:', ['do' => 'redrawBody']);
+		$this->presenter->redirect(':Portal:Home:', ['selectedCompany' => $this->securityUser->getIdentity()->getFilteredCompany()->getId(), 'do' => 'redrawBody']);
 	}
 
 	public function getEntityClass(): ?string
