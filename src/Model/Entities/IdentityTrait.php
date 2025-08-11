@@ -62,7 +62,9 @@ trait IdentityTrait
 
 	public function setPassword(?string $password): static
 	{
-		$this->password = new Passwords()->hash($password);
+		if ($password) {
+			$this->password = new Passwords()->hash($password);			
+		}
 		return $this;
 	}
 

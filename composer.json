@@ -5,7 +5,7 @@
   "homepage": "https://www.appsdevteam.com",
   "license": ["MIT"],
   "require": {
-    "php": ">=8.3",
+    "php": ">=8.4",
     "kdyby/autowired": "^3.0",
     "adt/ajax-select": "^4.0",
     "contributte/translation": "^2.0",
