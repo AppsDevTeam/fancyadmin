@@ -44,7 +44,7 @@ trait NewPasswordFormTrait
 	public function processForm(ArrayHash $values): void
 	{
 		$this->securityUser->getIdentity()
-			->setPassword(new Passwords()->hash($values->password));
+			->setPassword($values->password);
 
 		$this->em->flush();
 
