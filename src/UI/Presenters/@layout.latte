@@ -73,7 +73,7 @@
 		{/if}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">
-                <img src="{$basePath}/images/logos/sobit-cashdesk-horizontal-light.svg{v}" class="" width="226px" height="auto" />
+                <img n:if="$logoFileName" src="{$basePath}/images/logos/{$logoFileName}{v}" class="" width="226px" height="auto" />
                 {include content}
 			</div>
 		</div>
