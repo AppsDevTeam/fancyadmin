@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
 use ADT\FancyAdmin\Model\Entities\AclRole;
@@ -32,12 +33,19 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'lostPasswordEnabled' => true,
 		'navbarMenuFactory' => NavbarMenuFactory::class,
 		'authenticator' => Authenticator::class,
+		'logoFileName' => null,
 	];
 
 	public function loadConfiguration(): void
 	{
 		$this->validateConfig($this->defaults);
 		$builder = $this->getContainerBuilder();
+
+		$builder->addDefinition($this->prefix('mailConfig'))
+			->setFactory(MailConfig::class, [
+				'logoFileName' => $this->config['logoFileName'],
+			]
+		);
 
 		$builder->addFactoryDefinition($this->prefix('sidePanelControlFactory'))
 			->setImplement(SidePanelControlFactory::class)

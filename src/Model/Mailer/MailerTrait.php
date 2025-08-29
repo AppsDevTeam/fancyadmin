@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model\Mailer;
 
 use ADT\BackgroundQueue\BackgroundQueue;
+use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\Mailer\Services\Api;
@@ -40,7 +41,8 @@ trait MailerTrait
 		protected readonly Translator $translator,
 		protected readonly BackgroundQueue $backgroundQueue,
 		protected readonly EntityManagerInterface $em,
-		protected readonly LinkGenerator $linkGenerator
+		protected readonly LinkGenerator $linkGenerator,
+		protected readonly MailConfig $mailConfig
 	) {
 	}
 
@@ -64,6 +66,8 @@ trait MailerTrait
 		$template->addFilter('translate', [$this->translator, 'translate'])
 			->setFile(__DIR__ . '/templates/' . $templateName . '.latte');
 
+		$template->fromName = $this->fromName;
+		$template->logoFileName = $this->mailConfig->getLogoFileName();
 		$template->subject = $this->translator->translate($subject, $translateVariables);
 
 		foreach ($data as $key => $value) {
@@ -177,5 +181,10 @@ trait MailerTrait
 		$this->send($message);
 
 		$this->em->commit();
+	}
+
+	public function getLogoFileName(): ?string
+	{
+		return $this->logoFileName;
 	}
 }
