@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Forms\NewPassword;
 
+use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use ADT\Forms\Form;
 use ADT\FancyAdmin\Model\Entities\PasswordRecovery;
 use ADT\FancyAdmin\UI\Forms\BaseForm;
+use App\Model\Entities\OnetimeToken;
 use App\Model\Enums\AclResourceEnum;
 use App\Model\Exceptions\AuthenticationUserNotActiveException;
 use Kdyby\Autowired\Attributes\Autowire;
@@ -16,6 +18,8 @@ use Nette\Utils\ArrayHash;
 
 trait NewPasswordFormTrait
 {
+	abstract protected function getOnetimeTokenQuery(): OnetimeTokenQuery;
+
 	public function initForm(Form $form): void
 	{
 		$form->getElementPrototype()->class[] = 'login-form';
@@ -45,6 +49,11 @@ trait NewPasswordFormTrait
 	{
 		$this->securityUser->getIdentity()
 			->setPassword($values->password);
+
+		/** @var \ADT\FancyAdmin\Model\Entities\OnetimeToken $_onetimeToken */
+		foreach ($this->getOnetimeTokenQuery()->byIsValid()->byObjectId($this->securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {
+			$_onetimeToken->setUsedAt(new \DateTimeImmutable());
+		}
 
 		$this->em->flush();
 
