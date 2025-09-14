@@ -9,12 +9,18 @@ use Nette\Application\LinkGenerator;
 class Administration
 {
 	public function __construct(
+		protected string $appName,
 		protected string $adminHostPath,
 		protected string $homepagePresenter,
 		protected bool $lostPasswordEnabled,
 		protected NavbarMenuFactory $navbarMenuFactory,
 		protected LinkGenerator $linkGenerator,
 	) {}
+	
+	public function getAppName(): string
+	{
+		return $this->appName;
+	}
 
 	public function getAdminHostPath(): string
 	{
