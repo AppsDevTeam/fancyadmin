@@ -8,20 +8,20 @@ use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Administration;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
 use ADT\Mailer\Services\Api;
 use ADT\SingleRecipient\SingleRecipient;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use Contributte\Translation\Translator;
 use DateMalformedStringException;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Nette\Application\LinkGenerator;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Application\UI\TemplateFactory;
 use Nette\Bridges\ApplicationLatte\Template;
-use Nette\Mail;
 use Nette\Mail\Message;
+use ReflectionClass;
 use TijsVerkoyen\CssToInlineStyles;
 
 trait MailerTrait
@@ -44,6 +44,7 @@ trait MailerTrait
 		protected readonly LinkGenerator $linkGenerator,
 		protected readonly MailConfig $mailConfig,
 		protected readonly Administration $administration,
+		protected readonly OnetimeTokenService $onetimeTokenService,
 	) {
 	}
 
@@ -62,15 +63,29 @@ trait MailerTrait
 			$this->translator->setLocale($locale);
 		}
 
+		$templateName .= '.latte';
+		$dirname = dirname(new ReflectionClass($this)->getFileName()) . '/templates/';
+		$templateFile = $dirname . $templateName;
+		if (!file_exists($templateFile)) {
+			$templateFile = __DIR__ . '/templates/' . $templateName;
+		}
+
+		$layoutName = '@layout.latte';
+		$layoutFile = dirname(new ReflectionClass($this)->getFileName()) . '/templates/' . $layoutName;
+		if (!file_exists($layoutFile)) {
+			$layoutFile = __DIR__ . '/templates/' . $layoutName;
+		}
+
 		/** @var Template $template */
 		$template = $this->templateFactory->createTemplate();
 		$template->addFilter('translate', [$this->translator, 'translate'])
-			->setFile(__DIR__ . '/templates/' . $templateName . '.latte');
+			->setFile($templateFile);
 
 		$template->appName = $this->administration->getAppName();
 		$template->fromName = $this->fromName;
 		$template->logoFileName = $this->mailConfig->getLogoFileName();
 		$template->subject = $this->translator->translate($subject, $translateVariables);
+		$template->layoutFile = $layoutFile;
 
 		foreach ($data as $key => $value) {
 			$template->$key = $value;
@@ -83,7 +98,7 @@ trait MailerTrait
 		$message = static::createMessage()
 			->setSubject($this->translator->translate($subject, $translateVariables))
 			->setHtmlBody(
-				(new CssToInlineStyles\CssToInlineStyles())->convert((string) $template),
+				new CssToInlineStyles\CssToInlineStyles()->convert((string) $template),
 				$this->wwwDir
 			);
 
@@ -128,27 +143,22 @@ trait MailerTrait
 	 */
 	public function sendAccountCreationEmail(Identity $identity): void
 	{
+		$this->em->beginTransaction();
+
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = new $this->em->findEntityClassByInterface(OnetimeToken::class);
-		$onetimeToken
-			->setObjectId($identity->getId())
-			->setType('login')
-			->setIpAddress($_SERVER['REMOTE_ADDR'])
-			->setToken($onetimeToken::generateRandomToken())
-			->setValidUntil((new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours')));
-		$this->em->persist($onetimeToken);
-		$this->em->flush();
+		$onetimeToken = $this->onetimeTokenService->generateToken($identity, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'));
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
 			'Vytvoření účtu',
 			[
-				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
-				'validTill' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')
+				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()])
 			]
 		);
 		$message->addTo($identity->getEmail());
 		$this->send($message);
+
+		$this->em->commit();
 	}
 
 	/**
@@ -161,32 +171,18 @@ trait MailerTrait
 		$this->em->beginTransaction();
 
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = new $this->em->findEntityClassByInterface(OnetimeToken::class);
-		$onetimeToken
-			->setObjectId($identity->getId())
-			->setType('login') // TODO
-			->setToken($onetimeToken::generateRandomToken())
-			->setIpAddress($_SERVER['REMOTE_ADDR'])
-			->setValidUntil(new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'));
-		$this->em->persist($onetimeToken);
-		$this->em->flush();
+		$onetimeToken = $this->onetimeTokenService->generateToken($identity, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'));
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',
 			'Nové heslo',
 			[
 				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
-				'validTill' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')
 			]
 		);
 		$message->addTo($identity->getEmail());
 		$this->send($message);
 
 		$this->em->commit();
-	}
-
-	public function getLogoFileName(): ?string
-	{
-		return $this->logoFileName;
 	}
 }
