@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model\Mailer;
 
 use ADT\BackgroundQueue\BackgroundQueue;
+use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Administration;
 use ADT\FancyAdmin\Model\Entities\Identity;
@@ -27,8 +28,6 @@ trait MailerTrait
 {
 	use SingleRecipient;
 
-	abstract protected function getOnetimeTokenClass(): string;
-
 	public function __construct(
 		protected readonly string $from,
 		protected readonly string $fromName,
@@ -41,7 +40,7 @@ trait MailerTrait
 		protected readonly Api $mailapi,
 		protected readonly Translator $translator,
 		protected readonly BackgroundQueue $backgroundQueue,
-		protected readonly EntityManagerInterface $em,
+		protected readonly EntityManager $em,
 		protected readonly LinkGenerator $linkGenerator,
 		protected readonly MailConfig $mailConfig,
 		protected readonly Administration $administration,
@@ -130,7 +129,7 @@ trait MailerTrait
 	public function sendAccountCreationEmail(Identity $identity): void
 	{
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = new ($this->getOnetimeTokenClass());
+		$onetimeToken = new $this->em->findEntityClassByInterface(OnetimeToken::class);
 		$onetimeToken
 			->setObjectId($identity->getId())
 			->setType('login')
@@ -142,10 +141,10 @@ trait MailerTrait
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
-			'Vytvoření účtu', // TODO translate
+			'Vytvoření účtu',
 			[
 				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
-				'validTill' => $this->translator->translate('app.emails.passwordRecovery.validTill', ['date' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')])
+				'validTill' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')
 			]
 		);
 		$message->addTo($identity->getEmail());
@@ -162,7 +161,7 @@ trait MailerTrait
 		$this->em->beginTransaction();
 
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = new ($this->getOnetimeTokenClass());
+		$onetimeToken = new $this->em->findEntityClassByInterface(OnetimeToken::class);
 		$onetimeToken
 			->setObjectId($identity->getId())
 			->setType('login') // TODO
@@ -174,10 +173,10 @@ trait MailerTrait
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',
-			'app.emails.passwordRecovery.subject',
+			'Nové heslo',
 			[
 				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
-				'validTill' => $this->translator->translate('app.emails.passwordRecovery.validTill', ['date' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')])
+				'validTill' => $onetimeToken->getValidUntil()->format('j. n. Y G:i')
 			]
 		);
 		$message->addTo($identity->getEmail());
