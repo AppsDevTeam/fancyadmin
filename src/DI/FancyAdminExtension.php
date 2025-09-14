@@ -28,7 +28,8 @@ use RuntimeException;
 class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
 	private array $defaults = [
-		'appName' => null,
+		'project' => null,
+		'projectName' => null,
 		'adminHostPath' => '/admin',
 		'homepagePresenter' => 'Home:default',
 		'lostPasswordEnabled' => true,
@@ -63,7 +64,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(Administration::class, [
-				'appName' => $this->config['appName'],
+				'project' => $this->config['project'],
+				'projectName' => $this->config['projectName'],
 				'adminHostPath' => $this->config['adminHostPath'],
 				'homepagePresenter' => $this->config['homepagePresenter'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],

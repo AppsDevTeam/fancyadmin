@@ -17,6 +17,7 @@ use DateMalformedStringException;
 use DateTimeImmutable;
 use Exception;
 use Nette\Application\LinkGenerator;
+use Nette\Application\UI\Component;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Application\UI\TemplateFactory;
 use Nette\Bridges\ApplicationLatte\Template;
@@ -81,7 +82,7 @@ trait MailerTrait
 		$template->addFilter('translate', [$this->translator, 'translate'])
 			->setFile($templateFile);
 
-		$template->appName = $this->administration->getAppName();
+		$template->projectName = $this->administration->getProjectName();
 		$template->fromName = $this->fromName;
 		$template->logoFileName = $this->mailConfig->getLogoFileName();
 		$template->subject = $this->translator->translate($subject, $translateVariables);
@@ -152,7 +153,7 @@ trait MailerTrait
 			'accountCreation',
 			'Vytvoření účtu',
 			[
-				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()])
+				'link' => $this->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()])
 			]
 		);
 		$message->addTo($identity->getEmail());
@@ -177,12 +178,22 @@ trait MailerTrait
 			'passwordRecovery',
 			'Nové heslo',
 			[
-				'link' => $this->linkGenerator->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
+				'link' => $this->link(':Portal:Sign:token', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
 			]
 		);
 		$message->addTo($identity->getEmail());
 		$this->send($message);
 
 		$this->em->commit();
+	}
+
+	public function link(
+		string $destination,
+		array $args = [],
+		?Component $component = null,
+		?string $mode = null,
+	)
+	{
+		return $this->linkGenerator->link($destination, $args, $component, $mode);
 	}
 }
