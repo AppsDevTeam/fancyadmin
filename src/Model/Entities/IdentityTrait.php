@@ -165,6 +165,14 @@ trait IdentityTrait
 	/**
 	 * @return Profile[]
 	 */
+	public function getProfiles(): array
+	{
+		return $this->profiles->toArray();
+	}
+
+	/**
+	 * @return Profile[]
+	 */
 	public function getAllowedProfiles(?string $context = null): array
 	{
 		$context = $context ?: $this->context;
