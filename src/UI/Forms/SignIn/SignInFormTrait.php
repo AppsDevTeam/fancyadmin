@@ -12,6 +12,7 @@ use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
 use Nette\Utils\ArrayHash;
+use ADT\FancyAdmin\Exception\AuthenticationProcessException;
 
 trait SignInFormTrait
 {
@@ -60,7 +61,14 @@ trait SignInFormTrait
 	 */
 	public function processForm(): void
 	{
-		$this->presenter->user->login($this->identity);
+		try {
+			$this->presenter->user->login($this->identity);
+		}
+		catch (AuthenticationProcessException $e) {
+			$this->form->addError($e->getMessage());
+			return;
+		}
+
 		if ($selectedCompany = $this->presenter->user->getIdentity()->getFilteredCompany()?->getId()) {
 			$this->presenter->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
 		} else {
