@@ -52,6 +52,8 @@ trait SignInFormTrait
 			$this->form->addError('fcadmin.forms.signIn.errors.wrongEmailOrPassword');
 		} catch (AuthenticationUserNotActiveException $e) {
 			$this->form->addError('fcadmin.forms.signIn.errors.suspendedAccount');
+		} catch (AuthenticationProcessException $e) {
+			$this->form->addError($e->getMessage());
 		}
 	}
 
@@ -61,13 +63,7 @@ trait SignInFormTrait
 	 */
 	public function processForm(): void
 	{
-		try {
-			$this->presenter->user->login($this->identity);
-		}
-		catch (AuthenticationProcessException $e) {
-			$this->form->addError($e->getMessage());
-			return;
-		}
+		$this->presenter->user->login($this->identity);
 
 		if ($selectedCompany = $this->presenter->user->getIdentity()->getFilteredCompany()?->getId()) {
 			$this->presenter->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
