@@ -20,7 +20,7 @@ use Nette\Utils\ArrayHash;
 trait LostPasswordFormTrait
 {
 	abstract protected function getIdentity(string $email): ?Identity;
-	
+
 	#[Autowire]
 	protected Mailer $mailer;
 
@@ -47,10 +47,10 @@ trait LostPasswordFormTrait
 			$this->presenter->flashMessageError('fcadmin.forms.lostPassword.messages.error');
 			$this->presenter->redirect('this');
 		}
-		
+
 		$this->mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
 		$this->presenter->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
-		$this->presenter->redirect('Sign:In');
+		$this->presenter->redirect('this');
 	}
 
 	public function getEntityClass(): ?string
