@@ -10,6 +10,7 @@ use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\Forms\Form;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
+use Nette\Application\UI\Presenter;
 use Nette\Security\AuthenticationException;
 use Nette\Utils\ArrayHash;
 use ADT\FancyAdmin\Exception\AuthenticationProcessException;
@@ -18,11 +19,12 @@ trait SignInFormTrait
 {
 	abstract public function getAuthenticator(): DoctrineAuthenticator;
 	abstract public function getContext(): ?string;
+	abstract public function getPresenter(): ?Presenter;
 
 	#[Autowire]
 	protected Administration $administration;
 
-	protected Identity $identity;
+	protected Identi $identity;
 
 	public function initForm(Form $form): void
 	{
@@ -44,16 +46,12 @@ trait SignInFormTrait
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
 	}
 
-	public function validateForm(ArrayHash $values): void
+	public function validateForm(ArrayHash $values, Form $form): void
 	{
 		try {
-			$this->identity = $this->authenticator->authenticate($values->email, $values->password, $this->getContext());
+			$this->identity = $this->getAuthenticator()->authenticate($values->email, $values->password, $this->getContext());
 		} catch (AuthenticationException $e) {
-			$this->form->addError('fcadmin.forms.signIn.errors.wrongEmailOrPassword');
-		} catch (AuthenticationUserNotActiveException $e) {
-			$this->form->addError('fcadmin.forms.signIn.errors.suspendedAccount');
-		} catch (AuthenticationProcessException $e) {
-			$this->form->addError($e->getMessage());
+			$form->addError($e->getMessage());
 		}
 	}
 
@@ -61,14 +59,14 @@ trait SignInFormTrait
 	 * @throws AuthenticationException
 	 * @throws InvalidLinkException
 	 */
-	public function processForm(): void
+	public function processForm(): never
 	{
-		$this->presenter->user->login($this->identity);
+		$this->getPresenter()->user->login($this->identity);
 
-		if ($selectedCompany = $this->presenter->user->getIdentity()->getFilteredCompany()?->getId()) {
-			$this->presenter->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
+		if ($selectedCompany = $this->getPresenter()->user->getIdentity()->getFilteredCompany()?->getId()) {
+			$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
 		} else {
-			$this->presenter->redirect('Dashboard:default', ['do' => 'redrawBody']);
+			$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
 		}
 	}
 

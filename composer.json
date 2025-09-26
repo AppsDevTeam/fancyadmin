@@ -23,7 +23,8 @@
     "adt/mailer": "^3.2",
     "tijsverkoyen/css-to-inline-styles": "^2.3",
     "adt/doctrine-components": "^3.0",
-    "nette/application": "^3.2"
+    "nette/application": "^3.2",
+    "brick/phonenumber": "^0.7.0"
   },
   "repositories": [
     {

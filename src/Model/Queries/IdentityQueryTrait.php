@@ -4,20 +4,11 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\FancyAdmin\Model\Queries\Filters\IsActiveFilterTrait;
-
 trait IdentityQueryTrait
 {
-	use IsActiveFilterTrait;
-
-	public function setDefaultOrder(): void
+	public function byUsername(string $username): static
 	{
-		$this->orderBy(['firstName' => 'ASC', 'lastName' => 'ASC']);
-	}
-
-	public function byEmail(string $email): static
-	{
-		return $this->by('email', $email);
+		return $this->by('username', $username);
 	}
 
 	public function byPhoneNumber(string $phoneNumber): static

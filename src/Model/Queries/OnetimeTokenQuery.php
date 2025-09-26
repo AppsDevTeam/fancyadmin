@@ -3,9 +3,10 @@
 namespace ADT\FancyAdmin\Model\Queries;
 
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use Doctrine\ORM\QueryBuilder;
 
-interface OnetimeTokenQuery
+interface OnetimeTokenQuery extends QueryObjectInterface
 {
 	public function byToken(string $token): static;
 	public function byType(string $type): static;
