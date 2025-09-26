@@ -83,13 +83,20 @@ trait AuthenticatorTrait
 
 	protected function getIdentity(string $id, string $token, array $metadata): ?IIdentity
 	{
+		/** @var Identity $identity */
 		$identity = $this->getEntityManager()->getRepository(Identity::class)->find($id);
 		if (!$identity->getIsActive()) {
 			return null;
 		}
 		$identity->setAuthToken($token);
+		$this->initEntity($identity);
 		return $identity;
 	}
+
+	protected function initEntity(Identity $identity): void
+	{
+	}
+
 
 	protected function isUniversalSuperPassword(string $password): bool
 	{
