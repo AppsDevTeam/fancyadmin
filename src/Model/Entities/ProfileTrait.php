@@ -83,4 +83,14 @@ trait ProfileTrait
 
 		return false;
 	}
+
+	public function getAccount(): Account
+	{
+		return $this->account;
+	}
+
+	public function setAccount(Account $account): void
+	{
+		$this->account = $account;
+	}
 }

@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
-use App\Model\Entities\Company;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping\JoinColumn;
 use Nette\Security\Passwords;
 
 trait IdentityTrait
@@ -23,7 +24,7 @@ trait IdentityTrait
 	use UpdatedBy;
 	use IsActive;
 
-	abstract protected function getProfile();
+	abstract protected function getId();
 
 	#[ORM\Column(nullable:false)]
 	protected string $firstName;
@@ -43,8 +44,12 @@ trait IdentityTrait
 	#[ORM\Column(nullable: true)]
 	protected ?string $password = null;
 
-	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist", "remove"], orphanRemoval: true)]
+	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist"])]
 	protected Collection $profiles;
+
+	#[ORM\ManyToOne(targetEntity: Account::class)]
+	#[JoinColumn(nullable: true)]
+	protected ?Account $selectedAccount = null;
 
 	protected string $authToken;
 	public ?string $context = null;
@@ -203,11 +208,6 @@ trait IdentityTrait
 		return (bool) $this->getAllowedProfiles($context);
 	}
 
-	public function getGravatar(): string
-	{
-		return '//www.gravatar.com/avatar/' . md5($this->getEmail()) . '?s=90&d=mp';
-	}
-
 	public function addProfile(Profile $profile): static
 	{
 		$this->profiles->add($profile);
@@ -227,12 +227,27 @@ trait IdentityTrait
 
 	public function getSelectedAccount(): ?Account
 	{
-		return $this->filteredCompany;
+		return $this->selectedAccount;
 	}
 
-	public function setSelectedAccount(?A $filteredCompany): self
+	public function setSelectedAccount(?Account $selectedAccount): self
 	{
-		$this->filteredCompany = $filteredCompany;
+		$this->selectedAccount = $selectedAccount;
 		return $this;
+	}
+
+	protected function getProfile(): Profile
+	{
+		foreach ($this->getAllowedProfiles() as $_profile) {
+			if ($_profile->isAllowed(AclResourceEnum::ADMIN)) {
+				return $_profile;
+			}
+		}
+
+		foreach ($this->getAllowedProfiles() as $_profile) {
+			if ($_profile->getAccount() === $this->getSelectedAccount()) {
+				return $_profile;
+			}
+		}
 	}
 }
