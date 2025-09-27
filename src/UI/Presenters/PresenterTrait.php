@@ -1,0 +1,21 @@
+<?php
+
+namespace ADT\FancyAdmin\UI\Presenters;
+
+use Nette\Http\IResponse;
+use Nette\Security\User;
+use stdClass;
+
+trait PresenterTrait
+{
+	abstract public function error(string $message = '', int $httpCode = IResponse::S404_NotFound): void;
+	abstract public function getAction(): string;
+	abstract public function getPresenter(): static;
+	abstract public function getUser(): User;
+	abstract public function redirect(string $destination, $args = []): void;
+
+	abstract public function flashMessageError(string $message, ?int $autoCloseDuration = null): stdClass;
+	abstract public function flashMessageWarning(string $message, ?int $autoCloseDuration = null): stdClass;
+	abstract public function flashMessageSuccess(string $message, ?int $autoCloseDuration = null): stdClass;
+	abstract public function flashMessageInfo(string $message, ?int $autoCloseDuration = null): stdClass;
+}

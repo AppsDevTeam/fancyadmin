@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Forms;
 
 use ADT\DoctrineForms\Form;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\Forms\BootstrapFormRenderer;
 use Doctrine\ORM\EntityManagerInterface;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
@@ -10,8 +11,11 @@ use Nette\Localization\Translator;
 
 trait BaseFormTrait
 {
+	use FormTrait;
+
 	abstract protected function getEntityManager(): EntityManagerInterface;
 	abstract protected function getTranslator(): Translator;
+	abstract protected function getIdentity(): Identity;
 
 	protected function createComponentForm(): Form
 	{

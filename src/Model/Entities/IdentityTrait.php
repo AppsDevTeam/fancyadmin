@@ -9,6 +9,7 @@ use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
+use App\Model\Entities\Company;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
@@ -221,6 +222,17 @@ trait IdentityTrait
 	public function setUsername(?string $username): static
 	{
 		$this->username = $username;
+		return $this;
+	}
+
+	public function getSelectedAccount(): ?Account
+	{
+		return $this->filteredCompany;
+	}
+
+	public function setSelectedAccount(?A $filteredCompany): self
+	{
+		$this->filteredCompany = $filteredCompany;
 		return $this;
 	}
 }

@@ -28,7 +28,7 @@ use RuntimeException;
 
 class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
-	protected $config = [
+	private array $defaults = [
 		'project' => null,
 		'projectName' => null,
 		'adminHostPath' => '/admin',
@@ -41,7 +41,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 	public function loadConfiguration(): void
 	{
-		$config = $this->getConfigSchema();
+		$this->validateConfig($this->defaults);
 		$builder = $this->getContainerBuilder();
 
 		$builder->addFactoryDefinition($this->prefix('sidePanelControlFactory'))
@@ -53,7 +53,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setFactory(FancyAdminRouter::class);
 
 		$builder->addFactoryDefinition($this->prefix('navbarMenuFactory'))
-			->setImplement($config['navbarMenuFactory'])
+			->setImplement($this->config['navbarMenuFactory'])
 			->getResultDefinition()
 			->setFactory(NavbarMenu::class);
 

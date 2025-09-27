@@ -4,7 +4,6 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineAuthenticator\SecurityUser;
-use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Administration;
 use Contributte\Translation\Translator;
 use Exception;
@@ -27,9 +26,6 @@ trait BasePresenterTrait
 	#[Autowire]
 	protected Administration $administration;
 
-	#[Autowire]
-	protected MailConfig $mailConfig;
-
 	protected bool $primaryTemplate = false;
 
 	public array $allowedMethods = ['GET', 'POST', 'HEAD'];
@@ -44,7 +40,7 @@ trait BasePresenterTrait
 		$this->template->primaryTemplate = $this->primaryTemplate;
 		$this->template->jsComponentsConfig = Json::encode([]);
 		$this->template->navbarMenu = $this->administration->getNavbarMenu();
-		$this->template->logoFileName = $this->mailConfig->getlogoFileName();
+		$this->template->logoFileName = $this->administration->getLogoFileName();
 	}
 
 	public function handleRedrawBody(): void

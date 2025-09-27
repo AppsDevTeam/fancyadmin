@@ -15,8 +15,12 @@ trait ProfileTrait
 	use IsActive;
 
 	#[ManyToOne(targetEntity: 'Identity', inversedBy: 'profiles')]
-	#[JoinColumn(nullable: false, onDelete: "CASCADE")]
+	#[JoinColumn(nullable: false)]
 	protected Identity $identity;
+
+	#[ManyToOne(targetEntity: 'Account', inversedBy: 'profiles')]
+	#[JoinColumn(nullable: true)]
+	protected Account $account;
 
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]

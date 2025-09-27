@@ -2,28 +2,18 @@
 
 namespace App\UI\Portal\Presenters\Sign;
 
-use App\Model\Doctrine\EntityManager;
-use App\Model\Entities\Company;
-use App\Model\Entities\OnetimeToken;
-use App\Model\Enums\AclResourceEnum;
-use App\Model\Queries\Factories\CompanyQueryFactory;
-use App\Model\Queries\Factories\OnetimeTokenQueryFactory;
-use App\Model\Security\Authenticator;
-use App\UI\Portal\Components\Forms\LostPassword\LostPasswordForm;
-use App\UI\Portal\Components\Forms\LostPassword\LostPasswordFormFactory;
-use App\UI\Portal\Components\Forms\NewPassword\NewPasswordForm;
-use App\UI\Portal\Components\Forms\NewPassword\NewPasswordFormFactory;
-use App\UI\Portal\Components\Forms\SignIn\SignInForm;
-use App\UI\Portal\Components\Forms\SignIn\SignInFormFactory;
-use App\UI\Portal\Presenters\BasePresenter;
-use App\UI\Portal\Presenters\CompanyNotRequiredInterface;
+use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
+use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use DateTimeImmutable;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Security\AuthenticationException;
 use ReflectionException;
 
-class SignPresenterTrait
+trait SignPresenterTrait
 {
+	use PresenterTrait;
+
 	#[Autowire]
 	protected CompanyQueryFactory $companyQueryFactory;
 
@@ -36,17 +26,15 @@ class SignPresenterTrait
 	#[Autowire]
 	protected EntityManager $em;
 
-	protected Company|null $company = null;
-
 	public function startup(): void
 	{
 		parent::startup();
 
-		if ($this->isLogged() && !in_array($this->getAction(), ['out', 'token', 'newPassword'])) {
+		if ($this->getUser()->isLoggedIn() && !in_array($this->getAction(), ['out', 'token', 'newPassword'])) {
 			if ($selectedCompany = $this->getUser()->getIdentity()->getFilteredCompany()?->getId()) {
-				$this->presenter->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
+				$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
 			} else {
-				$this->presenter->redirect('Dashboard:default', ['do' => 'redrawBody']);
+				$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
 			}
 		}
 	}
@@ -100,21 +88,6 @@ class SignPresenterTrait
 		if (!$this->getUser()->isLoggedIn()) {
 			$this->redirect('in');
 		}
-	}
-
-	public function createComponentSignInForm(SignInForm $factory): SignInForm
-	{
-		return $factory->create();
-	}
-
-	public function createComponentNewPasswordForm(NewPasswordFormFactory $factory): NewPasswordForm
-	{
-		return $factory->create();
-	}
-
-	public function createComponentLostPasswordForm(LostPasswordFormFactory $factory): LostPasswordForm
-	{
-		return $factory->create();
 	}
 
 	public function actionLostPassword(): void

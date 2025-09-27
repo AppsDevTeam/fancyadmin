@@ -4,21 +4,17 @@ namespace ADT\FancyAdmin\UI\Forms\LostPassword;
 
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
-use ADT\FancyAdmin\Model\Entities\OnetimeTokenTrait;
 use ADT\FancyAdmin\Model\Mailer\Mailer;
+use ADT\FancyAdmin\UI\Forms\BaseFormTrait;
 use ADT\Forms\Form;
-use ADT\FancyAdmin\Model\Entities\PasswordRecovery;
-use ADT\FancyAdmin\UI\Forms\BaseForm;
-use App\Model\Queries\Factories\IdentityQueryFactory;
-use Contributte\Translation\Exceptions\InvalidArgument;
-use Doctrine\ORM\Exception\ORMException;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\LinkGenerator;
-use Nette\Application\UI\InvalidLinkException;
 use Nette\Utils\ArrayHash;
 
 trait LostPasswordFormTrait
 {
+	use BaseFormTrait;
+
 	abstract protected function getIdentity(string $email): ?Identity;
 
 	#[Autowire]
@@ -44,13 +40,13 @@ trait LostPasswordFormTrait
 	public function processForm(ArrayHash $values): void
 	{
 		if (!$identity = $this->getIdentity($values['email'])) {
-			$this->presenter->flashMessageError('fcadmin.forms.lostPassword.messages.error');
-			$this->presenter->redirect('this');
+			$this->getPresenter()->flashMessageError('fcadmin.forms.lostPassword.messages.error');
+			$this->getPresenter()->redirect('this');
 		}
 
 		$this->mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
-		$this->presenter->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
-		$this->presenter->redirect('this');
+		$this->getPresenter()->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
+		$this->getPresenter()->redirect('this');
 	}
 
 	public function getEntityClass(): ?string

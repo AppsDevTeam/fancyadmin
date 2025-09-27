@@ -7,16 +7,18 @@ namespace ADT\FancyAdmin\UI\Forms\SignIn;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Administration;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\UI\Forms\BaseFormTrait;
 use ADT\Forms\Form;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Application\UI\Presenter;
 use Nette\Security\AuthenticationException;
 use Nette\Utils\ArrayHash;
-use ADT\FancyAdmin\Exception\AuthenticationProcessException;
 
 trait SignInFormTrait
 {
+	use BaseFormTrait;
+
 	abstract public function getAuthenticator(): DoctrineAuthenticator;
 	abstract public function getContext(): ?string;
 	abstract public function getPresenter(): ?Presenter;
@@ -44,6 +46,8 @@ trait SignInFormTrait
 			->getControlPrototype()->class[] = 'w-100';
 
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
+
+		$this->getTemplate()->administration = $this->administration;
 	}
 
 	public function validateForm(ArrayHash $values, Form $form): void
@@ -63,17 +67,11 @@ trait SignInFormTrait
 	{
 		$this->getPresenter()->user->login($this->identity);
 
-		if ($selectedCompany = $this->getPresenter()->user->getIdentity()->getFilteredCompany()?->getId()) {
+		if ($selectedCompany = $this->getIdentity()->getFilteredCompany()?->getId()) {
 			$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
 		} else {
 			$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
 		}
-	}
-
-	public function render(): void
-	{
-		$this->template->administration = $this->administration;
-		parent::render();
 	}
 
 	public function getEntityClass(): ?string
