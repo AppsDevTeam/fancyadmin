@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
-use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
 use ADT\FancyAdmin\Model\Entities\AclRole;
@@ -27,7 +28,7 @@ use RuntimeException;
 
 class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
-	private array $defaults = [
+	protected $config = [
 		'project' => null,
 		'projectName' => null,
 		'adminHostPath' => '/admin',
@@ -40,14 +41,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 	public function loadConfiguration(): void
 	{
-		$this->validateConfig($this->defaults);
+		$config = $this->getConfigSchema();
 		$builder = $this->getContainerBuilder();
-
-		$builder->addDefinition($this->prefix('mailConfig'))
-			->setFactory(MailConfig::class, [
-				'logoFileName' => $this->config['logoFileName'],
-			]
-		);
 
 		$builder->addFactoryDefinition($this->prefix('sidePanelControlFactory'))
 			->setImplement(SidePanelControlFactory::class)
@@ -58,7 +53,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setFactory(FancyAdminRouter::class);
 
 		$builder->addFactoryDefinition($this->prefix('navbarMenuFactory'))
-			->setImplement($this->config['navbarMenuFactory'])
+			->setImplement($config['navbarMenuFactory'])
 			->getResultDefinition()
 			->setFactory(NavbarMenu::class);
 
@@ -68,6 +63,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'projectName' => $this->config['projectName'],
 				'adminHostPath' => $this->config['adminHostPath'],
 				'homepagePresenter' => $this->config['homepagePresenter'],
+				'logoFileName' => $this->config['logoFileName'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
 				'navbarMenuFactory' => '@' . $this->config['navbarMenuFactory'],
 				'linkGenerator' => '@' . LinkGenerator::class,

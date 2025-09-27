@@ -2,7 +2,9 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-interface Profile
+use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
+
+interface Profile extends IsActiveInterface
 {
 	public function getIdentity(): Identity;
 	public function setIdentity(Identity $identity): static;
@@ -11,6 +13,4 @@ interface Profile
 	public function addRole(AclRole $role): static;
 	public function isAllowed(string $resource): bool;
 	public function isAllowedContext(string $context): bool;
-	public function getIsActive(): bool;
-	public function setIsActive(bool $isActive): static;
 }

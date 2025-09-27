@@ -2,8 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
+use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\InverseJoinColumn;
@@ -13,7 +12,6 @@ use Doctrine\ORM\Mapping\ManyToOne;
 
 trait ProfileTrait
 {
-	use Identifier;
 	use IsActive;
 
 	#[ManyToOne(targetEntity: 'Identity', inversedBy: 'profiles')]

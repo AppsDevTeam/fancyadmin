@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\Model\Entities\Attributes;
+namespace ADT\FancyAdmin\Model\Entities\Traits;
 
 use ADT\FancyAdmin\Model\Entities\Identity;
 use Doctrine\ORM\Mapping\JoinColumn;

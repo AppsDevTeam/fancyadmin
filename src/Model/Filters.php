@@ -36,7 +36,7 @@ class Filters
 		return DateTime::from($time)->format($format);
 	}
 
-	public function datetime($time, string $format = 'j. n. Y&nbsp;H:i')
+	public function datetime($time, string $format = 'j. n. Y H:i'): ?string
 	{
 		if ($time === null) {
 			return null;
@@ -49,13 +49,13 @@ class Filters
 	/**
 	 * @throws Exception
 	 */
-	public function time($time, string $format = 'H:i')
+	public function time($time, string $format = 'H:i'): string
 	{
 		$format = html_entity_decode($format);
 		return DateTime::from($time)->format($format);
 	}
 
-	public function price(float $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null)
+	public function price(float $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null): string
 	{
 		if ($currency) {
 			$currency = html_entity_decode($currency);
@@ -158,7 +158,7 @@ class Filters
 		return sprintf('#%02x%02x%02x', round($r), round($g), round($b));
 	}
 
-	public static function lighten(string $hexColor, int $percent)
+	public static function lighten(string $hexColor, int $percent): string
 	{
 		// Odstranit "#" z barvy, pokud je přítomna
 		$hexColor = ltrim($hexColor, '#');

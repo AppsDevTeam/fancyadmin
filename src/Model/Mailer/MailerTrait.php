@@ -4,7 +4,6 @@ namespace ADT\FancyAdmin\Model\Mailer;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\DoctrineComponents\EntityManager;
-use ADT\FancyAdmin\Core\MailConfig;
 use ADT\FancyAdmin\Model\Administration;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
@@ -43,7 +42,6 @@ trait MailerTrait
 		protected readonly BackgroundQueue $backgroundQueue,
 		protected readonly EntityManager $em,
 		protected readonly LinkGenerator $linkGenerator,
-		protected readonly MailConfig $mailConfig,
 		protected readonly Administration $administration,
 		protected readonly OnetimeTokenService $onetimeTokenService,
 	) {
@@ -84,7 +82,7 @@ trait MailerTrait
 
 		$template->projectName = $this->administration->getProjectName();
 		$template->fromName = $this->fromName;
-		$template->logoFileName = $this->mailConfig->getLogoFileName();
+		$template->logoFileName = $this->administration->getLogoFileName();
 		$template->subject = $this->translator->translate($subject, $translateVariables);
 		$template->layoutFile = $layoutFile;
 

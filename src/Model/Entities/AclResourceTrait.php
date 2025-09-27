@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 trait AclResourceTrait
 {
-	use Identifier;
-
 	#[ORM\Column(unique: true, nullable: false)]
 	protected string $name;
 

@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedByNullable;
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\DoctrineForms\Entity;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\UniqueConstraint;
@@ -15,7 +13,6 @@ use Doctrine\ORM\Mapping\UniqueConstraint;
 #[UniqueConstraint(fields: ["grid", "name"])]
 trait GridFilter
 {
-	use Identifier;
 	use CreatedByNullable;
 	use CreatedAt;
 

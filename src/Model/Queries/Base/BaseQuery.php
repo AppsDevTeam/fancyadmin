@@ -9,7 +9,7 @@ use ADT\Components\AjaxSelect\Traits\OrByIdFilterTrait;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Queries\Filters\IsActiveInterface;
-use ADT\FancyAdmin\Model\Security\SecurityUser;
+use ADT\FancyAdmin\Model\Security\SecurityUserTrait;
 
 /**
  * @extends QueryObject<TEntity>
@@ -23,7 +23,7 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 
 	abstract protected function applySecurityFilter(): void;
 
-	protected SecurityUser $securityUser;
+	protected SecurityUserTrait $securityUser;
 
 	public function init(): void
 	{
@@ -48,7 +48,7 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 		return $fullClassEntityName;
 	}
 
-	public function setSecurityUser(SecurityUser $securityUser): static
+	public function setSecurityUser(SecurityUserTrait $securityUser): static
 	{
 		$this->securityUser = $securityUser;
 		return $this;
@@ -93,7 +93,7 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 		return $this;
 	}
 
-	protected function getSecurityUser(): SecurityUser
+	protected function getSecurityUser(): SecurityUserTrait
 	{
 		return $this->securityUser;
 	}

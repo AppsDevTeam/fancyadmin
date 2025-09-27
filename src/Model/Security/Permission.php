@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Security;
 
-use ADT\FancyAdmin\Model\Doctrine\EntityManager;
+use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Enums\AclRoleEnum;

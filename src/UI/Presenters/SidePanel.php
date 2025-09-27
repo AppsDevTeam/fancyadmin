@@ -4,7 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineForms\BaseForm;
-use ADT\FancyAdmin\Model\Entities\IEntity;
+use ADT\FancyAdmin\Model\Entities\Entity;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
@@ -13,7 +13,7 @@ use ReflectionException;
 
 trait SidePanel
 {
-	abstract protected function getEntity(): IEntity|callable|null;
+	abstract protected function getEntity(): Entity|callable|null;
 	abstract protected function getForm(): BaseForm;
 	abstract protected function getQueryObject(): QueryObject;
 	abstract protected function getPresenter(): ?Presenter;

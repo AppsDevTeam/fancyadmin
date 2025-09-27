@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
+use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 use DateTimeImmutable;
 
-interface Identity extends DoctrineAuthenticatorIdentity
+interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface
 {
 	// Identifier
 	public function getId(): ?int;

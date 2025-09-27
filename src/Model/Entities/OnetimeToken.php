@@ -14,7 +14,10 @@ interface OnetimeToken
 	 */
 	const int PASSWORD_RECOVERY_VALID_FOR = 24; //hour
 	const int PASSWORD_CREATION_VALID_FOR = 72; //hours (3 days)
-	
+
+	const string TYPE_LOGIN = 'login';
+	const string TYPE_PHONE_NUMBER_VERIFICATION = 'phone_number_verification';
+
 	public function getToken(): string;
 	public function setToken(string $token): static;
 	public function getObjectId(): ?int;

@@ -14,6 +14,7 @@ class Administration
 		protected string $adminHostPath,
 		protected string $homepagePresenter,
 		protected bool $lostPasswordEnabled,
+		protected string $logoFileName,
 		protected NavbarMenuFactory $navbarMenuFactory,
 		protected LinkGenerator $linkGenerator,
 	) {}
@@ -26,6 +27,11 @@ class Administration
 	public function getProjectName(): string
 	{
 		return $this->projectName;
+	}
+
+	public function getLogoFileName(): string
+	{
+		return $this->logoFileName;
 	}
 
 	public function getAdminHostPath(): string

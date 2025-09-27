@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping\Column;
 use Nette\Utils\Random;
 
 trait OnetimeTokenTrait
 {
-	use Identifier;
 	use CreatedAt;
 	use UpdatedAt;
 

@@ -24,7 +24,7 @@ trait SignInFormTrait
 	#[Autowire]
 	protected Administration $administration;
 
-	protected Identi $identity;
+	protected Identity $identity;
 
 	public function initForm(Form $form): void
 	{

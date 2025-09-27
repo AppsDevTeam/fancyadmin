@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace ADT\FancyAdmin\Core;
 
 use ADT\FancyAdmin\Model\Administration;

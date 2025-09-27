@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\CreatedByNullable;
-use ADT\FancyAdmin\Model\Entities\Attributes\Identifier;
-use ADT\FancyAdmin\Model\Entities\Attributes\IsActive;
-use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedAt;
-use ADT\FancyAdmin\Model\Entities\Attributes\UpdatedBy;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
+use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
@@ -17,7 +16,6 @@ use Nette\Security\Passwords;
 
 trait IdentityTrait
 {
-	use Identifier;
 	use CreatedAt;
 	use UpdatedAt;
 	use CreatedByNullable;

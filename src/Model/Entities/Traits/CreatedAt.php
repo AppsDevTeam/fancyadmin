@@ -1,6 +1,8 @@
 <?php
 
-namespace ADT\FancyAdmin\Model\Entities\Attributes;
+declare(strict_types=1);
+
+namespace ADT\FancyAdmin\Model\Entities\Traits;
 
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;

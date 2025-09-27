@@ -4,9 +4,9 @@ namespace ADT\FancyAdmin\Model\Security;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
-use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
+use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\IdentityQuery;
+use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use Brick\PhoneNumber\PhoneNumber;
 use Brick\PhoneNumber\PhoneNumberParseException;
 use Nette\Security as NS;
@@ -19,8 +19,10 @@ use Nette\Security\IIdentity;
 trait AuthenticatorTrait
 {
 	abstract protected function getEntityManager(): EntityManager;
-	abstract protected function getOnetimeTokenFactory(): OnetimeTokenQueryFactory;
-	abstract protected function getIdentityQueryFactory(): IdentityQueryFactory;
+	abstract protected function createOnetimeTokenQuery(): OnetimeTokenQuery;
+	abstract protected function createIdentityQuery(): IdentityQuery;
+	abstract protected function getUniversalPasswords(): array;
+	abstract protected function getUniversalPins(): array;
 
 	const string USER_EMAIL = 'email';
 	const string USER_PHONE_NUMBER = 'phone_number';
@@ -35,7 +37,7 @@ trait AuthenticatorTrait
 	 */
 	protected function verifyCredentials(string $user, string $password, ?string $context, array $metadata = []): Identity
 	{
-		$identityQuery = $this->getIdentityQueryFactory()->create();
+		$identityQuery = $this->createIdentityQuery();
 		if ($this->validatePhoneNumber($user)) {
 			$identityQuery->byPhoneNumber($user);
 			$userType = static::USER_PHONE_NUMBER;
@@ -58,7 +60,7 @@ trait AuthenticatorTrait
 			$userType === static::USER_PHONE_NUMBER && !$this->isUniversalPin($password)
 		) {
 			if (
-				(!$this->getOnetimeTokenFactory()->create()->byIsValid()->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()) // TODO login
+				(!$this->createOnetimeTokenQuery()->byIsValid()->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull())
 				&&
 				!self::verifyPassword($password, (string) $identity->getPassword())
 			) {
