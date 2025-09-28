@@ -4,7 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineAuthenticator\SecurityUser;
-use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use Contributte\Translation\Translator;
 use Exception;
 use Kdyby\Autowired\Attributes\Autowire;
@@ -16,6 +16,8 @@ use ReflectionClass as T;
 
 trait BasePresenterTrait
 {
+	use PresenterTrait;
+
 	use AutowireProperties;
 	use AutowireComponentFactories;
 	
@@ -24,13 +26,13 @@ trait BasePresenterTrait
 	const DEFAULT_AUTO_CLOSE_DURATION = 3000;
 
 	#[Autowire]
-	protected Administration $administration;
+	protected FancyAdmin $administration;
 
 	protected bool $primaryTemplate = false;
 
-	public function isLogged(): bool
+	public function injectAdministration(FancyAdmin $administration)
 	{
-		return $this->getUser()->isLoggedIn();
+		
 	}
 
 	protected function beforeRender(): void
@@ -89,7 +91,7 @@ trait BasePresenterTrait
 		return $flash;
 	}
 
-	public function getAdministration(): Administration
+	public function getAdministration(): FancyAdmin
 	{
 		return $this->administration;
 	}

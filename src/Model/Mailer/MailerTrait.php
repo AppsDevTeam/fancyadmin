@@ -4,7 +4,7 @@ namespace ADT\FancyAdmin\Model\Mailer;
 
 use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\DoctrineComponents\EntityManager;
-use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
@@ -32,17 +32,17 @@ trait MailerTrait
 		protected readonly string $from,
 		protected readonly string $fromName,
 		protected readonly ?string $singleRecipient,
-		protected readonly string $supportEmail,
-		protected readonly string $title,
-		protected readonly string $web,
-		protected readonly string $wwwDir,
-		protected readonly TemplateFactory $templateFactory,
-		protected readonly Api $mailapi,
-		protected readonly Translator $translator,
-		protected readonly BackgroundQueue $backgroundQueue,
-		protected readonly EntityManager $em,
-		protected readonly LinkGenerator $linkGenerator,
-		protected readonly Administration $administration,
+		protected readonly string              $supportEmail,
+		protected readonly string              $title,
+		protected readonly string              $web,
+		protected readonly string              $wwwDir,
+		protected readonly TemplateFactory     $templateFactory,
+		protected readonly Api                 $mailapi,
+		protected readonly Translator          $translator,
+		protected readonly BackgroundQueue     $backgroundQueue,
+		protected readonly EntityManager       $em,
+		protected readonly LinkGenerator       $linkGenerator,
+		protected readonly FancyAdmin          $administration,
 		protected readonly OnetimeTokenService $onetimeTokenService,
 	) {
 	}

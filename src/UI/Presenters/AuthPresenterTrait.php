@@ -14,13 +14,18 @@ use ReflectionException;
 
 trait AuthPresenterTrait
 {
-	abstract protected function getEntityManager(): EntityManagerInterface;
-
+	use PresenterTrait;	
+	
 	#[Persistent]
 	public ?string $gridFilterClass = null;
 
 	#[Persistent]
 	public array $gridFilterParameters = [];
+	
+	public function injectEntityManager(EntityManagerInterface $em)
+	{
+		$this->_em = $em;
+	}
 
 	/**
 	 * @throws InvalidLinkException
@@ -80,8 +85,8 @@ trait AuthPresenterTrait
 	public function handleRemoveGridFilter(): void
 	{
 		if ($gridFilter = $this->gridFilterQueryFactory->create()->byId($this->getParameter('removeId'))->fetchOneOrNull()) {
-			$this->getEntityManager()->remove($gridFilter);
-			$this->getEntityManager()->flush();
+			$this->_em->remove($gridFilter);
+			$this->_em->flush();
 		}
 	}
 

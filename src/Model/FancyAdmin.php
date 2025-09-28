@@ -4,11 +4,10 @@ namespace ADT\FancyAdmin\Model;
 
 use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
-use ADT\FancyAdmin\Model\Queries\AccountQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use Nette\Application\LinkGenerator;
 
-class Administration
+class FancyAdmin
 {
 	public function __construct(
 		protected string $project,
@@ -55,10 +54,5 @@ class Administration
 	public function getNavbarMenu(): NavbarMenu
 	{
 		return $this->navbarMenuFactory->create()->setLinkGenerator($this->linkGenerator);
-	}
-	
-	public function createAccountQuery(): AccountQuery
-	{
-		return $this->accountQueryFactory->create();
 	}
 }

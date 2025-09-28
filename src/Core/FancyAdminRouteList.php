@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Core;
 
-use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\Routing\TranslatorInterface;
@@ -18,9 +18,9 @@ use Nette\Routing\Route as RouteAlias;
 class FancyAdminRouteList extends \Nette\Application\Routers\RouteList
 {
 	public function __construct(
-		string $module,
-		protected Administration $administration, 
-		protected SecurityUser $securityUser,
+		string                           $module,
+		protected FancyAdmin             $administration,
+		protected SecurityUser           $securityUser,
 		protected EntityManagerInterface $em,
 	) {
 		parent::__construct($module);

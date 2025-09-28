@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Core;
 
-use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\Routing\RouteList;
 use Doctrine\ORM\EntityManagerInterface;
@@ -12,8 +12,8 @@ use Doctrine\ORM\EntityManagerInterface;
 class FancyAdminRouter
 {
 	public function __construct(
-		protected Administration $administration,
-		protected SecurityUser $securityUser,
+		protected FancyAdmin             $administration,
+		protected SecurityUser           $securityUser,
 		protected EntityManagerInterface $em,
 	) {}
 

@@ -17,7 +17,7 @@ use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
-use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\Application\LinkGenerator;
 use Nette\DI\CompilerExtension;
@@ -37,7 +37,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'navbarMenuFactory' => null,
 		'authenticator' => Authenticator::class,
 		'logoFileName' => null,
-		'accountQueryFactory' => null,
 	];
 
 	public function loadConfiguration(): void
@@ -60,7 +59,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 //			->setFactory($this->config['accountQueryFactory']);
 
 		$builder->addDefinition($this->prefix('administration'))
-			->setFactory(Administration::class, [
+			->setFactory(FancyAdmin::class, [
 				'project' => $this->config['project'],
 				'projectName' => $this->config['projectName'],
 				'adminHostPath' => $this->config['adminHostPath'],
@@ -68,7 +67,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'logoFileName' => $this->config['logoFileName'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
 				'navbarMenuFactory' => $navbarMenuFactory,
-				'accountQueryFactory' => '@' . $this->config['accountQueryFactory'],
 				'linkGenerator' => '@' . LinkGenerator::class,
 			]);
 

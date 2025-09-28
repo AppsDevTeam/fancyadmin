@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Forms\SignIn;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
-use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\UI\Forms\BaseFormTrait;
 use ADT\Forms\Form;
@@ -24,7 +24,7 @@ trait SignInFormTrait
 	abstract public function getPresenter(): ?Presenter;
 
 	#[Autowire]
-	protected Administration $administration;
+	protected FancyAdmin $administration;
 
 	protected Identity $identity;
 

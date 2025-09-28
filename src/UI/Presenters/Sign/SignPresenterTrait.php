@@ -6,6 +6,7 @@ use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
+use App\Model\Queries\Factories\OnetimeTokenQueryFactory;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Kdyby\Autowired\Attributes\Autowire;
@@ -16,8 +17,18 @@ trait SignPresenterTrait
 {
 	use PresenterTrait;
 
-	abstract public function createOnetimeQuery(): OnetimeTokenQuery;
-	abstract public function getEntityManager(): EntityManagerInterface;
+	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
+	private EntityManagerInterface $_em;
+
+	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $onetimeTokenQueryFactory): void
+	{
+		$this->_onetimeTokenQueryFactory = $onetimeTokenQueryFactory;
+	}
+
+	public function injectEntityManager(EntityManagerInterface $em): void
+	{
+		$this->_em = $em;
+	}
 
 	public function startup(): void
 	{
@@ -70,8 +81,8 @@ trait SignPresenterTrait
 		if (!$skipPasswordRecovery) {
 			$this->redirect(':Portal:Sign:newPassword');
 		} else {
-			$this->createOnetimeQuery()->byIsValid()->byToken($token)->byType(OnetimeToken::TYPE_LOGIN)->fetchOne()->setUsedAt(new DateTimeImmutable());
-			$this->getEntityManager()->flush();
+			$this->_onetimeTokenQueryFactory->create()->byIsValid()->byToken($token)->byType(OnetimeToken::TYPE_LOGIN)->fetchOne()->setUsedAt(new DateTimeImmutable());
+			$this->_em->flush();
 		}
 		$this->redirect('Home:');
 	}
