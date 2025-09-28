@@ -23,10 +23,13 @@ trait SignInFormTrait
 	abstract public function getContext(): ?string;
 	abstract public function getPresenter(): ?Presenter;
 
-	#[Autowire]
-	protected FancyAdmin $administration;
-
 	protected Identity $identity;
+
+	protected FancyAdmin $_fancyAdmin;
+	public function injectAdministration(FancyAdmin $fancyAdmin)
+	{
+		$this->_fancyAdmin = $fancyAdmin;
+	}
 
 	public function initForm(Form $form): void
 	{
@@ -47,7 +50,7 @@ trait SignInFormTrait
 
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
 
-		$this->getTemplate()->administration = $this->administration;
+		$this->getTemplate()->fancyAdmin = $this->_fancyAdmin;
 	}
 
 	public function validateForm(ArrayHash $values, Form $form): void
@@ -77,6 +80,12 @@ trait SignInFormTrait
 
 	protected function getTemplateFilename(): ?string
 	{
-		return __DIR__ . '/SignInForm.latte';
+		$templateName .= 'SignInForm.latte';
+		$dirname = dirname(new ReflectionClass($this)->getFileName());
+		$templateFile = $dirname . '/' . $templateName;
+		if (!file_exists($templateFile)) {
+			$templateFile = __DIR__ . '/' . $templateName;
+		}
+		return $templateFile;
 	}
 }

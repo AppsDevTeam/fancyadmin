@@ -25,22 +25,21 @@ trait BasePresenterTrait
 
 	const DEFAULT_AUTO_CLOSE_DURATION = 3000;
 
-	#[Autowire]
-	protected FancyAdmin $administration;
 
 	protected bool $primaryTemplate = false;
 
-	public function injectAdministration(FancyAdmin $administration)
+	protected FancyAdmin $_fancyAdmin;
+	public function injectFancyAdmin(FancyAdmin $fancyAdmin)
 	{
-		
+		$this->_fancyAdmin = $fancyAdmin;
 	}
 
 	protected function beforeRender(): void
 	{
 		$this->template->primaryTemplate = $this->primaryTemplate;
 		$this->template->jsComponentsConfig = Json::encode([]);
-		$this->template->navbarMenu = $this->administration->getNavbarMenu();
-		$this->template->logoFileName = $this->administration->getLogoFileName();
+		$this->template->navbarMenu = $this->_fancyAdmin->getNavbarMenu();
+		$this->template->logoFileName = $this->_fancyAdmin->getLogoFileName();
 	}
 
 	public function handleRedrawBody(): void
@@ -102,5 +101,16 @@ trait BasePresenterTrait
 			$this->redrawControl('title');
 			$this->redrawControl('body');
 		}
+	}
+
+	/**
+	 * Formats view template file names.
+	 * @return array
+	 */
+	public function formatTemplateFiles(): array
+	{
+		$list = parent::formatTemplateFiles();
+		$list[] = __DIR__ . '/' . explode(':', $this->name)[1] . '/' . $this->view . '.latte';
+		return $list;
 	}
 }

@@ -3,10 +3,16 @@
 namespace ADT\FancyAdmin\UI\Presenters\Sign;
 
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
+use ADT\FancyAdmin\UI\Forms\SignIn\LostPasswordForm;
+use ADT\FancyAdmin\UI\Forms\SignIn\LostPasswordFormFactory;
+use ADT\FancyAdmin\UI\Forms\SignIn\NewPasswordForm;
+use ADT\FancyAdmin\UI\Forms\SignIn\NewPasswordFormFactory;
+use ADT\FancyAdmin\UI\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
-use App\Model\Queries\Factories\OnetimeTokenQueryFactory;
+use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Kdyby\Autowired\Attributes\Autowire;
@@ -16,15 +22,15 @@ use ReflectionException;
 trait SignPresenterTrait
 {
 	use PresenterTrait;
+	use RedirectAfterLoginTrait;
 
 	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
-	private EntityManagerInterface $_em;
-
-	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $onetimeTokenQueryFactory): void
+	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $factory): void
 	{
-		$this->_onetimeTokenQueryFactory = $onetimeTokenQueryFactory;
+		$this->_onetimeTokenQueryFactory = $factory;
 	}
 
+	private EntityManagerInterface $_em;
 	public function injectEntityManager(EntityManagerInterface $em): void
 	{
 		$this->_em = $em;
@@ -35,11 +41,7 @@ trait SignPresenterTrait
 		parent::startup();
 
 		if ($this->getUser()->isLoggedIn() && !in_array($this->getAction(), ['out', 'token', 'newPassword'])) {
-			if ($selectedCompany = $this->getUser()->getIdentity()->getFilteredCompany()?->getId()) {
-				$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
-			} else {
-				$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
-			}
+			$this->redirectAfterLogin();
 		}
 	}
 
@@ -96,5 +98,20 @@ trait SignPresenterTrait
 
 	public function actionLostPassword(): void
 	{
+	}
+
+	public function createComponentSignInForm(\ADT\FancyAdmin\UI\Forms\SignIn\SignInFormFactory $factory): SignInForm
+	{
+		return $factory->create();
+	}
+
+	public function createComponentNewPasswordForm(NewPasswordFormFactory $factory): NewPasswordForm
+	{
+		return $factory->create();
+	}
+
+	public function createComponentLostPasswordForm(LostPasswordFormFactory $factory): LostPasswordForm
+	{
+		return $factory->create();
 	}
 }

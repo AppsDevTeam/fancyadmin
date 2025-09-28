@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Forms\NewPassword;
 
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use ADT\FancyAdmin\UI\Forms\BaseFormTrait;
 use ADT\Forms\Form;
@@ -13,8 +14,12 @@ use Nette\Utils\ArrayHash;
 trait NewPasswordFormTrait
 {
 	use BaseFormTrait;
-
-	abstract protected function getOnetimeTokenQuery(): OnetimeTokenQuery;
+	
+	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
+	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $factory)
+	{
+		$this->_onetimeTokenQueryFactory = $factory;
+	}
 
 	public function initForm(Form $form): void
 	{
@@ -47,7 +52,7 @@ trait NewPasswordFormTrait
 			->setPassword($values->password);
 
 		/** @var \ADT\FancyAdmin\Model\Entities\OnetimeToken $_onetimeToken */
-		foreach ($this->getOnetimeTokenQuery()->byIsValid()->byObjectId($this->securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {
+		foreach ($this->_onetimeTokenQueryFactory->create()->byIsValid()->byObjectId($this->securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {
 			$_onetimeToken->setUsedAt(new \DateTimeImmutable());
 		}
 

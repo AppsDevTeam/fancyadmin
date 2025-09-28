@@ -1,4 +1,4 @@
-{varType ADT\FancyAdmin\Model\FancyAdmin $administration}
+{varType ADT\FancyAdmin\Model\FancyAdmin $fancyAdmin}
 
 {form form}
 	{include errors}
@@ -6,7 +6,7 @@
 	<div class="inputs-wrap">
 		{formPair email}
 		{formPair password}
-		{if $administration->isLostPasswordEnabled()}
+		{if $fancyAdmin->isLostPasswordEnabled()}
 			<a href="{plink "Sign:lostPassword"}" class="linkInForm">
 				<span class="d-sm-inline">{_fcadmin.forms.signIn.links.lostPassword}</span>
 			</a>
