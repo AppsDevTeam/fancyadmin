@@ -4,11 +4,12 @@ namespace ADT\FancyAdmin\UI\Presenters\Sign;
 
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
+use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm;
+use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordFormFactory;
+use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm;
+use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInForm;
-use ADT\FancyAdmin\UI\Forms\SignIn\LostPasswordForm;
-use ADT\FancyAdmin\UI\Forms\SignIn\LostPasswordFormFactory;
-use ADT\FancyAdmin\UI\Forms\SignIn\NewPasswordForm;
-use ADT\FancyAdmin\UI\Forms\SignIn\NewPasswordFormFactory;
+use ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use DateTimeImmutable;
@@ -97,17 +98,17 @@ trait SignPresenterTrait
 	{
 	}
 
-	public function createComponentSignInForm(\ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory $factory): SignInForm
+	public function createComponentSignInForm(SignInFormFactory $factory): SignInForm
 	{
 		return $factory->create();
 	}
 
-	public function createComponentNewPasswordForm(\ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordFormFactory $factory): \ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm
+	public function createComponentNewPasswordForm(NewPasswordFormFactory $factory): NewPasswordForm
 	{
 		return $factory->create();
 	}
 
-	public function createComponentLostPasswordForm(\ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordFormFactory $factory): \ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm
+	public function createComponentLostPasswordForm(LostPasswordFormFactory $factory): LostPasswordForm
 	{
 		return $factory->create();
 	}
