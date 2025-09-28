@@ -230,7 +230,7 @@ trait IdentityTrait
 		return $this->selectedAccount;
 	}
 
-	public function setSelectedAccount(?Account $selectedAccount): self
+	public function setSelectedAccount(?Account $selectedAccount): static
 	{
 		$this->selectedAccount = $selectedAccount;
 		return $this;
