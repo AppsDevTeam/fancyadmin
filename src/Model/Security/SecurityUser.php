@@ -9,6 +9,7 @@ use SensitiveParameter;
 
 interface SecurityUser
 {
+	public function getId();
 	public function getIdentity(): Identity;
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool;
 	public function login(

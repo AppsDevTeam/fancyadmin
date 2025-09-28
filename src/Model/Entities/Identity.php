@@ -45,7 +45,6 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface
 	public function getUsername(): ?string;
 	public function setUsername(?string $username): static;
 
-
 	public function getPhoneNumber(): ?string;
 	public function setPhoneNumber(?string $phoneNumber): static;
 
@@ -64,4 +63,6 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface
 	// Auth metadata
 	public function getAuthMetadata(): array;
 	public function setAuthMetadata(array $metadata): void;
+
+	public function getSelectedAccount(): ?Account;
 }

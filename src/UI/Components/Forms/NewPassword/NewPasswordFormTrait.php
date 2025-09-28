@@ -4,30 +4,22 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Components\Forms\NewPassword;
 
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
-use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
-use ADT\FancyAdmin\Model\Security\SecurityUser;
-use ADT\FancyAdmin\UI\Components\Forms\BaseFormTrait;
+use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
 use Nette\Utils\ArrayHash;
 
 trait NewPasswordFormTrait
 {
-	use BaseFormTrait;
+	use FormTrait;
 	use RedirectAfterLoginTrait;
-	
-	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
-	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $factory)
-	{
-		$this->_onetimeTokenQueryFactory = $factory;
-	}
-
-	private SecurityUser $_securityUser;
-	public function injectSecurityUser(SecurityUser $securityUser)
-	{
-		$this->_securityUser = $securityUser;
-	}
+	use OnetimeTokenQueryFactoryInject;
+	use SecurityUserInject;
+	use EntityManagerInject;
 
 	public function initForm(Form $form): void
 	{
@@ -58,12 +50,12 @@ trait NewPasswordFormTrait
 	{
 		$this->_securityUser->getIdentity()->setPassword($values->password);
 
-		/** @var \ADT\FancyAdmin\Model\Entities\OnetimeToken $_onetimeToken */
-		foreach ($this->_onetimeTokenQueryFactory->create()->byIsValid()->byObjectId($this->securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {
+		/** @var OnetimeToken $_onetimeToken */
+		foreach ($this->_onetimeTokenQueryFactory->create()->byIsValid()->byObjectId($this->_securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {
 			$_onetimeToken->setUsedAt(new \DateTimeImmutable());
 		}
 
-		$this->getEntityManager()->flush();
+		$this->_em->flush();
 
 		$this->redirectAfterLogin();
 	}
@@ -71,10 +63,5 @@ trait NewPasswordFormTrait
 	public function getEntityClass(): ?string
 	{
 		return null;
-	}
-
-	protected function getTemplateFilename(): ?string
-	{
-		return __DIR__ . '/NewPasswordForm.latte';
 	}
 }

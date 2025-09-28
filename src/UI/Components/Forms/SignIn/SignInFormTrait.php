@@ -8,6 +8,7 @@ use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\UI\Components\Forms\BaseFormTrait;
+use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
 use Nette\Application\UI\InvalidLinkException;
@@ -17,7 +18,7 @@ use Nette\Utils\ArrayHash;
 
 trait SignInFormTrait
 {
-	use BaseFormTrait;
+	use FormTrait;
 	use RedirectAfterLoginTrait;
 
 	abstract public function getAuthenticator(): DoctrineAuthenticator;
@@ -54,10 +55,10 @@ trait SignInFormTrait
 		$this->getTemplate()->fancyAdmin = $this->_fancyAdmin;
 	}
 
-	public function validateForm(ArrayHash $values, Form $form): void
+	public function validateForm(array $values, Form $form): void
 	{
 		try {
-			$this->identity = $this->getAuthenticator()->authenticate($values->email, $values->password, $this->getContext());
+			$this->identity = $this->getAuthenticator()->authenticate($values['email'], $values['password'], $this->getContext());
 		} catch (AuthenticationException $e) {
 			$form->addError($e->getMessage());
 		}
@@ -77,16 +78,5 @@ trait SignInFormTrait
 	public function getEntityClass(): ?string
 	{
 		return null;
-	}
-
-	protected function getTemplateFilename(): ?string
-	{
-		$templateName = 'SignInForm.latte';
-		$dirname = dirname(new \ReflectionClass($this)->getFileName());
-		$templateFile = $dirname . '/' . $templateName;
-		if (!file_exists($templateFile)) {
-			$templateFile = __DIR__ . '/' . $templateName;
-		}
-		return $templateFile;
 	}
 }

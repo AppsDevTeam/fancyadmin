@@ -2,17 +2,16 @@
 
 namespace ADT\FancyAdmin\UI;
 
-use ADT\FancyAdmin\Model\Security\SecurityUser;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
+use Nette\Application\UI\Presenter;
 
 trait RedirectAfterLoginTrait
 {
-	private SecurityUser $_securityUser;
-	public function injectSecurityUser(SecurityUser $securityUser)
-	{
-		$this->_securityUser = $securityUser;
-	}
+	use SecurityUserInject;
+
+	abstract public function getPresenter(): ?Presenter;
 	
-	protected function redirectAfterLogin()
+	protected function redirectAfterLogin(): never
 	{
 		if ($selectedAccount = $this->_securityUser->getIdentity()->getSelectedAccount()) {
 			$this->getPresenter()->redirect('Customer:Home:', ['do' => 'redrawBody', 'selectedCompany' => $selectedAccount->getId()]);

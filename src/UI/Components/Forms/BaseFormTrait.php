@@ -35,4 +35,15 @@ trait BaseFormTrait
 	{
 		return null;
 	}
+
+	protected function getTemplateFilename(): ?string
+	{
+		$templateName = new \ReflectionClass($this)->getShortName() .'.latte';
+		$dirname = dirname(new \ReflectionClass($this)->getFileName());
+		$templateFile = $dirname . '/' . $templateName;
+		if (!file_exists($templateFile)) {
+			$templateFile = __DIR__ . '/' . $templateName;
+		}
+		return $templateFile;
+	}
 }
