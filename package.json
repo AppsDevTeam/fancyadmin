@@ -22,7 +22,7 @@
     "fabric": "^6.5.3",
     "file-loader": "^6.2.0",
     "firebase": "8.10.1",
-    "forms-replicator": "AppsDevTeam/replicator#master",
+    "forms-replicator": "github:AppsDevTeam/replicator#master",
     "jquery": "^3.7.1",
     "jquery-ui-bundle": "^1.12.1-migrate",
     "mini-css-extract-plugin": "^2.9.1",
@@ -64,5 +64,19 @@
   "packageManager": "yarn@3.2.0",
   "devDependencies": {
     "yarn-upgrade-all": "^0.7.4"
-  }
+  },
+  "name": "adt-fancyadmin",
+  "description": "Fancy visual and useful components for administration",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AppsDevTeam/fancyadmin.git"
+  },
+  "author": "Apps Dev Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AppsDevTeam/fancyadmin/issues"
+  },
+  "homepage": "https://github.com/AppsDevTeam/fancyadmin#readme"
 }
