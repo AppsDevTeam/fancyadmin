@@ -3,11 +3,11 @@
 namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
-use Nette\Application\LinkGenerator;
 use Nette\Application\UI\InvalidLinkException;
 use ReflectionClass;
 use ReflectionException;
@@ -16,6 +16,7 @@ trait AuthPresenterTrait
 {
 	use PresenterTrait;
 	use EntityManagerInject;
+	use LinkGeneratorInject;
 	
 	#[Persistent]
 	public ?string $gridFilterClass = null;
@@ -89,13 +90,10 @@ trait AuthPresenterTrait
 	public function beforeRender(): void
 	{
 		parent::beforeRender();
-		/** @var NavbarMenuFactory $className */
 		$submodule = explode(':', $this->name)[1];
-		if ($submodule === 'Customer') {
-			$navbarMenuFactory = new \App\UI\Portal\Customer\Presenters\NavbarMenuFactory();
-		} else {
-			$navbarMenuFactory = new \App\UI\Portal\Customer\Presenters\NavbarMenuFactory();
-		}
+		$className = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\NavbarMenuFactory";
+		/** @var NavbarMenuFactory $className */
+		$navbarMenuFactory = new $className();
 		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 	}
 
