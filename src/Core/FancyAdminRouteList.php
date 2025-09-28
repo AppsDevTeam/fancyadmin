@@ -4,23 +4,25 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Core;
 
+use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
-use ADT\Routing\TranslatorInterface;
 use Closure;
-use ADT\Routing\RouteList;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NoResultException;
 use Nette\Application\BadRequestException;
+use Nette\Application\Routers\RouteList;
 use Nette\Routing\Route as RouteAlias;
 
-class FancyAdminRouteList extends \Nette\Application\Routers\RouteList
+class FancyAdminRouteList extends RouteList
 {
 	public function __construct(
-		string                           $module,
-		protected FancyAdmin             $administration,
-		protected SecurityUser           $securityUser,
+		string $module,
+		protected FancyAdmin $administration,
+		protected SecurityUser $securityUser,
 		protected EntityManagerInterface $em,
+		protected AccountQueryFactory $accountQueryFactory,
 	) {
 		parent::__construct($module);
 	}
@@ -67,10 +69,12 @@ class FancyAdminRouteList extends \Nette\Application\Routers\RouteList
 							try {
 								if (!$this->securityUser->getIdentity()->getSelectedAccount()) {
 									// TODO disableCompanyFilter
-									$this->securityUser->getIdentity()->setSelectedAccount($this->administration->createAccountQuery()->byId($selectedAccount)->fetchOne());
+									/** @var Account $account */
+									$account = $this->accountQueryFactory->create()->byId($selectedAccount)->fetchOne();
+									$this->securityUser->getIdentity()->setSelectedAccount($account);
 									$this->em->flush();
 								}
-							} catch (NoResultException $e) {
+							} catch (NoResultException) {
 								throw new BadRequestException();
 							}
 						}

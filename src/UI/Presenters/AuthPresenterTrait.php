@@ -2,10 +2,8 @@
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
-use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
-use Doctrine\ORM\EntityManagerInterface;
 use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
@@ -16,25 +14,14 @@ use ReflectionException;
 
 trait AuthPresenterTrait
 {
-	use PresenterTrait;	
+	use PresenterTrait;
+	use EntityManagerInject;
 	
 	#[Persistent]
 	public ?string $gridFilterClass = null;
 
 	#[Persistent]
 	public array $gridFilterParameters = [];
-
-	private EntityManagerInterface $_em;
-	public function injectEntityManager(EntityManagerInterface $em)
-	{
-		$this->_em = $em;
-	}
-
-	private LinkGenerator $_linkGenerator;
-	public function injectLinkGenerator(LinkGenerator $linkGenerator)
-	{
-		$this->_linkGenerator = $linkGenerator;
-	}
 
 	/**
 	 * @throws InvalidLinkException

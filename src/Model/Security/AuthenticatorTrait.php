@@ -2,14 +2,12 @@
 
 namespace ADT\FancyAdmin\Model\Security;
 
-use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\IdentityQuery;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use Brick\PhoneNumber\PhoneNumber;
 use Brick\PhoneNumber\PhoneNumberParseException;
-use Doctrine\ORM\EntityManagerInterface;
 use Nette\Security as NS;
 use Nette\Security\AuthenticationException;
 use Nette\Security\IIdentity;
@@ -99,7 +97,6 @@ trait AuthenticatorTrait
 	protected function initEntity(Identity $identity): void
 	{
 	}
-
 
 	protected function isUniversalSuperPassword(string $password): bool
 	{

@@ -10,8 +10,10 @@ use SensitiveParameter;
 interface SecurityUser
 {
 	public function getId();
-	public function getIdentity(): Identity;
+	/** @return ?Identity */
+	public function getIdentity(): ?IIdentity;
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool;
+	public function isLoggedIn(): bool;
 	public function login(
 		string|IIdentity $username,
 		#[SensitiveParameter]

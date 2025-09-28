@@ -6,7 +6,6 @@ namespace ADT\FancyAdmin\Core;
 
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
-use ADT\Routing\RouteList;
 use Doctrine\ORM\EntityManagerInterface;
 
 class FancyAdminRouter
@@ -17,7 +16,8 @@ class FancyAdminRouter
 		protected EntityManagerInterface $em,
 	) {}
 
-	public function createAdminRouteModule(): FancyAdminRouteList {
+	public function createAdminRouteModule(): FancyAdminRouteList
+	{
 		$adminModule = new FancyAdminRouteList('Portal', $this->administration, $this->securityUser, $this->em);
 
 		$adminModule->addRoute('sign/in', [

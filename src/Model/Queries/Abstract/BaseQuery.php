@@ -6,10 +6,10 @@ namespace ADT\FancyAdmin\Model\Queries\Abstract;
 
 use ADT\Components\AjaxSelect\Interfaces\OrByIdFilterInterface;
 use ADT\Components\AjaxSelect\Traits\OrByIdFilterTrait;
+use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
-use ADT\FancyAdmin\Model\Queries\Filters\IsActiveInterface;
-use ADT\FancyAdmin\Model\Security\SecurityUserTrait;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 
 /**
  * @extends QueryObject<TEntity>
@@ -23,7 +23,7 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 
 	abstract protected function applySecurityFilter(): void;
 
-	protected SecurityUserTrait $securityUser;
+	protected SecurityUser $securityUser;
 
 	public function init(): void
 	{
@@ -31,8 +31,8 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 
 		$this->applySecurityFilter();
 
-		if ($this instanceof IsActiveInterface) {
-			$this->filter[IsActiveInterface::IS_ACTIVE_FILTER] = fn() => $this->byIsActive();
+		if ($this instanceof IsActiveFilter) {
+			$this->filter[IsActiveFilter::IS_ACTIVE_FILTER] = fn() => $this->byIsActive();
 		}
 	}
 
@@ -44,11 +44,10 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 		$fullClassQueryName = get_class($this);
 		$fullClassEntityName = str_replace("Queries", "Entities", $fullClassQueryName);
 		$fullClassEntityName = str_replace("Query", "", $fullClassEntityName);
-
 		return $fullClassEntityName;
 	}
 
-	public function setSecurityUser(SecurityUserTrait $securityUser): static
+	public function setSecurityUser(SecurityUser $securityUser): static
 	{
 		$this->securityUser = $securityUser;
 		return $this;
@@ -76,7 +75,7 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 
 	public function byId($id): static
 	{
-		if ($this instanceof IsActiveInterface) {
+		if ($this instanceof IsActiveFilter) {
 			$this->disableIsActiveFilter();
 		}
 
@@ -93,7 +92,7 @@ abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface
 		return $this;
 	}
 
-	protected function getSecurityUser(): SecurityUserTrait
+	protected function getSecurityUser(): SecurityUser
 	{
 		return $this->securityUser;
 	}
