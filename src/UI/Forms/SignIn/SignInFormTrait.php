@@ -67,11 +67,7 @@ trait SignInFormTrait
 	{
 		$this->getPresenter()->user->login($this->identity);
 
-		if ($selectedCompany = $this->getIdentity()->getFilteredCompany()?->getId()) {
-			$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
-		} else {
-			$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
-		}
+		$this->redirectAfterLogin();
 	}
 
 	public function getEntityClass(): ?string

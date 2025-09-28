@@ -35,4 +35,13 @@ trait BaseFormTrait
 	{
 		return null;
 	}
+
+	protected function redirectAfterLogin()
+	{
+		if ($selectedAccount = $this->getIdentity()->getSelectecAccount()) {
+			$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedAccount->getId()]);
+		} else {
+			$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
+		}
+	}
 }

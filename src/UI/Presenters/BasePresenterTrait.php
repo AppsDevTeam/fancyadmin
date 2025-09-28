@@ -28,8 +28,6 @@ trait BasePresenterTrait
 
 	protected bool $primaryTemplate = false;
 
-	public array $allowedMethods = ['GET', 'POST', 'HEAD'];
-
 	public function isLogged(): bool
 	{
 		return $this->getUser()->isLoggedIn();

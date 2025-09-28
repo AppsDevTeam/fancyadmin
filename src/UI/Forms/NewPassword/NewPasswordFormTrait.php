@@ -53,11 +53,7 @@ trait NewPasswordFormTrait
 
 		$this->getEntityManager()->flush();
 
-		if ($selectedCompany = $this->getPresenter()->user->getIdentity()->getFilteredCompany()?->getId()) {
-			$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedCompany]);
-		} else {
-			$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
-		}
+		$this->redirectAfterLogin();
 	}
 
 	public function getEntityClass(): ?string

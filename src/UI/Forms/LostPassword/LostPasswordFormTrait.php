@@ -15,8 +15,6 @@ trait LostPasswordFormTrait
 {
 	use BaseFormTrait;
 
-	abstract protected function getIdentity(string $email): ?Identity;
-
 	#[Autowire]
 	protected Mailer $mailer;
 
@@ -39,7 +37,7 @@ trait LostPasswordFormTrait
 
 	public function processForm(ArrayHash $values): void
 	{
-		if (!$identity = $this->getIdentity($values['email'])) {
+		if (!$identity = $this->identityQueryFactory->create()->byUsername($values['email'])->fetchOneOrNull()) {
 			$this->getPresenter()->flashMessageError('fcadmin.forms.lostPassword.messages.error');
 			$this->getPresenter()->redirect('this');
 		}

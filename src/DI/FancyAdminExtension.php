@@ -34,9 +34,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'adminHostPath' => '/admin',
 		'homepagePresenter' => 'Home:default',
 		'lostPasswordEnabled' => true,
-		'navbarMenuFactory' => NavbarMenuFactory::class,
+		'navbarMenuFactory' => null,
 		'authenticator' => Authenticator::class,
 		'logoFileName' => null,
+		'accountQueryFactory' => null,
 	];
 
 	public function loadConfiguration(): void
@@ -52,10 +53,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);
 
-		$builder->addFactoryDefinition($this->prefix('navbarMenuFactory'))
-			->setImplement($this->config['navbarMenuFactory'])
-			->getResultDefinition()
-			->setFactory(NavbarMenu::class);
+		$navbarMenuFactory = $builder->addDefinition($this->prefix('navbarMenu'))
+			->setFactory($this->config['navbarMenuFactory']);
+
+//		$accountQueryFactory = $builder->addDefinition($this->prefix('accountQueryFactory'))
+//			->setFactory($this->config['accountQueryFactory']);
 
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(Administration::class, [
@@ -65,7 +67,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'homepagePresenter' => $this->config['homepagePresenter'],
 				'logoFileName' => $this->config['logoFileName'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
-				'navbarMenuFactory' => '@' . $this->config['navbarMenuFactory'],
+				'navbarMenuFactory' => $navbarMenuFactory,
+				'accountQueryFactory' => '@' . $this->config['accountQueryFactory'],
 				'linkGenerator' => '@' . LinkGenerator::class,
 			]);
 

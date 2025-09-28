@@ -5,29 +5,33 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Core;
 
 use ADT\FancyAdmin\Model\Administration;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\Routing\RouteList;
+use Doctrine\ORM\EntityManagerInterface;
 
 class FancyAdminRouter
 {
 	public function __construct(
-		protected Administration $administration
+		protected Administration $administration,
+		protected SecurityUser $securityUser,
+		protected EntityManagerInterface $em,
 	) {}
 
-	public function createAdminRouteModule(): RouteList {
-		$adminModule = new FancyAdminRouteList($this->administration, 'Admin');
+	public function createAdminRouteModule(): FancyAdminRouteList {
+		$adminModule = new FancyAdminRouteList('Portal', $this->administration, $this->securityUser, $this->em);
 
-		$adminModule->addAdminRoute('sign/in', [
+		$adminModule->addRoute('sign/in', [
 			'presenter' => 'Sign',
 			'action' => 'in',
 		]);
 
-		$adminModule->addAdminRoute('sign/out', [
+		$adminModule->addRoute('sign/out', [
 			'presenter' => 'Sign',
 			'action' => 'out',
 		]);
 
 		if ($this->administration->isLostPasswordEnabled()) {
-			$adminModule->addAdminRoute('sign/lost-password', [
+			$adminModule->addRoute('sign/lost-password', [
 				'presenter' => 'Sign',
 				'action' => 'lostPassword',
 			]);

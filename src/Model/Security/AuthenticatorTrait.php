@@ -9,6 +9,7 @@ use ADT\FancyAdmin\Model\Queries\IdentityQuery;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use Brick\PhoneNumber\PhoneNumber;
 use Brick\PhoneNumber\PhoneNumberParseException;
+use Doctrine\ORM\EntityManagerInterface;
 use Nette\Security as NS;
 use Nette\Security\AuthenticationException;
 use Nette\Security\IIdentity;
@@ -18,7 +19,6 @@ use Nette\Security\IIdentity;
  */
 trait AuthenticatorTrait
 {
-	abstract protected function getEntityManager(): EntityManager;
 	abstract protected function createOnetimeTokenQuery(): OnetimeTokenQuery;
 	abstract protected function createIdentityQuery(): IdentityQuery;
 	abstract protected function getUniversalPasswords(): array;
@@ -85,8 +85,9 @@ trait AuthenticatorTrait
 
 	protected function getIdentity(string $id, string $token, array $metadata): ?IIdentity
 	{
-		/** @var Identity $identity */
-		$identity = $this->getEntityManager()->getRepository(Identity::class)->find($id);
+		if (!$identity = $this->identityQueryFactory->create()->byId($id)->fetchOneOrNull()) {
+			return null;
+		}
 		if (!$identity->getIsActive()) {
 			return null;
 		}
