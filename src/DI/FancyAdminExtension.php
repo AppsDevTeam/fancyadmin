@@ -13,13 +13,10 @@ use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
-use ADT\FancyAdmin\Model\Menu\NavbarMenu;
-use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use Contributte\Translation\DI\TranslationProviderInterface;
-use Nette\Application\LinkGenerator;
 use Nette\DI\CompilerExtension;
 use Nette\Loaders\RobotLoader;
 use Nette\Security\Authenticator;
@@ -32,9 +29,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'project' => null,
 		'projectName' => null,
 		'adminHostPath' => '/admin',
-		'homepagePresenter' => 'Home:default',
 		'lostPasswordEnabled' => true,
-		'navbarMenuFactory' => null,
 		'authenticator' => Authenticator::class,
 		'logoFileName' => null,
 	];
@@ -52,22 +47,13 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);
 
-		$navbarMenuFactory = $builder->addDefinition($this->prefix('navbarMenu'))
-			->setFactory($this->config['navbarMenuFactory']);
-
-//		$accountQueryFactory = $builder->addDefinition($this->prefix('accountQueryFactory'))
-//			->setFactory($this->config['accountQueryFactory']);
-
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(FancyAdmin::class, [
 				'project' => $this->config['project'],
 				'projectName' => $this->config['projectName'],
 				'adminHostPath' => $this->config['adminHostPath'],
-				'homepagePresenter' => $this->config['homepagePresenter'],
 				'logoFileName' => $this->config['logoFileName'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
-				'navbarMenuFactory' => $navbarMenuFactory,
-				'linkGenerator' => '@' . LinkGenerator::class,
 			]);
 
 		$this->validateTraitInterfaceCompliance();

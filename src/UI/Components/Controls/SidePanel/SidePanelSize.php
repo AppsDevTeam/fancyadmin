@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Controls\SidePanel;
+namespace ADT\FancyAdmin\UI\Components\Controls\SidePanel;
 
 enum SidePanelSize: string
 {

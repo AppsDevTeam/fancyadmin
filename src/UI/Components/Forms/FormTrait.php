@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Forms;
+namespace ADT\FancyAdmin\UI\Components\Forms;
 
 use Nette\Application\UI\Presenter;
 

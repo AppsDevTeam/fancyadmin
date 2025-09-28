@@ -2,23 +2,31 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Forms\NewPassword;
+namespace ADT\FancyAdmin\UI\Components\Forms\NewPassword;
 
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
-use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
-use ADT\FancyAdmin\UI\Forms\BaseFormTrait;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
+use ADT\FancyAdmin\UI\Components\Forms\BaseFormTrait;
+use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
 use Nette\Utils\ArrayHash;
 
 trait NewPasswordFormTrait
 {
 	use BaseFormTrait;
+	use RedirectAfterLoginTrait;
 	
 	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
 	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $factory)
 	{
 		$this->_onetimeTokenQueryFactory = $factory;
+	}
+
+	private SecurityUser $_securityUser;
+	public function injectSecurityUser(SecurityUser $securityUser)
+	{
+		$this->_securityUser = $securityUser;
 	}
 
 	public function initForm(Form $form): void
@@ -48,8 +56,7 @@ trait NewPasswordFormTrait
 
 	public function processForm(ArrayHash $values): void
 	{
-		$this->getIdentity()
-			->setPassword($values->password);
+		$this->_securityUser->getIdentity()->setPassword($values->password);
 
 		/** @var \ADT\FancyAdmin\Model\Entities\OnetimeToken $_onetimeToken */
 		foreach ($this->_onetimeTokenQueryFactory->create()->byIsValid()->byObjectId($this->securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {

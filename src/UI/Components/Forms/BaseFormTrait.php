@@ -1,12 +1,12 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Forms;
+namespace ADT\FancyAdmin\UI\Components\Forms;
 
 use ADT\DoctrineForms\Form;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
 use ADT\Forms\BootstrapFormRenderer;
 use Doctrine\ORM\EntityManagerInterface;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
 use Nette\Localization\Translator;
 
 trait BaseFormTrait
@@ -34,14 +34,5 @@ trait BaseFormTrait
 	public function getRedirect($entity = null): ?array
 	{
 		return null;
-	}
-
-	protected function redirectAfterLogin()
-	{
-		if ($selectedAccount = $this->getIdentity()->getSelectecAccount()) {
-			$this->getPresenter()->redirect('Home:default', ['do' => 'redrawBody', 'selectedCompany' => $selectedAccount->getId()]);
-		} else {
-			$this->getPresenter()->redirect('Dashboard:default', ['do' => 'redrawBody']);
-		}
 	}
 }

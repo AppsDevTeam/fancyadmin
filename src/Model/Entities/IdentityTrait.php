@@ -47,7 +47,7 @@ trait IdentityTrait
 	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist"])]
 	protected Collection $profiles;
 
-	#[ORM\ManyToOne(targetEntity: Account::class)]
+	#[ORM\ManyToOne(targetEntity: 'Account')]
 	#[JoinColumn(nullable: true)]
 	protected ?Account $selectedAccount = null;
 
@@ -249,5 +249,10 @@ trait IdentityTrait
 				return $_profile;
 			}
 		}
+	}
+
+	public function getGravatar(string $d = 'mp'): string
+	{
+		return 'https://www.gravatar.com/avatar/' . hash("sha256", strtolower(trim($this->getEmail()))) . '?s=90&d=' . urlencode($d);
 	}
 }

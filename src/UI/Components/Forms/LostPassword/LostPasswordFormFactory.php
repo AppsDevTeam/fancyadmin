@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Forms\LostPassword;
+namespace ADT\FancyAdmin\UI\Components\Forms\LostPassword;
 
 interface LostPasswordFormFactory
 {

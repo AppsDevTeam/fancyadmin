@@ -5,9 +5,9 @@ namespace ADT\FancyAdmin\UI\Presenters;
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineForms\BaseForm;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControl;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelControlFactory;
-use ADT\FancyAdmin\UI\Controls\SidePanel\SidePanelSize;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
 use Nette\Application\UI\Presenter;
 use ReflectionException;
 

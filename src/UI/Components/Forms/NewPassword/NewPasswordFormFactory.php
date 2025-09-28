@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Forms\NewPassword;
+namespace ADT\FancyAdmin\UI\Components\Forms\NewPassword;
 
 interface NewPasswordFormFactory
 {

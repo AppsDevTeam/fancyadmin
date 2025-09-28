@@ -1,12 +1,12 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Forms\LostPassword;
+namespace ADT\FancyAdmin\UI\Components\Forms\LostPassword;
 
-use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Mailer\Mailer;
-use ADT\FancyAdmin\UI\Forms\BaseFormTrait;
+use ADT\FancyAdmin\UI\Components\Forms\BaseFormTrait;
 use ADT\Forms\Form;
+use App\Model\Queries\Factories\IdentityQueryFactory;
 use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\LinkGenerator;
 use Nette\Utils\ArrayHash;
@@ -20,6 +20,12 @@ trait LostPasswordFormTrait
 
 	#[Autowire]
 	protected LinkGenerator $linkGenerator;
+
+	private IdentityQueryFactory $_identityQueryFactory;
+	public function injectIdentityQueryFactory(\ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory $factory)
+	{
+		$this->_identityQueryFactory = $factory;
+	}
 
 	public function initForm(Form $form): void
 	{
@@ -37,7 +43,7 @@ trait LostPasswordFormTrait
 
 	public function processForm(ArrayHash $values): void
 	{
-		if (!$identity = $this->identityQueryFactory->create()->byUsername($values['email'])->fetchOneOrNull()) {
+		if (!$identity = $this->_identityQueryFactory->create()->byUsername($values['email'])->fetchOneOrNull()) {
 			$this->getPresenter()->flashMessageError('fcadmin.forms.lostPassword.messages.error');
 			$this->getPresenter()->redirect('this');
 		}

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\Model\Queries\Base;
+namespace ADT\FancyAdmin\Model\Queries\Abstract;
 
 use ADT\Components\AjaxSelect\Interfaces\OrByIdFilterInterface;
 use ADT\Components\AjaxSelect\Traits\OrByIdFilterTrait;

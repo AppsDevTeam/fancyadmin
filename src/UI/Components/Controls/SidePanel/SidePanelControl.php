@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Controls\SidePanel;
+namespace ADT\FancyAdmin\UI\Components\Controls\SidePanel;
 
 use ADT\DoctrineForms\Form;
 use ADT\FancyAdmin\UI\RenderToStringTrait;

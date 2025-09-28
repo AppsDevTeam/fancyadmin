@@ -7,7 +7,6 @@ namespace ADT\FancyAdmin\Model\Security;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Enums\AclRoleEnum;
 
 class Permission extends \Nette\Security\Permission
 {

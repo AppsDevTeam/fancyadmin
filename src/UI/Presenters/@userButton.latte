@@ -2,7 +2,7 @@
     <div class="d-flex dropdown justify-content-center user">
         <button class="btn btn-avatar" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fa-solid fa-xl fa-user"></i>
-            <img src="{$user->getIdentity()->getGravatar()}" alt="gravatar" />
+            <img src="{$user->getIdentity()->getEmail()}" alt="gravatar" />
         </button>
         <ul class="dropdown-menu dropdown-menu-end user-dropdown dropdown-menu-bottom">
             <li class="dropdown-item user-item-wrapper">
@@ -30,7 +30,7 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li class="logout-item">
-                <a class="dropdown-item" n:href=":Admin:Sign:out">
+                <a class="dropdown-item" n:href=":Portal:Sign:out">
                     <div>
                         <div>
                             <i class="fa-solid fa-right-to-bracket"></i>

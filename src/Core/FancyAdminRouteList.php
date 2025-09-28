@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Core;
 
 use ADT\FancyAdmin\Model\FancyAdmin;
-use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\Routing\TranslatorInterface;
 use Closure;

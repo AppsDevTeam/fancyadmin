@@ -4,10 +4,12 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Latte\RedrawSidePanel;
+use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
+use Nette\Application\LinkGenerator;
 use Nette\Application\UI\InvalidLinkException;
 use ReflectionClass;
 use ReflectionException;
@@ -21,10 +23,17 @@ trait AuthPresenterTrait
 
 	#[Persistent]
 	public array $gridFilterParameters = [];
-	
+
+	private EntityManagerInterface $_em;
 	public function injectEntityManager(EntityManagerInterface $em)
 	{
 		$this->_em = $em;
+	}
+
+	private LinkGenerator $_linkGenerator;
+	public function injectLinkGenerator(LinkGenerator $linkGenerator)
+	{
+		$this->_linkGenerator = $linkGenerator;
 	}
 
 	/**
@@ -34,7 +43,7 @@ trait AuthPresenterTrait
 	{
 		parent::startup();
 
-		if (!$this->isLogged()) {
+		if (!$this->getUser()->isLoggedIn()) {
 			$this->redirect(':Portal:Sign:in');
 		}
 
@@ -88,6 +97,19 @@ trait AuthPresenterTrait
 			$this->_em->remove($gridFilter);
 			$this->_em->flush();
 		}
+	}
+
+	public function beforeRender(): void
+	{
+		parent::beforeRender();
+		/** @var NavbarMenuFactory $className */
+		$submodule = explode(':', $this->name)[1];
+		if ($submodule === 'Customer') {
+			$navbarMenuFactory = new \App\UI\Portal\Customer\Presenters\NavbarMenuFactory();
+		} else {
+			$navbarMenuFactory = new \App\UI\Portal\Customer\Presenters\NavbarMenuFactory();
+		}
+		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 	}
 
 	public function afterRender(): void

@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Forms\SignIn;
+namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 
 interface SignInFormFactory
 {

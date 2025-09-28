@@ -38,7 +38,6 @@ trait BasePresenterTrait
 	{
 		$this->template->primaryTemplate = $this->primaryTemplate;
 		$this->template->jsComponentsConfig = Json::encode([]);
-		$this->template->navbarMenu = $this->_fancyAdmin->getNavbarMenu();
 		$this->template->logoFileName = $this->_fancyAdmin->getLogoFileName();
 	}
 
@@ -111,6 +110,13 @@ trait BasePresenterTrait
 	{
 		$list = parent::formatTemplateFiles();
 		$list[] = __DIR__ . '/' . explode(':', $this->name)[1] . '/' . $this->view . '.latte';
+		return $list;
+	}
+
+	public function formatLayoutTemplateFiles(): array
+	{
+		$list = parent::formatLayoutTemplateFiles();
+		$list[] = __DIR__ . "/@layout.latte";
 		return $list;
 	}
 }
