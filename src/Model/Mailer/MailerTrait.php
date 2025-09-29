@@ -82,7 +82,7 @@ trait MailerTrait
 
 		$template->projectName = $this->administration->getProjectName();
 		$template->fromName = $this->fromName;
-		$template->logoFileName = $this->administration->getLogoFileName();
+		$template->logoFileName = $this->administration->getLogoBitmapPublicPath();
 		$template->subject = $this->translator->translate($subject, $translateVariables);
 		$template->layoutFile = $layoutFile;
 

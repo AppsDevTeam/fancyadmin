@@ -239,8 +239,10 @@ trait IdentityTrait
 	protected function getProfile(): Profile
 	{
 		foreach ($this->getAllowedProfiles() as $_profile) {
-			if ($_profile->isAllowed(AclResourceEnum::ADMIN)) {
-				return $_profile;
+			foreach ($_profile->getRoles() as $_role) {
+				if ($_role->getIsAdmin()) {
+					return $_profile;
+				}
 			}
 		}
 

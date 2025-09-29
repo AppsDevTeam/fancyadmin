@@ -6,7 +6,7 @@ use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
 
 trait OnetimeTokenQueryFactoryInject
 {
-	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
+	protected OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
 	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $factory): void
 	{
 		$this->_onetimeTokenQueryFactory = $factory;

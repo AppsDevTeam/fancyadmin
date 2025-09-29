@@ -2,6 +2,9 @@
 
 namespace ADT\FancyAdmin\UI\Presenters\Sign;
 
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm;
@@ -21,18 +24,9 @@ trait SignPresenterTrait
 {
 	use PresenterTrait;
 	use RedirectAfterLoginTrait;
-
-	private OnetimeTokenQueryFactory $_onetimeTokenQueryFactory;
-	public function injectOnetimeTokenQueryFactory(OnetimeTokenQueryFactory $factory): void
-	{
-		$this->_onetimeTokenQueryFactory = $factory;
-	}
-
-	private EntityManagerInterface $_em;
-	public function injectEntityManager(EntityManagerInterface $em): void
-	{
-		$this->_em = $em;
-	}
+	use OnetimeTokenQueryFactoryInject;
+	use EntityManagerInject;
+	use FancyAdminInject;
 
 	public function startup(): void
 	{
@@ -71,7 +65,7 @@ trait SignPresenterTrait
 		$this->getUser()->logout(true);
 
 		try {
-			$this->getUser()->login($email, $token, AclResourceEnum::CUSTOMER_DASHBOARD);
+			$this->getUser()->login($email, $token, $this->_fancyAdmin->getLoginContext()->value);
 		} catch (AuthenticationException $e) {
 			bd($e);
 			$this->flashMessageError($e->getMessage());

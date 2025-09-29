@@ -28,10 +28,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	private array $defaults = [
 		'project' => null,
 		'projectName' => null,
-		'adminHostPath' => '/admin',
+		'adminHostPath' => null,
 		'lostPasswordEnabled' => true,
-		'authenticator' => Authenticator::class,
-		'logoFileName' => null,
+		'logoPublicPath' => null,
+		'logoBitmapPublicPath' => null,
+		'hmr' => false,
+		'loginContext' => null
 	];
 
 	public function loadConfiguration(): void
@@ -52,8 +54,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'project' => $this->config['project'],
 				'projectName' => $this->config['projectName'],
 				'adminHostPath' => $this->config['adminHostPath'],
-				'logoFileName' => $this->config['logoFileName'],
+				'logoPublicPath' => $this->config['logoPublicPath'],
+				'logoBitmapPublicPath' => $this->config['logoBitmapPublicPath'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
+				'hmr' => $this->config['hmr'],
+				'loginContext' => $this->config['loginContext']
 			]);
 
 		$this->validateTraitInterfaceCompliance();

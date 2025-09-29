@@ -23,7 +23,8 @@ trait BasePresenterTrait
 	{
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
 		$this->getTemplate()->jsComponentsConfig = Json::encode([]);
-		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoFileName();
+		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
+		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 	}
 
 	public function handleRedrawBody(): void

@@ -2,6 +2,8 @@
 
 namespace ADT\FancyAdmin\Model;
 
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
+
 class FancyAdmin
 {
 	public function __construct(
@@ -9,7 +11,10 @@ class FancyAdmin
 		protected string $projectName,
 		protected string $adminHostPath,
 		protected bool $lostPasswordEnabled,
-		protected string $logoFileName,
+		protected string $logoPublicPath,
+		protected string $logoBitmapPublicPath,
+		protected bool $hmr,
+		protected AclResourceNameEnum $loginContext
 	) {}
 
 	public function getProject(): string
@@ -22,9 +27,14 @@ class FancyAdmin
 		return $this->projectName;
 	}
 
-	public function getLogoFileName(): string
+	public function getLogoPublicPath(): string
 	{
-		return $this->logoFileName;
+		return $this->logoPublicPath;
+	}
+
+	public function getLogoBitmapPublicPath(): string
+	{
+		return $this->logoBitmapPublicPath;
 	}
 
 	public function getAdminHostPath(): string
@@ -35,5 +45,15 @@ class FancyAdmin
 	public function isLostPasswordEnabled(): bool
 	{
 		return $this->lostPasswordEnabled;
+	}
+	
+	public function getHmr(): bool
+	{
+		return $this->hmr;
+	}
+	
+	public function getLoginContext(): AclResourceNameEnum
+	{
+		return $this->loginContext;
 	}
 }

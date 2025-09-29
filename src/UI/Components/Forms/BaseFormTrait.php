@@ -38,12 +38,23 @@ trait BaseFormTrait
 
 	protected function getTemplateFilename(): ?string
 	{
-		$templateName = new \ReflectionClass($this)->getShortName() .'.latte';
-		$dirname = dirname(new \ReflectionClass($this)->getFileName());
-		$templateFile = $dirname . '/' . $templateName;
-		if (!file_exists($templateFile)) {
-			$templateFile = __DIR__ . '/' . $templateName;
+		$reflectionClass = new \ReflectionClass($this);
+		$templateName = $reflectionClass->getShortName() .'.latte';
+
+		$templateFile = dirname($reflectionClass->getFileName()) . '/' . $templateName;
+		if (file_exists($templateFile)) {
+			return $templateFile;
 		}
-		return $templateFile;
+
+		foreach ($reflectionClass->getInterfaces() as $_interface => $_interfaceReflectionClass) {
+			if (str_contains($_interface, $reflectionClass->getShortName())) {
+				$templateFile = dirname($_interfaceReflectionClass->getFileName()) . '/' . $templateName;
+				if (file_exists($templateFile)) {
+					return $templateFile;
+				}
+			}
+		}
+
+		return null;
 	}
 }

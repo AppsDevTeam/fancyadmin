@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities\Enums;
 
-enum AclResourceEnum
+interface AclResourceNameEnum
 {
-	public const string ADMIN = 'admin';
 }

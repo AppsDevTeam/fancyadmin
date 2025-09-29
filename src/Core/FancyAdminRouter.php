@@ -38,6 +38,16 @@ class FancyAdminRouter
 			'action' => 'out',
 		]);
 
+		$adminModule->addRoute('sign/token', [
+			'presenter' => 'Sign',
+			'action' => 'token',
+		]);
+
+		$adminModule->addRoute('sign/new-password', [
+			'presenter' => 'Sign',
+			'action' => 'newPassword',
+		]);
+
 		if ($this->administration->isLostPasswordEnabled()) {
 			$adminModule->addRoute('sign/lost-password', [
 				'presenter' => 'Sign',

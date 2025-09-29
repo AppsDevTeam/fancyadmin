@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
+use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\UI\Components\Forms\BaseFormTrait;
@@ -20,18 +22,10 @@ trait SignInFormTrait
 {
 	use FormTrait;
 	use RedirectAfterLoginTrait;
+	use FancyAdminInject;
+	use AuthenticatorInject;
 
-	abstract public function getAuthenticator(): DoctrineAuthenticator;
-	abstract public function getContext(): ?string;
-	abstract public function getPresenter(): ?Presenter;
-
-	protected Identity $identity;
-
-	protected FancyAdmin $_fancyAdmin;
-	public function injectAdministration(FancyAdmin $fancyAdmin)
-	{
-		$this->_fancyAdmin = $fancyAdmin;
-	}
+	private Identity $_identity;
 
 	public function initForm(Form $form): void
 	{
@@ -52,13 +46,13 @@ trait SignInFormTrait
 
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
 
-		$this->getTemplate()->fancyAdmin = $this->_fancyAdmin;
+		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
 	}
 
 	public function validateForm(array $values, Form $form): void
 	{
 		try {
-			$this->identity = $this->getAuthenticator()->authenticate($values['email'], $values['password'], $this->getContext());
+			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->_fancyAdmin->getLoginContext()->value);
 		} catch (AuthenticationException $e) {
 			$form->addError($e->getMessage());
 		}
@@ -70,7 +64,7 @@ trait SignInFormTrait
 	 */
 	public function processForm(): never
 	{
-		$this->getPresenter()->user->login($this->identity);
+		$this->getPresenter()->user->login($this->_identity);
 
 		$this->redirectAfterLogin();
 	}
