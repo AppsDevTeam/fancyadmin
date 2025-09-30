@@ -93,19 +93,18 @@
 
 			if (this.href) {
 				const url = new URL(this.href);
-				const hasDoParameter = url.searchParams.has('do');
-				console.log([
-					this.href !== window.location.href, !hasDoParameter
-				]);
-				if (this.href !== window.location.href && !hasDoParameter) {
+				url.searchParams.delete('do');
+
+				const pushUrl = url.origin + url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+
+				if (pushUrl !== window.location.href) {
 					history.pushState({
 						nette: true,
 						href: this.href,
 						title: document.title,
 						ui: this.cache ? findSnippets() : null
-					}, document.title, this.href);
+					}, document.title, pushUrl);
 
-					const url = new URL(this.href);
 					$('a.nav-link').map((i, el) => {
 						if ($(el).attr('href') === '/') {
 							$(el).toggleClass('active', url.pathname === $(el).attr('href'))
