@@ -41,26 +41,6 @@
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4"
   },
-  "scripts": {
-    "build": "NODE_ENV=production MODULE=app webpack && NODE_ENV=production MODULE=web webpack",
-    "build:app": "NODE_ENV=development MODULE=app webpack",
-    "build:web": "NODE_ENV=development MODULE=web webpack",
-    "watch:app": "NODE_ENV=development MODULE=app webpack --watch",
-    "watch:web": "NODE_ENV=development MODULE=web webpack --watch",
-    "stats": "webpack-bundle-analyzer www/dist/stats.json"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari versions"
-    ]
-  },
   "packageManager": "yarn@3.2.0",
   "devDependencies": {
     "yarn-upgrade-all": "^0.7.4"
