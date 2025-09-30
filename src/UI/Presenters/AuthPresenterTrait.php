@@ -2,9 +2,13 @@
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
+use ADT\FancyAdmin\DI\Injects\AccountQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
+use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
+use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountFormFactory;
 use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
@@ -17,6 +21,8 @@ trait AuthPresenterTrait
 	use PresenterTrait;
 	use EntityManagerInject;
 	use LinkGeneratorInject;
+	use AccountQueryFactoryInject;
+	use FancyAdminInject;
 	
 	#[Persistent]
 	public ?string $gridFilterClass = null;
@@ -34,6 +40,15 @@ trait AuthPresenterTrait
 		if (!$this->getUser()->isLoggedIn()) {
 			$this->redirect(':Portal:Sign:in');
 		}
+
+		if ($this->getParameter('selectedAccount')) {
+			$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
+		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+			$this->getUser()->getIdentity()->setSelectedAccount(null);
+		} else {
+			$this->redirect('Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+		}
+		$this->company = $this->getUser()->getIdentity()->getSelectedAccount();
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
 		$this->getSession()->start();
@@ -117,5 +132,10 @@ trait AuthPresenterTrait
 	{
 		$this->getPresenter()->payload->snippets[$this->getSnippetId('sidePanel')] = $this[$name ? $name . ucfirst('sidePanel') : 'sidePanel']->renderToString();
 		$this->getPresenter()->sendPayload();
+	}
+
+	public function createComponentSelectAccountForm(SelectAccountFormFactory $factory): SelectAccountForm
+	{
+		return $factory->create();
 	}
 }

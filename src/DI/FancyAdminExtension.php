@@ -19,7 +19,6 @@ use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\DI\CompilerExtension;
 use Nette\Loaders\RobotLoader;
-use Nette\Security\Authenticator;
 use ReflectionClass;
 use RuntimeException;
 
@@ -29,11 +28,14 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'project' => null,
 		'projectName' => null,
 		'adminHostPath' => null,
+		'defaultCustomerRoute' => 'Portal:Customer:Home',
+		'defaultBackofficeRoute' => 'Portal:Backoffice:Home',
 		'lostPasswordEnabled' => true,
 		'logoPublicPath' => null,
 		'logoBitmapPublicPath' => null,
 		'hmr' => false,
-		'loginContext' => null
+		'customerAclResource' => null,
+		'backofficeAclResource' => null
 	];
 
 	public function loadConfiguration(): void
@@ -57,8 +59,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'logoPublicPath' => $this->config['logoPublicPath'],
 				'logoBitmapPublicPath' => $this->config['logoBitmapPublicPath'],
 				'lostPasswordEnabled' => $this->config['lostPasswordEnabled'],
+				'defaultCustomerRoute' => $this->config['defaultCustomerRoute'],
+				'defaultBackofficeRoute' => $this->config['defaultBackofficeRoute'],
 				'hmr' => $this->config['hmr'],
-				'loginContext' => $this->config['loginContext']
+				'customerAclResource' => $this->config['customerAclResource'],
+				'backofficeAclResource' => $this->config['backofficeAclResource'],
 			]);
 
 		$this->validateTraitInterfaceCompliance();

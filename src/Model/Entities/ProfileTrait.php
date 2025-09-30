@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -18,9 +19,9 @@ trait ProfileTrait
 	#[JoinColumn(nullable: false)]
 	protected Identity $identity;
 
-	#[ManyToOne(targetEntity: 'Account', inversedBy: 'profiles')]
+	#[ManyToOne(targetEntity: Account::class, inversedBy: 'profiles')]
 	#[JoinColumn(nullable: true)]
-	protected Account $account;
+	protected ?Account $account = null;
 
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]
@@ -60,14 +61,14 @@ trait ProfileTrait
 		return $this;
 	}
 
-	public function isAllowed(string $resource): bool
+	public function isAllowed(AclResourceNameEnum|string $resource): bool
 	{
 		foreach ($this->getRoles() as $_role) {
 			if ($_role->getIsAdmin()) {
 				return true;
 			}
 
-			if (array_any($_role->getResources(), fn($_resource) => $_resource->getName() === $resource)) {
+			if (array_any($_role->getResources(), fn($_resource) => $_resource->getName() === (is_string($resource) ? $resource : $resource->value))) {
 				return true;
 			}
 		}
@@ -84,13 +85,14 @@ trait ProfileTrait
 		return false;
 	}
 
-	public function getAccount(): Account
+	public function getAccount(): ?Account
 	{
 		return $this->account;
 	}
 
-	public function setAccount(Account $account): void
+	public function setAccount(?Account $account): static
 	{
 		$this->account = $account;
+		return $this;
 	}
 }

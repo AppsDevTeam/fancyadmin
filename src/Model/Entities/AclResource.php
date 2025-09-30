@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-interface AclResource
+use ADT\DoctrineComponents\Entities\Entity;
+
+interface AclResource extends Entity
 {
 	// Identifikátor
 	public function getId(): ?int;

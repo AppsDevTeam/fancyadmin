@@ -65,7 +65,7 @@ trait SignPresenterTrait
 		$this->getUser()->logout(true);
 
 		try {
-			$this->getUser()->login($email, $token, $this->_fancyAdmin->getLoginContext()->value);
+			$this->getUser()->login($email, $token, $this->_fancyAdmin->getCustomerAclResource()->value);
 		} catch (AuthenticationException $e) {
 			bd($e);
 			$this->flashMessageError($e->getMessage());

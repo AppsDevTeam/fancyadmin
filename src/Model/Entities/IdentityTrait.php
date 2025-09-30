@@ -24,7 +24,7 @@ trait IdentityTrait
 	use UpdatedBy;
 	use IsActive;
 
-	abstract protected function getId();
+	abstract public function getId();
 
 	#[ORM\Column(nullable:false)]
 	protected string $firstName;
@@ -47,7 +47,7 @@ trait IdentityTrait
 	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist"])]
 	protected Collection $profiles;
 
-	#[ORM\ManyToOne(targetEntity: 'Account')]
+	#[ORM\ManyToOne(targetEntity: Account::class)]
 	#[JoinColumn(nullable: true)]
 	protected ?Account $selectedAccount = null;
 

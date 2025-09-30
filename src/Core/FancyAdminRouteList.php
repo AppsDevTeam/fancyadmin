@@ -68,9 +68,8 @@ class FancyAdminRouteList extends RouteList
 						if ($this->securityUser->isLoggedIn()) {
 							try {
 								if (!$this->securityUser->getIdentity()->getSelectedAccount()) {
-									// TODO disableCompanyFilter
 									/** @var Account $account */
-									$account = $this->accountQueryFactory->create()->byId($selectedAccount)->fetchOne();
+									$account = $this->accountQueryFactory->create()->disableAccountFilter()->byId($selectedAccount)->fetchOne();
 									$this->securityUser->getIdentity()->setSelectedAccount($account);
 									$this->em->flush();
 								}

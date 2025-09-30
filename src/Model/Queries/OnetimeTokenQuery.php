@@ -2,11 +2,9 @@
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
-use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
-use Doctrine\ORM\QueryBuilder;
+use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 
-interface OnetimeTokenQuery extends QueryObjectInterface
+interface OnetimeTokenQuery extends BaseQuery
 {
 	public function byToken(string $token): static;
 	public function byType(string $type): static;

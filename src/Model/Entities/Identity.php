@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
+use ADT\DoctrineComponents\Entities\Entity;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 use DateTimeImmutable;
 
-interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface
+interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Entity
 {
-	// Identifier
-	public function getId(): ?int;
-
 	// CreatedAt
 	public function getCreatedAt(): DateTimeImmutable;
 	public function setCreatedAt(DateTimeImmutable $createdAt): self;
@@ -53,6 +51,7 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface
 
 	public function getFullName(): string;
 	public function getGravatar(): string;
+	public function getAccounts(): array;
 
 	// Auth
 	public function getAuthObjectId(): string;

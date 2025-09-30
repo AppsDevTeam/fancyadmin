@@ -13,8 +13,11 @@ class FancyAdmin
 		protected bool $lostPasswordEnabled,
 		protected string $logoPublicPath,
 		protected string $logoBitmapPublicPath,
+		protected string $defaultCustomerRoute,
+		protected string $defaultBackofficeRoute,
 		protected bool $hmr,
-		protected AclResourceNameEnum $loginContext
+		protected AclResourceNameEnum $customerAclResource,
+		protected AclResourceNameEnum $backofficeAclResource,
 	) {}
 
 	public function getProject(): string
@@ -46,14 +49,29 @@ class FancyAdmin
 	{
 		return $this->lostPasswordEnabled;
 	}
-	
+
+	public function getDefaultCustomerRoute(): string
+	{
+		return $this->defaultCustomerRoute;
+	}
+
+	public function getDefaultBackofficeRoute(): string
+	{
+		return $this->defaultBackofficeRoute;
+	}
+
 	public function getHmr(): bool
 	{
 		return $this->hmr;
 	}
-	
-	public function getLoginContext(): AclResourceNameEnum
+
+	public function getCustomerAclResource(): AclResourceNameEnum
 	{
-		return $this->loginContext;
+		return $this->customerAclResource;
+	}
+
+	public function getBackofficeAclResource(): AclResourceNameEnum
+	{
+		return $this->backofficeAclResource;
 	}
 }

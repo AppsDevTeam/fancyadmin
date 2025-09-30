@@ -2,9 +2,11 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineComponents\Entities\Entity;
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 
-interface Profile extends IsActiveInterface
+interface Profile extends IsActiveInterface, Entity
 {
 	public function getIdentity(): Identity;
 	public function setIdentity(Identity $identity): static;
@@ -13,9 +15,9 @@ interface Profile extends IsActiveInterface
 	public function getRoles(): array;
 	public function addRole(AclRole $role): static;
 
-	public function isAllowed(string $resource): bool;
+	public function isAllowed(AclResourceNameEnum $resource): bool;
 	public function isAllowedContext(string $context): bool;
 
-	public function getAccount(): Account;
-	public function setAccount(Account $account): void;
+	public function getAccount(): ?Account;
+	public function setAccount(?Account $account): static;
 }

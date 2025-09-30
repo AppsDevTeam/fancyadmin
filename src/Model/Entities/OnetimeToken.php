@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineComponents\Entities\Entity;
 use DateTimeImmutable;
 
-interface OnetimeToken
+interface OnetimeToken extends Entity
 {
 	/*
 	 * Konstanty pro nastaveni jak dlouho je validni request pro obnovu hesla a jak dlouho je validni request v pripade

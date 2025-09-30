@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineComponents\Entities\Entity;
 use Nette\Security\Role;
 
-interface AclRole extends Role
+interface AclRole extends Role, Entity
 {
 	// Role interface (Nette)
 	public function getRoleId(): string;

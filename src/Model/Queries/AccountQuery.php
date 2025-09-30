@@ -2,9 +2,9 @@
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
+use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 
-interface AccountQuery extends QueryObjectInterface
+interface AccountQuery extends BaseQuery
 {
 
 }

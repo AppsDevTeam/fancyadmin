@@ -3,25 +3,22 @@
 namespace ADT\FancyAdmin\UI\Components\Forms;
 
 use ADT\DoctrineForms\Form;
-use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
 use ADT\Forms\BootstrapFormRenderer;
-use Doctrine\ORM\EntityManagerInterface;
-use Nette\Localization\Translator;
 
 trait BaseFormTrait
 {
 	use FormTrait;
-
-	abstract protected function getEntityManager(): EntityManagerInterface;
-	abstract protected function getTranslator(): Translator;
-	abstract protected function getIdentity(): Identity;
+	use EntityManagerInject;
+	use TranslatorInject;
 
 	protected function createComponentForm(): Form
 	{
 		$form = new Form();
-		$form->setTranslator($this->getTranslator());
-		$form->setEntityManager($this->getEntityManager());
+		$form->setTranslator($this->_translator);
+		$form->setEntityManager($this->_em);
 		$form->setRenderer(new BootstrapFormRenderer($form));
 		return $form;
 	}
