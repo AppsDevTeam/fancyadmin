@@ -7,7 +7,7 @@
     "@fortawesome/fontawesome-pro": "^6.6.0",
     "@popperjs/core": "^2.11.8",
     "@regru/jquery-menu-aim": "^1.0.0",
-    "adt-js-components": "^1.6.2",
+    "adt-js-components": "^1.7.0",
     "adt-nette-ajax": "^1.0.0",
     "autoprefixer": "^10.4.20",
     "babel-loader": "^9.2.1",
