@@ -257,4 +257,21 @@ trait IdentityTrait
 	{
 		return 'https://www.gravatar.com/avatar/' . hash("sha256", strtolower(trim($this->getEmail()))) . '?s=90&d=' . urlencode($d);
 	}
+
+	/**
+	 * @return Account[]
+	 */
+	public function getAccounts(): array
+	{
+		$companies = [];
+		foreach ($this->getAllowedProfiles() as $_profile) {
+			if (!$_profile->getAccount()) {
+				continue;
+			}
+
+			$companies[] = $_profile->getAccount();
+		}
+
+		return $companies;
+	}
 }

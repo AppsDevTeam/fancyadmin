@@ -7,13 +7,16 @@ namespace ADT\FancyAdmin\Model\Queries\Abstract;
 use ADT\Components\AjaxSelect\Traits\OrByIdFilterTrait;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
+use Doctrine\ORM\QueryBuilder;
 
 trait BaseQueryTrait
 {
 	use OrByIdFilterTrait;
 
 	abstract protected function applySecurityFilter(): void;
+	abstract protected function applyCompanyFilter(QueryBuilder $qb, Account $account): void;
 
 	protected SecurityUser $securityUser;
 
@@ -26,6 +29,16 @@ trait BaseQueryTrait
 		if ($this instanceof IsActiveFilter) {
 			$this->filter[IsActiveFilter::IS_ACTIVE_FILTER] = fn() => $this->byIsActive();
 		}
+
+		$this->filter[BaseQuery::ACCOUNT_FILTER] = function (QueryBuilder $qb) {
+			if (
+				$this->securityUser->isLoggedIn()
+				&&
+				($account = $this->securityUser->getIdentity()->getSelectedAccount())
+			) {
+				$this->applyCompanyFilter($qb, $account);
+			}
+		};
 	}
 
 	/**
@@ -62,8 +75,10 @@ trait BaseQueryTrait
 		return parent::fetchPairs($value, $key);
 	}
 
-	public function byIdNot(int|array $id): static
+	public function byIdNot(int|array|null $id): static
 	{
+		$id = (array) $id;
+		$id = array_filter($id);
 		if (!$id) {
 			return $this;
 		}
@@ -78,5 +93,20 @@ trait BaseQueryTrait
 		}
 
 		return parent::byId($id);
+	}
+
+	final protected function addFilter(callable $callback, ?string $name = null): static
+	{
+		if ($name) {
+			$this->filter[$name] = $callback;
+		} else {
+			$this->filter[] = $callback;
+		}
+		return $this;
+	}
+
+	protected function getSecurityUser(): SecurityUser
+	{
+		return $this->securityUser;
 	}
 }

@@ -36,7 +36,6 @@ trait SelectAccountFormTrait
 	{
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$usersCompanies = $this->_accountQueryFactory->create()
-				->byType(CompanyTypeEnum::PRIMARY)
 				->disableAccountFilter()
 				->fetch();
 		} else {
