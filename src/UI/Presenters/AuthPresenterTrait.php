@@ -23,7 +23,7 @@ trait AuthPresenterTrait
 	use LinkGeneratorInject;
 	use AccountQueryFactoryInject;
 	use FancyAdminInject;
-	
+
 	#[Persistent]
 	public ?string $gridFilterClass = null;
 
@@ -48,7 +48,6 @@ trait AuthPresenterTrait
 		} else {
 			$this->redirect('Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
 		}
-		$this->company = $this->getUser()->getIdentity()->getSelectedAccount();
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
 		$this->getSession()->start();
