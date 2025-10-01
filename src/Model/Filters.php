@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model;
 
+use Contributte\Translation\Exceptions\InvalidArgument;
 use Exception;
 use Latte\ContentType;
 use Latte\Runtime\FilterInfo;
@@ -10,23 +11,53 @@ use Nette\Utils\DateTime;
 
 class Filters
 {
-
-	public function __construct(protected readonly Translator $translator)
+	public function __construct( protected readonly Translator $translator)
 	{
 	}
 
-	public function nbsp($string)
+	public function number(string|int|float $number, int $decimals = 0, string $decimalSymbol = ',', string $thousandsSeparator = ' '): string
 	{
-		return str_replace(' ', html_entity_decode('&nbsp;'), $string);
+		// Pokud je vstup string, zkusíme detekovat počet desetinných míst
+		$actualDecimals = $decimals;
+		if (is_string($number)) {
+			$parts = explode('.', $number);
+			if (count($parts) == 2) {
+				// Použijeme menší z: skutečný počet desetinných míst vs. maximální limit
+				$actualDecimals = min(strlen($parts[1]), $decimals);
+			}
+
+			$number = floatval($number);
+		}
+
+		// Formátujeme číslo s určeným počtem desetinných míst
+		$formatted = number_format($number, $actualDecimals, $decimalSymbol, $thousandsSeparator);
+
+		// Pokud jsou desetinná místa, odstraníme koncové nuly
+		if ($actualDecimals > 0) {
+			// Rozdělíme podle desetinného symbolu
+			$parts = explode($decimalSymbol, $formatted);
+
+			if (count($parts) == 2) {
+				// Odstraníme koncové nuly z desetinné části
+				$decimalPart = rtrim($parts[1], '0');
+
+				// Pokud zůstala prázdná desetinná část, vrátíme jen celé číslo
+				if ($decimalPart === '') {
+					return $parts[0];
+				}
+
+				// Jinak spojíme zpět s desetinným symbolem
+				return $parts[0] . $decimalSymbol . $decimalPart;
+			}
+		}
+
+		return $formatted;
 	}
 
-	public function number($number, $decimals = 2, $decimalSymbol = ',', $thousandsSeparator = '&nbsp;')
-	{
-		$thousandsSeparator = html_entity_decode($thousandsSeparator);
-		return number_format($number, $decimals, $decimalSymbol, $thousandsSeparator);
-	}
-
-	public function date($time, string $format = 'j. n. Y')
+	/**
+	 * @throws Exception
+	 */
+	public function date($time, string $format = 'j. n. Y'): ?string
 	{
 		if ($time === null) {
 			return null;
@@ -55,7 +86,10 @@ class Filters
 		return DateTime::from($time)->format($format);
 	}
 
-	public function price(float $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null): string
+	/**
+	 * @throws InvalidArgument
+	 */
+	public function price(float|string $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null): string
 	{
 		if ($currency) {
 			$currency = html_entity_decode($currency);
@@ -69,9 +103,18 @@ class Filters
 			$thousandsSeparator = $this->translator->translate('app.appGeneral.model.filters.thousandsSeparator');
 		}
 
-		$price = self::number($price, $decimals, $decimalSymbol, $thousandsSeparator);
+		$price = $this->number($price, $decimals, $decimalSymbol, $thousandsSeparator);
 
 		return trim($price . ' ' . $currency);
+	}
+
+	public function priceNullable(null|float|string $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null): ?string
+	{
+		if ($price === null) {
+			return '---';
+		}
+
+		return $this->price($price, $currency, $decimals, $decimalSymbol, $thousandsSeparator);
 	}
 
 	public function ifEmpty(FilterInfo $info, $string)
@@ -90,7 +133,7 @@ class Filters
 		return $value === null ? '<i class="fa-regular fa-square" style="color: #999999"></i>' : ($value ? '<i class="fa-solid fa-square-check" style="color: #28C885"></i>' : '<i class="fa-solid fa-square-xmark" style="color: #FF4242"></i>');
 	}
 
-	public static function darken(string $hexColor, int $percent): string
+	public function darken(string $hexColor, int $percent): string
 	{
 		// Odstranit "#" z barvy, pokud je přítomna
 		$hexColor = ltrim($hexColor, '#');
@@ -158,7 +201,7 @@ class Filters
 		return sprintf('#%02x%02x%02x', round($r), round($g), round($b));
 	}
 
-	public static function lighten(string $hexColor, int $percent): string
+	public function lighten(string $hexColor, int $percent): string
 	{
 		// Odstranit "#" z barvy, pokud je přítomna
 		$hexColor = ltrim($hexColor, '#');
@@ -180,5 +223,29 @@ class Filters
 
 		// Převést zpět na hexadecimální hodnotu
 		return sprintf('#%02x%02x%02x', $r, $g, $b);
+	}
+
+	public static function invertColor(string $hexColor): string
+	{
+		// Odstranit "#" z barvy, pokud je přítomna
+		$hexColor = ltrim($hexColor, '#');
+
+		// Pokud je barva ve zkráceném formátu (#abc), rozšířit ji na plnou (#aabbcc)
+		if (strlen($hexColor) == 3) {
+			$hexColor = $hexColor[0] . $hexColor[0] . $hexColor[1] . $hexColor[1] . $hexColor[2] . $hexColor[2];
+		}
+
+		// Rozdělit barvu na jednotlivé složky RGB
+		$r = hexdec(substr($hexColor, 0, 2));
+		$g = hexdec(substr($hexColor, 2, 2));
+		$b = hexdec(substr($hexColor, 4, 2));
+
+		// Inverze
+		$r = 255 - $r;
+		$g = 255 - $g;
+		$b = 255 - $b;
+
+		// nová hex hodnota
+		return sprintf("#%02x%02x%02x", $r, $g, $b);
 	}
 }
