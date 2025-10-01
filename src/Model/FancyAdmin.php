@@ -18,6 +18,7 @@ class FancyAdmin
 		protected bool $hmr,
 		protected AclResourceNameEnum $customerAclResource,
 		protected AclResourceNameEnum $backofficeAclResource,
+		protected AclResourceNameEnum $fullDataAclResource,
 	) {}
 
 	public function getProject(): string
@@ -73,5 +74,10 @@ class FancyAdmin
 	public function getBackofficeAclResource(): AclResourceNameEnum
 	{
 		return $this->backofficeAclResource;
+	}
+	
+	public function getFullDataAclResource(): AclResourceNameEnum
+	{
+		return $this->fullDataAclResource;
 	}
 }

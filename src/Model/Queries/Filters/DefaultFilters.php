@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Model\Queries\Filters;
+namespace ADT\FancyAdmin\Model\Queries\Filters;
 
-use App\Model\Entities\Branch;
-use App\Model\Entities\Company;
-use App\Model\Enums\AclResourceEnum;
-use App\Model\Queries\Base\BaseQuery;
-use App\Model\Security\SecurityUser;
+use ADT\FancyAdmin\Model\Entities\Account;
+use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Doctrine\ORM\QueryBuilder;
 
 trait DefaultFilters
@@ -25,48 +23,43 @@ trait DefaultFilters
 				return;
 			}
 
-			if (! $this->getSecurityUser()->isAllowed(AclResourceEnum::ADMIN)) {
+			if (! $this->getSecurityUser()->isAllowedFullDataAclResource()) {
 				if ($this->getPrimaryEntityAlias()) {
 					if ($this->getPrimaryEntityAlias() !== 'e') {
 						$this->innerJoin($qb, 'e.' . trim($this->getPrimaryEntityAlias(), '_'), $this->getPrimaryEntityAlias());
 					}
-					$this->innerJoin($qb, $this->getPrimaryEntityAlias() . '.company', 'company');
+					$this->innerJoin($qb, $this->getPrimaryEntityAlias() . '.account', 'account');
 
-					$qb->andWhere('company IN (:company) OR company.parent IN (:company)');
+					$qb->andWhere('account IN (:account) OR account.parent IN (:account)');
 				} else {
-					$qb->andWhere('e IN (:company) OR e.parent IN (:company)');
+					$qb->andWhere('e IN (:account) OR e.parent IN (:account)');
 				}
-				$qb->setParameter('company', $this->getSecurityUser()->getIdentity()->getCompanies());
+				$qb->setParameter('account', $this->getSecurityUser()->getIdentity()->getAccounts());
 			}
 		}, BaseQuery::SECURITY_FILTER);
 	}
 
-	protected function applyCompanyFilter(QueryBuilder $qb, Company $company): void
+	protected function applyAccountFilter(QueryBuilder $qb, Account $account): void
 	{
 		if ($this->getPrimaryEntityAlias()) {
 			if ($this->getPrimaryEntityAlias() !== 'e') {
 				$this->innerJoin($qb, 'e.' . trim($this->getPrimaryEntityAlias(), '_'), $this->getPrimaryEntityAlias());
 			}
-			$this->innerJoin($qb, $this->getPrimaryEntityAlias() . '.company', 'company');
+			$this->innerJoin($qb, $this->getPrimaryEntityAlias() . '.account', 'account');
 
-			$qb->andWhere('company = :company OR company.parent = :company');
+			$qb->andWhere('account = :account OR account.parent = :account');
 		} else {
-			$qb->andWhere('e = :company OR e.parent = :company');
+			$qb->andWhere('e = :account OR e.parent = :account');
 		}
-		$qb->setParameter('company', $company);
+		$qb->setParameter('account', $account);
 	}
 
-	protected function setDefaultOrder(): void
-	{
-		$this->orderBy([ltrim($this->getPrimaryEntityAlias() . '.', 'e.') . 'createdAt' => 'DESC', 'id' => 'DESC']);
-	}
-
-	public function byCompany(int|Company|array $company): static
+	public function byAccount(int|Account|array $account): static
 	{
 		if ($this->getPrimaryEntityAlias() !== 'e') {
-			return $this->by($this->getPrimaryEntityAlias() . '.company', $company);
+			return $this->by($this->getPrimaryEntityAlias() . '.account', $account);
 		} else {
-			return $this->by('company', $company);
+			return $this->by('account', $account);
 		}
 	}
 }

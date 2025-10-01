@@ -3,11 +3,16 @@
 namespace ADT\FancyAdmin\Model\Queries;
 
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
+use ADT\FancyAdmin\Model\Entities\Account;
 use Doctrine\ORM\QueryBuilder;
 
 trait OnetimeTokenQueryTrait
 {
-	public function applySecurityFilter(): void
+	protected function applySecurityFilter(): void
+	{
+	}
+
+	protected function applyAccountFilter(QueryBuilder $qb, Account $account): void
 	{
 	}
 

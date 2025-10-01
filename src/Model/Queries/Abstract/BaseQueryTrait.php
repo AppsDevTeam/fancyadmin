@@ -16,7 +16,7 @@ trait BaseQueryTrait
 	use OrByIdFilterTrait;
 
 	abstract protected function applySecurityFilter(): void;
-	abstract protected function applyCompanyFilter(QueryBuilder $qb, Account $account): void;
+	abstract protected function applyAccountFilter(QueryBuilder $qb, Account $account): void;
 
 	protected SecurityUser $securityUser;
 

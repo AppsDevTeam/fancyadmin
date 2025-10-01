@@ -14,6 +14,8 @@ use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use Contributte\Translation\DI\TranslationProviderInterface;
@@ -35,7 +37,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'logoBitmapPublicPath' => null,
 		'hmr' => false,
 		'customerAclResource' => null,
-		'backofficeAclResource' => null
+		'backofficeAclResource' => null,
+		'fullDataAclResource' => null,
 	];
 
 	public function loadConfiguration(): void
@@ -64,9 +67,17 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'hmr' => $this->config['hmr'],
 				'customerAclResource' => $this->config['customerAclResource'],
 				'backofficeAclResource' => $this->config['backofficeAclResource'],
+				'fullDataAclResource' => $this->config['fullDataAclResource'],
 			]);
 
 		$this->validateTraitInterfaceCompliance();
+	}
+
+	public function beforeCompile(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$baseQuery = $builder->getDefinitionByType(SecurityUser::class);
+		$baseQuery->addSetup('setFullDataAclResource', [$this->config['fullDataAclResource']]);
 	}
 
 	private function validateTraitInterfaceCompliance(): void

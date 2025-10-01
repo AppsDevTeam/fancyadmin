@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Core;
 
+use ADT\DoctrineComponents\Entities\Entity;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Doctrine\ORM\EntityManagerInterface;
+use Nette\Application\BadRequestException;
+use Nette\Http\IResponse;
+use Nette\Routing\Route as RouteAlias;
 
 class FancyAdminRouter
 {
@@ -56,5 +61,19 @@ class FancyAdminRouter
 		}
 
 		return $adminModule;
+	}
+
+	public function createFilterByQueryObject(BaseQuery $query): array
+	{
+		return [
+			RouteAlias::FilterIn => function ($entity) use ($query) {
+				if ($entity = $query->byId($entity)->fetchOneOrNull()) {
+					return $entity;
+				}
+
+				throw new BadRequestException(httpCode: IResponse::S404_NotFound);
+			},
+			RouteAlias::FilterOut => fn(Entity $entity) => $entity->getId()
+		];
 	}
 }

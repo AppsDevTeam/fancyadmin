@@ -13,6 +13,7 @@ interface SecurityUser
 	/** @return ?Identity */
 	public function getIdentity(): ?IIdentity;
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool;
+	public function isAllowedFullDataAclResource(): bool;
 	public function isLoggedIn(): bool;
 	public function login(
 		string|IIdentity $username,

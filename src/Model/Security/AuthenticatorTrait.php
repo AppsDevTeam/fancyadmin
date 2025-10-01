@@ -83,7 +83,7 @@ trait AuthenticatorTrait
 
 	protected function getIdentity(string $id, string $token, array $metadata): ?IIdentity
 	{
-		if (!$identity = $this->identityQueryFactory->create()->byId($id)->fetchOneOrNull()) {
+		if (!$identity = $this->identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byId($id)->fetchOneOrNull()) {
 			return null;
 		}
 		if (!$identity->getIsActive()) {
