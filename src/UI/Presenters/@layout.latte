@@ -23,11 +23,11 @@
         <style>
             body {
                 --primaryColor: #42b6a4;
-                --primaryColorDark: {=ADT\FancyAdmin\Model\Filters::darken("#42b6a4", 5)|noescape};
-                --primaryColorDark20: {=ADT\FancyAdmin\Model\Filters::darken("#42b6a4", 10)|noescape};
+                --primaryColorDark: {="#42b6a4"|darken,5};
+                --primaryColorDark20: {="#42b6a4"|darken,10};
                 --secondaryColor: #f1f7f7;
-                --secondaryColorDark: {=ADT\FancyAdmin\Model\Filters::darken("#f1f7f7", 5)|noescape};
-                --secondaryColorDarker: {=ADT\FancyAdmin\Model\Filters::darken("#f1f7f7", 10)|noescape};
+                --secondaryColorDark: {="#f1f7f7"|darken,5};
+                --secondaryColorDarker: {="#f1f7f7"|darken,10};
                 --ternaryColor: #101D40;
                 --ternaryTextColor: #ffffff;
             }
