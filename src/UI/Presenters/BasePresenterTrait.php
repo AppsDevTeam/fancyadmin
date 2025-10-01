@@ -15,8 +15,6 @@ trait BasePresenterTrait
 	
 	abstract protected function getTranslator(): Translator;
 
-	const int DEFAULT_AUTO_CLOSE_DURATION = 3000;
-
 	protected bool $primaryTemplate = false;
 
 	protected function beforeRender(): void

@@ -11,81 +11,81 @@
 	<link rel="manifest" href="/manifest.webmanifest"/>
 	<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
 	<link rel="icon" type="image/png" href="/favicon/favicon.png">
-    {if $hmr}
-        <link rel="stylesheet" href="https://localhost:3000/dist/css/portal.css">
-    {else}
-        <link rel="stylesheet" href="{$basePath}/dist/css/portal.css{v}">
-    {/if}
+	{if $hmr}
+		<link rel="stylesheet" href="https://localhost:3000/dist/css/portal.css">
+	{else}
+		<link rel="stylesheet" href="{$basePath}/dist/css/portal.css{v}">
+	{/if}
 </head>
 
 <body data-app-body data-adt-js-components="{$jsComponentsConfig}" data-adt-messaging data-adt-translate data-adt-safari-support>
-    <div n:snippet="body">
-        <style>
-            body {
-                --primaryColor: #42b6a4;
-                --primaryColorDark: {="#42b6a4"|darken,5};
-                --primaryColorDark20: {="#42b6a4"|darken,10};
-                --secondaryColor: #f1f7f7;
-                --secondaryColorDark: {="#f1f7f7"|darken,5};
-                --secondaryColorDarker: {="#f1f7f7"|darken,10};
-                --ternaryColor: #101D40;
-                --ternaryTextColor: #ffffff;
-            }
-        </style>
+<div n:snippet="body">
+	<style>
+        body {
+            --primaryColor: #42b6a4;
+            --primaryColorDark: {="#42b6a4"|darken,5|noescape};
+            --primaryColorDark20: {="#42b6a4"|darken,10|noescape};
+            --secondaryColor: #f1f7f7;
+            --secondaryColorDark: {="#f1f7f7"|darken,5|noescape};
+            --secondaryColorDarker: {="#f1f7f7"|darken,10|noescape};
+            --ternaryColor: #101D40;
+            --ternaryTextColor: #ffffff;
+        }
+	</style>
 
-        {if $primaryTemplate}
-            {snippet sideMenu}
-                {include @sideMenu.latte}
-                {include @mobileMenu.latte}
-            {/snippet}
+	{if $primaryTemplate}
+		{snippet sideMenu}
+			{include @sideMenu.latte}
+			{include @mobileMenu.latte}
+		{/snippet}
 
-            <div class="container-fluid {*px-0*} delay-animate" n:snippet="container">
-                {if $presenter->getAction() === 'detail'}
-                    <nav style="height: 70px" class="d-flex">
-                        <div class="back-link">
-                            <a n:href="default">{_app.appGeneral.labels.backToOverview}</a>
-                        </div>
-                    </nav>
-                {/if}
+		<div class="container-fluid {*px-0*} delay-animate" n:snippet="container">
+			{if $presenter->getAction() === 'detail'}
+				<nav style="height: 70px" class="d-flex">
+					<div class="back-link">
+						<a n:href="default">{_app.appGeneral.labels.backToOverview}</a>
+					</div>
+				</nav>
+			{/if}
 
-                <div id="content">
-                    {include content}
-                </div>
-            </div>
+			<div id="content">
+				{include content}
+			</div>
+		</div>
 
-            <div class="side-panel-template-backdrop"></div>
-            <div class="side-panel-template-container">
-                {snippet sidePanelContainer}
-                    {snippet sidePanel}{/snippet}
-                {/snippet}
-                <button type="button" class="btn-close"></button>
-            </div>
-        {else}
-            <div class="bg-primary-variant container-login">
-                <div class="wrap-login">
-                    <img n:if="$logoFileName" src="{$basePath}/{$logoFileName}{v}" class="" width="226px" height="auto" />
-                    {include content}
-                </div>
-            </div>
-        {/if}
+		<div class="side-panel-template-backdrop"></div>
+		<div class="side-panel-template-container">
+			{snippet sidePanelContainer}
+				{snippet sidePanel}{/snippet}
+			{/snippet}
+			<button type="button" class="btn-close"></button>
+		</div>
+	{else}
+		<div class="bg-primary-variant container-login">
+			<div class="wrap-login">
+				<img n:if="$logoFileName" src="{$basePath}/{$logoFileName}{v}" class="" width="226px" height="auto" />
+				{include content}
+			</div>
+		</div>
+	{/if}
 
-        <div n:snippet="flashes" class="snippet-flashes">
-            <div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type"
-                    data-close-duration="{$flash->closeDuration ?? App\UI\BasePresenter::DEFAULT_AUTO_CLOSE_DURATION}">
-                <div class="alert-text">{$flash->message}</div>
-                <div class="alert-close-btn-wrapper">
-                    <button class="alert-close-btn">
-                        Beru na vědomí
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    {if $hmr}
-        <script src="https://localhost:3000/dist/js/portal.js"></script>
-    {else}
-        <script src="{$basePath}/dist/js/portal.js{v}"></script>
-    {/if}
-    {block scripts}{/block}
+	<div n:snippet="flashes" class="snippet-flashes">
+		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type"
+				data-close-duration="{$flash->closeDuration ?? ADT\FancyAdmin\UI\Presenters\BasePresenter::DEFAULT_AUTO_CLOSE_DURATION}">
+			<div class="alert-text">{$flash->message}</div>
+			<div class="alert-close-btn-wrapper">
+				<button class="alert-close-btn">
+					Beru na vědomí {* TODO translate *}
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+{if $hmr}
+	<script src="https://localhost:3000/dist/js/portal.js"></script>
+{else}
+	<script src="{$basePath}/dist/js/portal.js{v}"></script>
+{/if}
+{block scripts}{/block}
 </body>
 </html>
