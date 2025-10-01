@@ -6,36 +6,23 @@
   "license": ["MIT"],
   "require": {
     "php": ">=8.4",
-    "kdyby/autowired": "^3.0",
     "adt/ajax-select": "^4.0",
     "contributte/translation": "^2.0",
     "adt/doctrine-forms": "^2.0",
     "adt/doctrine-authenticator": "^2.0",
-    "nettrine/extensions-atlantic18": "dev-orm3",
+    "nettrine/extensions-atlantic18": "dev-master",
     "adt/utils": "^2.0",
     "adt/nette-forms-phone-number": "^1.6",
-    "voda/date-input": "^2.2",
-    "adt/route-port": "^3.0",
-    "nasext/dependent-select-box": "^6.0",
     "nette/mail": "^4.0",
     "adt/single-recipient-mailer": "^5.1",
     "adt/background-queue": "^5.0",
-    "adt/mailer": "^3.2",
     "tijsverkoyen/css-to-inline-styles": "^2.3",
     "adt/doctrine-components": "^3.0",
     "nette/application": "^3.2",
-    "brick/phonenumber": "^0.7.0"
+    "brick/phonenumber": "^0.7.0",
+    "adt/mailer": "^3.2",
+    "symfony/yaml": "^7.3"
   },
-  "repositories": [
-    {
-      "type": "git",
-      "url": "https://github.com/AppsDevTeam/doctrine-extensions-atlantic18.git"
-    },
-    {
-      "type": "git",
-      "url": "https://github.com/AppsDevTeam/DependentSelectBox"
-    }
-  ],
   "autoload": {
     "psr-4": {
       "ADT\\FancyAdmin\\": "src/"

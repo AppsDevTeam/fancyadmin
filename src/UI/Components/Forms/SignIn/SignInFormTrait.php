@@ -4,19 +4,14 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 
-use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\FancyAdmin;
-use ADT\FancyAdmin\UI\Components\Forms\BaseFormTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
 use Nette\Application\UI\InvalidLinkException;
-use Nette\Application\UI\Presenter;
 use Nette\Security\AuthenticationException;
-use Nette\Utils\ArrayHash;
 
 trait SignInFormTrait
 {
