@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities\Enums;
 
-interface AclResourceNameEnum
+use Nette\Security\Resource;
+
+interface AclResourceNameEnum extends Resource
 {
 	/** @return static */
 	public static function from(string|int $value): static;
