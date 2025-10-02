@@ -36,7 +36,7 @@ trait BaseQueryTrait
 				&&
 				($account = $this->securityUser->getIdentity()->getSelectedAccount())
 			) {
-				$this->applyCompanyFilter($qb, $account);
+				$this->applyAccountFilter($qb, $account);
 			}
 		};
 	}
