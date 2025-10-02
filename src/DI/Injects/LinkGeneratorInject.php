@@ -2,13 +2,11 @@
 
 namespace ADT\FancyAdmin\DI\Injects;
 
+use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\LinkGenerator;
 
 trait LinkGeneratorInject
 {
+	#[Autowire]
 	protected LinkGenerator $_linkGenerator;
-	public function injectLinkGenerator(LinkGenerator $linkGenerator): void
-	{
-		$this->_linkGenerator = $linkGenerator;
-	}
 }

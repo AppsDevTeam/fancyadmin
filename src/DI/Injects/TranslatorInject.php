@@ -2,13 +2,11 @@
 
 namespace ADT\FancyAdmin\DI\Injects;
 
+use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Localization\Translator;
 
 trait TranslatorInject
 {
+	#[Autowire]
 	protected Translator $_translator;
-	public function injectTranslator(Translator $_translator): void
-	{
-		$this->_translator = $_translator;
-	}
 }

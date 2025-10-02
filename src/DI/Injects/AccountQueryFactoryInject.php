@@ -3,12 +3,10 @@
 namespace ADT\FancyAdmin\DI\Injects;
 
 use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
+use Kdyby\Autowired\Attributes\Autowire;
 
 trait AccountQueryFactoryInject
 {
+	#[Autowire]
 	protected AccountQueryFactory $_accountQueryFactory;
-	public function injectAccountQueryFactory(AccountQueryFactory $accountQueryFactory): void
-	{
-		$this->_accountQueryFactory = $accountQueryFactory;
-	}
 }

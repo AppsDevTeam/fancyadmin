@@ -3,12 +3,10 @@
 namespace ADT\FancyAdmin\DI\Injects;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
+use Kdyby\Autowired\Attributes\Autowire;
 
 trait AuthenticatorInject
 {
+	#[Autowire]
 	protected DoctrineAuthenticator $_authenticator;
-	public function injectAuthenticator(DoctrineAuthenticator $authenticator): void
-	{
-		$this->_authenticator = $authenticator;
-	}
 }
