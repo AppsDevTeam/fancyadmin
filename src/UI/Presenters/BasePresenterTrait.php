@@ -70,7 +70,7 @@ trait BasePresenterTrait
 	{
 		$this->redrawControl('flashes');
 		$flash = parent::flashMessage($this->getTranslator()->translate($message), $type);
-		$flash->closeDuration = $autoCloseDuration ?? self::DEFAULT_AUTO_CLOSE_DURATION;
+		$flash->closeDuration = $autoCloseDuration ?? BasePresenter::DEFAULT_AUTO_CLOSE_DURATION;
 		return $flash;
 	}
 
