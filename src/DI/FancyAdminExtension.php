@@ -14,7 +14,7 @@ use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
-use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Queries\Abstract\Factories\BaseQuery;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
@@ -90,7 +90,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		];
 
 		$loader = new RobotLoader();
-		$loader->addDirectory(__DIR__ . '/../../../../../app/Model/Entities');
+		$loader->addDirectory(__DIR__ . '/../../../app/Model/Entities');
 		$loader->acceptFiles = ['*.php'];
 		$loader->rebuild();
 

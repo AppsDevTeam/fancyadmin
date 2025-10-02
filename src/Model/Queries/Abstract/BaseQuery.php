@@ -4,18 +4,14 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries\Abstract;
 
-use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
-use ADT\FancyAdmin\Model\Security\SecurityUser;
+use ADT\Components\AjaxSelect\Interfaces\OrByIdFilterInterface;
+use ADT\DoctrineComponents\QueryObject\QueryObject;
 
-interface BaseQuery extends QueryObjectInterface
+/**
+ * @extends QueryObject<TEntity>
+ * @template TEntity of object
+ */
+abstract class BaseQuery extends QueryObject implements OrByIdFilterInterface, Factories\BaseQuery
 {
-	const string SECURITY_FILTER = "securityFilter";
-	const string ACCOUNT_FILTER = "accountFilter";
-
-	public function init(): void;
-	public function setSecurityUser(SecurityUser $securityUser): static;
-	public function disableSecurityFilter(): static;
-	public function disableAccountFilter(): static;
-	public function fetchPairs(?string $value = 'name', ?string $key = 'id'): array;
-	public function byIdNot(int|array $id): static;
+	use BaseQueryTrait;
 }

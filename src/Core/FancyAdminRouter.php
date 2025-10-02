@@ -6,7 +6,7 @@ namespace ADT\FancyAdmin\Core;
 
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\FancyAdmin\Model\FancyAdmin;
-use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Queries\Abstract\Factories\BaseQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Doctrine\ORM\EntityManagerInterface;

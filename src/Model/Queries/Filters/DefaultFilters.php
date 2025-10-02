@@ -3,7 +3,7 @@
 namespace ADT\FancyAdmin\Model\Queries\Filters;
 
 use ADT\FancyAdmin\Model\Entities\Account;
-use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Queries\Abstract\Factories\BaseQuery;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Doctrine\ORM\QueryBuilder;
 

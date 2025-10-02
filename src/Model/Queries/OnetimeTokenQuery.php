@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Queries;
 
-use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Queries\Abstract\Factories\BaseQuery;
 
 interface OnetimeTokenQuery extends BaseQuery
 {
