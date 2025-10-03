@@ -13,7 +13,7 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 {
 	// CreatedAt
 	public function getCreatedAt(): DateTimeImmutable;
-	public function setCreatedAt(DateTimeImmutable $createdAt): self;
+	public function setCreatedAt(DateTimeImmutable $createdAt): static;
 
 	// UpdatedAt
 	public function getUpdatedAt(): DateTimeImmutable;
