@@ -7,6 +7,13 @@ use ADT\Datagrid\Component\DataGrid;
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\DoctrineForms\BaseForm;
+use ADT\FancyAdmin\DI\Injects\BackgroundQueryInject;
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\FiltersInject;
+use ADT\FancyAdmin\DI\Injects\GridFilterFormFactoryInject;
+use ADT\FancyAdmin\DI\Injects\GridFilterQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\QueryObjectDataSourceInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
@@ -24,34 +31,20 @@ use Nette\Security\User;
 trait BaseGridTrait
 {
 	use SidePanel;
+	use FiltersInject;
 	use TranslatorInject;
-
-	#[Autowire]
-	public IQueryObjectDataSourceFactory $queryObjectDataSource;
-
-	#[Autowire]
-	public SecurityUser $securityUser;
-
-	#[Autowire]
-	public EntityManager $em;
-
-	#[Autowire]
-	public GridFilterQueryFactory $gridFilterQueryFactory;
-
-	#[Autowire]
-	public GridFilterFormFactory $gridFilterFormFactory;
-
-	#[Autowire]
-	public BackgroundQueue $backgroundQueue;
-
-	#[Autowire]
-	public Filters $filters;
+	use SecurityUserInject;
+	use EntityManagerInject;
+	use BackgroundQueryInject;
+	use QueryObjectDataSourceInject;
+	use GridFilterFormFactoryInject;
+	use GridFilterQueryFactoryInject;
 
 	public ?GridFilter $entity = null;
 
 	public function getEntityManager(): EntityManager
 	{
-		return $this->em;
+		return $this->_em;
 	}
 
 	public function getTranslator(): Translator
@@ -61,17 +54,17 @@ trait BaseGridTrait
 
 	public function getGridFilterQueryFactory(): GridFilterQueryFactory
 	{
-		return $this->gridFilterQueryFactory;
+		return $this->_gridFilterQueryFactory;
 	}
 
 	public function getSecurityUser(): User
 	{
-		return $this->securityUser;
+		return $this->_securityUser;
 	}
 
 	public function getQueryObjectDataSourceFactory(): IQueryObjectDataSourceFactory
 	{
-		return $this->queryObjectDataSource;
+		return $this->_queryObjectDataSource;
 	}
 
 	public function getDataGridClass(): string
@@ -86,13 +79,13 @@ trait BaseGridTrait
 
 	public function getForm(): BaseForm
 	{
-		return $this->gridFilterFormFactory->create()
+		return $this->_gridFilterFormFactory->create()
 			->setGrid($this);
 	}
 
 	public function getQueryObject(): QueryObject
 	{
-		return $this->gridFilterQueryFactory->create();
+		return $this->_gridFilterQueryFactory->create();
 	}
 
 	/**
@@ -111,6 +104,6 @@ trait BaseGridTrait
 
 	public function getEmail(): string
 	{
-		return $this->securityUser->getIdentity()->getEmail();
+		return $this->_securityUser->getIdentity()->getEmail();
 	}
 }
