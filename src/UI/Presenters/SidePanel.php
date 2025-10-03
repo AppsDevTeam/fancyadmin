@@ -8,10 +8,11 @@ use ADT\DoctrineForms\BaseFormInterface;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
+use ADT\FancyAdmin\UI\Components\ControlTrait;
 
 trait SidePanel
 {
-	use PresenterTrait;
+	use ControlTrait;
 
 	abstract protected function getEntity(): Entity|callable|null;
 	abstract protected function getForm(): BaseFormInterface;
