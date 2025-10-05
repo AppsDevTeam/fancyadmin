@@ -148,7 +148,7 @@ trait IdentityTrait
 		return $this->getProfile()->getRoles();
 	}
 
-	public function isAllowed(string $aclResource): bool
+	public function isAllowed(string|Resource $aclResource): bool
 	{
 		return array_any($this->getRoles(), fn(AclRole $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
 	}
