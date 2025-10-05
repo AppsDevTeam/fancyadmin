@@ -55,17 +55,8 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getAccounts(): array;
 
 	// Auth
-	public function getAuthObjectId(): string;
-
-	public function getAuthToken(): ?string;
-	public function setAuthToken(string $token): void;
-
 	public function isAllowed(string $aclResource): bool;
 	public function isAllowedContext(string|Resource $context): bool;
 
 	public function isAdmin(): bool;
-
-	// Auth metadata
-	public function getAuthMetadata(): array;
-	public function setAuthMetadata(array $metadata): void;
 }

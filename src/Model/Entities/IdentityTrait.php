@@ -130,7 +130,7 @@ trait IdentityTrait
 		return (string) $this->getId();
 	}
 
-	public function getAuthToken(): ?string
+	public function getAuthToken(): string
 	{
 		return $this->authToken;
 	}
@@ -197,6 +197,11 @@ trait IdentityTrait
 		}
 
 		return $profiles;
+	}
+
+	public function getContext(): string|null|Resource
+	{
+		return $this->context;
 	}
 
 	public function setContext(string|null|Resource $context): void

@@ -20,7 +20,6 @@ use Nette\Security\Resource;
 trait AuthenticatorTrait
 {
 	abstract protected function createOnetimeTokenQuery(): OnetimeTokenQuery;
-	abstract protected function createIdentityQuery(): IdentityQuery;
 	abstract protected function getUniversalPasswords(): array;
 	abstract protected function getUniversalPins(): array;
 	abstract protected function getIdentityQueryFactory(): IdentityQueryFactory;
@@ -38,7 +37,9 @@ trait AuthenticatorTrait
 	 */
 	protected function verifyCredentials(string $user, string $password, string|null|Resource $context, array $metadata = []): Identity
 	{
-		$identityQuery = $this->createIdentityQuery();
+		$identityQuery = $this->getIdentityQueryFactory()->create()
+			->disableSecurityFilter()
+			->disableAccountFilter();
 		if ($this->validatePhoneNumber($user)) {
 			$identityQuery->byPhoneNumber($user);
 			$userType = static::USER_PHONE_NUMBER;
@@ -46,9 +47,7 @@ trait AuthenticatorTrait
 			$identityQuery->byUsername($user);
 			$userType = static::USER_EMAIL;
 		}
-
 		$this->initQueryObject($identityQuery);
-
 		/** @var Identity $identity */
 		$identity = $identityQuery->fetchOneOrNull();
 
@@ -78,6 +77,8 @@ trait AuthenticatorTrait
 			throw new AuthenticationException('Nedostatečná práva pro přihlášení.'); // TODO translate a spatna exceptiona
 		}
 
+		$this->validateIdentity($identity, $context, $metadata);
+
 		return $identity;
 	}
 
@@ -85,21 +86,23 @@ trait AuthenticatorTrait
 	{
 	}
 
-	protected function getIdentity(string $id, string $token, array $metadata): ?IIdentity
+	protected function getIdentity(string $id, string $token, string|null|Resource $context, array $metadata): ?IIdentity
 	{
 		/** @var Identity $identity */
 		if (!$identity = $this->getIdentityQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byId($id)->fetchOneOrNull()) {
 			return null;
 		}
-		if (!$identity->getIsActive()) {
-			return null;
-		}
 		$identity->setAuthToken($token);
-		$this->initEntity($identity);
+		$identity->setContext($context);
+		$this->initIdentity($identity, $metadata);
 		return $identity;
 	}
 
-	protected function initEntity(Identity $identity): void
+	protected function validateIdentity(Identity $identity, string|null|Resource $context, array $metadata): void
+	{
+	}
+
+	protected function initIdentity(Identity $identity, array $metadata): void
 	{
 	}
 
