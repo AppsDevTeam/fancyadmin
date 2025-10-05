@@ -7,6 +7,7 @@ use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Authorizator;
 use Nette\Security\IIdentity;
+use Nette\Security\Resource;
 
 trait SecurityUserTrait
 {
@@ -30,7 +31,7 @@ trait SecurityUserTrait
 		string|IIdentity $username,
 		#[\SensitiveParameter]
 		?string $password = null,
-		?string $context = null,
+		string|null|Resource $context = null,
 		array $metadata = []
 	): void
 	{
