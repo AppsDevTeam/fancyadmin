@@ -8,6 +8,7 @@ use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 use DateTimeImmutable;
+use Nette\Security\Resource;
 
 interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Entity
 {
@@ -60,6 +61,7 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function setAuthToken(string $token): void;
 
 	public function isAllowed(string $aclResource): bool;
+	public function isAllowedContext(string|Resource $context): bool;
 
 	public function isAdmin(): bool;
 

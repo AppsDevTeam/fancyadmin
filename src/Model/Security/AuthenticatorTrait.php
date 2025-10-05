@@ -4,13 +4,15 @@ namespace ADT\FancyAdmin\Model\Security;
 
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\Model\Queries\IdentityQuery;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
 use Brick\PhoneNumber\PhoneNumber;
 use Brick\PhoneNumber\PhoneNumberParseException;
-use Nette\Security as NS;
 use Nette\Security\AuthenticationException;
 use Nette\Security\IIdentity;
+use Nette\Security\Passwords;
+use Nette\Security\Resource;
 
 /**
  * @method Identity authenticate(string $user, string $password, string $context, array $metadata = []))
@@ -21,19 +23,20 @@ trait AuthenticatorTrait
 	abstract protected function createIdentityQuery(): IdentityQuery;
 	abstract protected function getUniversalPasswords(): array;
 	abstract protected function getUniversalPins(): array;
+	abstract protected function getIdentityQueryFactory(): IdentityQueryFactory;
 
 	const string USER_EMAIL = 'email';
 	const string USER_PHONE_NUMBER = 'phone_number';
 
 	public static function verifyPassword(string $password, string $hash): bool
 	{
-		return new NS\Passwords()->verify($password, $hash);
+		return new Passwords()->verify($password, $hash);
 	}
 
 	/**
 	 * @throws AuthenticationException
 	 */
-	protected function verifyCredentials(string $user, string $password, ?string $context, array $metadata = []): Identity
+	protected function verifyCredentials(string $user, string $password, string|null|Resource $context, array $metadata = []): Identity
 	{
 		$identityQuery = $this->createIdentityQuery();
 		if ($this->validatePhoneNumber($user)) {
@@ -46,6 +49,7 @@ trait AuthenticatorTrait
 
 		$this->initQueryObject($identityQuery);
 
+		/** @var Identity $identity */
 		$identity = $identityQuery->fetchOneOrNull();
 
 		if (!$identity) {
@@ -83,7 +87,8 @@ trait AuthenticatorTrait
 
 	protected function getIdentity(string $id, string $token, array $metadata): ?IIdentity
 	{
-		if (!$identity = $this->identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byId($id)->fetchOneOrNull()) {
+		/** @var Identity $identity */
+		if (!$identity = $this->getIdentityQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byId($id)->fetchOneOrNull()) {
 			return null;
 		}
 		if (!$identity->getIsActive()) {
