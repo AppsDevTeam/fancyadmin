@@ -68,7 +68,7 @@ trait ProfileTrait
 				return true;
 			}
 
-			if (array_any($_role->getResources(), fn($_resource) => $_resource->getName() === (is_string($resource) ? $resource : $resource->value))) {
+			if (array_any($_role->getResources(), fn($_resource) => $_resource->getName() === $resource)) {
 				return true;
 			}
 		}
