@@ -15,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Nette\Security\Passwords;
+use Nette\Security\Resource;
 
 trait IdentityTrait
 {
@@ -52,7 +53,7 @@ trait IdentityTrait
 	protected ?Account $selectedAccount = null;
 
 	protected string $authToken;
-	public ?string $context = null;
+	public string|null|Resource $context = null;
 
 	public function __construct()
 	{
@@ -177,7 +178,7 @@ trait IdentityTrait
 	/**
 	 * @return Profile[]
 	 */
-	public function getAllowedProfiles(?string $context = null): array
+	public function getAllowedProfiles(string|null|Resource $context = null): array
 	{
 		$context = $context ?: $this->context;
 
@@ -198,12 +199,12 @@ trait IdentityTrait
 		return $profiles;
 	}
 
-	public function setContext(string $context): void
+	public function setContext(string|null|Resource $context): void
 	{
 		$this->context = $context;
 	}
 
-	public function isAllowedContext(string $context): bool
+	public function isAllowedContext(string|Resource $context): bool
 	{
 		return (bool) $this->getAllowedProfiles($context);
 	}

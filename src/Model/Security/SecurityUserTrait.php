@@ -10,6 +10,9 @@ use Nette\Security\IIdentity;
 
 trait SecurityUserTrait
 {
+	abstract protected function getAuthorizator(): Authorizator;
+	abstract public function getIdentity(): ?IIdentity;
+
 	protected AclResourceNameEnum $fullDataAclResource;
 
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool
@@ -34,7 +37,7 @@ trait SecurityUserTrait
 		parent::login($username, $password, $context, $metadata);
 	}
 
-	public function setFullDataAclResource(AclResourceNameEnum $aclResource)
+	public function setFullDataAclResource(AclResourceNameEnum $aclResource): void
 	{
 		$this->fullDataAclResource = $aclResource;
 	}

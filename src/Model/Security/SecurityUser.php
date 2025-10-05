@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\Model\Security;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use Nette\Security\Authorizator;
 use Nette\Security\IIdentity;
+use Nette\Security\Resource;
 use SensitiveParameter;
 
 interface SecurityUser
@@ -19,7 +20,7 @@ interface SecurityUser
 		string|IIdentity $username,
 		#[SensitiveParameter]
 		?string $password = null,
-		?string $context = null,
+		string|null|Resource $context = null,
 		array $metadata = []
 	): void;
 }
