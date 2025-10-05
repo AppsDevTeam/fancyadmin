@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineComponents\Entities\Entity;
+use Nette\Security\Resource;
 use Nette\Security\Role;
 
 interface AclRole extends Role, Entity
@@ -20,7 +21,7 @@ interface AclRole extends Role, Entity
 	public function setName(string $name): static;
 
 	// Přístupová práva
-	public function isAllowed(string $aclResource): bool;
+	public function isAllowed(Resource $aclResource): bool;
 
 	// Role flags
 	public function getIsAdmin(): bool;

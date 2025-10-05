@@ -62,14 +62,14 @@ trait ProfileTrait
 		return $this;
 	}
 
-	public function isAllowed(AclResourceNameEnum|string $resource): bool
+	public function isAllowed(AclResourceNameEnum $resource): bool
 	{
 		foreach ($this->getRoles() as $_role) {
 			if ($_role->getIsAdmin()) {
 				return true;
 			}
 
-			if (array_any($_role->getResources(), fn($_resource) => $_resource->getName() === $resource)) {
+			if (array_any($_role->getResources(), fn($_resource) => $_resource->getName() === $resource->getResourceId())) {
 				return true;
 			}
 		}

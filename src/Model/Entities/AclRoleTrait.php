@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
+use Nette\Security\Resource;
 
 trait AclRoleTrait
 {
@@ -83,7 +84,7 @@ trait AclRoleTrait
 		return $this;
 	}
 
-	public function isAllowed(string $aclResource): bool
+	public function isAllowed(Resource $aclResource): bool
 	{
 		return array_any($this->getResources(), fn(AclResource $_resource) => $_resource->getName() === $aclResource);
 	}
