@@ -15,7 +15,7 @@ use Nette\Security\Passwords;
 use Nette\Security\Resource;
 
 /**
- * @method Identity authenticate(string $user, string $password, string $context, array $metadata = []))
+ * @method Identity authenticate(string $user, string $password, string|null|Resource $context, array $metadata = []))
  */
 trait AuthenticatorTrait
 {
