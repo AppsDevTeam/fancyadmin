@@ -35,7 +35,7 @@ trait AuthenticatorTrait
 	/**
 	 * @throws AuthenticationException
 	 */
-	protected function verifyCredentials(string $user, string $password, string|null|Resource $context, array $metadata = []): Identity
+	protected function verifyCredentials(string $user, string $password, ?Resource $context, array $metadata = []): Identity
 	{
 		$identityQuery = $this->getIdentityQueryFactory()->create()
 			->disableSecurityFilter()
@@ -86,7 +86,7 @@ trait AuthenticatorTrait
 	{
 	}
 
-	protected function getIdentity(string $id, string $token, string|null|Resource $context, array $metadata): ?IIdentity
+	protected function getIdentity(string $id, string $token, ?Resource $context, array $metadata): ?IIdentity
 	{
 		/** @var Identity $identity */
 		if (!$identity = $this->getIdentityQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byId($id)->fetchOneOrNull()) {
@@ -98,7 +98,7 @@ trait AuthenticatorTrait
 		return $identity;
 	}
 
-	protected function validateIdentity(Identity $identity, string|null|Resource $context, array $metadata): void
+	protected function validateIdentity(Identity $identity, ?Resource $context, array $metadata): void
 	{
 	}
 

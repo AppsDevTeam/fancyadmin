@@ -20,7 +20,7 @@ interface SecurityUser
 		string|IIdentity $username,
 		#[SensitiveParameter]
 		?string $password = null,
-		string|null|Resource $context = null,
+		?Resource $context = null,
 		array $metadata = []
 	): void;
 }

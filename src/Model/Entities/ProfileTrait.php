@@ -77,7 +77,7 @@ trait ProfileTrait
 		return false;
 	}
 
-	public function isAllowedContext(string|Resource $context): bool
+	public function isAllowedContext(Resource $context): bool
 	{
 		if ($this->isAllowed($context)) {
 			return true;

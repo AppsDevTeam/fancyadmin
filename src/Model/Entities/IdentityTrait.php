@@ -53,7 +53,7 @@ trait IdentityTrait
 	protected ?Account $selectedAccount = null;
 
 	protected string $authToken;
-	public string|null|Resource $context = null;
+	public ?Resource $context = null;
 
 	public function __construct()
 	{
@@ -178,7 +178,7 @@ trait IdentityTrait
 	/**
 	 * @return Profile[]
 	 */
-	public function getAllowedProfiles(string|null|Resource $context = null): array
+	public function getAllowedProfiles(?Resource $context = null): array
 	{
 		$context = $context ?: $this->context;
 
@@ -199,17 +199,17 @@ trait IdentityTrait
 		return $profiles;
 	}
 
-	public function getContext(): string|null|Resource
+	public function getContext(): ?Resource
 	{
 		return $this->context;
 	}
 
-	public function setContext(string|null|Resource $context): void
+	public function setContext(?Resource $context): void
 	{
 		$this->context = $context;
 	}
 
-	public function isAllowedContext(string|Resource $context): bool
+	public function isAllowedContext(Resource $context): bool
 	{
 		return (bool) $this->getAllowedProfiles($context);
 	}
