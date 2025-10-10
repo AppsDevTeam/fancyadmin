@@ -10,7 +10,7 @@ enum AclResourceNameEnum: string implements Resource
 {
 	case BACKOFFICE_IDENTITIES = 'portal.backoffice.identities';
 
-	case BACKOFFICE_ROLES_AND_PERMISSIONS = 'backoffice.roles_and_permissions';
+	case BACKOFFICE_ROLES_AND_PERMISSIONS = 'portal.backoffice.roles_and_permissions';
 
 	public function getResourceId(): string
 	{
