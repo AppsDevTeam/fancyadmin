@@ -16,10 +16,10 @@ trait AclRoleFormTrait
 	 */
 	public function initForm(Form $form): void
 	{
-		$form->addText('name', 'Name')
+		$form->addText('name', 'fcadmin.forms.aclRole.name')
 			->setRequired();
 
-		$form->addSubmit('submit', 'Submit');
+		$form->addSubmit('submit', 'fcadmin.forms.aclRole.submit');
 	}
 
 	protected function getEntityClass(): ?string

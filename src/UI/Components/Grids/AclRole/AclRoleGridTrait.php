@@ -22,7 +22,7 @@ trait AclRoleGridTrait
 	 */
 	public function initGrid(DataGrid $grid): void
 	{
-		$grid->addColumnText('name', 'Name');
+		$grid->addColumnText('name', 'fcadmin.grids.aclRole.name');
 
 		if ($this->allowEdit()) {
 			$grid->getAction('edit')->setRenderCondition(fn(AclRole $aclRole) => !$aclRole->getIsAdmin());

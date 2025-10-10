@@ -4,7 +4,7 @@
 {varType App\Model\Entity\AclRole[] $roles}
 {varType array $rolesResources}
 
-{define title} Permissions{/define}
+{define title}{_fcadmin.presenters.permissions.title}{/define}
 
 {block content}
 <div class="px-3 overflow-visible">
@@ -17,9 +17,9 @@
 				{/if}
 				<tr>
 					{if $iterator->first}
-						<th scope="col" style="text-align: left; width: 150px;">Title</th> {* TODO translate *}
+						<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
 					{else}
-						<th scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;" title="{$_resource->getTitle()}">{$_resource->getTitle()}</th>
+						<th scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;" title="{_'fcadmin.aclResource.title.' . $_resource->getName()}">{_'fcadmin.aclResource.title.' . $_resource->getName()}</th>
 					{/if}
 					{foreach $roles as $_roleId => $_roleName}
 						{if $rowIsFirst}

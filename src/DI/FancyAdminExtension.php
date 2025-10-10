@@ -90,7 +90,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		];
 
 		$loader = new RobotLoader();
-		$loader->addDirectory(__DIR__ . '/../../../../../app/Model/Entities');
+		$loader->addDirectory(__DIR__ . '/../../../app/Model/Entities');
 		$loader->acceptFiles = ['*.php'];
 		$loader->rebuild();
 

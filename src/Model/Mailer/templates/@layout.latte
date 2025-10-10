@@ -145,7 +145,7 @@
               <tr>
                   <td align="left" style="padding:10px 25px;padding-bottom:40px;word-break:break-word;">
                       <div style="font-family:Roboto, Helvetica, Arial, sans-serif, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#555555;">
-                          Hezký den,<br><br>
+                          {_fcadmin.mailer.base.salutation|noescape}
                           {include content}
                       </div>
                   </td>
@@ -154,10 +154,7 @@
               <tr>
                 <td align="left" style="padding:10px 25px;word-break:break-word;">
                   <div style="font-family:Roboto, Helvetica, Arial, sans-serif, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#555555;">
-                      Děkujeme, že využíváte našich služeb.<br><br>
-
-                      S pozdravem<br><br>
-
+                      {_fcadmin.mailer.base.signature|noescape}
                       <strong>{$title}</strong><br>
                       <a href="mailto:{$supportEmail}" style="color: #101d40">{$supportEmail}</a>
                   </div>

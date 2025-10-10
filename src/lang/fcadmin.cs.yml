@@ -1,7 +1,43 @@
+global:
+  buttons:
+    new: Nový
+
+  flashes:
+    close: Beru na vědomí
+
 layout:
   sideMenu:
     user:
       logout: Odhlásit se
+
+aclResource:
+  title:
+    portal:
+      backoffice:
+        identities: Uživatelé
+        roles_and_permissions: Role a práva
+
+mailer:
+  base:
+    salutation: 'Hezký den,<br><br>'
+    signature: 'Děkujeme, že využíváte našich služeb.<br><br>S pozdravem<br><br>'
+
+  accountCreation:
+    text: 'právě Vám byl vytvořen účet v aplikaci <strong>%projectName%</strong>. Pro přístup k vašemu účtu si nastavte heslo zde:<br><br>'
+
+  passwordRecovery:
+    text: 'pro nastavení nového hesla do aplikace <strong>%projectName%</strong> klikněte na odkaz níže. <strong>Pokud jste o nové heslo nežádali, e-mail ignorujte.</strong><br><br>'
+
+presenters:
+  permissions:
+    title: Oprávnění
+
+    table:
+      title: Title
+
+  roles:
+    title: Role
+    pageTitle: Role
 
 forms:
   # Sign Form
@@ -32,3 +68,11 @@ forms:
       error: E-mail pro obnovu se nepodařilo odeslat
     errors:
       emailRequired: E-mail je povinný
+
+  aclRole:
+    name: Název
+    submit: Odeslat
+
+grids:
+  aclRole:
+    name: Název
