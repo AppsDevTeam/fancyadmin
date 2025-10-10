@@ -9,7 +9,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use App\Model\Entities\AclResource;
 use App\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
+use ADT\FancyAdmin\Model\Entities\Enums\AclRoleAndPermissionsEnum;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 
 trait PermissionsPresenterTrait
@@ -18,7 +18,7 @@ trait PermissionsPresenterTrait
 	use EntityManagerInject;
 	use AclRoleQueryFactoryInject;
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_PERMISSIONS)]
+	#[SecurityCheckAttribute(AclRoleAndPermissionsEnum::BACKOFFICE_ROLES_AND_PERMISSIONS)]
 	public function actionDefault(): void
 	{
 		$this->template->roles = $this->_aclRoleQueryFactory->create()

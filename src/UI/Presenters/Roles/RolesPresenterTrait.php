@@ -14,7 +14,7 @@ use ADT\FancyAdmin\UI\Components\Grids\Role\RoleGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
 use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
+use ADT\FancyAdmin\Model\Entities\Enums\AclRoleAndPermissionsEnum;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 
 trait RolesPresenterTrait
@@ -24,7 +24,7 @@ trait RolesPresenterTrait
 	use RoleFormFactoryInject;
 	use AclRoleQueryFactoryInject;
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_PERMISSIONS)]
+	#[SecurityCheckAttribute(AclRoleAndPermissionsEnum::BACKOFFICE_ROLES_AND_PERMISSIONS)]
 	public function actionDefault(): void
 	{
 	}
@@ -34,13 +34,13 @@ trait RolesPresenterTrait
 		$this->template->setFile(__DIR__ . '/default.latte');
 	}
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_PERMISSIONS)]
+	#[SecurityCheckAttribute(AclRoleAndPermissionsEnum::BACKOFFICE_ROLES_AND_PERMISSIONS)]
 	public function handleNew(): void
 	{
 		$this->redrawSidePanel();
 	}
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_PERMISSIONS)]
+	#[SecurityCheckAttribute(AclRoleAndPermissionsEnum::BACKOFFICE_ROLES_AND_PERMISSIONS)]
 	public function handleEdit(AclRole $role): void
 	{
 		$this->entity = $role;
