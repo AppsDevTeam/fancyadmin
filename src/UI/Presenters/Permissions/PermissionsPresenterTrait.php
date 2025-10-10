@@ -7,8 +7,8 @@ namespace ADT\FancyAdmin\UI\Presenters\Permissions;
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
-use App\Model\Entities\AclResource;
-use App\Model\Entities\AclRole;
+use ADT\FancyAdmin\Model\Entities\AclResource;
+use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 
@@ -18,6 +18,17 @@ trait PermissionsPresenterTrait
 	use EntityManagerInject;
 	use AclRoleQueryFactoryInject;
 
+	private string $aclRoleEntityClass;
+	private string $aclResourceEntityClass;
+
+	public function startup(): void
+	{
+		parent::startup();
+
+		$this->aclRoleEntityClass = $this->_em->findEntityClassByInterface(AclRole::class);
+		$this->aclResourceEntityClass = $this->_em->findEntityClassByInterface(AclResource::class);
+	}
+
 	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ROLES_AND_PERMISSIONS)]
 	public function actionDefault(): void
 	{
@@ -25,14 +36,14 @@ trait PermissionsPresenterTrait
 			->byIsAdmin(false)
 			->fetchPairs();
 
-		$this->template->resources = $this->_em->getRepository(AclResource::class)
+		$this->template->resources = $this->_em->getRepository($this->aclResourceEntityClass)
 			->createQueryBuilder('acl_resources')
 			->select('acl_resources')
 			->orderBy('acl_resources.name')
 			->getQuery()
 			->getResult();
 
-		$this->template->rolesResources = $this->_em->getRepository(AclRole::class)
+		$this->template->rolesResources = $this->_em->getRepository($this->aclRoleEntityClass)
 			->createQueryBuilder('acl_roles')
 			->select('acl_roles.id roleId, acl_resources.id resourceId')
 			->innerJoin('acl_roles.resources', 'acl_resources')
@@ -53,7 +64,7 @@ trait PermissionsPresenterTrait
 	 */
 	public function handlePermission(int $roleId, int $resourceId, bool $bool)
 	{
-		$rolesResource = $this->_em->getRepository(AclRole::class)
+		$rolesResource = $this->_em->getRepository($this->aclRoleEntityClass)
 			->createQueryBuilder('acl_roles')
 			->select('acl_roles.id roleId, acl_resources.id resourceId')
 			->innerJoin('acl_roles.resources', 'acl_resources')
@@ -65,7 +76,7 @@ trait PermissionsPresenterTrait
 			->getResult();
 
 		/** @var AclRole $aclRole */
-		$aclRole = $this->_em->getRepository(AclRole::class)
+		$aclRole = $this->_em->getRepository($this->aclRoleEntityClass)
 			->createQueryBuilder('acl_role')
 			->andWhere('acl_role.id = :roleId')
 			->setParameter('roleId', $roleId)
@@ -73,7 +84,7 @@ trait PermissionsPresenterTrait
 			->getOneOrNullResult();
 
 		/** @var AclResource $aclResource */
-		$aclResource = $this->_em->getRepository(AclResource::class)
+		$aclResource = $this->_em->getRepository($this->aclResourceEntityClass)
 			->createQueryBuilder('acl_resource')
 			->andWhere('acl_resource.id = :resourceId')
 			->setParameter('resourceId', $resourceId)
