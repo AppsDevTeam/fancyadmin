@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Grids\Role;
 
 use ADT\Datagrid\Component\DataGrid;
-use ADT\FancyAdmin\Model\Entities\Enums\AclRoleAndPermissionsEnum;
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
 use App\Model\Entities\AclRole;
 use App\Model\Queries\Factories\AclRoleQueryFactory;
@@ -15,7 +15,7 @@ trait RoleGridTrait
 {
 	use Editable;
 
-	protected string $aclResource = AclRoleAndPermissionsEnum::BACKOFFICE_ROLES_AND_PERMISSIONS->value;
+	protected string $aclResource = AclResourceNameEnum::BACKOFFICE_ROLES_AND_PERMISSIONS->value;
 
 	/**
 	 * @throws DatagridException
