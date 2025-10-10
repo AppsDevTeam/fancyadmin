@@ -3,7 +3,6 @@
 namespace ADT\FancyAdmin\Model\Security;
 
 use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Authorizator;
 use Nette\Security\IIdentity;
@@ -14,7 +13,7 @@ trait SecurityUserTrait
 	abstract protected function getAuthorizator(): Authorizator;
 	abstract public function getIdentity(): ?IIdentity;
 
-	protected AclResourceNameEnum $fullDataAclResource;
+	protected Resource $fullDataAclResource;
 
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool
 	{
@@ -38,7 +37,7 @@ trait SecurityUserTrait
 		parent::login($username, $password, $context, $metadata);
 	}
 
-	public function setFullDataAclResource(AclResourceNameEnum $aclResource): void
+	public function setFullDataAclResource(Resource $aclResource): void
 	{
 		$this->fullDataAclResource = $aclResource;
 	}

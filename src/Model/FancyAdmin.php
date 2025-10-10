@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\Model;
 
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
+use Nette\Security\Resource;
 
 class FancyAdmin
 {
@@ -16,9 +16,9 @@ class FancyAdmin
 		protected string $defaultCustomerRoute,
 		protected string $defaultBackofficeRoute,
 		protected bool $hmr,
-		protected AclResourceNameEnum $customerAclResource,
-		protected AclResourceNameEnum $backofficeAclResource,
-		protected AclResourceNameEnum $fullDataAclResource,
+		protected Resource $customerAclResource,
+		protected Resource $backofficeAclResource,
+		protected Resource $fullDataAclResource,
 	) {}
 
 	public function getProject(): string
@@ -66,17 +66,17 @@ class FancyAdmin
 		return $this->hmr;
 	}
 
-	public function getCustomerAclResource(): AclResourceNameEnum
+	public function getCustomerAclResource(): Resource
 	{
 		return $this->customerAclResource;
 	}
 
-	public function getBackofficeAclResource(): AclResourceNameEnum
+	public function getBackofficeAclResource(): Resource
 	{
 		return $this->backofficeAclResource;
 	}
 	
-	public function getFullDataAclResource(): AclResourceNameEnum
+	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;
 	}

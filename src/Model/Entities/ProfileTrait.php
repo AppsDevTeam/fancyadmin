@@ -2,7 +2,6 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -62,7 +61,7 @@ trait ProfileTrait
 		return $this;
 	}
 
-	public function isAllowed(AclResourceNameEnum $resource): bool
+	public function isAllowed(Resource $resource): bool
 	{
 		foreach ($this->getRoles() as $_role) {
 			if ($_role->getIsAdmin()) {
