@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Grids\Role;
+namespace ADT\FancyAdmin\UI\Components\Grids\AclRole;
 
 use ADT\Datagrid\Component\DataGrid;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
@@ -11,7 +11,7 @@ use App\Model\Entities\AclRole;
 use App\Model\Queries\Factories\AclRoleQueryFactory;
 use Contributte\Datagrid\Exception\DatagridException;
 
-trait RoleGridTrait
+trait AclRoleGridTrait
 {
 	use Editable;
 

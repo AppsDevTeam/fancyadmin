@@ -5,23 +5,23 @@ namespace ADT\FancyAdmin\UI\Presenters\Roles;
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineForms\BaseFormInterface;
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
-use ADT\FancyAdmin\DI\Injects\RoleFormFactoryInject;
+use ADT\FancyAdmin\DI\Injects\AclRoleFormFactoryInject;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
-use ADT\FancyAdmin\UI\Components\Forms\Role\RoleFormFactory;
-use ADT\FancyAdmin\UI\Components\Grids\Role\RoleGrid;
-use ADT\FancyAdmin\UI\Components\Grids\Role\RoleGridFactory;
+use ADT\FancyAdmin\UI\Components\Forms\AclRole\AclRoleFormFactory;
+use ADT\FancyAdmin\UI\Components\Grids\AclRole\AclRoleGrid;
+use ADT\FancyAdmin\UI\Components\Grids\AclRole\AclRoleGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 
-trait RolesPresenterTrait
+trait AclRolesPresenterTrait
 {
 	use SidePanel;
 	use PresenterTrait;
-	use RoleFormFactoryInject;
+	use AclRoleFormFactoryInject;
 	use AclRoleQueryFactoryInject;
 
 	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ROLES_AND_PERMISSIONS)]
@@ -67,7 +67,7 @@ trait RolesPresenterTrait
 		return SidePanelSize::Medium;
 	}
 
-	public function createComponentRoleGrid(RoleGridFactory $factory): RoleGrid
+	public function createComponentRoleGrid(AclRoleGridFactory $factory): AclRoleGrid
 	{
 		return $factory->create();
 	}

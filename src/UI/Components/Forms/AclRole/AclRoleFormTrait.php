@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Components\Forms\Role;
+namespace ADT\FancyAdmin\UI\Components\Forms\AclRole;
 
 use ADT\Forms\Form;
 use App\Model\Entities\AclRole;
@@ -9,7 +9,7 @@ use Exception;
 /**
  * @property AclRole $entity
  */
-trait RoleFormTrait
+trait AclRoleFormTrait
 {
 	/**
 	 * @throws Exception

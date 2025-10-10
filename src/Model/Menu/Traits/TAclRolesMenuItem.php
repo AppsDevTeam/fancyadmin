@@ -5,12 +5,12 @@ namespace ADT\FancyAdmin\Model\Menu\Traits;
 use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuItem;
 
-trait TPermissionsMenuItem {
-	public function addPermissionsItem(NavbarMenu $menu): void {
+trait TAclRolesMenuItem {
+	public function addRoleItem(NavbarMenu $menu): void {
 		$menu->addMenuItem(
 			(new NavbarMenuItem())
-				->setLabel('Permissions')
-				->setLink('Permissions:default')
+				->setLabel('Roles')
+				->setLink('Roles:default')
 		);
 	}
 }

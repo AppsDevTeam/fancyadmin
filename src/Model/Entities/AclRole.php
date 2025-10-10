@@ -10,7 +10,7 @@ use Nette\Security\Role;
 
 interface AclRole extends Role, Entity
 {
-	// Role interface (Nette)
+	// AclRole interface (Nette)
 	public function getRoleId(): string;
 
 	// Identifikátor
@@ -23,7 +23,7 @@ interface AclRole extends Role, Entity
 	// Přístupová práva
 	public function isAllowed(Resource $aclResource): bool;
 
-	// Role flags
+	// AclRole flags
 	public function getIsAdmin(): bool;
 	public function setIsAdmin(bool $isAdmin): static;
 
