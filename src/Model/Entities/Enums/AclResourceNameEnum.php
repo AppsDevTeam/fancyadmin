@@ -6,14 +6,14 @@ namespace ADT\FancyAdmin\Model\Entities\Enums;
 
 use Nette\Security\Resource;
 
-interface AclResourceNameEnum extends Resource
+enum AclResourceNameEnum: string implements Resource
 {
-	/** @return static */
-	public static function from(string|int $value): static;
+	case BACKOFFICE_IDENTITIES = 'portal.backoffice.identities';
 
-	/** @return static|null */
-	public static function tryFrom(string|int $value): ?static;
+	case BACKOFFICE_ROLES_AND_PERMISSIONS = 'portal.backoffice.roles_and_permissions';
 
-	/** @return string[]|int[] */
-	public static function values(): array;
+	public function getResourceId(): string
+	{
+		return $this->value;
+	}
 }

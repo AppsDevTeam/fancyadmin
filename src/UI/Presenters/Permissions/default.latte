@@ -1,0 +1,63 @@
+{layout '../@layout.latte'}
+
+{varType App\Model\Entity\AclResource[] $resources}
+{varType App\Model\Entity\AclRole[] $roles}
+{varType array $rolesResources}
+
+{define title}{_fcadmin.presenters.permissions.title}{/define}
+
+{block content}
+<div class="px-3 overflow-visible">
+	<div style="overflow: auto; width: calc(100vw - 266px); height: calc(100vh - 100px)">
+		<table class="table text-center mb-0" style="table-layout: fixed">
+			{foreach $resources as $_resource}
+				{var $rowIsFirst = $iterator->first}
+				{if $rowIsFirst}
+					<thead>
+				{/if}
+				<tr>
+					{if $iterator->first}
+						<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
+					{else}
+						<th scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;" title="{_'fcadmin.aclResource.title.' . $_resource->getName()}">{_'fcadmin.aclResource.title.' . $_resource->getName()}</th>
+					{/if}
+					{foreach $roles as $_roleId => $_roleName}
+						{if $rowIsFirst}
+							<th scope="col" class="text-center">{$_roleName}</th>
+						{else}
+							{var $permissionExists = false}
+							{foreach $rolesResources as $_roleResource}
+								{breakIf $permissionExists = $_roleResource['resourceId'] === $_resource->getId() && $_roleResource['roleId'] === $_roleId}
+							{/foreach}
+							{if $permissionExists}
+								<td class="table-success"><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), false}"><div class="w-100"><i class="fa fa-check"></i></div></a></td>
+							{else}
+								<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), true}"><div class="w-100"><i class="fa fa-times"></i></div></a></td>
+							{/if}
+						{/if}
+					{/foreach}
+				</tr>
+				{if $rowIsFirst}
+					</thead>
+				{/if}
+			{/foreach}
+		</table>
+	</div>
+</div>
+
+<style>
+	thead th {
+		position: -webkit-sticky; /* for Safari */
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		width: 100px;
+	}
+
+	tbody th {
+		position: -webkit-sticky; /* for Safari */
+		position: sticky;
+		left: 0;
+		background-color: #f9f9f9;
+	}
+</style>

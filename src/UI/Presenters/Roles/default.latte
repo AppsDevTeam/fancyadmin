@@ -1,0 +1,13 @@
+{define title}{_fcadmin.presenters.roles.title}{/define}
+
+{block content}
+
+<div class="header">
+    <h1 class="header-title">{_fcadmin.presenters.roles.pageTitle}</h1>
+
+    <div class="header-actions">
+		<a n:href="new!" class="btn btn-new btn-primary ajax">{_fcadmin.global.buttons.new}</a>
+    </div>
+</div>
+
+{control roleGrid}
