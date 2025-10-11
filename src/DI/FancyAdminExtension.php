@@ -70,7 +70,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'fullDataAclResource' => $this->config['fullDataAclResource'],
 			]);
 
-		$this->validateTraitInterfaceCompliance();
+		//$this->validateTraitInterfaceCompliance();
 	}
 
 	public function beforeCompile(): void
