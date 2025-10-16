@@ -15,7 +15,7 @@ trait AclRoleGridTrait
 {
 	use Editable;
 
-	protected string $aclResource = AclResourceNameEnum::BACKOFFICE_ROLES_AND_PERMISSIONS->value;
+	protected AclResourceNameEnum $aclResource = AclResourceNameEnum::BACKOFFICE_ROLES_AND_PERMISSIONS;
 
 	/**
 	 * @throws DatagridException
