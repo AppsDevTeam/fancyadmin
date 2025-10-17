@@ -6,7 +6,6 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
-use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordFormFactory;
 use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm;
@@ -16,7 +15,6 @@ use ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Nette\Security\AuthenticationException;
 use ReflectionException;
 
