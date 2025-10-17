@@ -82,7 +82,7 @@ trait AuthenticatorTrait
 		return $identity;
 	}
 
-	protected function initQueryObject(IdentityQuery $query): void
+	protected function initQueryObject(IdentityQuery $query, ?Resource $context, array $metadata = []): void
 	{
 	}
 
