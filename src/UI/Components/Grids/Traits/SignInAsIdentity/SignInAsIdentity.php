@@ -19,10 +19,10 @@ trait SignInAsIdentity
 					->setRenderer(function ($item) {
 						return '
 							<a href="javascript:void(0);" class="noajax"
-								data-button-text="' . $this->_translator->translate('app.grids.user.actions.signAsIdentityOpenInIncognitoWindow') . '"
+								data-button-text="' . $this->_translator->translate('fcadmin.grids.user.actions.signAsIdentityOpenInIncognitoWindow') . '"
 								data-sign-in-as-identity-url="?do=' . $this->name . '-signInAsIdentity&' . $this->name . '-id=' . $item->getId() . '
 							">
-								<span class="fa fa-sign-in"></span>&nbsp;' . $this->_translator->translate('app.grids.user.actions.signAsIdentity') . '
+								<span class="fa fa-sign-in"></span>&nbsp;' . $this->_translator->translate('fcadmin.grids.user.actions.signAsIdentity') . '
 							</a>
 						';
 					});

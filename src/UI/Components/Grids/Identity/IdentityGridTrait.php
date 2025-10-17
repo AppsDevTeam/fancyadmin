@@ -32,7 +32,7 @@ trait IdentityGridTrait
 
 	public function initGrid(DataGrid $grid): void
 	{
-		$grid->addFilterText('search', '', ['firstName', 'lastName', 'email', 'phoneNumber', 'bankAccount']);
+		$grid->addFilterText('search', '', ['firstName', 'lastName', 'email', 'phoneNumber']);
 		$this->addIdentityData($grid);
 
 		$grid->addAction('logout', 'Anonymizovat')

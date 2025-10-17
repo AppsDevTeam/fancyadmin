@@ -10,8 +10,6 @@
 		</div>
 	</div>
 
-	{formPair 'bankAccount'}
-
 	{snippet chosenCompany}
 		{var $form = $control['form']}
 		{var ADT\Forms\DynamicContainer $profiles = $form['companyProfiles'] ?? $form['profiles']}
@@ -45,12 +43,6 @@
 	</div>
 
 	<div class="row">
-		<div class="col-md-12">
-			{formPair '_smartCards'}
-		</div>
-	</div>
-
-	<div class="row">
 		<div class="col-12 d-flex justify-content-end">
 			{formPair 'submit' class => 'w-100'}
 		</div>
@@ -67,9 +59,6 @@
 				</div>
 
 				{formPair $container['roles']}
-				{formPair $container['account']}
-				{formPair $container['branches']}
-				{formPair $container['warehouses']}
 
 				<div class="d-flex justify-content-center align-items-center">
 					<a href="#" class="form-replicator-delete btn px-3 btn-danger" style="margin-top: 20px;" data-adt-replicator-remove>

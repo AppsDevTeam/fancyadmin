@@ -2,23 +2,16 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms\Identity;
 
+use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\MailerInject;
+use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\Forms\StaticContainer;
 use App\Model\Entities\Identity;
-use App\Model\Entities\SmartCard;
-use App\Model\Queries\Factories\AclRoleQueryFactory;
-use App\Model\Queries\Factories\BranchQueryFactory;
-use App\Model\Queries\Factories\CompanyQueryFactory;
-use App\Model\Queries\Factories\WarehouseQueryFactory;
-use App\Model\Services\UserService;
-use App\UI\Portal\Components\Forms\Base\BaseForm;
-use App\UI\Portal\Components\Forms\Base\EntityForm;
-use App\UI\Portal\Components\Forms\UserFormTrait;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use DateMalformedStringException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Exception;
-use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Application\UI\InvalidLinkException;
-use Nette\Security\Passwords;
 use Nette\Utils\ArrayHash;
 use ADT\Forms\Form;
 
@@ -27,22 +20,8 @@ use ADT\Forms\Form;
  */
 trait IdentityFormTrait
 {
-	use IdentityFormTrait;
-
-	#[Autowire]
-	protected UserService $userService;
-
-	#[Autowire]
-	protected CompanyQueryFactory $companyQueryFactory;
-
-	#[Autowire]
-	protected AclRoleQueryFactory $aclRoleQueryFactory;
-
-	#[Autowire]
-	protected BranchQueryFactory $branchQueryFactory;
-
-	#[Autowire]
-	protected WarehouseQueryFactory $warehouseQueryFactory;
+	use MailerInject;
+	use AclRoleQueryFactoryInject;
 
 	/**
 	 * @throws Exception
@@ -51,61 +30,24 @@ trait IdentityFormTrait
 	{
 		$this->initUserForm($form);
 
-		$form->addText('bankAccount', 'app.forms.user.labels.bankAccount');
+		$form->addText('bankAccount', 'fcadmin.forms.user.labels.bankAccount');
 
-		$companyRoles = $this->aclRoleQueryFactory->create()->byIsCustomer(true)->fetchPairs();
-		$adminRoles = $this->aclRoleQueryFactory->create()->byIsAdmin(true)->fetchPairs();
-		$visitorRoles = $this->aclRoleQueryFactory->create()->byIsVisitor(true)->fetchPairs();
+		$adminRoles = $this->_aclRoleQueryFactory->create()->byIsAdmin(true)->fetchPairs();
 		$form->addDynamicContainer(
 			'profiles',
-			function (StaticContainer $container) use ($identity, $form, $companyRoles, $adminRoles, $visitorRoles) {
-				$container->addCheckbox('isActive', 'app.forms.user.labels.isActive');
+			function (StaticContainer $container) use ($form, $adminRoles) {
+				$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
 
-				$container->addMultiSelect('roles', 'app.forms.user.labels.role', $identity ? $adminRoles + $companyRoles + $visitorRoles : $adminRoles)
+				$container->addMultiSelect('roles', 'fcadmin.forms.user.labels.role', $adminRoles)
 					->setRequired();
-
-				$container->addSelect('account', 'app.forms.user.labels.company', $this->companyQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
-					->setPrompt('---');
-
-				$container->addMultiSelect('branches', 'app.forms.user.labels.branches', $this->branchQueryFactory->create()->fetchPairs('fullName'));
-				$container->addMultiSelect('warehouses', 'app.forms.user.labels.warehouses', $this->warehouseQueryFactory->create()->fetchPairs());
 			}
 		);
-
-		$form->addGroup();
-
-		// name inputu "smartCards" (manyToMany) jako v entite nefungovalo správně v proccessFormu (= zůstavaly entity v kolekci a nešlo odebrat)
-		$form->addAjaxMultiSelect('_smartCards', 'app.forms.user.labels.smartCards', 'smart-card');
-
-		if ($identity && !$identity->isNew()) {
-			$smartCards = [];
-			foreach ($identity->getSmartCards() as $smartCard) {
-				$smartCards[] = $smartCard->getId();
-			}
-			$form['_smartCards']->setDefaultValue($smartCards);
-		}
 
 		$form->addSubmit('chosenCompany')
 			->setValidationScope([])
 			->onClick[] = function () {
-				$this->redrawControl('chosenCompany');
-			};
-	}
-
-	protected function getProfilesContainer(?Identity $user): StaticContainer
-	{
-		$profiles = $this->form->getComponentDynamicContainer('profiles');
-
-		if ($profiles->getContainers()) {
-			return current($profiles->getContainers());
-		}
-
-		if (!$user) {
-			$profiles->createNew();
-		} else {
-			$profiles[0];
-		}
-		return current($profiles->getContainers());
+			$this->redrawControl('chosenCompany');
+		};
 	}
 
 	/**
@@ -116,16 +58,43 @@ trait IdentityFormTrait
 	 */
 	public function processForm(Identity $identity, ArrayHash $values): void
 	{
-		foreach ($identity->getSmartCards() as $smartCard) {
-			$identity->removeSmartCard($smartCard);
-		}
-		foreach ($values->_smartCards as $smartCardId) {
-			if ($smartCard = $this->em->getRepository(SmartCard::class)->find($smartCardId)) {
-				$identity->addSmartCard($smartCard);
-			}
+		$this->processUserForm($identity);
+	}
+
+	public function initUserForm(Form $form): void
+	{
+		$form->addText('firstName', 'fcadmin.forms.user.labels.firstName')
+			->setRequired();
+
+		$form->addText('lastName', 'fcadmin.forms.user.labels.lastName')
+			->setRequired();
+
+		$form->addGroup('contactBlock');
+		$form->addText('email', 'fcadmin.forms.user.labels.email');
+		$form->addPhoneNumber('phoneNumber', 'fcadmin.forms.user.labels.phoneNumber', 'fcadmin.forms.user.errors.phoneNumber');
+		$form->addGroup();
+
+		$form->addSubmit('submit', 'fcadmin.forms.user.labels.submit');
+	}
+
+	/**
+	 * @throws DateMalformedStringException
+	 * @throws InvalidArgument
+	 * @throws InvalidLinkException
+	 * @throws \Doctrine\DBAL\Exception|Exception
+	 */
+	public function processUserForm(Identity $identity): void
+	{
+		try {
+			$this->em->flush();
+		} catch (UniqueConstraintViolationException $e) {
+			$this->presenter->flashMessageError('app.forms.user.errors.credentialsConstrain');
+			return;
 		}
 
-		$this->processUserForm($identity);
+		if (!$identity->getPassword()) {
+			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_CREATION_VALID_FOR);
+		}
 	}
 
 	protected function getEntityClass(): ?string

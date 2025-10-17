@@ -12,7 +12,7 @@ trait ResetPassword
 		$this->onAnchor[] = function () {
 			$this['grid']->addAction('newPasswordAgain', 'Nové heslo', 'newPasswordAgain!')
 				->setIcon('lock')
-				->setConfirmation(new StringConfirmation('app.grids.user.confirms.newPassword'))
+				->setConfirmation(new StringConfirmation('fcadmin.grids.user.confirms.newPassword'))
 				->setClass('');	//je potreba, protoze se jinak aplikuje classa btn btn-primary atd. a prida pozadi -> skareda iknka
 		};
 	}
@@ -27,6 +27,6 @@ trait ResetPassword
 
 		$this->mailer->sendPasswordRecoveryMail($user, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
 
-		$this->getPresenter()->flashMessageSuccess('app.grids.user.messages.mailSuccess');
+		$this->getPresenter()->flashMessageSuccess('fcadmin.grids.user.messages.mailSuccess');
 	}
 }
