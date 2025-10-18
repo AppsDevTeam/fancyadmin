@@ -47,7 +47,7 @@ trait AuthenticatorTrait
 			$identityQuery->byUsername($user);
 			$userType = static::USER_EMAIL;
 		}
-		$this->initQueryObject($identityQuery);
+		$this->initQueryObject($identityQuery, $context, $metadata);
 		/** @var Identity $identity */
 		$identity = $identityQuery->fetchOneOrNull();
 
