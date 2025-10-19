@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
@@ -15,7 +16,7 @@ use Nette\Security\AuthenticationException;
 
 trait SignInFormTrait
 {
-	use FormTrait;
+	use ControlTrait;
 	use RedirectAfterLoginTrait;
 	use FancyAdminInject;
 	use AuthenticatorInject;

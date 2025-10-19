@@ -13,6 +13,7 @@ use ADT\FancyAdmin\DI\Injects\GridFilterQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\QueryObjectDataSourceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
 use Nette\Application\AbortException;
@@ -21,6 +22,7 @@ use Nette\Security\User;
 trait BaseGridTrait
 {
 	use SidePanel;
+	use ControlTrait;
 	use TranslatorInject;
 	use SecurityUserInject;
 	use BaseGridDependencies;

@@ -13,6 +13,7 @@ use Nette\Security\AuthenticationException;
 use Nette\Security\IIdentity;
 use Nette\Security\Passwords;
 use Nette\Security\Resource;
+use Nette\Utils\Validators;
 
 /**
  * @method Identity authenticate(string $user, string $password, string|null|Resource $context, array $metadata = []))
@@ -23,10 +24,7 @@ trait AuthenticatorTrait
 	abstract protected function getUniversalPasswords(): array;
 	abstract protected function getUniversalPins(): array;
 	abstract protected function getIdentityQueryFactory(): IdentityQueryFactory;
-
-	const string USER_EMAIL = 'email';
-	const string USER_PHONE_NUMBER = 'phone_number';
-
+	
 	public static function verifyPassword(string $password, string $hash): bool
 	{
 		return new Passwords()->verify($password, $hash);
@@ -42,12 +40,15 @@ trait AuthenticatorTrait
 			->disableAccountFilter();
 		if ($this->validatePhoneNumber($user)) {
 			$identityQuery->byPhoneNumber($user);
-			$userType = static::USER_PHONE_NUMBER;
+			$userType = UserTypeEnum::PHONE_NUMBER;
+		} elseif (Validators::isEmail($user)) {
+			$identityQuery->byEmail($user);
+			$userType = UserTypeEnum::EMAIL;
 		} else {
 			$identityQuery->byUsername($user);
-			$userType = static::USER_EMAIL;
+			$userType = UserTypeEnum::USERNAME;
 		}
-		$this->initQueryObject($identityQuery, $context, $metadata);
+		$this->initQueryObject($identityQuery, $userType, $context, $metadata);
 		/** @var Identity $identity */
 		$identity = $identityQuery->fetchOneOrNull();
 
@@ -56,9 +57,9 @@ trait AuthenticatorTrait
 		}
 
 		if (
-			$userType === static::USER_EMAIL && !$this->isUniversalSuperPassword($password)
+			in_array($userType, [UserTypeEnum::EMAIL, UserTypeEnum::USERNAME]) && !$this->isUniversalSuperPassword($password)
 			||
-			$userType === static::USER_PHONE_NUMBER && !$this->isUniversalPin($password)
+			$userType === UserTypeEnum::PHONE_NUMBER && !$this->isUniversalPin($password)
 		) {
 			if (
 				(!$this->createOnetimeTokenQuery()->byIsValid()->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull())
@@ -82,7 +83,7 @@ trait AuthenticatorTrait
 		return $identity;
 	}
 
-	protected function initQueryObject(IdentityQuery $query, ?Resource $context, array $metadata = []): void
+	protected function initQueryObject(IdentityQuery $query, UserTypeEnum $userType, ?Resource $context, array $metadata = []): void
 	{
 	}
 

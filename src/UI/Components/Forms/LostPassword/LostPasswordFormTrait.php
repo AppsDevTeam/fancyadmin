@@ -6,13 +6,14 @@ use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\Forms\Form;
 use Nette\Utils\ArrayHash;
 
 trait LostPasswordFormTrait
 {
-	use FormTrait;
+	use ControlTrait;
 	use IdentityQueryFactoryInject;
 	use MailerInject;
 

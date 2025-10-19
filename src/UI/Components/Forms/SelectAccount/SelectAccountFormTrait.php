@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\Forms\Form;
 use Contributte\Translation\Exceptions\InvalidArgument;
@@ -18,7 +19,7 @@ use ReflectionException;
 
 trait SelectAccountFormTrait
 {
-	use FormTrait;
+	use ControlTrait;
 	use AccountQueryFactoryInject;
 	use SecurityUserInject;
 	use FancyAdminInject;
@@ -34,6 +35,8 @@ trait SelectAccountFormTrait
 	 */
 	public function initForm(Form $form): void
 	{
+		$form->setHtmlAttribute('data-adt-select-account-form', true);
+
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$usersCompanies = $this->_accountQueryFactory->create()
 				->disableAccountFilter()
@@ -56,7 +59,7 @@ trait SelectAccountFormTrait
 				'dropdownCssClass' => 'select2-primary-dropdown',
 			]);
 
-		$form->addSubmit("submit", '')
+		$form->addSubmit("submit")
 			->setHtmlAttribute('class', 'superUltraSecretSubmit');
 	}
 

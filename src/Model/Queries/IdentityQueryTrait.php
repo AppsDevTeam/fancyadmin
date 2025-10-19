@@ -13,6 +13,11 @@ trait IdentityQueryTrait
 		return $this->by('username', $username);
 	}
 
+	public function byEmail(string $email): static
+	{
+		return $this->by('email', $email);
+	}
+
 	public function byPhoneNumber(string $phoneNumber): static
 	{
 		return $this->by('phoneNumber', $phoneNumber);

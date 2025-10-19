@@ -8,6 +8,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
@@ -15,7 +16,7 @@ use Nette\Utils\ArrayHash;
 
 trait NewPasswordFormTrait
 {
-	use FormTrait;
+	use ControlTrait;
 	use RedirectAfterLoginTrait;
 	use OnetimeTokenQueryFactoryInject;
 	use SecurityUserInject;
