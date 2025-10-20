@@ -1,8 +1,8 @@
 {extends ADT\Forms\BaseForm::getDefaultTemplateFile()}
 
 {define row}
-	<div {if $item['name']}id="{$item['name']}"{/if} class="row">
-		<div n:foreach="$item['children'] as $_el" class="col-md-{12 / count($item['children'])}">
+	<div {if $section['name']}id="{$section['name']}"{/if} class="row">
+		<div n:foreach="$section['children'] as $_el" class="col-md-{12 / count($section['children'])}">
 			{include renderEl, el => $_el}
 		</div>
 	</div>
