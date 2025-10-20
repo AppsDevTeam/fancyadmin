@@ -33,4 +33,9 @@ trait BaseFormTrait
 	{
 		return null;
 	}
+
+	public static function getDefaultTemplateFile(): string
+	{
+		return __DIR__ . '/BaseForm.latte';
+	}
 }
