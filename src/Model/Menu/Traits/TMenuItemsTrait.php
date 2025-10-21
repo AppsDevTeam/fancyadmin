@@ -38,4 +38,12 @@ trait TMenuItemsTrait {
 				->setLink('Accounts:default')
 		);
 	}
+
+	public function addConfigurationsItem(NavbarMenu $menu): void {
+		$menu->addMenuItem(
+			(new NavbarMenuItem())
+				->setLabel('Configurations')
+				->setLink('Configurations:default')
+		);
+	}
 }

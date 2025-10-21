@@ -47,6 +47,10 @@ presenters:
     pageTitle: Účty
     header: Účty
 
+  configurations:
+    pageTitle: Konfigurace
+    header: Konfigurace
+
 forms:
   # Sign Form
   signIn:
