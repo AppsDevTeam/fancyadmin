@@ -15,6 +15,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Exception;
 use Nette\Application\UI\InvalidLinkException;
+use Nette\Forms\Controls\SubmitButton;
 use ReflectionException;
 
 trait SelectAccountFormTrait
@@ -35,8 +36,6 @@ trait SelectAccountFormTrait
 	 */
 	public function initForm(Form $form): void
 	{
-		$form->setHtmlAttribute('data-adt-select-account-form', true);
-
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$usersCompanies = $this->_accountQueryFactory->create()
 				->disableAccountFilter()
@@ -53,14 +52,15 @@ trait SelectAccountFormTrait
 			//pridani option pro presmerovani do settings, respektive pro odnastaveni spolcnosi pokud ma user global companies
 			$usersCompanyPairs[self::SETTINGS] = $this->_translator->translate('app.forms.systemSelectCompany.options.admin');
 		}
+
 		$form->addSelect('account', '', $usersCompanyPairs)
 			->setDefaultValue($this->_securityUser->getIdentity()->getSelectedAccount()?->getId() ?: self::SETTINGS)
+			->setHtmlAttribute('class', 'primary-select')
 			->setHtmlAttribute('data-adt-select2', [
 				'dropdownCssClass' => 'select2-primary-dropdown',
 			]);
 
-		$form->addSubmit("submit")
-			->setHtmlAttribute('class', 'superUltraSecretSubmit');
+		$form->watchForSubmit($form['account']);
 	}
 
 	/**
@@ -80,7 +80,7 @@ trait SelectAccountFormTrait
 			// Pripad kdy je vybrana spolecnost -> nastavujeme spolecnost
 			$this->_securityUser->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($values['account'])->fetchOne());
 			$this->_em->flush();
-			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute(), ['do' => 'redrawBody', 'selectedAccount' => $this->_securityUser->getIdentity()->getSelectedAccount()?->getId()]);
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['do' => 'redrawBody', 'selectedAccount' => $this->_securityUser->getIdentity()->getSelectedAccount()?->getId()]);
 		}
 	}
 
