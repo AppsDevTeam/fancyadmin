@@ -19,10 +19,12 @@ trait BasePresenterTrait
 
 	protected function beforeRender(): void
 	{
+		$this->getTemplate()->originalTemplate = __DIR__ . '/@layout.latte';
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
 		$this->getTemplate()->jsComponentsConfig = Json::encode([]);
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
+		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 	}
 
 	public function handleRedrawBody(): void

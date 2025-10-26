@@ -44,24 +44,6 @@
 			this.popped = !!('state' in window.history) && !!window.history.state;
 			var initialUrl = window.location.href;
 
-			$(window).on('popstate.nette', $.proxy(function (e) {
-				var state = e.originalEvent.state || this.initialState;
-				var initialPop = (!this.popped && initialUrl === state.href);
-				this.popped = true;
-				if (initialPop || !e.originalEvent.state) {
-					return;
-				}
-				if (this.cache && state.ui) {
-					handleState(this, 'UI', [state.ui]);
-					handleState(this, 'title', [state.title]);
-				} else {
-					$.nette.ajax({
-						url: state.href,
-						off: ['history']
-					});
-				}
-			}, this));
-
 			history.replaceState(this.initialState = {
 				nette: true,
 				href: window.location.href,
@@ -138,7 +120,6 @@
 			if (redirect) {
 				$.nette.ajax({
 					url: this.href,
-					off: ['history']
 				});
 			}
 			this.href = null;

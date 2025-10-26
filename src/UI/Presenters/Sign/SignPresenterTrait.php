@@ -66,7 +66,7 @@ trait SignPresenterTrait
 			$this->getUser()->login($email, $token, $this->_fancyAdmin->getCustomerAclResource());
 		} catch (AuthenticationException $e) {
 			bd($e);
-			$this->flashMessageError($e->getMessage());
+			$this->flashMessageError('Odkaz již není platný. Pro nový odkaz klikněte <a href="' .  $this->link(':Portal:Sign:lostPassword') . '">zde</a>.'); // TODO translate
 			$this->getPresenter()->redirect(':Portal:Sign:in');
 		}
 

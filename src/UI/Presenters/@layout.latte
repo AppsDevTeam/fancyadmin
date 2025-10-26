@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-	<title n:snippet="title">{ifset title}{include title|stripHtml} | {/ifset}{_app.modules.web.layout.title}</title>
+	<title n:snippet="title">{ifset title}{include title|stripHtml} | {/ifset}{$projectName}</title>
 
 	{block head}{/block}
 
@@ -12,31 +12,35 @@
 	<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
 	<link rel="icon" type="image/png" href="/favicon/favicon.png">
 	{if $hmr}
-		<link rel="stylesheet" href="https://localhost:3000/dist/css/portal.css">
+		<link rel="stylesheet" href="https://localhost:3000/dist/portal/css/portal.css">
 	{else}
-		<link rel="stylesheet" href="{$basePath}/dist/css/portal.css{v}">
+		<link rel="stylesheet" href="{$basePath}/dist/portal/css/portal.css{v}">
 	{/if}
 </head>
 
 <body data-app-body data-adt-js-components="{$jsComponentsConfig}" data-adt-messaging data-adt-translate data-adt-safari-support>
 <div n:snippet="body">
-	<style>
-        body {
-            --primaryColor: #42b6a4;
-            --primaryColorDark: {="#42b6a4"|darken,5|noescape};
-            --primaryColorDark20: {="#42b6a4"|darken,10|noescape};
-            --secondaryColor: #f1f7f7;
-            --secondaryColorDark: {="#f1f7f7"|darken,5|noescape};
-            --secondaryColorDarker: {="#f1f7f7"|darken,10|noescape};
-            --ternaryColor: #101D40;
-            --ternaryTextColor: #ffffff;
-        }
-	</style>
+	{block colors}
+		<style>
+			body {
+				--primaryColor: #42b6a4;
+				--primaryColorDark: {="#42b6a4"|darken,5|noescape};
+				--primaryColorDark20: {="#42b6a4"|darken,10|noescape};
+				--secondaryColor: #f1f7f7;
+				--secondaryColorDark: {="#f1f7f7"|darken,5|noescape};
+				--secondaryColorDarker: {="#f1f7f7"|darken,10|noescape};
+				--ternaryColor: #101D40;
+				--ternaryTextColor: #ffffff;
+			}
+		</style>
+	{/block}
 
 	{if $primaryTemplate}
 		{snippet sideMenu}
-			{include @sideMenu.latte}
-			{include @mobileMenu.latte}
+			{block menu}
+				{include @sideMenu.latte}
+				{include @mobileMenu.latte}
+			{/block}
 		{/snippet}
 
 		<div class="container-fluid {*px-0*} delay-animate" n:snippet="container">
@@ -46,10 +50,36 @@
 						<a n:href="default">{_app.appGeneral.labels.backToOverview}</a>
 					</div>
 				</nav>
+			{else}
+				<nav n:if="$user->isAllowedFullDataAclResource() || count($user->getIdentity()->getAccounts()) > 1" style="height: 70px" class="d-flex">
+					<div class="col-auto align-items-center" style="display: flex">
+						{control selectAccountForm}
+					</div>
+				</nav>
 			{/if}
 
 			<div id="content">
 				{include content}
+			</div>
+
+			<div id="iOsA2HS" style="display: none;">
+				<div class="iOsA2HS_backdrop closeA2H"></div>
+				<div class="iOsA2HS_popup">
+					<span style="position: absolute; right: 20px;top: 15px;">
+						<i class="fa fa-times closeA2H"></i>
+					</span>
+					<div class="install-header">
+						<div>
+							<img src="/icon512_maskable.png" />
+						</div>
+						<div>Instalovat {$projectName}</div>
+					</div>
+					<hr />
+					<ul style="list-style-type: decimal;margin: 10px 0;">
+						<li>Klikněte na ikonu <i class="fa-regular fa-arrow-up-from-square"></i></li>
+						<li>Vyberte možnost <b>Přidat na plochu</b></li>
+					</ul>
+				</div>
 			</div>
 		</div>
 
@@ -63,16 +93,22 @@
 	{else}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">
-				<img n:if="$logoFileName" src="{$basePath}/{$logoFileName}{v}" class="" width="226px" height="auto" />
+				{if $account?->getLogo()}
+					<img src="{$account->getLogo()->getUrl()}{v}" class="" width="226px" height="auto" alt="Logo {$account->getCompanyName()}" />
+				{else}
+					<img src="{$basePath}/images/logos/{$parameters['loginPageLogoFileName']}{v}" class="" width="226px" height="auto" alt="Logo {$parameters['title']}" />
+				{/if}
 				{include content}
 			</div>
+			{if $account?->getLogo()}
+				<img src="{$basePath}/images/logos/{$parameters['loginPageLogoFileName']}{v}" class="mt-4" width="146px" height="auto" alt="Logo {$parameters['title']}" />
+			{/if}
 		</div>
 	{/if}
 
 	<div n:snippet="flashes" class="snippet-flashes">
-		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type"
-				data-close-duration="{$flash->closeDuration ?? ADT\FancyAdmin\UI\Presenters\BasePresenter::DEFAULT_AUTO_CLOSE_DURATION}">
-			<div class="alert-text">{$flash->message}</div>
+		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type" data-close-duration="{$flash->closeDuration ?? ADT\FancyAdmin\UI\Presenters\BasePresenter::DEFAULT_AUTO_CLOSE_DURATION}">
+			<div class="alert-text d-block">{$flash->message}</div>
 			<div class="alert-close-btn-wrapper">
 				<button class="alert-close-btn">
 					{_fcadmin.global.flashes.close}
@@ -82,9 +118,9 @@
 	</div>
 </div>
 {if $hmr}
-	<script src="https://localhost:3000/dist/js/portal.js"></script>
+	<script src="https://localhost:3000/dist/portal/js/portal.js"></script>
 {else}
-	<script src="{$basePath}/dist/js/portal.js{v}"></script>
+	<script src="{$basePath}/dist/portal/js/portal.js{v}"></script>
 {/if}
 {block scripts}{/block}
 </body>
