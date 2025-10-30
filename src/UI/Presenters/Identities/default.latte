@@ -1,0 +1,21 @@
+{define title}
+    {_fcadmin.presenters.identity.pageTitle}
+{/define}
+
+{define header-actions}
+
+{/define}
+
+{block content}
+
+<div class="header">
+    <h1 class="header-title">
+        {_fcadmin.presenters.identity.header}
+    </h1>
+
+    <div class="header-actions">
+        <a n:href="new!" class="btn btn-new btn-primary ajax">{_fcadmin.global.buttons.new}</a>
+    </div>
+</div>
+
+{control userGrid}

@@ -39,6 +39,18 @@ presenters:
     title: Role
     pageTitle: Role
 
+  identity:
+    pageTitle: Uživatelé
+    header: Uživatelé
+
+  account:
+    pageTitle: Účty
+    header: Účty
+
+  configurations:
+    pageTitle: Konfigurace
+    header: Konfigurace
+
 forms:
   # Sign Form
   signIn:
@@ -69,6 +81,23 @@ forms:
     errors:
       emailRequired: E-mail je povinný
 
+  account:
+    name: Název
+    submit: Uložit
+
+  user:
+    labels:
+      firstName: Jméno
+      lastName: Příjmení
+      email: E-mail
+      phoneNumber: Telefonní číslo
+      isActive: Aktivní
+      submit: Uložit
+    errors:
+      phoneNumber: Neplatné telefonní číslo
+      credentialsConstrain: "E-mail / Uživatelské jméno nebo telefonní číslo jsou již použity"
+      requiredBranch: "Je nutné vyplnit pobočku"
+
   aclRole:
     name: Název
     submit: Odeslat
@@ -76,3 +105,22 @@ forms:
 grids:
   aclRole:
     name: Název
+
+  account:
+    name: Název
+
+  user:
+    labels:
+      fullName: Jméno
+      email: E-mail
+      emailUsername: E-mail / Uživatelské jméno
+      phoneNumber: Telefon
+      isActive: Aktivní
+    actions:
+      newPassword: Nové heslo
+      signAsIdentity: Přihlásit se za uživatele
+      signAsIdentityOpenInIncognitoWindow: Otevřít v anonymním okně
+    confirms:
+      newPassword: Opravdu chcete odeslat e-mail S výzvou pro nastavení hesla?
+    messages:
+      mailSuccess: E-mail pro nastavení hesla byl odeslán
