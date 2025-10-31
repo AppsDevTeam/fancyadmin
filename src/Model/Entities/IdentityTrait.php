@@ -27,11 +27,11 @@ trait IdentityTrait
 
 	abstract public function getId();
 
-	#[ORM\Column(nullable:false)]
-	protected string $firstName;
+	#[ORM\Column(nullable: true)]
+	protected ?string $firstName = null;
 
-	#[ORM\Column(nullable:false)]
-	protected string $lastName;
+	#[ORM\Column(nullable: true)]
+	protected ?string $lastName = null;
 
 	#[ORM\Column(unique: true, nullable:true)]
 	protected ?string $email = null;
@@ -73,7 +73,7 @@ trait IdentityTrait
 		return $this;
 	}
 
-	public function getFirstName(): string
+	public function getFirstName(): ?string
 	{
 		return $this->firstName;
 	}
@@ -84,7 +84,7 @@ trait IdentityTrait
 		return $this;
 	}
 
-	public function getLastName(): string
+	public function getLastName(): ?string
 	{
 		return $this->lastName;
 	}
