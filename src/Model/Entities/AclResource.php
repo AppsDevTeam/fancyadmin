@@ -15,6 +15,9 @@ interface AclResource extends Entity
 	public function getName(): string;
 	public function setName(string $name): static;
 
+	public function getTitle(): string;
+	public function setTitle(string $title): static;
+
 	// AclRole management
 	public function addRole(AclRole $role): static;
 	public function removeRole(AclRole $role): static;

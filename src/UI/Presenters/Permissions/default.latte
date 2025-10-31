@@ -17,7 +17,7 @@
 					{if $iterator->first}
 						<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
 					{else}
-						<th scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;" title="{_'fcadmin.aclResource.title.' . $_resource->getName()}">{_'fcadmin.aclResource.title.' . $_resource->getName()}</th>
+						<th scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;">{_$_resource->getTitle()}</th>
 					{/if}
 					{foreach $roles as $_roleId => $_roleName}
 						{if $rowIsFirst}
