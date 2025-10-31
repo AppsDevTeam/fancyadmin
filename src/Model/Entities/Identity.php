@@ -32,10 +32,10 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getPassword(): ?string;
 	public function setPassword(?string $password): static;
 
-	public function getFirstName(): string;
+	public function getFirstName(): ?string;
 	public function setFirstName(?string $firstName): static;
 
-	public function getLastName(): string;
+	public function getLastName(): ?string;
 	public function setLastName(?string $lastName): static;
 
 	public function getEmail(): ?string;
