@@ -1038,10 +1038,6 @@ body:not(:fullscreen) {
   }
 }
 
-body {
-  overflow: hidden;
-}
-
 iframe {
   z-index: 99999;
   display: block;
