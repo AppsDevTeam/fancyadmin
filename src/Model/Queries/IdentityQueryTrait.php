@@ -8,7 +8,7 @@ use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use Doctrine\ORM\QueryBuilder;
 
-trait IdentityQueryTrait extends BaseQuery
+trait IdentityQueryTrait
 {
 	public function byEmailOrPhoneNumber(string $email, string $phoneNumber): static
 	{
