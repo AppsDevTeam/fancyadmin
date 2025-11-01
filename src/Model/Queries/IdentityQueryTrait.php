@@ -5,9 +5,22 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Queries;
 
 use ADT\FancyAdmin\Model\Entities\Account;
+use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use Doctrine\ORM\QueryBuilder;
 
-trait IdentityQueryTrait
+trait IdentityQueryTrait extends BaseQuery
 {
+	public function byEmailOrPhoneNumber(string $email, string $phoneNumber): static
+	{
+		$this->filter[] = function (QueryBuilder $qb) use ($email, $phoneNumber) {
+			$qb->andWhere('e.email = :email OR e.phoneNumber = :phoneNumber')
+				->setParameter('email', $email)
+				->setParameter('phoneNumber', $phoneNumber);
+		};
+
+		return $this;
+	}
+
 	public function byUsername(string $username): static
 	{
 		return $this->by('username', $username);

@@ -1,53 +1,23 @@
-{form form data-adt-portal-components-forms-userForm => true}
-	{include errors}
-	<div class="row">
-		<div class="col-md-6">
-			{formPair 'firstName'}
-		</div>
-
-		<div class="col-md-6">
-			{formPair 'lastName'}
-		</div>
+{define component-profiles}
+	{var $form = $control['form']}
+	{var ADT\Forms\DynamicContainer $profiles = $form['companyProfiles'] ?? $form['profiles']}
+	{capture $profilesTemplate}
+		{if !$user->getIdentity()->getSelectedAccount()}
+			{include userCompanyContainerTemplate container => $profiles->getTemplate()}
+		{/if}
+	{/capture}
+	<div data-adt-replicator="{$profilesTemplate|trim|noescape}" class="row mt-2">
+		{foreach $profiles->getContainers() as $_userCompany}
+			{varType ADT\Forms\StaticContainer $_userCompany}
+			{include userCompanyContainerTemplate, container => $_userCompany}
+		{/foreach}
+		{if !$user->getIdentity()->getSelectedAccount()}
+			<button type="button" class="btn btn-secondary mb-4" data-adt-replicator-add>
+				<i class="fa fa-plus-circle me-2"></i>Přidat {* TODO TRANSLATE *}
+			</button>
+		{/if}
 	</div>
-
-	{snippet chosenCompany}
-		{var $form = $control['form']}
-		{var ADT\Forms\DynamicContainer $profiles = $form['companyProfiles'] ?? $form['profiles']}
-		{capture $profilesTemplate}
-			{if !$user->getIdentity()->getSelectedAccount()}
-				{include userCompanyContainerTemplate container => $profiles->getTemplate()}
-			{/if}
-		{/capture}
-		<div data-adt-replicator="{$profilesTemplate|trim|noescape}" class="row mt-2">
-			{foreach $profiles->getContainers() as $_userCompany}
-				{varType ADT\Forms\StaticContainer $_userCompany}
-				{include userCompanyContainerTemplate, container => $_userCompany}
-			{/foreach}
-			{if !$user->getIdentity()->getSelectedAccount()}
-				<button type="button" class="btn btn-secondary mb-4" data-adt-replicator-add>
-					<i class="fa fa-plus-circle me-2"></i>Přidat {* TODO TRANSLATE *}
-				</button>
-			{/if}
-		</div>
-		{formPair chosenCompany class => "d-none"}
-	{/snippet}
-
-	<div class="row">
-		<div class="col-md-6">
-			{formPair 'email'}
-		</div>
-
-		<div class="col-md-6">
-			{formPair 'phoneNumber'}
-		</div>
-	</div>
-
-	<div class="row">
-		<div class="col-12 d-flex justify-content-end">
-			{formPair 'submit' class => 'w-100'}
-		</div>
-	</div>
-{/form}
+{/define}
 
 {define	userCompanyContainerTemplate}
 	<div class="replicator-item col-12 mb-1" data-adt-replicator-item>
@@ -59,6 +29,8 @@
 				</div>
 
 				{formPair $container['roles']}
+				{formPair $container['account']}
+				{include renderEl, el => $container->getSections()['account']}
 
 				<div class="d-flex justify-content-center align-items-center">
 					<a href="#" class="form-replicator-delete btn px-3 btn-danger" style="margin-top: 20px;" data-adt-replicator-remove>

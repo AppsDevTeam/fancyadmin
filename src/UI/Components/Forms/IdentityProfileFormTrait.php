@@ -50,6 +50,10 @@ trait IdentityProfileFormTrait
 		}, blockName: BlockNameEnum::ROW);
 	}
 
+	protected function addProfileFields(Form|Container $form): void
+	{
+	}
+
 	/**
 	 * @param AclRole[] $roles
 	 */

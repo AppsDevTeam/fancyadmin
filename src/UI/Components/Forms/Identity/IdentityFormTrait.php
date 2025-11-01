@@ -10,6 +10,7 @@ use ADT\FancyAdmin\UI\Components\Forms\IdentityProfileFormTrait;
 use ADT\Forms\DynamicContainer;
 use ADT\Forms\StaticContainer;
 use Exception;
+use Nette\Forms\Container;
 
 /**
  * @property Identity $entity
@@ -38,9 +39,8 @@ trait IdentityFormTrait
 					->setPrompt('---');
 				$container->addSection(function () use ($form, $container) {
 					$form->mapToForm();
-					$account = $container['account']->getValue();
-					$container->addMultiSelect('branches', 'app.forms.user.labels.branches', $this->branchQueryFactory->create()->byAccount($account)->fetchPairs('fullName'));
-					$container->addMultiSelect('warehouses', 'app.forms.user.labels.warehouses', $this->warehouseQueryFactory->create()->byAccount($account)->fetchPairs());
+					$this->addProfileFields($container);
+
 				}, 'account', watchForRedraw: [$container['account']]);
 			}
 		);
@@ -66,5 +66,9 @@ trait IdentityFormTrait
 	protected function getEntityClass(): ?string
 	{
 		return Identity::class;
+	}
+
+	protected function addRoleBasedFields(Form $form, ?Identity $identity, array $roles): void
+	{
 	}
 }
