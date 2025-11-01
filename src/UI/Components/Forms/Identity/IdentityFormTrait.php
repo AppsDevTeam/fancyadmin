@@ -2,25 +2,22 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms\Identity;
 
+use ADT\DoctrineForms\Form;
+use ADT\FancyAdmin\DI\Injects\AccountQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
-use ADT\FancyAdmin\DI\Injects\MailerInject;
-use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\UI\Components\Forms\IdentityProfileFormTrait;
+use ADT\Forms\DynamicContainer;
 use ADT\Forms\StaticContainer;
-use App\Model\Entities\Identity;
-use Contributte\Translation\Exceptions\InvalidArgument;
-use DateMalformedStringException;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Exception;
-use Nette\Application\UI\InvalidLinkException;
-use Nette\Utils\ArrayHash;
-use ADT\Forms\Form;
 
 /**
  * @property Identity $entity
  */
 trait IdentityFormTrait
 {
-	use MailerInject;
+	use IdentityProfileFormTrait;
+	use AccountQueryFactoryInject;
 	use AclRoleQueryFactoryInject;
 
 	/**
@@ -28,73 +25,42 @@ trait IdentityFormTrait
 	 */
 	public function initForm(Form $form, ?Identity $identity): void
 	{
-		$this->initUserForm($form);
+		$this->addIdentityFields($form);
 
-		$form->addText('bankAccount', 'fcadmin.forms.user.labels.bankAccount');
+		$this->addRoles($form, $this->getIdentityRoles());
 
-		$adminRoles = $this->_aclRoleQueryFactory->create()->byIsAdmin(true)->fetchPairs();
 		$form->addDynamicContainer(
 			'profiles',
-			function (StaticContainer $container) use ($form, $adminRoles) {
-				$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
-
-				$container->addMultiSelect('roles', 'fcadmin.forms.user.labels.role', $adminRoles)
-					->setRequired();
+			function (StaticContainer $container) use ($identity, $form) {
+				$container->addCheckbox('isActive', 'app.forms.user.labels.isActive');
+				$this->addRoles($container, $this->getProfileRoles());
+				$container->addSelect('account', 'app.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
+					->setPrompt('---');
+				$container->addSection(function () use ($form, $container) {
+					$form->mapToForm();
+					$account = $container['account']->getValue();
+					$container->addMultiSelect('branches', 'app.forms.user.labels.branches', $this->branchQueryFactory->create()->byAccount($account)->fetchPairs('fullName'));
+					$container->addMultiSelect('warehouses', 'app.forms.user.labels.warehouses', $this->warehouseQueryFactory->create()->byAccount($account)->fetchPairs());
+				}, 'account', watchForRedraw: [$container['account']]);
 			}
 		);
 
-		$form->addSubmit('chosenCompany')
-			->setValidationScope([])
-			->onClick[] = function () {
-			$this->redrawControl('chosenCompany');
-		};
-	}
+		$form->mapToForm();
 
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws InvalidArgument
-	 * @throws InvalidLinkException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	public function processForm(Identity $identity, ArrayHash $values): void
-	{
-		$this->processUserForm($identity);
-	}
-
-	public function initUserForm(Form $form): void
-	{
-		$form->addText('firstName', 'fcadmin.forms.user.labels.firstName')
-			->setRequired();
-
-		$form->addText('lastName', 'fcadmin.forms.user.labels.lastName')
-			->setRequired();
-
-		$form->addGroup('contactBlock');
-		$form->addText('email', 'fcadmin.forms.user.labels.email');
-		$form->addPhoneNumber('phoneNumber', 'fcadmin.forms.user.labels.phoneNumber', 'fcadmin.forms.user.errors.phoneNumber');
-		$form->addGroup();
-
-		$form->addSubmit('submit', 'fcadmin.forms.user.labels.submit');
-	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws InvalidArgument
-	 * @throws InvalidLinkException
-	 * @throws \Doctrine\DBAL\Exception|Exception
-	 */
-	public function processUserForm(Identity $identity): void
-	{
-		try {
-			$this->em->flush();
-		} catch (UniqueConstraintViolationException $e) {
-			$this->presenter->flashMessageError('app.forms.user.errors.credentialsConstrain');
-			return;
+		$roleControls = [$form['roles'], $form['profiles'][DynamicContainer::NEW_PREFIX]['roles']];
+		foreach ($form['profiles']->getComponents() as $_profileContainer) {
+			$roleControls[] = $_profileContainer['roles'];
 		}
+		$form->addSection(function () use ($form, $identity) {
+			$roleIds = $form['roles']->getValue();
+			foreach ($form['profiles']->getComponents() as $_profileContainer) {
+				$roleIds = array_merge($roleIds, $_profileContainer['roles']->getValue());
+			}
+			$roles = $this->_aclRoleQueryFactory->create()->byId($roleIds)->fetch();
+			$this->addRoleBasedFields($form, $identity, $roles);
+		}, name: 'roleBasedFields', watchForRedraw: $roleControls);
 
-		if (!$identity->getPassword()) {
-			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_CREATION_VALID_FOR);
-		}
+		$form->addSubmit('submit', 'app.forms.user.labels.submit');
 	}
 
 	protected function getEntityClass(): ?string

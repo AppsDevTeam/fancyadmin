@@ -24,6 +24,12 @@ trait AclRoleTrait
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isAdmin = false;
 
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	protected bool $isIdentity = false;
+
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	protected bool $isProfile = false;
+
 	public function __construct()
 	{
 		$this->resources = new ArrayCollection();
@@ -86,6 +92,32 @@ trait AclRoleTrait
 
 	public function isAllowed(Resource $aclResource): bool
 	{
-		return array_any($this->getResources(), fn(AclResource $_resource) => $_resource->getName() === $aclResource);
+		if ($this->isAdmin) {
+			return true;
+		}
+
+		return array_any($this->getResources(), fn(Resource $_resource) => $_resource === $aclResource);
+	}
+
+	public function isIdentity(): bool
+	{
+		return $this->isIdentity;
+	}
+
+	public function setIsIdentity(bool $isIdentity): static
+	{
+		$this->isIdentity = $isIdentity;
+		return $this;
+	}
+
+	public function isProfile(): bool
+	{
+		return $this->isProfile;
+	}
+
+	public function setIsProfile(bool $isProfile): static
+	{
+		$this->isProfile = $isProfile;
+		return $this;
 	}
 }

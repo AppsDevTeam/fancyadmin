@@ -16,7 +16,6 @@ interface Profile extends IsActiveInterface, Entity
 	public function addRole(AclRole $role): static;
 
 	public function isAllowed(Resource $resource): bool;
-	public function isAllowedContext(Resource $context): bool;
 
 	public function getAccount(): ?Account;
 	public function setAccount(?Account $account): static;

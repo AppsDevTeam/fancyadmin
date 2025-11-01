@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
@@ -13,7 +12,9 @@ use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\ManyToMany;
 use Nette\Security\Passwords;
 use Nette\Security\Resource;
 
@@ -51,6 +52,11 @@ trait IdentityTrait
 	#[ORM\ManyToOne(targetEntity: Account::class)]
 	#[JoinColumn(nullable: true)]
 	protected ?Account $selectedAccount = null;
+
+	#[ManyToMany(targetEntity: 'AclRole')]
+	#[JoinColumn(onDelete: "CASCADE")]
+	#[InverseJoinColumn(onDelete: "RESTRICT")]
+	protected Collection $roles;
 
 	protected string $authToken;
 	public ?Resource $context = null;
@@ -140,14 +146,6 @@ trait IdentityTrait
 		$this->authToken = $token;
 	}
 
-	/**
-	 * @return AclRole[]
-	 */
-	public function getRoles(): array
-	{
-		return $this->getProfile()->getRoles();
-	}
-
 	public function isAllowed(string|Resource $aclResource): bool
 	{
 		return array_any($this->getRoles(), fn(AclRole $_role) => $_role->getIsAdmin() || $_role->isAllowed($aclResource));
@@ -189,7 +187,7 @@ trait IdentityTrait
 				continue;
 			}
 
-			if ($context && !$_profile->isAllowedContext($context)) {
+			if ($context && !$_profile->isAllowed($context)) {
 				continue;
 			}
 
@@ -242,21 +240,10 @@ trait IdentityTrait
 		return $this;
 	}
 
-	protected function getProfile(): Profile
+	protected function getProfile(): ?Profile
 	{
-		foreach ($this->getAllowedProfiles() as $_profile) {
-			foreach ($_profile->getRoles() as $_role) {
-				if ($_role->getIsAdmin()) {
-					return $_profile;
-				}
-			}
-		}
+		return array_find($this->getAllowedProfiles(), fn($_profile) => $_profile->getAccount() === $this->getSelectedAccount());
 
-		foreach ($this->getAllowedProfiles() as $_profile) {
-			if ($_profile->getAccount() === $this->getSelectedAccount()) {
-				return $_profile;
-			}
-		}
 	}
 
 	public function getGravatar(string $d = 'mp'): string
@@ -279,5 +266,21 @@ trait IdentityTrait
 		}
 
 		return $companies;
+	}
+
+	/**
+	 * @return AclRole[]
+	 */
+	public function getRoles(): array
+	{
+		$roles = [];
+		/** @var AclRole $_aclRole */
+		foreach ($this->roles as $_aclRole) {
+			if (!$this->context || $_aclRole->isAllowed($this->context)) {
+				$roles[] = $_aclRole;
+			}
+		}
+
+		return array_merge($roles, $this->getProfile()?->getRoles() ?: []);
 	}
 }

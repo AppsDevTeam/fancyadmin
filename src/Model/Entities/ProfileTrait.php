@@ -76,15 +76,6 @@ trait ProfileTrait
 		return false;
 	}
 
-	public function isAllowedContext(Resource $context): bool
-	{
-		if ($this->isAllowed($context)) {
-			return true;
-		}
-
-		return false;
-	}
-
 	public function getAccount(): ?Account
 	{
 		return $this->account;
