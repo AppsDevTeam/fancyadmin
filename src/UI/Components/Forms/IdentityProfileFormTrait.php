@@ -51,6 +51,7 @@ trait IdentityProfileFormTrait
 				$this->addIdentityFields($form, $isEdit);
 			}
 			$section->setWatchForRedraw([$primaryEl['search']]);
+			$section->setValidationScope([$primaryEl['email']]);
 
 			if ($isEdit || $primaryEl['email']->getValue()) {
 				$this->addIsActiveField($form);
@@ -105,7 +106,7 @@ trait IdentityProfileFormTrait
 			}
 		}, 'fields', onRedraw: function() {
 			$this->redrawControl($this->getName());
-		}); // validationScope: [$container['email']]
+		});
 	}
 
 	protected function addIdentityFields(Container $container, bool $isEdit): void
