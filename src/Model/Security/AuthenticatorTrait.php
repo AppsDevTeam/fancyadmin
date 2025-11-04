@@ -16,7 +16,7 @@ use Nette\Security\Resource;
 use Nette\Utils\Validators;
 
 /**
- * @method Identity authenticate(string $user, string $password, string|null|Resource $context, array $metadata = []))
+ * @method Identity authenticate(string $user, string $password, ?string $context = null, array $metadata = []))
  */
 trait AuthenticatorTrait
 {
@@ -33,7 +33,7 @@ trait AuthenticatorTrait
 	/**
 	 * @throws AuthenticationException
 	 */
-	protected function verifyCredentials(string $user, string $password, ?Resource $context, array $metadata = []): Identity
+	protected function verifyCredentials(string $user, string $password, ?string $context = null, array $metadata = []): Identity
 	{
 		$identityQuery = $this->getIdentityQueryFactory()->create()
 			->disableSecurityFilter()
@@ -48,6 +48,10 @@ trait AuthenticatorTrait
 			$identityQuery->byUsername($user);
 			$userType = UserTypeEnum::USERNAME;
 		}
+		if ($context) {
+			$identityQuery->byContext($context);
+		}
+		
 		$this->initQueryObject($identityQuery, $userType, $context, $metadata);
 		/** @var Identity $identity */
 		$identity = $identityQuery->fetchOneOrNull();
@@ -66,16 +70,12 @@ trait AuthenticatorTrait
 				&&
 				!self::verifyPassword($password, (string) $identity->getPassword())
 			) {
-				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials');
+				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
 			}
 		}
 
 		if (!$identity->getIsActive()) {
-			throw new AuthenticationException('app.appGeneral.exceptions.inactiveUser');
-		}
-
-		if ($context && !$identity->isAllowedContext($context)) {
-			throw new AuthenticationException('Nedostatečná práva pro přihlášení.'); // TODO translate a spatna exceptiona
+			throw new AuthenticationException('app.appGeneral.exceptions.inactiveUser'); // TODO translate
 		}
 
 		$this->validateIdentity($identity, $context, $metadata);
@@ -83,23 +83,29 @@ trait AuthenticatorTrait
 		return $identity;
 	}
 
-	protected function initQueryObject(IdentityQuery $query, UserTypeEnum $userType, ?Resource $context, array $metadata = []): void
+	protected function initQueryObject(IdentityQuery $query, UserTypeEnum $userType, ?string $context = null, array $metadata = []): void
 	{
 	}
 
-	protected function getIdentity(string $id, string $token, ?Resource $context, array $metadata): ?IIdentity
+	protected function getIdentity(string $id, string $token, ?string $context, array $metadata): ?IIdentity
 	{
 		/** @var Identity $identity */
-		if (!$identity = $this->getIdentityQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byId($id)->fetchOneOrNull()) {
+		if (
+			!$identity = $this->getIdentityQueryFactory()->create()
+				->disableSecurityFilter()
+				->disableAccountFilter()
+				->byContext($context)
+				->byId($id)
+				->fetchOneOrNull()
+		) {
 			return null;
 		}
 		$identity->setAuthToken($token);
-		$identity->setContext($context);
 		$this->initIdentity($identity, $metadata);
 		return $identity;
 	}
 
-	protected function validateIdentity(Identity $identity, ?Resource $context, array $metadata): void
+	protected function validateIdentity(Identity $identity, ?string $context = null, array $metadata = []): void
 	{
 	}
 

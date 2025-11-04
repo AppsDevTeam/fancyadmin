@@ -31,7 +31,9 @@ trait IdentityProfileFormTrait
 	use IdentityQueryFactoryInject;
 	use IsActiveFormField;
 
-	abstract protected function addProfileFields(Form|Container $form): void;
+	abstract protected function addProfileFields(Form|Container $form, ?Profile $profile, array $roles): void;
+	abstract protected function addIdentityFields(Form|Container $form, ?Identity $identity, array $roles): void;
+	abstract protected function getContext(): ?string;
 
 	/**
 	 * @throws \Exception
@@ -45,10 +47,10 @@ trait IdentityProfileFormTrait
 
 			if ($isProfile) {
 				$primaryEl = $form->addStaticContainer('identity', function(StaticContainer $container) use ($isEdit) {
-					$this->addIdentityFields($container, $isEdit);
+					$this->addBasicIdentityFields($container, $isEdit);
 				});
 			} else {
-				$this->addIdentityFields($form, $isEdit);
+				$this->addBasicIdentityFields($form, $isEdit);
 			}
 			$section->setWatchForRedraw([$primaryEl['search']]);
 			$section->setValidationScope([$primaryEl['email']]);
@@ -109,7 +111,7 @@ trait IdentityProfileFormTrait
 		});
 	}
 
-	protected function addIdentityFields(Container $container, bool $isEdit): void
+	protected function addBasicIdentityFields(Container $container, bool $isEdit): void
 	{
 		$container->addEmail('email', 'app.forms.user.labels.email')
 			->setRequired(true);
@@ -193,10 +195,5 @@ trait IdentityProfileFormTrait
 	protected function getProfileRoles(?string $context): array
 	{
 		return $this->_aclRoleQueryFactory->create()->byType(AclRoleTypeEnum::PROFILE)->byContext($context)->fetch();
-	}
-
-	protected function getContext(): ?string
-	{
-		return null;
 	}
 }

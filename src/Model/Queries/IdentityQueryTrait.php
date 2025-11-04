@@ -40,4 +40,9 @@ trait IdentityQueryTrait
 	{
 		return $this->by('selectedAccount', $account);
 	}
+
+	public function byContext(string $context): static
+	{
+		return $this->by('context', $context);
+	}
 }

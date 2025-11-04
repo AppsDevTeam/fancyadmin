@@ -30,7 +30,7 @@ trait SecurityUserTrait
 		string|IIdentity $username,
 		#[\SensitiveParameter]
 		?string $password = null,
-		?Resource $context = null,
+		?string $context = null,
 		array $metadata = []
 	): void
 	{

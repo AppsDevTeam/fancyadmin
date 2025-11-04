@@ -41,6 +41,9 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getEmail(): ?string;
 	public function setEmail(?string $email): static;
 
+	public function getContext(): ?string;
+	public function setContext(?string $context): static;
+
 	public function getUsername(): ?string;
 	public function setUsername(?string $username): static;
 
@@ -56,7 +59,6 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 
 	// Auth
 	public function isAllowed(Resource $aclResource): bool;
-	public function isAllowedContext(Resource $context): bool;
 
 	public function isAdmin(): bool;
 }

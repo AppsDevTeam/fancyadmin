@@ -48,7 +48,7 @@ trait SignInFormTrait
 	public function validateForm(array $values, Form $form): void
 	{
 		try {
-			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->_fancyAdmin->getCustomerAclResource());
+			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], 'portal'); // TODO enum
 		} catch (AuthenticationException $e) {
 			$form->addError($e->getMessage());
 		}

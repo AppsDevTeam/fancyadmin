@@ -40,6 +40,9 @@ trait IdentityTrait
 	#[ORM\Column(nullable: true)]
 	protected ?string $username = null;
 
+	#[ORM\Column(nullable: true)]
+	protected ?string $context = null;
+
 	#[ORM\Column(nullable:true)]
 	protected ?string $phoneNumber = null;
 
@@ -59,7 +62,6 @@ trait IdentityTrait
 	protected Collection $roles;
 
 	protected string $authToken;
-	public ?Resource $context = null;
 
 	public function __construct()
 	{
@@ -173,43 +175,15 @@ trait IdentityTrait
 		return $this->profiles->toArray();
 	}
 
-	/**
-	 * @return Profile[]
-	 */
-	public function getAllowedProfiles(?Resource $context = null): array
-	{
-		$context = $context ?: $this->context;
-
-		$profiles = [];
-		/** @var Profile $_profile */
-		foreach ($this->profiles as $_profile) {
-			if (!$_profile->getIsActive()) {
-				continue;
-			}
-
-			if ($context && !$_profile->isAllowed($context)) {
-				continue;
-			}
-
-			$profiles[] = $_profile;
-		}
-
-		return $profiles;
-	}
-
-	public function getContext(): ?Resource
+	public function getContext(): ?string
 	{
 		return $this->context;
 	}
 
-	public function setContext(?Resource $context): void
+	public function setContext(?string $context): static
 	{
 		$this->context = $context;
-	}
-
-	public function isAllowedContext(Resource $context): bool
-	{
-		return (bool) $this->getAllowedProfiles($context);
+		return $this;
 	}
 
 	public function addProfile(Profile $profile): static
@@ -242,7 +216,7 @@ trait IdentityTrait
 
 	protected function getProfile(): ?Profile
 	{
-		return array_find($this->getAllowedProfiles(), fn($_profile) => $_profile->getAccount() === $this->getSelectedAccount());
+		return array_find($this->getProfiles(), fn($_profile) => $_profile->getAccount() === $this->getSelectedAccount());
 
 	}
 
@@ -256,16 +230,11 @@ trait IdentityTrait
 	 */
 	public function getAccounts(): array
 	{
-		$companies = [];
-		foreach ($this->getAllowedProfiles() as $_profile) {
-			if (!$_profile->getAccount()) {
-				continue;
-			}
-
-			$companies[] = $_profile->getAccount();
+		$accounts = [];
+		foreach ($this->getProfiles() as $_profile) {
+			$accounts[] = $_profile->getAccount();
 		}
-
-		return $companies;
+		return $accounts;
 	}
 
 	/**
@@ -273,14 +242,6 @@ trait IdentityTrait
 	 */
 	public function getRoles(): array
 	{
-		$roles = [];
-		/** @var AclRole $_aclRole */
-		foreach ($this->roles as $_aclRole) {
-			if (!$this->context || $_aclRole->isAllowed($this->context)) {
-				$roles[] = $_aclRole;
-			}
-		}
-
-		return array_merge($roles, $this->getProfile()?->getRoles() ?: []);
+		return array_merge($this->roles->toArray(), $this->getProfile()?->getRoles() ?: []);
 	}
 }
