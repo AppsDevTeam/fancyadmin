@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Queries;
 
+use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use Doctrine\ORM\QueryBuilder;
 
 trait AclRoleQueryTrait
@@ -16,14 +17,14 @@ trait AclRoleQueryTrait
 		return $this->by('isAdmin', $isAdmin);
 	}
 
-	public function byIsIdentity(bool $isIdentity): static
+	public function byType(AclRoleTypeEnum $aclRoleType): static
 	{
-		return $this->by('isIdentity', $isIdentity);
+		return $this->by('type', $aclRoleType);
 	}
 
-	public function byIsProfile(bool $isProfile): static
+	public function byContext(string $context): static
 	{
-		return $this->by('isProfile', $isProfile);
+		return $this->by('context', $context);
 	}
 
 	protected function setDefaultOrder(): void

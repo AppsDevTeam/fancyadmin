@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,14 +22,14 @@ trait AclRoleTrait
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	protected Collection $resources;
 
+	#[ORM\Column(nullable: true)]
+	protected ?string $context = null;
+
+	#[ORM\Column(nullable: false)]
+	protected AclRoleTypeEnum $type;
+
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isAdmin = false;
-
-	#[ORM\Column(nullable: false, options: ["default" => 0])]
-	protected bool $isIdentity = false;
-
-	#[ORM\Column(nullable: false, options: ["default" => 0])]
-	protected bool $isProfile = false;
 
 	public function __construct()
 	{
@@ -99,25 +100,25 @@ trait AclRoleTrait
 		return array_any($this->getResources(), fn(Resource $_resource) => $_resource === $aclResource);
 	}
 
-	public function isIdentity(): bool
+	public function getContext(): ?string
 	{
-		return $this->isIdentity;
+		return $this->context;
 	}
 
-	public function setIsIdentity(bool $isIdentity): static
+	public function setContext(?string $context): static
 	{
-		$this->isIdentity = $isIdentity;
+		$this->context = $context;
 		return $this;
 	}
 
-	public function isProfile(): bool
+	public function getType(): AclRoleTypeEnum
 	{
-		return $this->isProfile;
+		return $this->type;
 	}
 
-	public function setIsProfile(bool $isProfile): static
+	public function setType(AclRoleTypeEnum $type): static
 	{
-		$this->isProfile = $isProfile;
+		$this->type = $type;
 		return $this;
 	}
 }

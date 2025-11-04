@@ -2,8 +2,9 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms\AclRole;
 
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\Forms\Form;
-use App\Model\Entities\AclRole;
 use Exception;
 
 /**
@@ -11,6 +12,8 @@ use Exception;
  */
 trait AclRoleFormTrait
 {
+	use EntityManagerInject;
+	
 	/**
 	 * @throws Exception
 	 */
@@ -24,7 +27,7 @@ trait AclRoleFormTrait
 
 	protected function getEntityClass(): ?string
 	{
-		return AclRole::class;
+		return $this->_em->findEntityClassByInterface(AclRole::class);
 	}
 
 	/**

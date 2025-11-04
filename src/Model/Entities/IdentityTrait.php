@@ -34,13 +34,13 @@ trait IdentityTrait
 	#[ORM\Column(nullable: true)]
 	protected ?string $lastName = null;
 
-	#[ORM\Column(unique: true, nullable:true)]
+	#[ORM\Column(nullable:true)]
 	protected ?string $email = null;
 
-	#[ORM\Column(nullable:true)]
+	#[ORM\Column(nullable: true)]
 	protected ?string $username = null;
 
-	#[ORM\Column(unique: true, nullable:true)]
+	#[ORM\Column(nullable:true)]
 	protected ?string $phoneNumber = null;
 
 	#[ORM\Column(nullable: true)]
