@@ -244,4 +244,13 @@ trait IdentityTrait
 	{
 		return array_merge($this->roles->toArray(), $this->getProfile()?->getRoles() ?: []);
 	}
+
+	public function addRole(AclRole $role): static
+	{
+		if ($this->roles->contains($role)) {
+			return $this;
+		}
+		$this->roles->add($role);
+		return $this;
+	}
 }
