@@ -22,6 +22,7 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Forms\Container;
+use Nette\Forms\SubmitterControl;
 
 trait IdentityProfileFormTrait
 {
@@ -54,8 +55,6 @@ trait IdentityProfileFormTrait
 			} else {
 				$this->addBasicIdentityFields($form, $isEdit);
 			}
-			$section->setWatchForRedraw([$primaryEl['search']]);
-			$section->setValidationScope([$primaryEl['email']]);
 
 			if ($isEdit || $primaryEl['email']->getValue()) {
 				$this->addIsActiveField($form);
@@ -68,20 +67,17 @@ trait IdentityProfileFormTrait
 
 					$form->addDynamicContainer(
 						'profiles',
-						function (StaticContainer $container) use ($form) {
-							$container->addHidden('id');
+						function (StaticContainer $container) use ($form, $entity) {
+							static $i = 0;
 							$container->addCheckbox('isActive', 'app.forms.user.labels.isActive');
 							$this->addRoles($container, $this->getProfileRoles($this->getContext()), required: true);
 							$container->addSelect('account', 'app.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
 								->setPrompt('---');
-							$container->addSection(function () use ($form, $container) {
+							$container->addSection(function () use ($form, $container, $entity, $i) {
 								$form->mapToForm();
-								$_profile = null;
-								if ($container['id']->getValue()) {
-									$_profile = $this->_profileQueryFactory->create()->byId($container['id']->getValue())->fetchOne();
-								}
-								$this->addProfileFields($container, $_profile, $container['roles']->getValue());
+								$this->addProfileFields($container, $entity->getProfiles()[$i] ?? null, $container['roles']->getValue());
 							}, 'account', watchForRedraw: [$container['account'], $container['roles']]);
+							$i++;
 						}
 					);
 
@@ -91,12 +87,12 @@ trait IdentityProfileFormTrait
 					if (!$form->isSubmitted()) {
 						$roleControls[] = $form['profiles'][DynamicContainer::NEW_PREFIX]['roles'];
 					}
-					foreach ($form['profiles']->getComponents() as $_profileContainer) {
+					foreach ($form['profiles']->getContainers() as $_profileContainer) {
 						$roleControls[] = $_profileContainer['roles'];
 					}
 					$form->addSection(function () use ($form, $entity) {
 						$roleIds = $form['roles']->getValue();
-						foreach ($form['profiles']->getComponents() as $_profileContainer) {
+						foreach ($form['profiles']->getContainers() as $_profileContainer) {
 							$roleIds = array_merge($roleIds, $_profileContainer['roles']->getValue());
 						}
 						$roles = $this->_aclRoleQueryFactory->create()->byId($roleIds)->fetch();
@@ -104,17 +100,18 @@ trait IdentityProfileFormTrait
 					}, name: 'roleBasedFields', watchForRedraw: $roleControls);
 				} else {
 					$this->addRoles($form, $this->getProfileRoles($this->getContext()), required: true);
-
-					$form->addSection(function () use ($form) {
+					$watchForRedraw = [$form['roles']];
+					if (isset($form['account'])) {
+						$watchForRedraw[] = $form['account'];
+					}
+					$form->addSection(function () use ($form, $entity) {
 						$form->mapToForm();
-						$this->addProfileFields($form);
-					}, name: 'profileFields', watchForRedraw: isset($form['account']) ? [$form['account']] : []);
+						$this->addProfileFields($form, $entity, $form['roles']->getValue());
+					}, name: 'profileFields', watchForRedraw: $watchForRedraw);
 				}
 
 				$form->addSubmit('submit', 'app.forms.user.labels.submit'); // TODO translate
 			}
-		}, 'fields', onRedraw: function() {
-			$this->redrawControl($this->getName());
 		});
 	}
 
@@ -123,7 +120,11 @@ trait IdentityProfileFormTrait
 		$container->addEmail('email', 'app.forms.user.labels.email')
 			->setRequired(true);
 
-		$container->addSubmit('search', 'Vyhledat');
+		$container->addSubmit('search', 'Vyhledat')
+			->setValidationScope([$container['email']])
+			->onClick[] = function () use ($container) {
+				$this->redrawControl($this->getName());
+			};
 
 		if (!$isEdit && $this->_identityQueryFactory->create()->byEmail($container['email']->getValue())->fetchOneOrNull()) {
 			$container['email']->addError('Uživatel již ve vybraném účtu existuje.'); // TODO translate
@@ -149,7 +150,7 @@ trait IdentityProfileFormTrait
 				$container->addPhoneNumber('phoneNumber', 'app.forms.user.labels.phoneNumber', 'app.forms.user.errors.phoneNumber')
 					->setRequired();
 
-				if ($identity) {
+				if ($identity && $container->getForm()->isSubmitted() instanceof SubmitterControl && $container->getForm()->isSubmitted()->getName() === 'search') {
 					$container['firstName']->setValue($identity->getFirstName());
 					$container['lastName']->setValue($identity->getLastName());
 					$container['phoneNumber']->setValue($identity->getPhoneNumber());

@@ -30,7 +30,7 @@ trait IdentityFormTrait
 		$this->addFormFields($form, $identity, isProfile: false);
 	}
 
-	protected function processForm(Identity $identity, array $values): void
+	protected function processForm(Identity $identity): void
 	{
 		$this->processUserForm($identity);
 	}
@@ -38,10 +38,6 @@ trait IdentityFormTrait
 	protected function getEntityClass(): ?string
 	{
 		return $this->_em->findEntityClassByInterface(Identity::class);
-	}
-
-	protected function addRoleBasedFields(Form $form, ?Identity $identity, array $roles): void
-	{
 	}
 
 	public function isAllowedToEdit(): true

@@ -41,13 +41,15 @@ trait AclRoleQueryTrait
 			}
 
 			if (! $this->getSecurityUser()->isAllowedFullDataAclResource()) {
-				$qb->andWhere("e.isProfile = 1");
+				$qb->andWhere("e.type = :sf_type")
+					->setParameter('sf_type', AclRoleTypeEnum::PROFILE);
 			}
 		};
 	}
 
 	protected function applyAccountFilter(QueryBuilder $qb, \ADT\FancyAdmin\Model\Entities\Account $account): void
 	{
-		$qb->andWhere('e.isProfile = 1');
+		$qb->andWhere("e.type = :sf_type")
+			->setParameter('sf_type', AclRoleTypeEnum::PROFILE);
 	}
 }
