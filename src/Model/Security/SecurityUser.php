@@ -5,7 +5,6 @@ namespace ADT\FancyAdmin\Model\Security;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use Nette\Security\Authorizator;
 use Nette\Security\IIdentity;
-use Nette\Security\Resource;
 use SensitiveParameter;
 
 interface SecurityUser

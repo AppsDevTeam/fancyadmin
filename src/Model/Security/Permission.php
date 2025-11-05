@@ -49,8 +49,5 @@ class Permission extends \Nette\Security\Permission
 		foreach ($allows as $allow) {
 			$this->allow((string) $allow['roleName'], $allow['resourceName']);
 		}
-
-		// Adminovi povol vše
-		$this->allow((string) AclRoleEnum::ROLE_ADMIN);
 	}
 }

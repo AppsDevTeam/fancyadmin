@@ -7,6 +7,7 @@ use Nette\Security\AuthenticationException;
 use Nette\Security\Authorizator;
 use Nette\Security\IIdentity;
 use Nette\Security\Resource;
+use SensitiveParameter;
 
 trait SecurityUserTrait
 {
@@ -28,7 +29,7 @@ trait SecurityUserTrait
 	 */
 	public function login(
 		string|IIdentity $username,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		?string $password = null,
 		?string $context = null,
 		array $metadata = []

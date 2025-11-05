@@ -12,7 +12,6 @@ use Brick\PhoneNumber\PhoneNumberParseException;
 use Nette\Security\AuthenticationException;
 use Nette\Security\IIdentity;
 use Nette\Security\Passwords;
-use Nette\Security\Resource;
 use Nette\Utils\Validators;
 
 /**
@@ -48,9 +47,7 @@ trait AuthenticatorTrait
 			$identityQuery->byUsername($user);
 			$userType = UserTypeEnum::USERNAME;
 		}
-		if ($context) {
-			$identityQuery->byContext($context);
-		}
+		$identityQuery->byContext($context);
 		
 		$this->initQueryObject($identityQuery, $userType, $context, $metadata);
 		/** @var Identity $identity */

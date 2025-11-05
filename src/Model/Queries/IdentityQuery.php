@@ -12,4 +12,5 @@ interface IdentityQuery extends BaseQuery
 	public function byEmail(string $email): static;
 	public function bySelectedAccount(Account $account): static;
 	public function byEmailOrPhoneNumber(string $email, string $phoneNumber): static;
+	public function byContext(?string $context): static;
 }
