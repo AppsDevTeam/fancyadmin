@@ -23,6 +23,8 @@ trait SignInFormTrait
 
 	private Identity $_identity;
 
+	abstract protected function getContext(): ?string;
+
 	public function initForm(Form $form): void
 	{
 		$form->getElementPrototype()->class[] = 'login-form';
@@ -48,7 +50,7 @@ trait SignInFormTrait
 	public function validateForm(array $values, Form $form): void
 	{
 		try {
-			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], 'portal'); // TODO enum
+			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->getContext());
 		} catch (AuthenticationException $e) {
 			$form->addError($e->getMessage());
 		}
