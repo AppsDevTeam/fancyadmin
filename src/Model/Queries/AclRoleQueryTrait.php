@@ -22,7 +22,7 @@ trait AclRoleQueryTrait
 		return $this->by('type', $aclRoleType);
 	}
 
-	public function byContext(string $context): static
+	public function byContext(?string $context): static
 	{
 		return $this->by('context', $context);
 	}

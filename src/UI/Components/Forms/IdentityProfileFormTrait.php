@@ -6,6 +6,7 @@ use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
+use ADT\FancyAdmin\DI\Injects\ProfileQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
@@ -30,6 +31,7 @@ trait IdentityProfileFormTrait
 	use AclRoleQueryFactoryInject;
 	use IdentityQueryFactoryInject;
 	use IsActiveFormField;
+	use ProfileQueryFactoryInject;
 
 	abstract protected function addProfileFields(Form|Container $form, ?Profile $profile, array $roles): void;
 	abstract protected function addIdentityFields(Form|Container $form, ?Identity $identity, array $roles): void;
@@ -67,14 +69,19 @@ trait IdentityProfileFormTrait
 					$form->addDynamicContainer(
 						'profiles',
 						function (StaticContainer $container) use ($form) {
+							$container->addHidden('id');
 							$container->addCheckbox('isActive', 'app.forms.user.labels.isActive');
 							$this->addRoles($container, $this->getProfileRoles($this->getContext()), required: true);
 							$container->addSelect('account', 'app.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
 								->setPrompt('---');
 							$container->addSection(function () use ($form, $container) {
 								$form->mapToForm();
-								$this->addProfileFields($container);
-							}, 'account', watchForRedraw: [$container['account']]);
+								$_profile = null;
+								if ($container['id']->getValue()) {
+									$_profile = $this->_profileQueryFactory->create()->byId($container['id']->getValue())->fetchOne();
+								}
+								$this->addProfileFields($container, $_profile, $container['roles']->getValue());
+							}, 'account', watchForRedraw: [$container['account'], $container['roles']]);
 						}
 					);
 
@@ -93,7 +100,7 @@ trait IdentityProfileFormTrait
 							$roleIds = array_merge($roleIds, $_profileContainer['roles']->getValue());
 						}
 						$roles = $this->_aclRoleQueryFactory->create()->byId($roleIds)->fetch();
-						$this->addRoleBasedFields($form, $entity instanceof Profile ? $entity->getIdentity() : $entity, $roles);
+						$this->addIdentityFields($form, $entity instanceof Profile ? $entity->getIdentity() : $entity, $roles);
 					}, name: 'roleBasedFields', watchForRedraw: $roleControls);
 				} else {
 					$this->addRoles($form, $this->getProfileRoles($this->getContext()), required: true);

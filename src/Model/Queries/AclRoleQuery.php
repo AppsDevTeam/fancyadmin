@@ -10,5 +10,5 @@ interface AclRoleQuery extends BaseQuery
 	public function byName(string $name): static;
 	public function byIsAdmin(bool $isAdmin): static;
 	public function byType(AclRoleTypeEnum $aclRoleType): static;
-	public function byContext(string $context): static;
+	public function byContext(?string $context): static;
 }
