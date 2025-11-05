@@ -75,7 +75,7 @@ trait IdentityProfileFormTrait
 								->setPrompt('---');
 							$container->addSection(function () use ($form, $container, $entity, $i) {
 								$form->mapToForm();
-								$this->addProfileFields($container, $entity->getProfiles()[$i] ?? null, $container['roles']->getValue());
+								$this->addProfileFields($container, $entity?->getProfiles()[$i] ?? null, $container['roles']->getValue());
 							}, 'account', watchForRedraw: [$container['account'], $container['roles']]);
 							$i++;
 						}
@@ -181,6 +181,7 @@ trait IdentityProfileFormTrait
 	public function processUserForm(Identity $identity): void
 	{
 		try {
+			$identity->setContext($this->getContext());
 			$this->_em->flush();
 		} catch (UniqueConstraintViolationException) {
 			$this->getPresenter()->flashMessageError('app.forms.user.errors.credentialsConstrain');
