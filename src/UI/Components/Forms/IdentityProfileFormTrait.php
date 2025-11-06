@@ -64,14 +64,14 @@ trait IdentityProfileFormTrait
 				}
 
 				if (!$isProfile) {
-					$this->addRoles($form, $this->getIdentityRoles($this->getContext()), required: !$this->getProfileRoles($this->getContext()));
+					$this->addRoles($form, $this->getIdentityRoles($this->_fancyAdmin->getContext()), required: !$this->getProfileRoles($this->_fancyAdmin->getContext()));
 
 					$form->addDynamicContainer(
 						'profiles',
 						function (StaticContainer $container) use ($form, $entity) {
 							static $i = 0;
 							$container->addCheckbox('isActive', 'app.forms.user.labels.isActive');
-							$this->addRoles($container, $this->getProfileRoles($this->getContext()), required: true);
+							$this->addRoles($container, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
 							$container->addSelect('account', 'app.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
 								->setPrompt('---');
 							$container->addSection(function () use ($form, $container, $entity, $i) {
@@ -100,7 +100,7 @@ trait IdentityProfileFormTrait
 						$this->addIdentityFields($form, $entity instanceof Profile ? $entity->getIdentity() : $entity, $roles);
 					}, name: 'roleBasedFields', watchForRedraw: $roleControls);
 				} else {
-					$this->addRoles($form, $this->getProfileRoles($this->getContext()), required: true);
+					$this->addRoles($form, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
 					$watchForRedraw = [$form['roles']];
 					if (isset($form['account'])) {
 						$watchForRedraw[] = $form['account'];
