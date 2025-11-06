@@ -46,6 +46,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'customerAclResource' => Expect::type(Resource::class)->default(null),
 			'backofficeAclResource' => Expect::type(Resource::class)->default(null),
 			'fullDataAclResource' => Expect::type(Resource::class)->default(null),
+			'context' => Expect::string()->default(null),
 			'locksDir' => Expect::string()->required(),
 		]);
 	}
@@ -77,6 +78,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'customerAclResource' => $this->config->customerAclResource,
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
+				'context' => $this->config->context,
 			]);
 
 		//$this->validateTraitInterfaceCompliance();

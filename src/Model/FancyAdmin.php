@@ -19,6 +19,7 @@ class FancyAdmin
 		protected Resource $customerAclResource,
 		protected Resource $backofficeAclResource,
 		protected Resource $fullDataAclResource,
+		protected ?string $context,
 	) {}
 
 	public function getProject(): string
@@ -64,6 +65,11 @@ class FancyAdmin
 	public function getHmr(): bool
 	{
 		return $this->hmr;
+	}
+	
+	public function getContext()
+	{
+		return $this->context;
 	}
 
 	public function getCustomerAclResource(): Resource
