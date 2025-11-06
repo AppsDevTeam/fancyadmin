@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use Exception;
+use Nette\Application\Attributes\Persistent;
 use Nette\Localization\Translator;
 use Nette\Utils\Json;
 use stdClass;
@@ -16,6 +17,9 @@ trait BasePresenterTrait
 	abstract protected function getTranslator(): Translator;
 
 	protected bool $primaryTemplate = false;
+
+	#[Persistent]
+	public string $backlink = '';
 
 	protected function beforeRender(): void
 	{

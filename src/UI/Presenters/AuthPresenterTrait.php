@@ -38,7 +38,8 @@ trait AuthPresenterTrait
 		parent::startup();
 
 		if (!$this->getUser()->isLoggedIn()) {
-			$this->redirect(':Portal:Sign:in', ['selectedAccount' => null]);
+			$this->request->setParameters(array_merge($this->request->getParameters(), ['do' => 'redrawBody']));
+			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);
 		}
 
 		if ($this->getParameter('selectedAccount')) {
