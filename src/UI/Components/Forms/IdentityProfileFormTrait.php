@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms;
 
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
 use ADT\FancyAdmin\DI\Injects\ProfileQueryFactoryInject;
@@ -33,10 +34,10 @@ trait IdentityProfileFormTrait
 	use IdentityQueryFactoryInject;
 	use IsActiveFormField;
 	use ProfileQueryFactoryInject;
+	use FancyAdminInject;
 
 	abstract protected function addProfileFields(Form|Container $form, ?Profile $profile, array $roles): void;
 	abstract protected function addIdentityFields(Form|Container $form, ?Identity $identity, array $roles): void;
-	abstract protected function getContext(): ?string;
 
 	/**
 	 * @throws \Exception
@@ -181,7 +182,7 @@ trait IdentityProfileFormTrait
 	public function processUserForm(Identity $identity): void
 	{
 		try {
-			$identity->setContext($this->getContext());
+			$identity->setContext($this->_fancyAdmin->getContext());
 			$this->_em->flush();
 		} catch (UniqueConstraintViolationException) {
 			$this->getPresenter()->flashMessageError('app.forms.user.errors.credentialsConstrain');
