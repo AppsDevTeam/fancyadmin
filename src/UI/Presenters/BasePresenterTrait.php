@@ -23,6 +23,7 @@ trait BasePresenterTrait
 
 	protected function beforeRender(): void
 	{
+		parent::beforeRender();
 		$this->getTemplate()->originalTemplate = __DIR__ . '/@layout.latte';
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
 		$this->getTemplate()->jsComponentsConfig = Json::encode([]);
