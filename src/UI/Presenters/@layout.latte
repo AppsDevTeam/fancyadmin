@@ -108,7 +108,7 @@
 
 	<div n:snippet="flashes" class="snippet-flashes">
 		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type" data-close-duration="{$flash->closeDuration ?? ADT\FancyAdmin\UI\Presenters\BasePresenter::DEFAULT_AUTO_CLOSE_DURATION}">
-			<div class="alert-text d-block">{$flash->message}</div>
+			<div class="alert-text d-block">{$flash->message|noescape}</div>
 			<div class="alert-close-btn-wrapper">
 				<button class="alert-close-btn">
 					{_fcadmin.global.flashes.close}

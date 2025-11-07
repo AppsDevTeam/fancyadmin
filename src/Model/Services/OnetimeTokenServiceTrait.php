@@ -25,7 +25,8 @@ trait OnetimeTokenServiceTrait
 		$onetimeToken = new ($this->em->findEntityClassByInterface(OnetimeToken::class));
 		$onetimeToken
 			->setObjectId($identity->getId())
-			->setType('login')
+			->setObjectClass($identity::class)
+			->setType(OnetimeToken::TYPE_LOGIN)
 			->setIpAddress($_SERVER['REMOTE_ADDR'])
 			->setToken($onetimeToken::generateRandomToken())
 			->setValidUntil($validUntil);

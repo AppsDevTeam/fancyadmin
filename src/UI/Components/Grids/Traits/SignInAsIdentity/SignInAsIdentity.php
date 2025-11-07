@@ -5,12 +5,13 @@ namespace ADT\FancyAdmin\UI\Components\Grids\Traits\SignInAsIdentity;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\OnetimeToken;
-use Nette\Utils\Random;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenServiceTrait;
+use ReflectionException;
 
 trait SignInAsIdentity
 {
 	use EntityManagerInject;
+	use OnetimeTokenServiceTrait;
 
 	public function injectSignInAsIdentity(): void
 	{
@@ -45,18 +46,12 @@ trait SignInAsIdentity
 		$this->createSignAsIdentityLink($identity);
 	}
 
+	/**
+	 * @throws ReflectionException
+	 */
 	protected function createSignAsIdentityLink(Identity $identity): never
 	{
-		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = new ($this->_em->findEntityClassByInterface(OnetimeToken::class);
-		$onetimeToken
-			->setObjectId($identity->getId())
-			->setObjectClass($identity::class)
-			->setValidUntil(new \DateTimeImmutable('+15 minutes'))
-			->setIpAddress($_SERVER['REMOTE_ADDR'])
-			->setType(OnetimeToken::TYPE_LOGIN)
-			->setToken(Random::generate(32));
-
+		$onetimeToken = $this->generateToken($identity, new \DateTimeImmutable('+15 minutes'));
 		$this->_em->persist($onetimeToken);
 		$this->_em->flush();
 
