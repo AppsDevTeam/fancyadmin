@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\DI\Injects\AccountQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
@@ -23,6 +24,7 @@ trait AuthPresenterTrait
 	use LinkGeneratorInject;
 	use AccountQueryFactoryInject;
 	use FancyAdminInject;
+	use AuthenticatorInject;
 
 	#[Persistent]
 	public ?string $gridFilterClass = null;
@@ -38,6 +40,12 @@ trait AuthPresenterTrait
 		parent::startup();
 
 		if (!$this->getUser()->isLoggedIn()) {
+			if ($this->getParameter('token')) {
+				if ($identity = $this->_authenticator->findIdentity($this->getParameter('token'))) {
+					$this->getUser()->login($identity);
+				}
+			}
+			
 			$this->request->setParameters(array_merge($this->request->getParameters(), ['do' => 'redrawBody']));
 			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);
 		}

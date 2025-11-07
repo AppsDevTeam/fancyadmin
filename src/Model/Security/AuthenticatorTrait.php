@@ -84,29 +84,17 @@ trait AuthenticatorTrait
 	{
 	}
 
-	protected function getIdentity(string $id, string $token, ?string $context, array $metadata): ?IIdentity
+	protected function getIdentity(string $id, ?string $context): ?IIdentity
 	{
-		/** @var Identity $identity */
-		if (
-			!$identity = $this->getIdentityQueryFactory()->create()
-				->disableSecurityFilter()
-				->disableAccountFilter()
-				->byContext($context)
-				->byId($id)
-				->fetchOneOrNull()
-		) {
-			return null;
-		}
-		$identity->setAuthToken($token);
-		$this->initIdentity($identity, $metadata);
-		return $identity;
+		return $this->getIdentityQueryFactory()->create()
+			->disableSecurityFilter()
+			->disableAccountFilter()
+			->byId($id)
+			->byContext($context)
+			->fetchOneOrNull();
 	}
 
 	protected function validateIdentity(Identity $identity, ?string $context = null, array $metadata = []): void
-	{
-	}
-
-	protected function initIdentity(Identity $identity, array $metadata): void
 	{
 	}
 
