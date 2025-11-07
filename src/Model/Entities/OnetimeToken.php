@@ -34,4 +34,5 @@ interface OnetimeToken extends Entity
 	public function getIpAddress(): string;
 	public function setIpAddress(string $ipAddress): static;
 	public function getObjectClass(): ?string;
+	public function setObjectClass(string $objectClass): ?string;
 }

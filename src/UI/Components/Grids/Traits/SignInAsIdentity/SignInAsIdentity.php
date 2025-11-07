@@ -2,13 +2,16 @@
 
 namespace ADT\FancyAdmin\UI\Components\Grids\Traits\SignInAsIdentity;
 
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use App\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use Nette\Utils\Random;
 
 trait SignInAsIdentity
 {
+	use EntityManagerInject;
+
 	public function injectSignInAsIdentity(): void
 	{
 		$this->onAnchor[] = function () {
@@ -44,19 +47,21 @@ trait SignInAsIdentity
 
 	protected function createSignAsIdentityLink(Identity $identity): never
 	{
-		$token = new OnetimeToken()
+		/** @var OnetimeToken $onetimeToken */
+		$onetimeToken = new ($this->_em->findEntityClassByInterface(OnetimeToken::class);
+		$onetimeToken
 			->setObjectId($identity->getId())
+			->setObjectClass($identity::class)
 			->setValidUntil(new \DateTimeImmutable('+15 minutes'))
 			->setIpAddress($_SERVER['REMOTE_ADDR'])
 			->setType(OnetimeToken::TYPE_LOGIN)
 			->setToken(Random::generate(32));
 
-		$this->_em->persist($token);
+		$this->_em->persist($onetimeToken);
 		$this->_em->flush();
 
 		$this->getPresenter()->payload->signAsIdentityLink = $this->getPresenter()->link('//Sign:token', [
-			'email' => $identity->getEmail(),
-			'token' => $token->getToken(),
+			'token' => $onetimeToken->getToken(),
 			'skipPasswordRecovery' => 1,
 		]);
 
