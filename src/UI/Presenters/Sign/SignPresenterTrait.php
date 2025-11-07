@@ -5,7 +5,9 @@ namespace ADT\FancyAdmin\UI\Presenters\Sign;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
+use ADT\FancyAdmin\Model\Security\SecurityUserTrait;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordFormFactory;
 use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm;
@@ -25,6 +27,7 @@ trait SignPresenterTrait
 	use OnetimeTokenQueryFactoryInject;
 	use EntityManagerInject;
 	use FancyAdminInject;
+	use SecurityUserInject;
 
 	public function startup(): void
 	{
@@ -58,12 +61,12 @@ trait SignPresenterTrait
 	/**
 	 * @throws ReflectionException
 	 */
-	public function actionToken(string $email, string $token, int $skipPasswordRecovery = 0): void
+	public function actionToken(string $token, int $skipPasswordRecovery = 0): void
 	{
 		$this->getUser()->logout(true);
 
 		try {
-			$this->getUser()->login($email, $token, $this->_fancyAdmin->getContext());
+			$this->_securityUser->login($token, context: $this->_fancyAdmin->getContext());
 		} catch (AuthenticationException $e) {
 			$this->flashMessageError('Odkaz již není platný. Pro nový odkaz klikněte <a href="' .  $this->link(':Portal:Sign:lostPassword') . '">zde</a>.'); // TODO translate
 			$this->getPresenter()->redirect(':Portal:Sign:in');

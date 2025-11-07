@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
@@ -20,6 +21,7 @@ trait SignInFormTrait
 	use RedirectAfterLoginTrait;
 	use FancyAdminInject;
 	use AuthenticatorInject;
+	use SecurityUserInject;
 
 	private Identity $_identity;
 
@@ -60,7 +62,7 @@ trait SignInFormTrait
 	 */
 	public function processForm(): never
 	{
-		$this->getPresenter()->user->login($this->_identity);
+		$this->_securityUser->login($this->_identity, context: $this->_fancyAdmin->getContext());
 
 		$this->redirectAfterLogin();
 	}

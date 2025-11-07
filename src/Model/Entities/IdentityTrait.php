@@ -52,7 +52,7 @@ trait IdentityTrait
 	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist", "remove"], orphanRemoval: true)]
 	protected Collection $profiles;
 
-	#[ORM\ManyToOne(targetEntity: Account::class)]
+	#[ORM\ManyToOne(targetEntity: 'Account')]
 	#[JoinColumn(nullable: true)]
 	protected ?Account $selectedAccount = null;
 

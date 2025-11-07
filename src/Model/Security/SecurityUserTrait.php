@@ -35,6 +35,10 @@ trait SecurityUserTrait
 		array $metadata = []
 	): void
 	{
+		if (empty($context)) {
+			throw new \Exception('Context is required.');
+		}
+
 		parent::login($username, $password, $context, $metadata);
 	}
 

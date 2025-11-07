@@ -25,6 +25,9 @@ trait OnetimeTokenTrait
 	protected ?int $objectId = null;
 
 	#[Column(nullable: true)]
+	protected ?string $objectClass = null;
+
+	#[Column(nullable: true)]
 	protected ?DateTimeImmutable $usedAt = null;
 
 	#[Column(nullable: false)]
@@ -111,6 +114,17 @@ trait OnetimeTokenTrait
 	public function setIpAddress(string $ipAddress): static
 	{
 		$this->ipAddress = $ipAddress;
+		return $this;
+	}
+
+	public function getObjectClass(): ?string
+	{
+		return $this->objectClass;
+	}
+
+	public function setObjectClass(?string $objectClass): static
+	{
+		$this->objectClass = $objectClass;
 		return $this;
 	}
 }

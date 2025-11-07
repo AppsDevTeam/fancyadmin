@@ -19,7 +19,7 @@ trait ProfileTrait
 	#[JoinColumn(nullable: false)]
 	protected Identity $identity;
 
-	#[ManyToOne(targetEntity: Account::class, inversedBy: 'profiles')]
+	#[ManyToOne(targetEntity: 'Account', inversedBy: 'profiles')]
 	#[JoinColumn(nullable: true)]
 	protected ?Account $account = null;
 

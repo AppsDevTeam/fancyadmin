@@ -31,20 +31,30 @@ trait AuthenticatorTrait
 	/**
 	 * @throws AuthenticationException
 	 */
-	protected function verifyCredentials(string $user, string $password, ?string $context = null, array $metadata = []): Identity
+	protected function verifyCredentials(string $user, ?string $password = null, ?string $context = null, array $metadata = []): Identity
 	{
-		/** @var Identity $identity */
-		if (!$identity = $this->findIdentityByCredentials($user, $context, $metadata)) {
-			throw new AuthenticationException('app.appGeneral.exceptions.userNotFound');
-		}
-
-		if (!array_any($this->getUniversalPasswords(), fn($universalPassword) => $this->verifyPassword($password, $universalPassword))) {
-			if (
-				(!$this->createOnetimeTokenQuery()->byIsValid()->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull())
-				&&
-				!$this->verifyPassword($password, (string) $identity->getPassword())
-			) {
+		if (!$password) {
+			/** @var OnetimeToken $onetimeToken */
+			if (!$onetimeToken = $this->createOnetimeTokenQuery()->byIsValid()->byToken($user)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()) {
 				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+			}
+
+			$onetimeToken->setUsedAt(new \DateTimeImmutable());
+			$this->em->flush();
+
+			if (!$identity = $this->em->getRepository($onetimeToken->getObjectClass())->find($onetimeToken->getObjectId())) {
+				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+			}
+		} else {
+			/** @var Identity $identity */
+			if (!$identity = $this->findIdentityByCredentials($user, $context, $metadata)) {
+				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+			}
+
+			if (!array_any($this->getUniversalPasswords(), fn($universalPassword) => $this->verifyPassword($password, $universalPassword))) {
+				if (!$this->verifyPassword($password, (string) $identity->getPassword())) {
+					throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+				}
 			}
 		}
 

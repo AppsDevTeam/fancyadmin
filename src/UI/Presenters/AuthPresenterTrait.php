@@ -14,6 +14,7 @@ use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
+use Nette\Security\AuthenticationException;
 use ReflectionClass;
 use ReflectionException;
 
@@ -40,10 +41,10 @@ trait AuthPresenterTrait
 		parent::startup();
 
 		if (!$this->getUser()->isLoggedIn()) {
-			if ($this->getParameter('token')) {
-				if ($identity = $this->_authenticator->findIdentity($this->getParameter('token'))) {
-					$this->getUser()->login($identity);
-				}
+			if ($token = $this->getParameter('token')) {
+				try {
+					$this->getUser()->login($token, context: 'cashdesk'); // TODO enum
+				} catch (AuthenticationException $e) {}
 			}
 			
 			$this->request->setParameters(array_merge($this->request->getParameters(), ['do' => 'redrawBody']));
