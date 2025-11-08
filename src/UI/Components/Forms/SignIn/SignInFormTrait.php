@@ -9,7 +9,6 @@ use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
-use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
 use Nette\Application\UI\InvalidLinkException;
@@ -45,8 +44,6 @@ trait SignInFormTrait
 
 		$form->addSubmit('submit', 'fcadmin.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';
-
-		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
 
 		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
 	}
