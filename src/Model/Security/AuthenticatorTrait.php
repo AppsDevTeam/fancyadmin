@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Security;
 
+use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
@@ -33,7 +34,7 @@ trait AuthenticatorTrait
 	/**
 	 * @throws AuthenticationException
 	 */
-	protected function verifyCredentials(string $user, ?string $password = null, ?string $context = null, array $metadata = []): IIdentity
+	protected function verifyCredentials(string $user, ?string $password = null, ?string $context = null, array $metadata = []): DoctrineAuthenticatorIdentity
 	{
 		if (!$password) {
 			/** @var OnetimeToken $onetimeToken */
