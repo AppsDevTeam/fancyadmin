@@ -1085,7 +1085,7 @@ iframe {
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.15);
   left: 70px !important;
   bottom: -50px !important;
-  background-color: $ternary;
+  background-color: $tertiary;
   --bs-dropdown-link-color: white;
 
   .logout-item {
@@ -1095,7 +1095,7 @@ iframe {
 
   .dropdown-item {
     text-decoration: none;
-    color: $ternary-text;
+    color: $tertiary-text;
     background-color: #ffffff1a;
 
     a {
@@ -1105,7 +1105,7 @@ iframe {
     }
 
     &:active {
-      background-color: $ternary;
+      background-color: $tertiary;
     }
 
     &:hover {
@@ -1119,7 +1119,7 @@ iframe {
     cursor: default;
     border-bottom: 1px solid rgba(255, 255, 255, 0.30);
     pointer-events: none;
-    background-color: $ternary;
+    background-color: $tertiary;
 
     .user-item {
       display: flex;
