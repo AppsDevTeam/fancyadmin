@@ -29,15 +29,19 @@ trait SignInFormTrait
 	{
 		$form->getElementPrototype()->class[] = 'login-form';
 
-		$form->addText('email')
-			->setHtmlAttribute('id', 'login-form-input-email')
-			->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.email')
-			->setRequired('fcadmin.forms.signIn.errors.emailRequired');
+		$form->addSection(function () use ($form) {
+			$form->addText('email')
+				->setHtmlAttribute('id', 'login-form-input-email')
+				->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.email')
+				->setRequired('fcadmin.forms.signIn.errors.emailRequired');
 
-		$form->addPassword('password')
-			->setHtmlAttribute('id', 'login-form-input-password')
-			->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.password')
-			->setRequired('fcadmin.forms.signIn.errors.passwordRequired');
+			$form->addPassword('password')
+				->setHtmlAttribute('id', 'login-form-input-password')
+				->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.password')
+				->setRequired('fcadmin.forms.signIn.errors.passwordRequired');
+		}, 'inputsWrap');
+
+		$form->addSection(name: 'lostPassword');
 
 		$form->addSubmit('submit', 'fcadmin.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';

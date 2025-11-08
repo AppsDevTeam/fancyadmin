@@ -1,16 +1,5 @@
-{define form}
-	{form form}
-		{include errors}
-
-		<div id="inputs-wrap">
-			{formPair email}
-			{formPair password}
-			{if $isLostPasswordEnabled}
-				<a href="{plink "Sign:lostPassword"}" class="linkInForm">
-					<span class="d-sm-inline">{_fcadmin.forms.signIn.links.lostPassword}</span>
-				</a>
-			{/if}
-			{input submit}
-		</div>
-	{/form}
+{define section-lostPassword}
+	<a href="{plink "Sign:lostPassword"}" class="linkInForm">
+		<span class="d-sm-inline">{_fcadmin.forms.signIn.links.lostPassword}</span>
+	</a>
 {/define}

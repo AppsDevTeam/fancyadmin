@@ -67,7 +67,7 @@
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
-	gap: 60px;
+	gap: 30px;
 	align-self: stretch;
 
 	#inputsWrap {
@@ -78,7 +78,6 @@
 		gap: 20px;
 		align-self: stretch;
 	}
-
 
 	div:has(> .form-control),
 	div:has(> .form-check) {
