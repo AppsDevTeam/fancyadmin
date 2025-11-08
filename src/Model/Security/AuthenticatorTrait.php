@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Security;
 
+use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
@@ -22,6 +23,7 @@ trait AuthenticatorTrait
 	abstract protected function createOnetimeTokenQuery(): OnetimeTokenQuery;
 	abstract protected function getUniversalPasswords(): array;
 	abstract protected function getIdentityQueryFactory(): IdentityQueryFactory;
+	abstract protected function getEntityManager(): EntityManager;
 	
 	protected function verifyPassword(string $password, string $hash): bool
 	{
@@ -31,7 +33,7 @@ trait AuthenticatorTrait
 	/**
 	 * @throws AuthenticationException
 	 */
-	protected function verifyCredentials(string $user, ?string $password = null, ?string $context = null, array $metadata = []): Identity
+	protected function verifyCredentials(string $user, ?string $password = null, ?string $context = null, array $metadata = []): IIdentity
 	{
 		if (!$password) {
 			/** @var OnetimeToken $onetimeToken */
@@ -40,14 +42,14 @@ trait AuthenticatorTrait
 			}
 
 			$onetimeToken->setUsedAt(new \DateTimeImmutable());
-			$this->em->flush();
+			$this->getEntityManager()->flush();
 
-			if (!$identity = $this->em->getRepository($onetimeToken->getObjectClass())->find($onetimeToken->getObjectId())) {
+			if (!$identity = $this->getEntityManager()->getRepository($onetimeToken->getObjectClass())->find($onetimeToken->getObjectId())) {
 				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
 			}
 		} else {
 			/** @var Identity $identity */
-			if (!$identity = $this->findIdentityByCredentials($user, $context, $metadata)) {
+			if (!$identity = $this->findIdentity($user, $context, $metadata)) {
 				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
 			}
 
@@ -71,21 +73,19 @@ trait AuthenticatorTrait
 	{
 	}
 
-	protected function findIdentityByCredentials(string $user, ?string $context = null, array $metadata = []): ?IIdentity
+	public function findIdentity(string $identifier, ?string $context = null, array $metadata = []): ?IIdentity
 	{
 		$identityQuery = $this->getIdentityQueryFactory()->create()
 			->disableSecurityFilter()
 			->disableAccountFilter()
 			->byContext($context);
 
-		if ($this->validatePhoneNumber($user)) {
-			$identityQuery->byPhoneNumber($user);
-		} elseif (Validators::isEmail($user)) {
-			$identityQuery->byEmail($user);
-		} elseif (is_numeric($user)) {
-			$identityQuery->byId($user);
+		if ($this->validatePhoneNumber($identifier)) {
+			$identityQuery->byPhoneNumber($identifier);
+		} elseif (Validators::isEmail($identifier)) {
+			$identityQuery->byEmail($identifier);
 		} else {
-			$identityQuery->byUsername($user);
+			$identityQuery->byUsername($identifier);
 		}
 
 		$this->initQueryObject($identityQuery, $context, $metadata);

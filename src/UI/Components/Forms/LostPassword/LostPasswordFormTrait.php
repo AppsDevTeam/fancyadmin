@@ -2,20 +2,22 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms\LostPassword;
 
+use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
-use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\Forms\Form;
-use Nette\Utils\ArrayHash;
 
 trait LostPasswordFormTrait
 {
 	use ControlTrait;
 	use IdentityQueryFactoryInject;
 	use MailerInject;
+	use AuthenticatorInject;
+	use FancyAdminInject;
 
 	public function initForm(Form $form): void
 	{
@@ -31,10 +33,10 @@ trait LostPasswordFormTrait
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
 	}
 
-	public function processForm(ArrayHash $values): never
+	public function processForm(array $values): never
 	{
 		/** @var Identity $identity */
-		if (!$identity = $this->_identityQueryFactory->create()->byUsername($values['email'])->fetchOneOrNull()) {
+		if (!$identity = $this->_authenticator->findIdentity($values['email'], $this->_fancyAdmin->getContext())) {
 			$this->getPresenter()->flashMessageError('fcadmin.forms.lostPassword.messages.error');
 			$this->getPresenter()->redirect('this');
 		}

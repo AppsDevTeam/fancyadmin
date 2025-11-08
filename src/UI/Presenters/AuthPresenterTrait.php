@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountFormFactory;
@@ -26,6 +27,7 @@ trait AuthPresenterTrait
 	use AccountQueryFactoryInject;
 	use FancyAdminInject;
 	use AuthenticatorInject;
+	use SecurityUserInject;
 
 	#[Persistent]
 	public ?string $gridFilterClass = null;
@@ -42,10 +44,17 @@ trait AuthPresenterTrait
 
 		if (!$this->getUser()->isLoggedIn()) {
 			if ($token = $this->getParameter('token')) {
+				$this->getUser()->logout(true);
 				try {
-					$this->getUser()->login($token, context: 'cashdesk'); // TODO enum
-				} catch (AuthenticationException $e) {}
+					$this->_securityUser->login($token, context: 'cashdesk'); // TODO enum
+					$this->redirect('this');
+				} catch (AuthenticationException) {
+					$this->error();
+				}
 			}
+
+			$parameters = array_merge($this->request->getParameters(), ['do' => 'redrawBody']);
+			unset($parameters['token']);
 			
 			$this->request->setParameters(array_merge($this->request->getParameters(), ['do' => 'redrawBody']));
 			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);

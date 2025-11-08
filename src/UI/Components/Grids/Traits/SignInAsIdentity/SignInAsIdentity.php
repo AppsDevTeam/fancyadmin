@@ -55,9 +55,8 @@ trait SignInAsIdentity
 		$this->_em->persist($onetimeToken);
 		$this->_em->flush();
 
-		$this->getPresenter()->payload->signAsIdentityLink = $this->getPresenter()->link('//Sign:token', [
+		$this->getPresenter()->payload->signAsIdentityLink = $this->getPresenter()->link('//Home:', [
 			'token' => $onetimeToken->getToken(),
-			'skipPasswordRecovery' => 1,
 		]);
 
 		$this->getPresenter()->sendPayload();

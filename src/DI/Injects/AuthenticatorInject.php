@@ -2,11 +2,11 @@
 
 namespace ADT\FancyAdmin\DI\Injects;
 
-use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
+use ADT\FancyAdmin\Model\Security\Authenticator;
 use Kdyby\Autowired\Attributes\Autowire;
 
 trait AuthenticatorInject
 {
 	#[Autowire]
-	protected DoctrineAuthenticator $_authenticator;
+	protected Authenticator $_authenticator;
 }
