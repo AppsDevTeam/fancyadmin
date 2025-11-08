@@ -28,21 +28,21 @@ trait NewPasswordFormTrait
 		$form->getElementPrototype()->class[] = 'login-form';
 
 		$form->addSection(function () use ($form) {
-			$form->addText('firstName')
-				->setHtmlAttribute('placeholder', 'Jméno') // TODO translate
-				->setRequired();
-
-			$form->addText('lastName')
-				->setHtmlAttribute('placeholder', 'Příjmení') // TODO translate
-				->setRequired();
-
-			$form->addEmail('email')
-				->setHtmlAttribute('placeholder', 'E-mail') // TODO translate
-				->setRequired();
-
-			$form->addPhoneNumber('phoneNumber', null, 'Zadejte validní telefonní číslo') // TODO trnaslate
-				->setHtmlAttribute('placeholder', 'Telefon') // TODO translate
-				->setRequired();
+//			$form->addText('firstName')
+//				->setHtmlAttribute('placeholder', 'Jméno') // TODO translate
+//				->setRequired();
+//
+//			$form->addText('lastName')
+//				->setHtmlAttribute('placeholder', 'Příjmení') // TODO translate
+//				->setRequired();
+//
+//			$form->addEmail('email')
+//				->setHtmlAttribute('placeholder', 'E-mail') // TODO translate
+//				->setRequired();
+//
+//			$form->addPhoneNumber('phoneNumber', null, 'Zadejte validní telefonní číslo') // TODO trnaslate
+//				->setHtmlAttribute('placeholder', 'Telefon') // TODO translate
+//				->setRequired();
 
 			$form->addPassword('password')
 				->setHtmlAttribute('placeholder', 'app.forms.newPassword.labels.password') // TODO translate
