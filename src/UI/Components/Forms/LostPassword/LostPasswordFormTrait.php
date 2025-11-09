@@ -28,9 +28,7 @@ trait LostPasswordFormTrait
 			->setRequired('fcadmin.forms.lostPassword.errors.emailRequired');
 
 		$form->addSubmit('submit', 'fcadmin.forms.lostPassword.labels.submit');
-		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn ';
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'w-100';
-		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';
 	}
 
 	public function processForm(array $values): never

@@ -130,19 +130,6 @@ trait AuthPresenterTrait
 		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 	}
 
-	public function afterRender(): void
-	{
-		if (!$this->isControlInvalid()) {
-			$this->redrawControl('title');
-			$this->redrawControl('sideMenu');
-			$this->redrawControl('container');
-			$this->redrawControl('sidePanelContainer');
-			if ($this->getFlashSession()->get('flash')) {
-				$this->redrawControl('flashes');
-			}
-		}
-	}
-
 	/**
 	 * @throws AbortException
 	 */

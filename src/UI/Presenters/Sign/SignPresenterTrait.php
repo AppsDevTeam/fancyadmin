@@ -58,13 +58,13 @@ trait SignPresenterTrait
 		$this->redirect('in', ['do' => 'redrawBody']);
 	}
 
-	public function actionNewPassword(): void
+	public function actionNewPassword(string $token): void
 	{
 		try {
-			$this->identity = $this->_authenticator->authenticate($this->getParameter('token'));
+			$this->identity = $this->_authenticator->authenticate($token);
 		} catch(AuthenticationException) {
-			$this->flashMessageError('Odkaz již není platný. Pro nový odkaz klikněte <a href="' .  $this->link(':Portal:Sign:lostPassword') . '">zde</a>.'); // TODO translate
-			$this->redirect(':Portal:Sign:in');
+			$this->flashMessageError('Odkaz již není platný. Pro vygenerováno nového odešlete znovu formulář.'); // TODO translate
+			$this->redirect(':Portal:Sign:lostPassword');
 		}
 	}
 
