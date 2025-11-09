@@ -75,12 +75,12 @@ trait SelectAccountFormTrait
 			// Pokud mame cloveka s global companies, tam se nastavi company jako null
 			$this->_securityUser->getIdentity()->setSelectedAccount(null);
 			$this->_em->flush();
-			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute(), ['do' => 'redrawBody', 'selectedAccount' => null]);
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute(), ['selectedAccount' => null]);
 		} else {
 			// Pripad kdy je vybrana spolecnost -> nastavujeme spolecnost
 			$this->_securityUser->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($values['account'])->fetchOne());
 			$this->_em->flush();
-			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['do' => 'redrawBody', 'selectedAccount' => $this->_securityUser->getIdentity()->getSelectedAccount()?->getId()]);
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->_securityUser->getIdentity()->getSelectedAccount()?->getId()]);
 		}
 	}
 

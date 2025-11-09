@@ -27,7 +27,7 @@ $.nette.ext('live').after(function (el, data) {
 
 	})
 
-	$(el).find('#snippet--container').map((i, el) => {
+	$(el).find('[data-app-container]').map((i, el) => {
 		let prevScrollPos = $(el).scrollTop();
 		let top = 0;
 		$(el).on('scroll', (e) => {

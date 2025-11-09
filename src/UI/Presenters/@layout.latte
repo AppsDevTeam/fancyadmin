@@ -38,14 +38,12 @@
 	{/block}
 
 	{if $primaryTemplate}
-		{snippet sideMenu}
-			{block menu}
-				{include @sideMenu.latte}
-				{include @mobileMenu.latte}
-			{/block}
-		{/snippet}
+		{block menu}
+			{include @sideMenu.latte}
+			{include @mobileMenu.latte}
+		{/block}
 
-		<div class="container-fluid {*px-0*} delay-animate">
+		<div class="container-fluid {*px-0*} delay-animate container-main" data-app-container>
 			{if $presenter->getAction() === 'detail'}
 				<nav style="height: 70px" class="d-flex">
 					<div class="back-link">

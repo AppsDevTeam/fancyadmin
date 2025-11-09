@@ -53,10 +53,10 @@ trait AuthPresenterTrait
 				}
 			}
 
-			$parameters = array_merge($this->request->getParameters(), ['do' => 'redrawBody']);
+			$parameters = array_merge($this->request->getParameters());
 			unset($parameters['token']);
 
-			$this->request->setParameters(array_merge($this->request->getParameters(), ['do' => 'redrawBody']));
+			$this->request->setParameters(array_merge($this->request->getParameters()));
 			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);
 		}
 

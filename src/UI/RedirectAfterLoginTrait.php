@@ -18,9 +18,9 @@ trait RedirectAfterLoginTrait
 		$this->getPresenter()->restoreRequest($this->getPresenter()->backlink);
 
 		if ($selectedAccount = $this->_securityUser->getIdentity()->getSelectedAccount()) {
-			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['do' => 'redrawBody', 'selectedAccount' => $selectedAccount->getId()]);
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $selectedAccount->getId()]);
 		} else {
-			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute(), ['do' => 'redrawBody']);
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute());
 		}
 	}
 }

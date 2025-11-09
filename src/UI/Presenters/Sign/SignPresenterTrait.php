@@ -55,7 +55,7 @@ trait SignPresenterTrait
 			$this->getUser()->logout(true);
 		}
 
-		$this->redirect('in', ['do' => 'redrawBody']);
+		$this->redirect('in');
 	}
 
 	public function actionNewPassword(string $token): void

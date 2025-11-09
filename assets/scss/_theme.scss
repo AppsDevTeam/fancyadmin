@@ -18,7 +18,7 @@ a {
 }
 
 :has(.side-panel .menu) {
-  #snippet--container {
+  .container-main {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -30,13 +30,13 @@ a {
   }
 
   @include media-breakpoint-down(sm) {
-    #snippet--container {
+	  .container-main{
       padding: 80px 15px 0 15px;
       bottom: 65px;
     }
 
     &:has(.sub-menu.opened) {
-      #snippet--container {
+		.container-main {
         bottom: 108px;
       }
     }
@@ -45,7 +45,7 @@ a {
 
 @include media-breakpoint-down(sm) {
   :has(.container-login) {
-    #snippet--container {
+	  .container-main {
       --bs-gutter-x: 0 !important;
     }
   }
@@ -54,7 +54,7 @@ a {
     display: none;
   }
 
-  #snippet--container {
+	.container-main {
     left: 0 !important;
     width: 100% !important;
   }
@@ -813,7 +813,7 @@ label:has(input[name="dateRange"]) {
   }
 }
 
-body:not(:has(.navbar)) #snippet--container {
+body:not(:has(.navbar)) .container-main {
   padding-top: 0 !important;
 }
 
@@ -1008,7 +1008,7 @@ label.required {
 }
 
 body:fullscreen {
-  #snippet--container {
+	.container-main {
     z-index: 999;
     background-color: white;
     position: fixed !important;
