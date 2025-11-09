@@ -84,6 +84,7 @@ trait BasePresenterTrait
 	/** @internal */
 	private function flashMessageCommon(string $message, string $type, ?int $autoCloseDuration = null)
 	{
+		//$this->redrawControl('flashes');
 		$flash = parent::flashMessage($this->_translator->translate($message), $type);
 		$flash->closeDuration = $autoCloseDuration ?? BasePresenter::DEFAULT_AUTO_CLOSE_DURATION;
 		return $flash;

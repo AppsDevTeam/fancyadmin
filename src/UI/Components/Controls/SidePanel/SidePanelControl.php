@@ -50,12 +50,12 @@ class SidePanelControl extends Control
 		})
 			->setOnSuccess(function (Form $form) use ($baseForm) {
 				$this->getPresenter()->flashMessageSuccess($form->getEntity() ? 'app.sidePanels.control.itemEdit' : 'app.sidePanels.control.itemAdd');
-				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
-					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
-				} else {
-					$this->getPresenter()->redrawControl('container');
-					$this->getPresenter()->redrawControl('sidePanelContainer');
-				}
+//				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
+//					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
+//				} else {
+//					$this->getPresenter()->redrawControl('container');
+//					$this->getPresenter()->redrawControl('sidePanelContainer');
+//				}
 			});
 
 		return $baseForm;
