@@ -42,12 +42,11 @@ trait AuthenticatorTrait
 				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
 			}
 
-			$onetimeToken->setUsedAt(new \DateTimeImmutable());
-			$this->getEntityManager()->flush();
-
 			if (!$identity = $this->getEntityManager()->getRepository($onetimeToken->getObjectClass())->find($onetimeToken->getObjectId())) {
 				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
 			}
+			
+			$identity->setOnetimeToken($onetimeToken);
 		} else {
 			/** @var Identity $identity */
 			if (!$identity = $this->findIdentity($user, $context, $metadata)) {

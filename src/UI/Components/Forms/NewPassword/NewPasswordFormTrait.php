@@ -13,6 +13,7 @@ use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
+use Nette\Security\AuthenticationException;
 use Nette\Utils\ArrayHash;
 
 trait NewPasswordFormTrait
@@ -22,6 +23,14 @@ trait NewPasswordFormTrait
 	use OnetimeTokenQueryFactoryInject;
 	use SecurityUserInject;
 	use EntityManagerInject;
+
+	protected Identity $identity;
+
+	public function __construct(Identity $identity)
+	{
+		parent::__construct();
+		$this->identity = $identity;
+	}
 
 	public function initForm(Form $form): void
 	{
@@ -66,17 +75,13 @@ trait NewPasswordFormTrait
 		}
 	}
 
-	public function processForm(ArrayHash $values): void
+	public function processForm(array $values): void
 	{
-		$this->_securityUser->getIdentity()->setPassword($values->password);
+		$this->_securityUser->logout(true);
 
-		/** @var OnetimeToken $_onetimeToken */
-		foreach ($this->_onetimeTokenQueryFactory->create()->byIsValid()->byObjectId($this->_securityUser->getId())->byType(OnetimeToken::TYPE_LOGIN)->fetch() as $_onetimeToken) {
-			$_onetimeToken->setUsedAt(new \DateTimeImmutable());
-		}
+		$this->_securityUser->login($this->identity, context: $this->_fancyAdmin->getContext());
 
-		$this->_securityUser->getIdentity()->setIsActive(true);
-
+		$this->_securityUser->getIdentity()->setPassword($values['password']);
 		$this->_em->flush();
 
 		$this->redirectAfterLogin();

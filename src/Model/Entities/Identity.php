@@ -61,4 +61,7 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function isAllowed(Resource $aclResource): bool;
 
 	public function isAdmin(): bool;
+	
+	public function getOnetimeToken(): ?OnetimeToken;
+	public function setOnetimeToken(?OnetimeToken $onetimeToken): static;
 }

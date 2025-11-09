@@ -2,10 +2,12 @@
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
+use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Exception;
 use Nette\Application\Attributes\Persistent;
-use Nette\Localization\Translator;
 use Nette\Utils\Json;
 use stdClass;
 
@@ -13,13 +15,25 @@ trait BasePresenterTrait
 {
 	use PresenterTrait;
 	use FancyAdminInject;
-	
-	abstract protected function getTranslator(): Translator;
+	use EntityManagerInject;
+	use TranslatorInject;
 
 	protected bool $primaryTemplate = false;
 
 	#[Persistent]
 	public string $backlink = '';
+	
+	protected function startup(): void
+	{
+		parent::startup();
+
+		$this->getUser()->onLoggedIn[] = function(SecurityUser $securityUser) {
+			if ($onetimeToken = $securityUser->getIdentity()->getOnetimeToken()) {
+				$onetimeToken->setUsedAt(new \DateTimeImmutable());
+				$this->_em->flush();
+			}
+		};
+	}
 
 	protected function beforeRender(): void
 	{
@@ -76,7 +90,7 @@ trait BasePresenterTrait
 	private function flashMessageCommon(string $message, string $type, ?int $autoCloseDuration = null)
 	{
 		$this->redrawControl('flashes');
-		$flash = parent::flashMessage($this->getTranslator()->translate($message), $type);
+		$flash = parent::flashMessage($this->_translator->translate($message), $type);
 		$flash->closeDuration = $autoCloseDuration ?? BasePresenter::DEFAULT_AUTO_CLOSE_DURATION;
 		return $flash;
 	}

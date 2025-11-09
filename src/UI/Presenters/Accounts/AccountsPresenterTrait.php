@@ -25,25 +25,10 @@ trait AccountsPresenterTrait
 	use AccountFormFactoryInject;
 	use AccountQueryFactoryInject;
 
-	public function startup()
-	{
-		try {
-			parent::startup();
-		} catch (BadRequestException $ę) {
-			$this->flashMessageError('Odkaz již není platný. Pro nový odkaz klikněte <a href="' .  $this->link(':Portal:Sign:lostPassword') . '">zde</a>.'); // TODO translate
-			$this->redirect(':Portal:Sign:in');
-		}
-	}
-
 	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ACCOUNTS)]
 	public function actionDefault(): void
 	{
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
-	}
-
-	public function createComponentNewPasswordForm(NewPasswordFormFactory $factory): NewPasswordForm
-	{
-		return $factory->create();
 	}
 
 	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ACCOUNTS)]
