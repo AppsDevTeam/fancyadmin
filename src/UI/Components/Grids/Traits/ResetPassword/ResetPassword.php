@@ -2,9 +2,10 @@
 
 namespace ADT\FancyAdmin\UI\Components\Grids\Traits\ResetPassword;
 
+use ADT\DoctrineComponents\QueryObject\QueryObject;
+use ADT\FancyAdmin\DI\Injects\MailerInject;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
-use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use DateMalformedStringException;
@@ -14,7 +15,9 @@ use ReflectionException;
 
 trait ResetPassword
 {
-	abstract protected function createQueryObject(): BaseQuery;
+	use MailerInject;
+
+	abstract protected function createQueryObject(): QueryObject;
 
 	public function injectResetPassword(): void
 	{
@@ -40,7 +43,7 @@ trait ResetPassword
 			$this->error();
 		}
 
-		$this->mailer->sendPasswordRecoveryMail($hasIdentity->getIdentity(), OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
+		$this->_mailer->sendPasswordRecoveryMail($hasIdentity->getIdentity(), OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
 
 		$this->getPresenter()->flashMessageSuccess('app.grids.user.messages.mailSuccess');
 	}
