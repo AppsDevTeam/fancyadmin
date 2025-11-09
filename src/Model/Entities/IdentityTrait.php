@@ -265,4 +265,9 @@ trait IdentityTrait
 		$this->onetimeToken = $onetimeToken;
 		return $this;
 	}
+
+	public function getIdentity(): Identity
+	{
+		return $this;
+	}
 }

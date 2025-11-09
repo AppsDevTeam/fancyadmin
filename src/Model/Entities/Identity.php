@@ -6,11 +6,12 @@ namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
 use ADT\DoctrineComponents\Entities\Entity;
+use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 use DateTimeImmutable;
 use Nette\Security\Resource;
 
-interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Entity
+interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Entity, HasIdentity
 {
 	// CreatedAt
 	public function getCreatedAt(): DateTimeImmutable;

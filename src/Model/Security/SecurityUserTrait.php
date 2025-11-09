@@ -24,6 +24,14 @@ trait SecurityUserTrait
 		);
 	}
 
+	public function isAdmin(): bool
+	{
+		return array_any(
+			$this->getIdentity()->getRoles(),
+			fn(AclRole $role) => $role->getIsAdmin()
+		);
+	}
+
 	/**
 	 * @throws AuthenticationException
 	 */
