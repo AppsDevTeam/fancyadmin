@@ -97,6 +97,10 @@
 					<img src="{$basePath}/images/logos/{$parameters['loginPageLogoFileName']}{v}" class="" width="226px" height="auto" alt="Logo {$parameters['title']}" />
 				{/if}
 
+				{if !empty($showProfileMenu)}
+					{include @profileMenu.latte}
+				{/if}
+
 				{if !empty($showBackButton)}
 					{if	$presenter->getAction() !== 'default'}
 						<p class="text-center"><a n:href="default">zpět</a></p> {* TODO translate *}

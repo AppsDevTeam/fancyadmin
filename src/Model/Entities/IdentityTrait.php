@@ -215,7 +215,7 @@ trait IdentityTrait
 		return $this;
 	}
 
-	protected function getProfile(): ?Profile
+	public function getProfile(): ?Profile
 	{
 		return array_find($this->getProfiles(), fn($_profile) => $_profile->getAccount() === $this->getSelectedAccount());
 

@@ -9,7 +9,9 @@ layout:
   sideMenu:
     user:
       logout: Odhlásit se
-
+  profileMenu:
+    profile:
+      edit: Editovat údaje
 aclResource:
   title:
     portal:
