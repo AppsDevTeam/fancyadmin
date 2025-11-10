@@ -69,7 +69,7 @@ trait AuthenticatorTrait
 		return $identity;
 	}
 
-	protected function initQueryObject(IdentityQuery $query, ?string $context = null, array $metadata = []): void
+	protected function initQueryObject(IdentityQuery $query, UserTypeEnum $userType, ?string $context = null, array $metadata = []): void
 	{
 	}
 
@@ -82,13 +82,16 @@ trait AuthenticatorTrait
 
 		if ($this->validatePhoneNumber($identifier)) {
 			$identityQuery->byPhoneNumber($identifier);
+			$userType = UserTypeEnum::PHONE;
 		} elseif (Validators::isEmail($identifier)) {
 			$identityQuery->byEmail($identifier);
+			$userType = UserTypeEnum::EMAIL;
 		} else {
 			$identityQuery->byUsername($identifier);
+			$userType = UserTypeEnum::USERNAME;
 		}
 
-		$this->initQueryObject($identityQuery, $context, $metadata);
+		$this->initQueryObject($identityQuery, $userType, $context, $metadata);
 		
 		return $identityQuery->fetchOneOrNull();
 	}

@@ -97,10 +97,12 @@
 					<img src="{$basePath}/images/logos/{$parameters['loginPageLogoFileName']}{v}" class="" width="226px" height="auto" alt="Logo {$parameters['title']}" />
 				{/if}
 
-				{if $presenter->getName() === 'Portal:Account' && !$presenter->isLinkCurrent('Account:default')}
-					<p class="text-center"><a n:href="Account:default">zpět</a></p> {* TODO translate *}
-				{elseif !empty($showBackButton)}
-					<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()">zpět na hlavní stránku</a></p> {* TODO translate *}
+				{if !empty($showBackButton)}
+					{if	$presenter->getAction() !== 'default'}
+						<p class="text-center"><a n:href="default">zpět</a></p> {* TODO translate *}
+					{else}
+						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()">zpět na hlavní stránku</a></p> {* TODO translate *}
+					{/if}
 				{/if}
 
 				{include content}
