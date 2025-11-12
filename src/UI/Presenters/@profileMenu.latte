@@ -7,7 +7,11 @@
 			<div class="me-1">{$user->getIdentity()->getFirstName()}</div>
 		</a>
 		<ul class="dropdown-menu">
-			<li><a class="dropdown-item" n:href=":Portal:Account:profile"><i class="fa-solid fa-edit"></i> {_fcadmin.layout.profileMenu.profile.edit}</a></li>
+			<li n:if="!empty($allowToEditProfileResource) && $user->isAllowed($allowToEditProfileResource)">
+				<a class="dropdown-item" n:href=":Portal:Account:profile">
+					<i class="fa-solid fa-edit"></i> {_fcadmin.layout.profileMenu.profile.edit}
+				</a>
+			</li>
 			<li><a class="dropdown-item" n:href=":Portal:Sign:out"><i class="fa-solid fa-right-to-bracket"></i> {_fcadmin.layout.sideMenu.user.logout}</a></li>
 		</ul>
 	</div>
