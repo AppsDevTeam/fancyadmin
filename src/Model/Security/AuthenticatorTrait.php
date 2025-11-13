@@ -54,7 +54,11 @@ trait AuthenticatorTrait
 			}
 
 			if (!array_any($this->getUniversalPasswords(), fn($universalPassword) => $this->verifyPassword($password, $universalPassword))) {
-				if (!$this->verifyPassword($password, (string) $identity->getPassword())) {
+				if (
+					!$this->verifyPassword($password, (string) $identity->getPassword())
+					&&
+					!$this->createOnetimeTokenQuery()->byIsValid()->byObjectId($identity->getId())->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()
+				) {
 					throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
 				}
 			}
