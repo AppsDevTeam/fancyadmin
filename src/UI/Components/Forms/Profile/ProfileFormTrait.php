@@ -60,6 +60,7 @@ trait ProfileFormTrait
 			(!$identity = $this->_identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byEmail($values['identity']['email'])->fetchOneOrNull())
 		) {
 			$identity = new Identity();
+			$identity->setContext($this->_fancyAdmin->getContext());
 			$this->_em->persist($identity);
 			$identity->setSelectedAccount($entity->getAccount());
 		}
