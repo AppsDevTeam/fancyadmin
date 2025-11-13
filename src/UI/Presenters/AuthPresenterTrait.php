@@ -42,17 +42,14 @@ trait AuthPresenterTrait
 	{
 		parent::startup();
 
-		if (!$this->getUser()->isLoggedIn()) {
-			if ($token = $this->getParameter('token')) {
-				$this->getUser()->logout(true);
-				try {
-					$this->_securityUser->login($token, context: 'cashdesk'); // TODO enum
-					$this->redirect('this');
-				} catch (AuthenticationException) {
-					$this->error();
-				}
-			}
+		if ($token = $this->getParameter('token')) {
+			try {
+				$this->_securityUser->login($token, context: 'cashdesk'); // TODO enum
+				$this->redirect('this');
+			} catch (AuthenticationException) {}
+		}
 
+		if (!$this->getUser()->isLoggedIn()) {
 			$parameters = array_merge($this->request->getParameters());
 			unset($parameters['token']);
 

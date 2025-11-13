@@ -67,6 +67,7 @@ trait IdentityTrait
 	public function __construct()
 	{
 		$this->profiles = new ArrayCollection();
+		$this->roles = new ArrayCollection();
 	}
 
 	public function getPassword(): ?string
