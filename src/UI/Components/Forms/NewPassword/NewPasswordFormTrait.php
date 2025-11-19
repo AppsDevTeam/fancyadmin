@@ -24,14 +24,6 @@ trait NewPasswordFormTrait
 	use SecurityUserInject;
 	use EntityManagerInject;
 
-	protected Identity $identity;
-
-	public function __construct(Identity $identity)
-	{
-		parent::__construct();
-		$this->identity = $identity;
-	}
-
 	public function initForm(Form $form): void
 	{
 		$form->getElementPrototype()->class[] = 'login-form';
@@ -79,7 +71,7 @@ trait NewPasswordFormTrait
 	{
 		$this->_securityUser->logout(true);
 
-		$this->_securityUser->login($this->identity, context: $this->_fancyAdmin->getContext());
+		$this->_securityUser->login($this->getEntity(), context: $this->_fancyAdmin->getContext());
 
 		$this->_securityUser->getIdentity()->setPassword($values['password']);
 		$this->_em->flush();

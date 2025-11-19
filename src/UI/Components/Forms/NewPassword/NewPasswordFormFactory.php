@@ -6,5 +6,5 @@ use ADT\FancyAdmin\Model\Entities\Identity;
 
 interface NewPasswordFormFactory
 {
-	public function create(Identity $identity): NewPasswordForm;
+	public function create(): NewPasswordForm;
 }

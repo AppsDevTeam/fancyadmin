@@ -84,6 +84,6 @@ trait SignPresenterTrait
 
 	public function createComponentNewPasswordForm(NewPasswordFormFactory $factory): NewPasswordForm
 	{
-		return $factory->create($this->identity);
+		return $factory->create()->setEntity($this->identity);
 	}
 }
