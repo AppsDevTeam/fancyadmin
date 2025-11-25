@@ -20,6 +20,7 @@ class FancyAdmin
 		protected Resource $backofficeAclResource,
 		protected Resource $fullDataAclResource,
 		protected ?string $context,
+		protected array $parameters = [],
 	) {}
 
 	public function getProject(): string
@@ -67,7 +68,7 @@ class FancyAdmin
 		return $this->hmr;
 	}
 	
-	public function getContext()
+	public function getContext(): ?string
 	{
 		return $this->context;
 	}
@@ -85,5 +86,15 @@ class FancyAdmin
 	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;
+	}
+
+	public function getParameters(): array
+	{
+		return $this->parameters;
+	}
+
+	public function setParameters(array $parameters): void
+	{
+		$this->parameters = $parameters;
 	}
 }

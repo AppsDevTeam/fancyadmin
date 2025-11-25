@@ -91,6 +91,7 @@
 	{else}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">
+				{default $account = null}
 				{if $account?->getLogo()}
 					<img src="{$account->getLogo()->getUrl()}{v}" class="" width="226px" height="auto" alt="Logo {$account->getCompanyName()}" />
 				{else}

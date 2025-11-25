@@ -44,6 +44,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
+		$this->getTemplate()->parameters = $this->_fancyAdmin->getParameters();
 	}
 
 
