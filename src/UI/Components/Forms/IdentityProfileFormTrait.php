@@ -138,7 +138,7 @@ trait IdentityProfileFormTrait
 				$container->getForm()['account']->setHtmlAttribute('readonly');
 			}
 
-			$identity = $this->_identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byEmail($container['email']->getValue())->fetchOneOrNull();
+			$identity = $this->_identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byEmail($container['email']->getValue())->byContext($this->_fancyAdmin->getContext())->fetchOneOrNull();
 
 			if ($this->isAllowedToEdit($identity)) {
 				$container->addSection(function () use ($container) {
