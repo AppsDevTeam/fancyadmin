@@ -27,7 +27,7 @@
                         <div class="submenu">
                             <div class="submenu-heading">{_$subMenu->getTitle()}</div>
                             {foreach $subMenu->getSubMenuItems() as $subMenuItem}
-                                <a class="item" n:href="$subMenuItem->getLink()">
+                                <a n:class="item, $subMenuItem->isCurrent($presenter) ? active" n:href="$subMenuItem->getLink()">
                                     <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
                                     <div class="item-title">{_$subMenuItem->getLabel()}</div>
                                 </a>
