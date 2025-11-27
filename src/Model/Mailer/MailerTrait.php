@@ -151,7 +151,7 @@ trait MailerTrait
 			'accountCreation',
 			'Vytvoření účtu',
 			[
-				'link' => $this->link(':Portal:Sign:newPassword', ['token' => $onetimeToken->getToken()])
+				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()])
 			]
 		);
 		$message->addTo($identity->getEmail());
@@ -176,7 +176,7 @@ trait MailerTrait
 			'passwordRecovery',
 			'Nové heslo',
 			[
-				'link' => $this->link(':Portal:Sign:newPassword', ['token' => $onetimeToken->getToken()]),
+				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
 			]
 		);
 		$message->addTo($identity->getEmail());
