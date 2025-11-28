@@ -12,6 +12,7 @@ class FancyAdmin
 		protected string $adminHostPath,
 		protected bool $lostPasswordEnabled,
 		protected string $logoPublicPath,
+		protected string $logoMenuPath,
 		protected string $logoBitmapPublicPath,
 		protected string $defaultCustomerRoute,
 		protected string $defaultBackofficeRoute,
@@ -36,6 +37,11 @@ class FancyAdmin
 	public function getLogoPublicPath(): string
 	{
 		return $this->logoPublicPath;
+	}
+
+	public function getLogoMenuPath(): string
+	{
+		return $this->logoMenuPath;
 	}
 
 	public function getLogoBitmapPublicPath(): string

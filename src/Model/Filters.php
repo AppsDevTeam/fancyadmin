@@ -11,10 +11,14 @@ use Nette\Utils\DateTime;
 
 class Filters
 {
-	public function __construct( protected readonly Translator $translator)
+	public function __construct(protected readonly string $sharedDir, protected readonly Translator $translator)
 	{
 	}
 
+	public function setSharedDir(\Nette\Application\UI\Template $template)
+	{
+		$template->sharedDir = $this->sharedDir;
+	}
 	public function number(string|int|float $number, int $decimals = 0, string $decimalSymbol = ',', string $thousandsSeparator = ' '): string
 	{
 		// Pokud je vstup string, zkusíme detekovat počet desetinných míst
