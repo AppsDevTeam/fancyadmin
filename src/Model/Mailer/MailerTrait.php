@@ -2,7 +2,6 @@
 
 namespace ADT\FancyAdmin\Model\Mailer;
 
-use ADT\BackgroundQueue\BackgroundQueue;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Entities\Identity;
@@ -39,7 +38,6 @@ trait MailerTrait
 		protected readonly TemplateFactory     $templateFactory,
 		protected readonly Api                 $mailapi,
 		protected readonly Translator          $translator,
-		protected readonly BackgroundQueue     $backgroundQueue,
 		protected readonly EntityManager       $em,
 		protected readonly LinkGenerator       $linkGenerator,
 		protected readonly FancyAdmin          $administration,
@@ -109,18 +107,10 @@ trait MailerTrait
 	}
 
 	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	public function send(Message $mail): void
-	{
-		$this->backgroundQueue->publish('sendEmail', ['mail' => $mail]);
-	}
-
-	/**
 	 * @throws Exception
 	 * @internal
 	 */
-	public function sendEmail(Message $mail): void
+	public function send(Message $mail): void
 	{
 		if (! $mail->getFrom() && $this->from) {
 			$mail->setFrom($this->from, $this->fromName)
@@ -139,6 +129,7 @@ trait MailerTrait
 	 * @throws InvalidArgument
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
+	 * @throws Exception
 	 */
 	public function sendAccountCreationEmail(Identity $identity): void
 	{
@@ -164,6 +155,7 @@ trait MailerTrait
 	 * @throws DateMalformedStringException
 	 * @throws InvalidArgument
 	 * @throws InvalidLinkException|\Doctrine\DBAL\Exception
+	 * @throws Exception
 	 */
 	public function sendPasswordRecoveryMail(Identity $identity, int $tokenLifetime): void
 	{
