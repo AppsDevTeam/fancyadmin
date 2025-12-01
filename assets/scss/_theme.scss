@@ -1001,8 +1001,9 @@ body:not(:has(.navbar)) #snippet--container {
 		height: 2em;
 
 		&:checked {
-			background-color: #41b3a1;
-			border-color: #41b3a1;
+			test:sss;
+			background-color: $primary;
+			border-color: $primary;
 		}
 	}
 }

@@ -31,11 +31,11 @@ trait TMenuItemsTrait {
 		);
 	}
 
-	public function addAccountsItem(NavbarMenu $menu): void {
+	public function addAccountsItem(NavbarMenu $menu, string $label = 'Accounts', string $link = 'Accounts:default'): void {
 		$menu->addMenuItem(
 			(new NavbarMenuItem())
-				->setLabel('Accounts')
-				->setLink('Accounts:default')
+				->setLabel($label)
+				->setLink($link)
 		);
 	}
 

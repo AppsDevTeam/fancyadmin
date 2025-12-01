@@ -22,21 +22,6 @@
 
 <body data-app-body data-adt-js-components="{$jsComponentsConfig}" data-adt-messaging data-adt-translate data-adt-safari-support>
 <div n:snippet="body">
-	{block colors}
-		<style>
-			body {
-				--primaryColor: #42b6a4;
-				--primaryColorDark: {="#42b6a4"|darken,5|noescape};
-				--primaryColorDark20: {="#42b6a4"|darken,10|noescape};
-				--secondaryColor: #f1f7f7;
-				--secondaryColorDark: {="#f1f7f7"|darken,5|noescape};
-				--secondaryColorDarker: {="#f1f7f7"|darken,10|noescape};
-				--tertiaryColor: #101D40;
-				--tertiaryTextColor: #ffffff;
-			}
-		</style>
-	{/block}
-
 	{if $primaryTemplate}
 		{block menu}
 			{include @sideMenu.latte}
