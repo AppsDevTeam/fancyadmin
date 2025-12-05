@@ -9,6 +9,7 @@ class NavbarSubmenuItem
 	protected string $label = 'Test';
 	protected string $faIcon = 'chart-simple';
 	protected string $link = '#';
+	protected array $linkArgs = [];
 
 	public function getLabel(): string
 	{
@@ -32,6 +33,17 @@ class NavbarSubmenuItem
 		return $this;
 	}
 
+	public function getLinkArgs(): array
+	{
+		return $this->linkArgs;
+	}
+
+	public function setLinkArgs(array $linkArgs): self
+	{
+		$this->linkArgs = $linkArgs;
+		return $this;
+	}
+
 	public function getFaIcon(): string
 	{
 		return $this->faIcon;
@@ -45,7 +57,7 @@ class NavbarSubmenuItem
 
 	public function isCurrent(Component $presenter): bool
 	{
-		return $presenter->isLinkCurrent($this->getLink());
+		return $presenter->isLinkCurrent($this->getLink(), $this->getLinkArgs());
 	}
 
 

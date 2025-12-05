@@ -11,6 +11,7 @@ class NavbarMenuItem
 
 	protected ?NavbarSubmenu $submenu = null;
 	protected ?string $link = null;
+	protected array $linkArgs = [];
 
 	public function getLabel(): string
 	{
@@ -56,6 +57,17 @@ class NavbarMenuItem
 		return $this;
 	}
 
+	public function getLinkArgs(): array
+	{
+		return $this->linkArgs;
+	}
+
+	public function setLinkArgs(array $linkArgs): self
+	{
+		$this->linkArgs = $linkArgs;
+		return $this;
+	}
+
 	public function setupSubmenuItems(callable $setupSubmenuItem): self
 	{
 		$submenu = $this->submenu ?? new NavbarSubmenu($this);
@@ -73,6 +85,6 @@ class NavbarMenuItem
 			}
 		}
 
-		return $presenter->isLinkCurrent($this->getLink());
+		return $presenter->isLinkCurrent($this->getLink(), $this->getLinkArgs());
 	}
 }
