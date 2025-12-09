@@ -9,6 +9,7 @@ use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
+use ADT\FancyAdmin\Model\Menu\UserMenuFactory;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountFormFactory;
 use Nette\Application\AbortException;
@@ -122,9 +123,13 @@ trait AuthPresenterTrait
 		parent::beforeRender();
 		$submodule = explode(':', $this->name)[1];
 		$className = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\NavbarMenuFactory";
+		$userMenuClassName = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\UserMenuFactory";
 		/** @var NavbarMenuFactory $className */
 		$navbarMenuFactory = new $className();
+		/** @var UserMenuFactory $userMenuFactory */
+		$userMenuFactory = new $userMenuClassName();
 		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
+		$this->getTemplate()->userMenu = $userMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 	}
 
 	/**
