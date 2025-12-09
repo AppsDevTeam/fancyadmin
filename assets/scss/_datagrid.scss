@@ -387,3 +387,8 @@ form:has(> .table-responsive-wrapper) {
 		}
 	}
 }
+
+.tr-danger {
+	color: red;
+	text-decoration: line-through;
+}
