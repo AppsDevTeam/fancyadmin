@@ -20,6 +20,16 @@
                 </div>
             </li>
             <li><hr class="dropdown-divider"></li>
+            <li n:if="$userMenu->isAddMyAccountMenuItem()" class="dropdown-item">
+                <div>
+                    <div>
+                        <i class="fa-solid fa-user-lock"></i>
+                    </div>
+                    <div>
+                        <a href="#">{_app.modules.web.navbar.account.myAccount}</a>
+                    </div>
+                </div>
+            </li>
             <li n:foreach="$userMenu->getMenuItems() as $item" class="dropdown-item">
                 {var $link = $presenter->link($item->getLink(), $item->getLinkArgs())}
                 <div>
