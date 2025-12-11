@@ -40,7 +40,7 @@ trait LostPasswordFormTrait
 		}
 
 		$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
-		$this->processFormRedirect();
+		$this->processFormRedirect($identity);
 	}
 
 	public function getEntityClass(): ?string
@@ -48,7 +48,7 @@ trait LostPasswordFormTrait
 		return null;
 	}
 
-	protected function processFormRedirect(): never
+	protected function processFormRedirect(Identity $identity): never
 	{
 		$this->getPresenter()->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
 		$this->getPresenter()->redirect('lostPasswordSuccess');
