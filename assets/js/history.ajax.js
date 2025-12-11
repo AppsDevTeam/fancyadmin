@@ -20,6 +20,24 @@
 		});
 		return result;
 	};
+
+	var handleRedirect = function (redirect, context) {
+		var regexp = new RegExp('//' + window.location.host + '($|/)');
+		var isCustomProtocol = /^[a-z][a-z0-9+.-]*:/.test(redirect) && !redirect.startsWith('http');
+
+		if (isCustomProtocol) {
+			// Custom protokoly (tapygo://, mailto:, tel:, atd.) - vždy window.location
+			window.location.href = redirect;
+			return false; // nepoužívat AJAX
+		} else if ((redirect.substring(0,4) === 'http') ? regexp.test(redirect) : true) {
+			context.href = redirect;
+			return true; // použít AJAX
+		} else {
+			window.location.href = redirect;
+			return false; // nepoužívat AJAX
+		}
+	};
+
 	var handleState = function (context, name, args) {
 		var handler = context['handle' + name.substring(0, 1).toUpperCase() + name.substring(1)];
 		if (handler) {
@@ -80,13 +98,10 @@
 		},
 		success: function (payload) {
 			var redirect = payload.redirect || payload.url; // backwards compatibility for 'url'
+			var shouldUseAjax = false;
+
 			if (redirect) {
-				var regexp = new RegExp('//' + window.location.host + '($|/)');
-				if ((redirect.substring(0,4) === 'http') ? regexp.test(redirect) : true) {
-					this.href = redirect;
-				} else {
-					window.location.href = redirect;
-				}
+				shouldUseAjax = handleRedirect(redirect, this);
 			}
 
 			if (this.href) {
@@ -133,11 +148,13 @@
 					});
 				}
 			}
-			if (redirect) {
+
+			if (redirect && shouldUseAjax) {
 				$.nette.ajax({
 					url: this.href,
 				});
 			}
+
 			this.href = null;
 			this.popped = true;
 		}
