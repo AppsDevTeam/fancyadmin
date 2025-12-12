@@ -60,8 +60,6 @@ trait SelectAccountFormTrait
 				'dropdownCssClass' => 'select2-primary-dropdown',
 			]);
 
-        $form->addCheckbox('test', 'test');
-
 		$form->watchForSubmit($form['account']);
 	}
 
@@ -90,9 +88,4 @@ trait SelectAccountFormTrait
 	{
 		return null;
 	}
-
-    public static function getDefaultTemplateFile(): string
-    {
-        return __DIR__ . '/SelectAccountForm.latte';
-    }
 }
