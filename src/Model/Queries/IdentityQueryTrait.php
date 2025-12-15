@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Queries;
 
+use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use Doctrine\ORM\QueryBuilder;
@@ -29,6 +30,11 @@ trait IdentityQueryTrait
 	public function byEmail(string $email): static
 	{
 		return $this->by('email', $email);
+	}
+
+	public function byEmailNot(string $email): static
+	{
+		return $this->by('email', $email, QueryObjectByMode::NOT_EQUALS);
 	}
 
 	public function byPhoneNumber(string $phoneNumber): static
