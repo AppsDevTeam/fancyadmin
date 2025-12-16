@@ -1001,7 +1001,6 @@ body:not(:has(.navbar)) #snippet--container {
 		height: 2em;
 
 		&:checked {
-			test:sss;
 			background-color: $primary;
 			border-color: $primary;
 		}
