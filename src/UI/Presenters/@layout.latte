@@ -80,7 +80,7 @@
 				{if $account?->getLogo()}
 					<img src="{$account->getLogo()->getUrl()}{v}" class="" width="226px" height="auto" alt="Logo {$account->getCompanyName()}" />
 				{else}
-					<img src="{$basePath}/images/logos/{$parameters['loginPageLogoFileName']}{v}" class="" width="226px" height="auto" alt="Logo {$parameters['title']}" />
+					<img src="{$basePath}/images/logos/{$loginPageLogoPath}{v}" class="" width="226px" height="auto" alt="Logo {$projectName}" />
 				{/if}
 
 				{if !empty($showProfileMenu)}

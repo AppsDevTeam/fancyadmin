@@ -42,6 +42,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'lostPasswordEnabled' => Expect::bool()->default(true),
 			'logoPublicPath' => Expect::string()->default(null),
 			'logoMenuPath' => Expect::string()->default(null),
+			'loginPageLogoPath' => Expect::string()->default(null),
 			'logoBitmapPublicPath' => Expect::string()->default(null),
 			'hmr' => Expect::bool()->default(false),
 			'customerAclResource' => Expect::type(Resource::class)->default(null),
@@ -49,10 +50,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'fullDataAclResource' => Expect::type(Resource::class)->default(null),
 			'context' => Expect::string()->default(null),
 			'locksDir' => Expect::string()->required(),
-			'parameters' => Expect::structure([
-				'title' => Expect::string()->nullable()->default(null),
-				'loginPageLogoFileName' => Expect::string()->nullable()->default(null),
-			]),
 		]);
 	}
 
@@ -76,6 +73,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'adminHostPath' => $this->config->adminHostPath,
 				'logoPublicPath' => $this->config->logoPublicPath,
 				'logoMenuPath' => $this->config->logoMenuPath,
+				'loginPageLogoPath' => $this->config->loginPageLogoPath,
 				'logoBitmapPublicPath' => $this->config->logoBitmapPublicPath,
 				'lostPasswordEnabled' => $this->config->lostPasswordEnabled,
 				'defaultCustomerRoute' => $this->config->defaultCustomerRoute,
@@ -85,7 +83,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'context' => $this->config->context,
-				'parameters' => (array)$this->config->parameters,
 			]);
 
 		//$this->validateTraitInterfaceCompliance();

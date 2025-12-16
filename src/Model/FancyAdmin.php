@@ -13,6 +13,7 @@ class FancyAdmin
 		protected bool $lostPasswordEnabled,
 		protected string $logoPublicPath,
 		protected string $logoMenuPath,
+		protected string $loginPageLogoPath,
 		protected string $logoBitmapPublicPath,
 		protected string $defaultCustomerRoute,
 		protected string $defaultBackofficeRoute,
@@ -21,7 +22,6 @@ class FancyAdmin
 		protected Resource $backofficeAclResource,
 		protected Resource $fullDataAclResource,
 		protected ?string $context,
-		protected array $parameters = [],
 	) {}
 
 	public function getProject(): string
@@ -42,6 +42,11 @@ class FancyAdmin
 	public function getLogoMenuPath(): string
 	{
 		return $this->logoMenuPath;
+	}
+
+	public function getLoginPageLogoPath(): string
+	{
+		return $this->loginPageLogoPath;
 	}
 
 	public function getLogoBitmapPublicPath(): string
@@ -92,15 +97,5 @@ class FancyAdmin
 	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;
-	}
-
-	public function getParameters(): array
-	{
-		return $this->parameters;
-	}
-
-	public function setParameters(array $parameters): void
-	{
-		$this->parameters = $parameters;
 	}
 }

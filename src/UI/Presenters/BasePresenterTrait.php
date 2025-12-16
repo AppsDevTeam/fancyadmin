@@ -43,9 +43,9 @@ trait BasePresenterTrait
 		$this->getTemplate()->jsComponentsConfig = Json::encode([]);
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
 		$this->getTemplate()->icon = $this->_fancyAdmin->getLogoMenuPath();
+		$this->getTemplate()->loginPageLogoPath = $this->_fancyAdmin->getLoginPageLogoPath();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
-		$this->getTemplate()->parameters = $this->_fancyAdmin->getParameters();
 	}
 
 
