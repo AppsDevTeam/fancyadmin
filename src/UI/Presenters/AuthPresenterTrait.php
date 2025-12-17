@@ -63,9 +63,9 @@ trait AuthPresenterTrait
 		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$this->getUser()->getIdentity()->setSelectedAccount(null);
 		} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
-			$this->redirect('Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+			$this->redirect(':Portal:Customer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
 		} else {
-			$this->redirect('Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+			$this->redirect(':Portal:Customer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
 		}
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni

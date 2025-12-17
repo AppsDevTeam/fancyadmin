@@ -33,11 +33,6 @@ class FancyAdminRouter
 			$this->accountQueryFactory
 		);
 
-		$routeList->addCustomerRoute('<presenter>[/<id>]', [
-			'presenter' => 'Customer:Home',
-			'action' => 'default',
-		]);
-
 		$routeList->addRoute('sign/in', [
 			'presenter' => 'Sign',
 			'action' => 'in',
@@ -60,7 +55,12 @@ class FancyAdminRouter
 			]);
 		}
 
-		$routeList->addRoute('<presenter>[/<id>]', [
+		$routeList->addCustomerRoute('<presenter>/[/<id>][/<action>]', [
+			'presenter' => 'Customer:Home',
+			'action' => 'default',
+		]);
+
+		$routeList->addRoute('<presenter>/[/<id>][/<action>]', [
 			'presenter' => 'Backoffice:Home',
 			'action' => 'default',
 		]);
