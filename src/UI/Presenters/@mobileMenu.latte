@@ -2,6 +2,8 @@
 
 <div class="row bottom-mobile-menu d-sm-none">
     {foreach $navbarMenu->getMenuItems() as $menuItemKey => $menuItem}
+        {continueIf !is_null($menuItem->getAclResource()) && !$user->isAllowed($menuItem->getAclResource())}
+
         <div class="col">
             {if $menuItem->getLink()}
                 <a n:href="$menuItem->getLink()" n:class="$menuItem->isCurrent($presenter) ? active">

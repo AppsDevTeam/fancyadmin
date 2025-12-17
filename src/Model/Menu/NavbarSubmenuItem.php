@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model\Menu;
 
 use Nette\Application\UI\Component;
+use Nette\Security\Resource;
 
 class NavbarSubmenuItem
 {
@@ -10,6 +11,7 @@ class NavbarSubmenuItem
 	protected string $faIcon = 'chart-simple';
 	protected string $link = '#';
 	protected array $linkArgs = [];
+	protected ?Resource $resource = null;
 
 	public function getLabel(): string
 	{
@@ -60,5 +62,14 @@ class NavbarSubmenuItem
 		return $presenter->isLinkCurrent($this->getLink(), $this->getLinkArgs());
 	}
 
+	public function getAclResource(): ?Resource
+	{
+		return $this->resource;
+	}
 
+	public function setAclResource(Resource $resource): self
+	{
+		$this->resource = $resource;
+		return $this;
+	}
 }
