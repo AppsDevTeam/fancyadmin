@@ -49,16 +49,6 @@ class FancyAdminRouteList extends RouteList
 		return $this;
 	}
 
-	public function addBackofficeRoute(string $mask, Closure|array|string $metadata = [], int|bool $oneWay = 0): static
-	{
-		parent::addRoute(
-			$this->getAdminHost() . '/' . $mask,
-			$metadata,
-			$oneWay
-		);
-		return $this;
-	}
-
 	public function addCustomerRoute(string $mask, Closure|array|string $metadata = [], int|bool $oneWay = 0): static
 	{
 		$metadata = array_merge(

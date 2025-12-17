@@ -23,7 +23,7 @@ class FancyAdminRouter
 		protected AccountQueryFactory $accountQueryFactory,
 	) {}
 
-	public function createAdminRouteModule(): FancyAdminRouteList
+	public function createRouteModule(): FancyAdminRouteList
 	{
 		$adminModule = new FancyAdminRouteList(
 			'Portal',
@@ -54,6 +54,11 @@ class FancyAdminRouter
 				'action' => 'lostPassword',
 			]);
 		}
+
+		$adminModule->addRoute('<presenter>[/<id>]', [
+			'presenter' => 'Backoffice:Home',
+			'action' => 'default',
+		]);
 
 		return $adminModule;
 	}
