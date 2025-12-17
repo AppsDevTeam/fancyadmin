@@ -48,7 +48,7 @@ class NavbarMenuItem
 		$enabled = false;
 
 		if ($this->getAclResource() || count($this->getSubmenu()->getSubMenuItems()) === 0) {
-			return true;
+			return $user->isAllowed($this->getAclResource());
 		}
 
 		foreach ($this->getSubmenu()->getSubMenuItems() as $subMenuItem) {
