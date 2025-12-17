@@ -24,12 +24,23 @@ trait TMenuItemsTrait {
 		);
 	}
 
-	public function addIdentitiesItem(NavbarMenu $menu): void {
-		$menu->addMenuItem(
-			(new NavbarMenuItem())
-				->setLabel('Identities')
-				->setLink('Identities:default')
-		);
+	public function addIdentitiesItem(
+		NavbarMenu $menu,
+		string $label = 'Identities',
+		string $link = 'Identities:default',
+		?string $faIcon = null,
+		?Resource $alcResource = null,
+	): void {
+		$navbarMenuItem = new NavbarMenuItem()
+			->setLabel($label)
+			->setLink($link)
+			->setAclResource($alcResource);
+
+		if ($faIcon) {
+			$navbarMenuItem->setFaIcon($faIcon);
+		}
+
+		$menu->addMenuItem($navbarMenuItem);
 	}
 
 	public function addAccountsItem(
@@ -39,7 +50,7 @@ trait TMenuItemsTrait {
 		?string $faIcon = null,
 		?Resource $alcResource = null,
 	): void {
-		$navbarMenuItem = (new NavbarMenuItem())
+		$navbarMenuItem = new NavbarMenuItem()
 			->setLabel($label)
 			->setLink($link)
 			->setAclResource($alcResource);
