@@ -24,7 +24,7 @@ class FancyAdminRouter
 		protected AccountQueryFactory $accountQueryFactory,
 	) {}
 
-	public function createRouteModule()
+	public function createRouteList()
 	{
 		$routeList = new \ADT\Routing\RouteList();
 
