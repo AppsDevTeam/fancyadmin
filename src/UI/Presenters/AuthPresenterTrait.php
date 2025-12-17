@@ -62,8 +62,10 @@ trait AuthPresenterTrait
 			$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
 		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$this->getUser()->getIdentity()->setSelectedAccount(null);
-		} else {
+		} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
 			$this->redirect('Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+		} else {
+			$this->redirect('Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
 		}
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni

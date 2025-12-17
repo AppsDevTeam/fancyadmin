@@ -25,7 +25,7 @@ class FancyAdminRouter
 
 	public function createRouteModule(): FancyAdminRouteList
 	{
-		$adminModule = new FancyAdminRouteList(
+		$routeList = new FancyAdminRouteList(
 			'Portal',
 			$this->administration,
 			$this->securityUser,
@@ -33,34 +33,39 @@ class FancyAdminRouter
 			$this->accountQueryFactory
 		);
 
-		$adminModule->addRoute('sign/in', [
+		$routeList->addCustomerRoute('<presenter>[/<id>]', [
+			'presenter' => 'Customer:Home',
+			'action' => 'default',
+		]);
+
+		$routeList->addRoute('sign/in', [
 			'presenter' => 'Sign',
 			'action' => 'in',
 		]);
 
-		$adminModule->addRoute('sign/out', [
+		$routeList->addRoute('sign/out', [
 			'presenter' => 'Sign',
 			'action' => 'out',
 		]);
 
-		$adminModule->addRoute('sign/new-password', [
+		$routeList->addRoute('sign/new-password', [
 			'presenter' => 'Sign',
 			'action' => 'newPassword',
 		]);
 
 		if ($this->administration->isLostPasswordEnabled()) {
-			$adminModule->addRoute('sign/lost-password', [
+			$routeList->addRoute('sign/lost-password', [
 				'presenter' => 'Sign',
 				'action' => 'lostPassword',
 			]);
 		}
 
-		$adminModule->addRoute('<presenter>[/<id>]', [
+		$routeList->addRoute('<presenter>[/<id>]', [
 			'presenter' => 'Backoffice:Home',
 			'action' => 'default',
 		]);
 
-		return $adminModule;
+		return $routeList;
 	}
 
 	public function createFilterByQueryObject(BaseQuery $query): array
