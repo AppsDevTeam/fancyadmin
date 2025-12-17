@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\Model\Menu\Traits;
 
 use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuItem;
+use Nette\Security\Resource;
 
 trait TMenuItemsTrait {
 
@@ -35,11 +36,13 @@ trait TMenuItemsTrait {
 		NavbarMenu $menu,
 		string $label = 'Accounts',
 		string $link = 'Accounts:default',
-		?string $faIcon = null
+		?string $faIcon = null,
+		?Resource $alcResource = null,
 	): void {
 		$navbarMenuItem = (new NavbarMenuItem())
 			->setLabel($label)
-			->setLink($link);
+			->setLink($link)
+			->setAclResource($alcResource);
 
 		if ($faIcon) {
 			$navbarMenuItem->setFaIcon($faIcon);
