@@ -20,27 +20,29 @@
                 </div>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li n:if="$userMenu->isAddMyAccountMenuItem()" class="dropdown-item">
+            <a n:if="$userMenu->isAddMyAccountMenuItem()" href="#" class="dropdown-item">
                 <div>
                     <div>
                         <i class="fa-solid fa-user-lock"></i>
                     </div>
                     <div>
-                        <a href="#">{_app.modules.web.navbar.account.myAccount}</a>
+                        {_app.modules.web.navbar.account.myAccount}
                     </div>
                 </div>
-            </li>
-            <li n:foreach="$userMenu->getMenuItems() as $item" class="dropdown-item">
+            </a>
+            {foreach $userMenu->getMenuItems() as $item}
                 {var $link = $presenter->link($item->getLink(), $item->getLinkArgs())}
-                <div>
+                <a href="{$link}" class="dropdown-item">
                     <div>
-                        <i class="fa-solid fa-{$item->getFaIcon()}"></i>
+                        <div>
+                            <i class="fa-solid fa-{$item->getFaIcon()}"></i>
+                        </div>
+                        <div>
+                            {_$item->getLabel()}
+                        </div>
                     </div>
-                    <div>
-                        <a href="{$link}">{_$item->getLabel()}</a>
-                    </div>
-                </div>
-            </li>
+                </a>
+            {/foreach}
             <li><hr class="dropdown-divider"></li>
             <li class="logout-item">
                 <a class="dropdown-item" n:href=":Portal:Sign:out">
