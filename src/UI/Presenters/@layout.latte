@@ -22,21 +22,6 @@
 
 <body data-app-body data-adt-js-components="{$jsComponentsConfig}" data-adt-messaging data-adt-translate data-adt-safari-support>
 <div n:snippet="body">
-	{block colors}
-		<style>
-			body {
-				--primaryColor: #42b6a4;
-				--primaryColorDark: {="#42b6a4"|darken,5|noescape};
-				--primaryColorDark20: {="#42b6a4"|darken,10|noescape};
-				--secondaryColor: #f1f7f7;
-				--secondaryColorDark: {="#f1f7f7"|darken,5|noescape};
-				--secondaryColorDarker: {="#f1f7f7"|darken,10|noescape};
-				--tertiaryColor: #101D40;
-				--tertiaryTextColor: #ffffff;
-			}
-		</style>
-	{/block}
-
 	{if $primaryTemplate}
 		{block menu}
 			{include @sideMenu.latte}
@@ -91,10 +76,11 @@
 	{else}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">
+				{default $account = null}
 				{if $account?->getLogo()}
 					<img src="{$account->getLogo()->getUrl()}{v}" class="" width="226px" height="auto" alt="Logo {$account->getCompanyName()}" />
 				{else}
-					<img src="{$basePath}/images/logos/{$parameters['loginPageLogoFileName']}{v}" class="" width="226px" height="auto" alt="Logo {$parameters['title']}" />
+					<img src="{$basePath}/images/logos/{$loginPageLogoPath}{v}" class="" width="226px" height="auto" alt="Logo {$projectName}" />
 				{/if}
 
 				{if !empty($showProfileMenu)}

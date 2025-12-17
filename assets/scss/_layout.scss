@@ -10,10 +10,10 @@
 }
 
 body {
-    background-color: $background-color;
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
+  background-color: $background-color;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 body:has(.side-panel) .container {
@@ -168,8 +168,8 @@ body:has(.side-panel-template-container form) {
 .side-panel-template-container {
   position: fixed;
   width: 100vw;
-  max-width: 610px;
-  right: -610px;
+  max-width: var(--width, 610px);
+  right: calc(var(--width, 610px) * -1);
   top: 0;
   bottom: 0;
   padding: 40px;
@@ -199,6 +199,26 @@ body:has(.side-panel-template-container form) {
   form {
     display: flex;
     flex-direction: column;
+  }
+
+  &:has(.side-panel-config[data-size="sm"]) {
+    --width: 520px;
+  }
+
+  &:has(.side-panel-config[data-size="lg"]) {
+    --width: 850px;
+  }
+
+  &:has(.side-panel-config[data-size="extreme"]) {
+    --width: 1100px;
+  }
+
+  &:has(.side-panel-config[data-size="full"]) {
+    --width: 100vw;
+  }
+
+  &:has(.side-panel-config[data-size="full-except-menu"]) {
+    --width: calc(100vw - var(--side-panel-width));
   }
 }
 

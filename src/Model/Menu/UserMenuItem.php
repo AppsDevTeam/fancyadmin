@@ -4,11 +4,12 @@ namespace ADT\FancyAdmin\Model\Menu;
 
 use Nette\Application\UI\Component;
 
-class NavbarSubmenuItem
+class UserMenuItem
 {
 	protected string $label = 'Test';
 	protected string $faIcon = 'chart-simple';
-	protected string $link = '#';
+
+    protected ?string $link = null;
 	protected array $linkArgs = [];
 
 	public function getLabel(): string
@@ -22,7 +23,18 @@ class NavbarSubmenuItem
 		return $this;
 	}
 
-	public function getLink(): string
+	public function getFaIcon(): string
+	{
+		return $this->faIcon;
+	}
+
+	public function setFaIcon(string $faIcon): self
+	{
+		$this->faIcon = $faIcon;
+		return $this;
+	}
+
+	public function getLink(): ?string
 	{
 		return $this->link;
 	}
@@ -44,21 +56,7 @@ class NavbarSubmenuItem
 		return $this;
 	}
 
-	public function getFaIcon(): string
-	{
-		return $this->faIcon;
-	}
-
-	public function setFaIcon(string $faIcon): self
-	{
-		$this->faIcon = $faIcon;
-		return $this;
-	}
-
-	public function isCurrent(Component $presenter): bool
-	{
+	public function isCurrent(Component $presenter): bool {
 		return $presenter->isLinkCurrent($this->getLink(), $this->getLinkArgs());
 	}
-
-
 }

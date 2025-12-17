@@ -1,4 +1,5 @@
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
+{varType ADT\FancyAdmin\Model\Menu\UserMenu $userMenu}
 <div class="bottom-menu">
     <div class="d-flex dropdown justify-content-center user">
         <button class="btn btn-avatar" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -19,13 +20,24 @@
                 </div>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li class="dropdown-item">
+            <li n:if="$userMenu->isAddMyAccountMenuItem()" class="dropdown-item">
                 <div>
                     <div>
                         <i class="fa-solid fa-user-lock"></i>
                     </div>
                     <div>
                         <a href="#">{_app.modules.web.navbar.account.myAccount}</a>
+                    </div>
+                </div>
+            </li>
+            <li n:foreach="$userMenu->getMenuItems() as $item" class="dropdown-item">
+                {var $link = $presenter->link($item->getLink(), $item->getLinkArgs())}
+                <div>
+                    <div>
+                        <i class="fa-solid fa-{$item->getFaIcon()}"></i>
+                    </div>
+                    <div>
+                        <a href="{$link}">{_$item->getLabel()}</a>
                     </div>
                 </div>
             </li>
