@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nette\Application\BadRequestException;
 use Nette\Http\IResponse;
 use Nette\Routing\Route as RouteAlias;
+use Nette\Routing\RouteList;
 
 class FancyAdminRouter
 {
@@ -23,9 +24,11 @@ class FancyAdminRouter
 		protected AccountQueryFactory $accountQueryFactory,
 	) {}
 
-	public function createRouteModule(): FancyAdminRouteList
+	public function createRouteModule()
 	{
-		$routeList = new FancyAdminRouteList(
+		$routeList = new \ADT\Routing\RouteList();
+
+		$routeList[] = $portal = new FancyAdminRouteList(
 			'Portal',
 			$this->administration,
 			$this->securityUser,
@@ -33,35 +36,51 @@ class FancyAdminRouter
 			$this->accountQueryFactory
 		);
 
-		$routeList->addRoute('sign/in', [
+		$portal->addRoute('sign/in', [
 			'presenter' => 'Sign',
 			'action' => 'in',
 		]);
 
-		$routeList->addRoute('sign/out', [
+		$portal->addRoute('sign/out', [
 			'presenter' => 'Sign',
 			'action' => 'out',
 		]);
 
-		$routeList->addRoute('sign/new-password', [
+		$portal->addRoute('sign/new-password', [
 			'presenter' => 'Sign',
 			'action' => 'newPassword',
 		]);
 
 		if ($this->administration->isLostPasswordEnabled()) {
-			$routeList->addRoute('sign/lost-password', [
+			$portal->addRoute('sign/lost-password', [
 				'presenter' => 'Sign',
 				'action' => 'lostPassword',
 			]);
 		}
 
-		$routeList->addCustomerRoute('<presenter>/[/<id>][/<action>]', [
-			'presenter' => 'Customer:Home',
+		$routeList[] = $portal = new FancyAdminRouteList(
+			'PortalCustomer',
+			$this->administration,
+			$this->securityUser,
+			$this->em,
+			$this->accountQueryFactory
+		);
+
+		$portal->addCustomerRoute('<presenter>/[/<id>][/<action>]', [
+			'presenter' => 'Home',
 			'action' => 'default',
 		]);
 
-		$routeList->addRoute('<presenter>/[/<id>][/<action>]', [
-			'presenter' => 'Backoffice:Home',
+		$routeList[] = $portal = new FancyAdminRouteList(
+			'PortalBackoffice',
+			$this->administration,
+			$this->securityUser,
+			$this->em,
+			$this->accountQueryFactory
+		);
+
+		$portal->addRoute('<presenter>/[/<id>][/<action>]', [
+			'presenter' => 'Home',
 			'action' => 'default',
 		]);
 

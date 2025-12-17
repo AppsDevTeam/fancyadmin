@@ -97,8 +97,8 @@
 
 				{include content}
 
-				{if !$user->isLoggedIn() && !$presenter->isLinkCurrent('Sign:in')}
-					<p class="text-center"><a n:href="Sign:in">přejít na přihlášení</a></p> {* TODO translate *}
+				{if !$user->isLoggedIn() && !$presenter->isLinkCurrent(':Portal:Sign:in')}
+					<p class="text-center"><a n:href=":Portal:Sign:in">přejít na přihlášení</a></p> {* TODO translate *}
 				{/if}
 			</div>
 			{if $account?->getLogo()}

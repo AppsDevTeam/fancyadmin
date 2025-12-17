@@ -31,6 +31,9 @@ trait AuthPresenterTrait
 	use SecurityUserInject;
 
 	#[Persistent]
+	public ?int $selectedAccount = null;
+
+	#[Persistent]
 	public ?string $gridFilterClass = null;
 
 	#[Persistent]
@@ -63,9 +66,9 @@ trait AuthPresenterTrait
 		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$this->getUser()->getIdentity()->setSelectedAccount(null);
 		} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
-			$this->redirect(':Portal:Customer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+			$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
 		} else {
-			$this->redirect(':Portal:Customer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+			$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
 		}
 
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
@@ -123,7 +126,7 @@ trait AuthPresenterTrait
 	public function beforeRender(): void
 	{
 		parent::beforeRender();
-		$submodule = explode(':', $this->name)[1];
+		$submodule = str_replace('Portal', '', explode(':', $this->name)[0]);
 		$className = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\NavbarMenuFactory";
 		$userMenuClassName = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\UserMenuFactory";
 		/** @var NavbarMenuFactory $className */
