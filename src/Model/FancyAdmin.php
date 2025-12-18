@@ -22,6 +22,7 @@ class FancyAdmin
 		protected Resource $backofficeAclResource,
 		protected Resource $fullDataAclResource,
 		protected ?string $context,
+		protected array $jsComponentsConfig = [],
 	) {}
 
 	public function getProject(): string
@@ -97,5 +98,16 @@ class FancyAdmin
 	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;
+	}
+
+	public function getJsComponentsConfig(): array
+	{
+		return $this->jsComponentsConfig;
+	}
+
+	public function setJsComponentsConfig(array $jsComponentsConfig): self
+	{
+		$this->jsComponentsConfig = $jsComponentsConfig;
+		return $this;
 	}
 }
