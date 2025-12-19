@@ -22,7 +22,8 @@
     "adt/mailer": "^3.2",
     "symfony/yaml": "^7.3",
     "kdyby/autowired": "^3.1",
-    "adt/datagrid-components": "^1.0"
+    "adt/datagrid-components": "^1.0",
+    "nettrine/orm": "^0.10"
   },
   "autoload": {
     "psr-4": {
