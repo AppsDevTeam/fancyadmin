@@ -16,11 +16,11 @@ trait TMenuItemsTrait {
 		);
 	}
 
-	public function addRoleItem(NavbarMenu $menu): void {
+	public function addAclRolesItem(NavbarMenu $menu): void {
 		$menu->addMenuItem(
 			(new NavbarMenuItem())
-				->setLabel('Roles')
-				->setLink('Roles:default')
+				->setLabel('AclRoles')
+				->setLink('AclRoles:default')
 		);
 	}
 

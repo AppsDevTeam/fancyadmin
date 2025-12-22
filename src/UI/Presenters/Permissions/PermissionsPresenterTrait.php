@@ -12,7 +12,7 @@ use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 
-trait AclPermissionsPresenterTrait
+trait PermissionsPresenterTrait
 {
 	use PresenterTrait;
 	use EntityManagerInject;

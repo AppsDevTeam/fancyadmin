@@ -1,6 +1,6 @@
 <?php
 
-namespace ADT\FancyAdmin\UI\Presenters\Roles;
+namespace ADT\FancyAdmin\UI\Presenters\AclRoles;
 
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineForms\BaseFormInterface;
