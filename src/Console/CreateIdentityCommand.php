@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\Console;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Profile;
+use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\AclRoleQueryFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
@@ -21,6 +22,7 @@ class CreateIdentityCommand extends \ADT\FancyAdmin\Console\Command
 	public function __construct(
 		private readonly EntityManagerInterface $em,
 		private readonly AclRoleQueryFactory $aclRoleQueryFactory,
+		private readonly FancyAdmin $fancyAdmin,
 	)
 	{
 		parent::__construct();
@@ -34,7 +36,6 @@ class CreateIdentityCommand extends \ADT\FancyAdmin\Console\Command
 	{
 		$io = new SymfonyStyle($input, $output);
 		$identityEntity = $this->em->findEntityClassByInterface(Identity::class);
-		$profileEntity = $this->em->findEntityClassByInterface(Profile::class);
 
 		$this->validateInput($io, 'Křestní jméno', $firstname);
 		$this->validateInput($io, 'Příjmení', $lastname);
@@ -45,18 +46,16 @@ class CreateIdentityCommand extends \ADT\FancyAdmin\Console\Command
 		$role = $this->aclRoleQueryFactory->create()->byIsAdmin(true)->fetchOne(false);
 
 		/** @var Identity $identity */
-		$identity = (new $identityEntity)
+		$identity = (new $identityEntity);
+		$identity
+			->setContext($this->fancyAdmin->getContext())
 			->setFirstName($firstname)
 			->setLastName($lastname)
 			->setEmail($email)
-			->setPhoneNumber($phoneNumber);
-
-		$profile = (new $profileEntity)
-			->addRole($role)
-			->setIdentity($identity);
+			->setPhoneNumber($phoneNumber)
+			->addRole($role);
 
 		$this->em->persist($identity);
-		$this->em->persist($profile);
 		$this->em->flush();
 
 		// TODO send email

@@ -65,4 +65,6 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	
 	public function getOnetimeToken(): ?OnetimeToken;
 	public function setOnetimeToken(?OnetimeToken $onetimeToken): static;
+	
+	public function addRole(\ADT\FancyAdmin\Model\Entities\AclRole $role): static;
 }
