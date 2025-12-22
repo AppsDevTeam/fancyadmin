@@ -16,7 +16,7 @@
             {if $menuItem->getLink()}
                 {var $link = $presenter->link($menuItem->getLink(), $menuItem->getLinkArgs())}
 
-                <a n:if="!is_null($menuItem->getAclResource()) && $user->isAllowed($menuItem->getAclResource())" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
+                <a n:if="!$menuItem->getAclResource() || $user->isAllowed($menuItem->getAclResource())" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
                     <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
                     <div class="title">{_$menuItem->getLabel()}</div>
                 </a>
