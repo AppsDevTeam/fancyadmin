@@ -126,3 +126,14 @@ grids:
       newPassword: Opravdu chcete odeslat e-mail S výzvou pro nastavení hesla?
     messages:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
+
+appGeneral:
+  exceptions:
+    userNotFound: "Uživatel nenalezen"
+    wrongCredentials: "Neplatné přihlašovací údaje"
+    inactiveUser: "Neaktivní uživatel"
+
+sidePanels:
+  control:
+    itemEdit: "Položka byla upravena."
+    itemAdd: "Položka byla přidána."
