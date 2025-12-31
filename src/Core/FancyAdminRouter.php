@@ -79,7 +79,7 @@ class FancyAdminRouter
 			$this->accountQueryFactory
 		);
 
-		$portal->addRoute('<presenter>/[/<id>][/<action>]', [
+		$portal->addRoute('<presenter>[/<id>][/<action>]', [
 			'presenter' => 'Home',
 			'action' => 'default',
 		]);
