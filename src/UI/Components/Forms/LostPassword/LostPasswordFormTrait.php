@@ -51,6 +51,6 @@ trait LostPasswordFormTrait
 	protected function processFormRedirect(Identity $identity): never
 	{
 		$this->getPresenter()->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
-		$this->getPresenter()->redirect('lostPasswordSuccess');
+		$this->getPresenter()->redirect('lostPassword');
 	}
 }

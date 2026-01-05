@@ -7,7 +7,6 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
-use ADT\Mailer\Services\Api;
 use ADT\SingleRecipient\SingleRecipient;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use Contributte\Translation\Translator;
@@ -28,19 +27,19 @@ trait MailerTrait
 	use SingleRecipient;
 
 	public function __construct(
+		protected readonly \Nette\Mail\Mailer $mailer,
 		protected readonly string $from,
 		protected readonly string $fromName,
 		protected readonly ?string $singleRecipient,
-		protected readonly string              $supportEmail,
-		protected readonly string              $title,
-		protected readonly string              $web,
-		protected readonly string              $wwwDir,
-		protected readonly TemplateFactory     $templateFactory,
-		protected readonly Api                 $mailapi,
-		protected readonly Translator          $translator,
-		protected readonly EntityManager       $em,
-		protected readonly LinkGenerator       $linkGenerator,
-		protected readonly FancyAdmin          $administration,
+		protected readonly string $supportEmail,
+		protected readonly string $title,
+		protected readonly string $web,
+		protected readonly string $wwwDir,
+		protected readonly TemplateFactory $templateFactory,
+		protected readonly Translator $translator,
+		protected readonly EntityManager $em,
+		protected readonly LinkGenerator $linkGenerator,
+		protected readonly FancyAdmin $administration,
 		protected readonly OnetimeTokenService $onetimeTokenService,
 	) {
 	}
@@ -108,7 +107,6 @@ trait MailerTrait
 
 	/**
 	 * @throws Exception
-	 * @internal
 	 */
 	public function send(Message $mail): void
 	{
@@ -121,14 +119,12 @@ trait MailerTrait
 			$this->applySingleRecipient($mail, $this->singleRecipient);
 		}
 
-		$this->mailapi->send($mail);
+		$this->mailer->send($mail);
 	}
 
 	/**
-	 * @throws InvalidLinkException
 	 * @throws InvalidArgument
 	 * @throws DateMalformedStringException
-	 * @throws \Doctrine\DBAL\Exception
 	 * @throws Exception
 	 */
 	public function sendAccountCreationEmail(Identity $identity): void
@@ -154,7 +150,6 @@ trait MailerTrait
 	/**
 	 * @throws DateMalformedStringException
 	 * @throws InvalidArgument
-	 * @throws InvalidLinkException|\Doctrine\DBAL\Exception
 	 * @throws Exception
 	 */
 	public function sendPasswordRecoveryMail(Identity $identity, int $tokenLifetime): void
@@ -177,12 +172,15 @@ trait MailerTrait
 		$this->em->commit();
 	}
 
+	/**
+	 * @throws InvalidLinkException
+	 */
 	public function link(
 		string $destination,
 		array $args = [],
 		?Component $component = null,
 		?string $mode = null,
-	)
+	): ?string
 	{
 		return $this->linkGenerator->link($destination, $args, $component, $mode);
 	}
