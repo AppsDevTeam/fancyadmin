@@ -100,11 +100,11 @@ class Filters
 		}
 
 		if ($decimalSymbol === null) {
-			$decimalSymbol = $this->translator->translate('app.appGeneral.model.filters.decimalSeparator');
+			$decimalSymbol = $this->translator->translate('fcadmin.appGeneral.model.filters.decimalSeparator');
 		}
 
 		if ($thousandsSeparator === null) {
-			$thousandsSeparator = $this->translator->translate('app.appGeneral.model.filters.thousandsSeparator');
+			$thousandsSeparator = $this->translator->translate('fcadmin.appGeneral.model.filters.thousandsSeparator');
 		}
 
 		$price = $this->number($price, $decimals, $decimalSymbol, $thousandsSeparator);
@@ -125,7 +125,7 @@ class Filters
 	{
 		if ((string)$string === '') {
 			$info->contentType = ContentType::Html;
-			return '<span class="empty">' . $this->translator->translate('app.appGeneral.model.filters.empty') . '</span>';
+			return '<span class="empty">' . $this->translator->translate('fcadmin.appGeneral.model.filters.empty') . '</span>';
 		}
 
 		return $string;

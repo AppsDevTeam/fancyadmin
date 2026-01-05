@@ -93,16 +93,32 @@ forms:
       lastName: Příjmení
       email: E-mail
       phoneNumber: Telefonní číslo
+      company: Společnost
       isActive: Aktivní
+      role: Role
       submit: Uložit
     errors:
       phoneNumber: Neplatné telefonní číslo
       credentialsConstrain: "E-mail / Uživatelské jméno nebo telefonní číslo jsou již použity"
       requiredBranch: "Je nutné vyplnit pobočku"
 
+  newPassword:
+    labels:
+      password: Heslo
+      passwordAgain: Heslo znovu
+      submit: Uložit
+    errors:
+      noMatch: Hesla se neshodují
+      required: Zadejte heslo
+
   aclRole:
     name: Název
     submit: Odeslat
+
+  systemSelectCompany:
+    options:
+      admin: Backoffice
+      isTest: Testovací
 
 grids:
   aclRole:
@@ -128,6 +144,15 @@ grids:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
 
 appGeneral:
+  labels:
+    backToOverview: "Zpět na přehled"
+  model:
+    filters:
+      empty: neuvedeno
+      yes: ano
+      no: ne
+      decimalSeparator: ','
+      thousandsSeparator: ' '
   exceptions:
     userNotFound: "Uživatel nenalezen"
     wrongCredentials: "Neplatné přihlašovací údaje"
@@ -137,3 +162,20 @@ sidePanels:
   control:
     itemEdit: "Položka byla upravena."
     itemAdd: "Položka byla přidána."
+
+modules:
+  web:
+    navbar:
+      account:
+        myAccount: "Můj účet"
+    presenters:
+      sign:
+        in:
+          pageTitle: "Přihlášení"
+          renewLink: "Zapomenuté heslo"
+        lostPassword:
+          pageTitle: "Obnovení hesla"
+        newPassword:
+          pageTitle: "Obnova hesla"
+      flashFraud: "Bylo detekováno podezřelé chování."
+      flashWrongToken: "Neplatný token"

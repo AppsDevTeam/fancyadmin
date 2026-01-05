@@ -39,18 +39,18 @@ trait AuthenticatorTrait
 		if (!$password) {
 			/** @var OnetimeToken $onetimeToken */
 			if (!$onetimeToken = $this->createOnetimeTokenQuery()->byIsValid()->byToken($user)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()) {
-				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+				throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 			}
 
 			if (!$identity = $this->getEntityManager()->getRepository($onetimeToken->getObjectClass())->find($onetimeToken->getObjectId())) {
-				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+				throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 			}
 			
 			$identity->setOnetimeToken($onetimeToken);
 		} else {
 			/** @var Identity $identity */
 			if (!$identity = $this->findIdentity($user, $context, $metadata)) {
-				throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+				throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 			}
 
 			if (!array_any($this->getUniversalPasswords(), fn($universalPassword) => $this->verifyPassword($password, $universalPassword))) {
@@ -59,13 +59,13 @@ trait AuthenticatorTrait
 					&&
 					!$this->createOnetimeTokenQuery()->byIsValid()->byObjectId($identity->getId())->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()
 				) {
-					throw new AuthenticationException('app.appGeneral.exceptions.wrongCredentials'); // TODO translate
+					throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 				}
 			}
 		}
 
 		if (!$identity->getIsActive()) {
-			throw new AuthenticationException('app.appGeneral.exceptions.inactiveUser'); // TODO translate
+			throw new AuthenticationException('fcadmin.appGeneral.exceptions.inactiveUser'); // TODO translate
 		}
 
 		$this->validateIdentity($identity, $context, $metadata);

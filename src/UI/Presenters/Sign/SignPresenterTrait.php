@@ -45,7 +45,7 @@ trait SignPresenterTrait
 		}
 
 		if ($this->getParameter('fraudDetected')) {
-			$this->flashMessageError('_app.modules.web.presenters.sign.flashFraud');
+			$this->flashMessageError('_fcadmin.modules.web.presenters.sign.flashFraud');
 		}
 	}
 

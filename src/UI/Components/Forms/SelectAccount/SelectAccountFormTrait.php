@@ -50,7 +50,7 @@ trait SelectAccountFormTrait
 		asort($usersCompanyPairs);
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			//pridani option pro presmerovani do settings, respektive pro odnastaveni spolcnosi pokud ma user global companies
-			$usersCompanyPairs[self::SETTINGS] = $this->_translator->translate('app.forms.systemSelectCompany.options.admin');
+			$usersCompanyPairs[self::SETTINGS] = $this->_translator->translate('fcadmin.forms.systemSelectCompany.options.admin');
 		}
 
 		$form->addSelect('account', '', $usersCompanyPairs)

@@ -49,7 +49,7 @@ class SidePanelControl extends Control
 			$form->setAction((string) $url);
 		})
 			->setOnSuccess(function (Form $form) use ($baseForm) {
-				$this->getPresenter()->flashMessageSuccess($form->getEntity() ? 'app.sidePanels.control.itemEdit' : 'app.sidePanels.control.itemAdd');
+				$this->getPresenter()->flashMessageSuccess($form->getEntity() ? 'fcadmin.sidePanels.control.itemEdit' : 'fcadmin.sidePanels.control.itemAdd');
 //				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
 //					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
 //				} else {

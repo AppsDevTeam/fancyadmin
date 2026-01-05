@@ -70,9 +70,9 @@ trait IdentityProfileFormTrait
 						'profiles',
 						function (StaticContainer $container) use ($form, $entity) {
 							static $i = 0;
-							$container->addCheckbox('isActive', 'app.forms.user.labels.isActive');
+							$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
 							$this->addRoles($container, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
-							$container->addSelect('account', 'app.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
+							$container->addSelect('account', 'fcadmin.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
 								->setPrompt('---');
 							$container->addSection(function () use ($form, $container, $entity, $i) {
 								$form->mapToForm();
@@ -111,14 +111,14 @@ trait IdentityProfileFormTrait
 					}, name: 'profileFields', watchForRedraw: $watchForRedraw);
 				}
 
-				$form->addSubmit('submit', 'app.forms.user.labels.submit'); // TODO translate
+				$form->addSubmit('submit', 'fcadmin.forms.user.labels.submit'); // TODO translate
 			}
 		});
 	}
 
 	protected function addBasicIdentityFields(Container $container, bool $isEdit): void
 	{
-		$container->addEmail('email', 'app.forms.user.labels.email')
+		$container->addEmail('email', 'fcadmin.forms.user.labels.email')
 			->setRequired(true);
 
 		$container->addSubmit('search', 'Vyhledat')
@@ -142,13 +142,13 @@ trait IdentityProfileFormTrait
 
 			if ($this->isAllowedToEdit($identity)) {
 				$container->addSection(function () use ($container) {
-					$container->addText('firstName', 'app.forms.user.labels.firstName')
+					$container->addText('firstName', 'fcadmin.forms.user.labels.firstName')
 						->setRequired();
-					$container->addText('lastName', 'app.forms.user.labels.lastName')
+					$container->addText('lastName', 'fcadmin.forms.user.labels.lastName')
 						->setRequired();
 				}, blockName: BlockNameEnum::ROW);
 
-				$container->addPhoneNumber('phoneNumber', 'app.forms.user.labels.phoneNumber', 'app.forms.user.errors.phoneNumber')
+				$container->addPhoneNumber('phoneNumber', 'fcadmin.forms.user.labels.phoneNumber', 'fcadmin.forms.user.errors.phoneNumber')
 					->setRequired();
 
 				if ($identity && $container->getForm()->isSubmitted() instanceof SubmitterControl && $container->getForm()->isSubmitted()->getName() === 'search') {
@@ -169,7 +169,7 @@ trait IdentityProfileFormTrait
 		foreach ($roles as $_aclRole) {
 			$rolePairs[$_aclRole->getId()] = $_aclRole->getName();
 		}
-		$container->addMultiSelect('roles', 'app.forms.user.labels.role', $rolePairs)
+		$container->addMultiSelect('roles', 'fcadmin.forms.user.labels.role', $rolePairs)
 			->setRequired($required);
 	}
 
@@ -185,7 +185,7 @@ trait IdentityProfileFormTrait
 			$identity->setContext($this->_fancyAdmin->getContext());
 			$this->_em->flush();
 		} catch (UniqueConstraintViolationException) {
-			$this->getPresenter()->flashMessageError('app.forms.user.errors.credentialsConstrain');
+			$this->getPresenter()->flashMessageError('fcadmin.forms.user.errors.credentialsConstrain');
 			return;
 		}
 
