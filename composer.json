@@ -19,7 +19,6 @@
     "adt/doctrine-components": "^3.0",
     "nette/application": "^3.2",
     "brick/phonenumber": "^0.7.0",
-    "adt/mailer": "^3.2",
     "symfony/yaml": "^7.3",
     "kdyby/autowired": "^3.1",
     "adt/datagrid-components": "^1.0",
