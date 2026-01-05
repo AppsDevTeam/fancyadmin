@@ -46,12 +46,12 @@ trait NewPasswordFormTrait
 //				->setRequired();
 
 			$form->addPassword('password')
-				->setHtmlAttribute('placeholder', 'app.forms.newPassword.labels.password') // TODO translate
-				->setRequired('app.forms.newPassword.errors.required');
+				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.password') // TODO translate
+				->setRequired('fcadmin.forms.newPassword.errors.required');
 
 			$form->addPassword('passwordRepeat')
-				->setHtmlAttribute('placeholder', 'app.forms.newPassword.labels.passwordAgain') // TODO translate
-				->setRequired('app.forms.newPassword.errors.required');
+				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.passwordAgain') // TODO translate
+				->setRequired('fcadmin.forms.newPassword.errors.required');
 		}, 'inputsWrap');
 
 		$form->addSubmit('submit', 'Uložit'); // TODO translate
@@ -63,7 +63,7 @@ trait NewPasswordFormTrait
 	public function validateForm(array $values, Form $form): void
 	{
 		if ($values['password'] !== $values['passwordRepeat']) {
-			$form->getComponentTextInput('passwordRepeat')->addError('app.forms.newPassword.errors.noMatch'); // TODO
+			$form->getComponentTextInput('passwordRepeat')->addError('fcadmin.forms.newPassword.errors.noMatch'); // TODO
 		}
 	}
 
