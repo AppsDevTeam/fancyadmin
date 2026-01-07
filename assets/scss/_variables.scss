@@ -10,6 +10,11 @@
  *  Colors
  * ==================*/
 
+:root {
+  --secondaryColorDark: white;
+  --secondaryColorDarker: #e8e8e8;
+}
+
 $primary: var(--primaryColor);
 $primary-dark: var(--primaryColorDark);
 

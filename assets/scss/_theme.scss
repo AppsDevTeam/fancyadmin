@@ -26,12 +26,15 @@ a {
 		margin-left: 0;
 		width: calc(100% - $side-panel-width);
 		left: $side-panel-width;
-		padding: 0px 25px 0 25px;
+		padding: 15px 25px 0 25px;
 	}
 
 	@include media-breakpoint-down(sm) {
 		.container-main {
-			padding: 80px 15px 0 15px;
+			padding: 15px 15px 0 15px;
+			left: 0;
+			width: 100%;
+			padding-top: 15px;
 			bottom: 65px;
 		}
 

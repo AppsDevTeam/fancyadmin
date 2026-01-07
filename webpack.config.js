@@ -25,7 +25,7 @@ module.exports = (env) => {
 			path: path.resolve(__dirname, 'dist', module), // každý modul bude mít svůj adresář
 			publicPath: `/dist/${module}/`,
 			filename: 'js/[name].js',
-			chunkFilename: 'js/[name].[hash:5].js'
+			chunkFilename: 'js/[name].[fullhash:5].js'
 		},
 
 		// Development or production?
@@ -164,7 +164,9 @@ module.exports = (env) => {
 		resolve: {
 			modules: ['node_modules'],
 			alias: {
-				JsComponents: path.resolve(__dirname, 'app')
+				JsComponents: path.resolve(__dirname, 'src'),
+				'adt-fancyadmin': path.resolve(__dirname),
+				'~/src': path.resolve(__dirname, 'src')
 			}
 		}
 	};
