@@ -27,7 +27,7 @@
     "jquery-ui-bundle": "^1.12.1-migrate",
     "mini-css-extract-plugin": "^2.9.1",
     "nette-forms": "^3.5.0",
-    "nette.ajax.js": "^2.3.0",
+    "nette.ajax.js": "github:appsdevteam/nette.ajax.js#fix-nette-32",
     "postcss": "^8.4.47",
     "postcss-loader": "^8.1.1",
     "postcss-modules": "^6.0.0",
