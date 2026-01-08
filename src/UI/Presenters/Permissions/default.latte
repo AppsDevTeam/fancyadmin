@@ -5,57 +5,60 @@
 {define title}{_fcadmin.presenters.permissions.title}{/define}
 
 {block content}
-<div class="px-3 overflow-visible">
-	<div style="overflow: auto; width: calc(100vw - 266px); height: calc(100vh - 100px)">
-		<table class="table text-center mb-0" style="table-layout: fixed">
-			{foreach $resources as $_resource}
-				{var $rowIsFirst = $iterator->first}
-				{if $rowIsFirst}
-					<thead>
-				{/if}
-				<tr>
-					{if $iterator->first}
-						<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
-					{else}
-						<th scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;">{_$_resource->getTitle()}</th>
+<div class="header">
+	<h1 class="header-title">Oprávnění</h1>
+
+	<div class="header-actions">
+
+	</div>
+</div>
+
+<div class="overflow-visible">
+	<div class="table-responsive-wrapper">
+		<div class="table-responsive">
+			<table class="table text-center mb-0" style="table-layout: fixed">
+				{foreach $resources as $_resource}
+					{var $rowIsFirst = $iterator->first}
+					{if $rowIsFirst}
+						<thead>
 					{/if}
-					{foreach $roles as $_roleId => $_roleName}
-						{if $rowIsFirst}
-							<th scope="col" class="text-center">{$_roleName}</th>
+					<tr>
+						{if $iterator->first}
+							<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
 						{else}
-							{var $permissionExists = false}
-							{foreach $rolesResources as $_roleResource}
-								{breakIf $permissionExists = $_roleResource['resourceId'] === $_resource->getId() && $_roleResource['roleId'] === $_roleId}
-							{/foreach}
-							{if $permissionExists}
-								<td class="table-success"><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), false}"><div class="w-100"><i class="fa fa-check"></i></div></a></td>
-							{else}
-								<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), true}"><div class="w-100"><i class="fa fa-times"></i></div></a></td>
-							{/if}
+							<td scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;">{_$_resource->getTitle()}</td>
 						{/if}
-					{/foreach}
-				</tr>
-				{if $rowIsFirst}
-					</thead>
-				{/if}
-			{/foreach}
-		</table>
+						{foreach $roles as $_roleId => $_roleName}
+							{if $rowIsFirst}
+								<th scope="col" class="text-center">{$_roleName}</th>
+							{else}
+							{var $permissionExists = false}
+								{foreach $rolesResources as $_roleResource}
+									{breakIf $permissionExists = $_roleResource['resourceId'] === $_resource->getId() && $_roleResource['roleId'] === $_roleId}
+								{/foreach}
+								{if $permissionExists}
+									<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), false}"><div class="w-100"><i class="fa fa-check"></i></div></a></td>
+								{else}
+									<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), true}"><div class="w-100"><i class="fa fa-times"></i></div></a></td>
+								{/if}
+							{/if}
+						{/foreach}
+					</tr>
+					{if $rowIsFirst}
+						</thead>
+					{/if}
+				{/foreach}
+			</table>
+		</div>
 	</div>
 </div>
 
 <style>
-	thead th {
-		position: -webkit-sticky; /* for Safari */
-		position: sticky;
-		top: 0;
-		z-index: 100;
-		width: 100px;
-	}
+    thead th {
+        width: 100px;
+    }
 
-	tbody th {
-		position: -webkit-sticky; /* for Safari */
-		position: sticky;
-		left: 0;
-		background-color: #f9f9f9;
-	}
+    tbody tr > td:first-child {
+        width: 100px !important;
+    }
 </style>

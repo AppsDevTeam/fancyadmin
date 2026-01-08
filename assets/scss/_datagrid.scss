@@ -81,6 +81,10 @@
 			width: 300px;
 			max-width: min(30%, 300px);
 
+			@include media-breakpoint-down(sm) {
+				position: initial;
+			}
+
 			> div {
 				width: 300px;
 				max-width: min(30vw, 300px);
@@ -146,6 +150,8 @@
 			}
 		}
 		.col-action {
+			text-align: right;
+
 			> div {
 				position: relative;
 				display: inline-flex;
@@ -342,6 +348,7 @@ form:has(> .table-responsive-wrapper) {
 			background-color: $secondary-darker;
 			width: 300px;
 			max-width: 100%;
+			margin-bottom: 0 !important;
 			label {
 				display: none;
 			}

@@ -26,12 +26,15 @@ a {
 		margin-left: 0;
 		width: calc(100% - $side-panel-width);
 		left: $side-panel-width;
-		padding: 0px 25px 0 25px;
+		padding: 15px 25px 0 25px;
 	}
 
 	@include media-breakpoint-down(sm) {
 		.container-main {
-			padding: 80px 15px 0 15px;
+			padding: 15px 15px 0 15px;
+			left: 0;
+			width: 100%;
+			padding-top: 15px;
 			bottom: 65px;
 		}
 
@@ -1725,4 +1728,28 @@ select.is-invalid + .select2 {
 	.swiper-container {
 		display: none;
 	}
+}
+
+.replicator-item {
+	position: relative;
+}
+
+.replicator-item.bg-body-secondary .replicator-item {
+	background-color: #ffffff !important;
+	margin-bottom: 12px !important;
+	border: var(--inputBorder);
+}
+
+.replicator-item .right-bottom-corner-delete {
+	position: absolute;
+	bottom: 15px;
+	right: 15px;
+	height: 44px;
+}
+
+.replicator-item .left-bottom-corner-add {
+	position: absolute;
+	bottom: 15px;
+	left: 15px;
+	height: 44px;
 }
