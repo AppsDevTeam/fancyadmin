@@ -29,7 +29,7 @@ trait SignInFormTrait
 		$form->getElementPrototype()->class[] = 'login-form';
 
 		$form->addSection(function () use ($form) {
-			$form->addText('email')
+			$form->addEmail('email')
 				->setHtmlAttribute('id', 'login-form-input-email')
 				->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.email')
 				->setRequired('fcadmin.forms.signIn.errors.emailRequired');
