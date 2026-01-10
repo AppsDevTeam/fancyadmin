@@ -92,6 +92,7 @@ $select2MinWidth: 300px;
 	width: fit-content !important;
 	min-width: $select2MinWidth;
 	box-shadow: 0 4px 4px 0 #00000026;
+	overflow: hidden;
 
 	.select2-results {
 		background-color: $background !important;
