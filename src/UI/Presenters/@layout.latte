@@ -1,5 +1,31 @@
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
 
+{block colors}
+	{if $account?->getCss()}
+		<style>
+			{$account->getCss()|noescape}
+		</style>
+	{else}
+		<style>
+			body {
+				--backgroundColor: {$parameters['colors']['backgroundColor']|noescape};
+				--dashboardAccentColor: {$parameters['colors']['dashboardAccentColor']|noescape};
+				--primaryColor: {$parameters['colors']['primaryColor']|noescape};
+				--primaryColorDark: {$parameters['colors']['primaryColorDark']|noescape};
+				--primaryColorDark20: {$parameters['colors']['primaryColorDark20']|noescape};
+				--secondaryColor: {$parameters['colors']['secondaryColor']|noescape};
+				--secondaryColorDark: {$parameters['colors']['secondaryColorDark']|noescape};
+				--secondaryColorDarker: {$parameters['colors']['secondaryColorDarker']|noescape};
+				--tertiaryColor: {$parameters['colors']['ternaryColor']|noescape};
+				--tertiaryTextColor: {$parameters['colors']['ternaryTextColor']|noescape};
+				--loginBackground: {$parameters['colors']['loginBackground']|noescape};
+				--loginBackgroundInput: {$parameters['colors']['loginBackgroundInput']|noescape};
+				--loginBackgroundInputFocus: {$parameters['colors']['loginBackgroundInputFocus']|noescape};
+			}
+		</style>
+	{/if}
+{/block}
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
