@@ -192,7 +192,7 @@ input[type="color"]::-webkit-color-swatch {
 		}
 	}
 
-	input:checked+label {
+	input:checked+label, label:has(input:checked) {
 		&:before {
 			background-color: $primary;
 			border: 2px solid $primary;
