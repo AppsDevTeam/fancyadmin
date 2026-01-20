@@ -8,8 +8,11 @@ use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Component\DeleteParams;
 use ADT\Datagrid\Component\EditParams;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
+use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
 use ADT\FancyAdmin\Model\Queries\Factories\ConfigurationQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
+use App\Model\Entities\Configuration;
+use Nette\Utils\Json;
 
 trait ConfigurationGridTrait
 {
@@ -19,10 +22,16 @@ trait ConfigurationGridTrait
 
 	public function initGrid(DataGrid $grid): void
 	{
-		$grid->addColumnText('key', 'Key');
-		$grid->addColumnText('type', 'Type');
-		$grid->addColumnText('value', 'Value');
-		$grid->addColumnText('options', 'Options');
+		$grid->addColumnText('name', 'Name');
+		$grid->addColumnText('value', 'Value')
+			->setRenderer(function(Configuration $configuration) {
+				if ($configuration->getType() === ConfigurationTypeEnum::TYPE_JSON) {
+					return Json::encode($configuration->getValue(), pretty: true);
+				} elseif ($configuration->getType() === ConfigurationTypeEnum::TYPE_FILE) {
+					return $configuration->getFile()->getUrl();
+				}
+				return $configuration->getValue();
+			});
 	}
 
 	protected function allowEdit(): ?EditParams

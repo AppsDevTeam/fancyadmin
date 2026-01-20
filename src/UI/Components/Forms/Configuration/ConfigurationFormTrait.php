@@ -5,8 +5,10 @@ namespace ADT\FancyAdmin\UI\Components\Forms\Configuration;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Entities\Configuration;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
+use ADT\FancyAdmin\Model\Entities\File;
 use ADT\Forms\Form;
 use App\Model\Entities\Account;
+use Nette\Http\FileUpload;
 
 /**
  * @property Account $entity
@@ -27,13 +29,28 @@ trait ConfigurationFormTrait
 
 		$form['type']
 			->addCondition(Form::Equal, ConfigurationTypeEnum::TYPE_SELECT)
-			->toggle('options-input');
+			->toggle('optionsInput')
+			->endCondition()
+			->addCondition(Form::Equal, ConfigurationTypeEnum::TYPE_FILE)
+			->toggle('fileInput')
+			->elseCondition()
+			->toggle('valueInput');
 
-		$form->addTextArea('value', 'Value')
-			->setHtmlAttribute('rows', 5);
+		$form->addSection(function() use ($form) {
+			$form->addTextArea('options', 'Options')
+				->setHtmlAttribute('rows', 5);
+		}, 'optionsInput');
 
-		$form->addTextArea('options', 'Options')
-			->setHtmlAttribute('rows', 5);
+		$form->addSection(function() use ($form) {
+			$form->addUpload('_file', 'File')
+				->addConditionOn($form['type'], Form::EQUAL, ConfigurationTypeEnum::TYPE_FILE)
+				->setRequired();
+		}, 'fileInput');
+
+		$form->addSection(function() use ($form) {
+			$form->addTextArea('value', 'Value')
+				->setHtmlAttribute('rows', 5);
+		}, 'valueInput');
 
 		$form->addSubmit("submit", 'Save');
 	}
@@ -63,6 +80,15 @@ trait ConfigurationFormTrait
 		if ($entity->getType() === ConfigurationTypeEnum::TYPE_JSON->value) {
 			$value = json_decode($inputs['value']);
 			$entity->setValue(json_encode($value, JSON_PRETTY_PRINT));
+		} elseif ($entity->getType() === ConfigurationTypeEnum::TYPE_FILE->value) {
+			/** @var FileUpload $fileUpload */
+			$fileUpload = $inputs['_file'];
+
+			/** @var File $fileEntity */
+			$fileEntity = new ($this->em->findEntityClassByInterface(File::class));
+			$fileEntity->setTemporaryFile($fileUpload->getTemporaryFile(), $fileUpload->getUntrustedName());
+
+			$entity->setFile($fileEntity);
 		}
 
 		$this->_em->flush();

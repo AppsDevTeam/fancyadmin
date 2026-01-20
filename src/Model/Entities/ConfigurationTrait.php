@@ -10,6 +10,8 @@ use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\OneToOne;
 use Nette\Utils\Json;
 
 trait ConfigurationTrait
@@ -19,11 +21,18 @@ trait ConfigurationTrait
 	#[Column(name: '`key`', nullable: false)]
 	protected string $key;
 
+	#[Column(name: 'name', nullable: false)]
+	protected string $name;
+
 	#[Column(name: '`type`', nullable: false, options: ["default" => ConfigurationTypeEnum::TYPE_PLAINTEXT])]
 	protected ConfigurationTypeEnum $type = ConfigurationTypeEnum::TYPE_PLAINTEXT;
 
-	#[Column(name: '`value`', type: Types::TEXT, nullable: false)]
-	protected string $value;
+	#[Column(name: '`value`', type: Types::TEXT, nullable: true)]
+	protected ?string $value = null;
+
+	#[OneToOne(targetEntity: 'File', cascade: ['persist'], orphanRemoval: true)]
+	#[JoinColumn(nullable: true)]
+	protected File $file;
 
 	#[Column(name: '`options`', type: Types::TEXT, nullable: true)]
 	protected ?string $options = null;
@@ -39,23 +48,34 @@ trait ConfigurationTrait
 		return $this;
 	}
 
-	public function getType(): string
+	public function getName(): string
 	{
-		return $this->type->value;
+		return $this->name;
 	}
 
-	public function setType(ConfigurationType $type): static
+	public function setName(string $name): static
+	{
+		$this->name = $name;
+		return $this;
+	}
+
+	public function getType(): ConfigurationTypeEnum
+	{
+		return $this->type;
+	}
+
+	public function setType(ConfigurationTypeEnum $type): static
 	{
 		$this->type = $type;
 		return $this;
 	}
 
-	public function getValue(): string
+	public function getValue(): ?string
 	{
 		return $this->value;
 	}
 
-	public function setValue(string $value): static
+	public function setValue(?string $value): static
 	{
 		$this->value = $value;
 		return $this;
@@ -78,6 +98,17 @@ trait ConfigurationTrait
 			? (is_array($options) ? Json::encode($options) : $options)
 			: null;
 
+		return $this;
+	}
+
+	public function getFile(): File
+	{
+		return $this->file;
+	}
+
+	public function setFile(File $file): static
+	{
+		$this->file = $file;
 		return $this;
 	}
 }

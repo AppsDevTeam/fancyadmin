@@ -9,6 +9,7 @@ enum ConfigurationTypeEnum: string implements ConfigurationType
 	case TYPE_JSON = 'json';
 	case TYPE_PLAINTEXT = 'plaintext';
 	case TYPE_SELECT = 'select';
+	case TYPE_FILE = 'file';
 
 	public static function list(): array
 	{
