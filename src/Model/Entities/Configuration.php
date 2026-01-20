@@ -16,6 +16,6 @@ interface Configuration extends Entity
 	public function setType(ConfigurationTypeEnum $type): static;
 	public function getValue(): ?string;
 	public function setValue(?string $value): static;
-	public function getFile(): File;
-	public function setFile(File $file): static;
+	public function getFile(): ?File;
+	public function setFile(?File $file): static;
 }

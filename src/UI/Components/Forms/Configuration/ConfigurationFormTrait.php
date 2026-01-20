@@ -77,10 +77,10 @@ trait ConfigurationFormTrait
 
 	public function processForm(Configuration $entity, array $inputs): void
 	{
-		if ($entity->getType() === ConfigurationTypeEnum::TYPE_JSON->value) {
+		if ($entity->getType() === ConfigurationTypeEnum::TYPE_JSON) {
 			$value = json_decode($inputs['value']);
 			$entity->setValue(json_encode($value, JSON_PRETTY_PRINT));
-		} elseif ($entity->getType() === ConfigurationTypeEnum::TYPE_FILE->value) {
+		} elseif ($entity->getType() === ConfigurationTypeEnum::TYPE_FILE) {
 			/** @var FileUpload $fileUpload */
 			$fileUpload = $inputs['_file'];
 

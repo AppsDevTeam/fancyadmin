@@ -32,7 +32,7 @@ trait ConfigurationTrait
 
 	#[OneToOne(targetEntity: 'File', cascade: ['persist'], orphanRemoval: true)]
 	#[JoinColumn(nullable: true)]
-	protected File $file;
+	protected ?File $file;
 
 	#[Column(name: '`options`', type: Types::TEXT, nullable: true)]
 	protected ?string $options = null;
@@ -101,12 +101,12 @@ trait ConfigurationTrait
 		return $this;
 	}
 
-	public function getFile(): File
+	public function getFile(): ?File
 	{
 		return $this->file;
 	}
 
-	public function setFile(File $file): static
+	public function setFile(?File $file): static
 	{
 		$this->file = $file;
 		return $this;
