@@ -46,8 +46,8 @@ presenters:
     header: Uživatelé
 
   account:
-    pageTitle: Účty
-    header: Účty
+    pageTitle: Zákazníci
+    header: Zákazníci
 
   configurations:
     pageTitle: Konfigurace
