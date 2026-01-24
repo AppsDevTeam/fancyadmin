@@ -10,7 +10,7 @@
     "contributte/translation": "^2.0",
     "adt/doctrine-forms": "^2.0",
     "adt/doctrine-authenticator": "^2.0",
-    "nettrine/extensions-atlantic18": "dev-master",
+    "nettrine/extensions-atlantic18": "^0.7.1",
     "adt/utils": "^2.0",
     "adt/nette-forms-phone-number": "^1.6",
     "nette/mail": "^4.0",
