@@ -1,5 +1,5 @@
 body {
-	--inputBackground: var(--dashboardAccentColor);
+	--inputBackground: var(--secondaryColorDark);
 	--inputFocusBackground: var(--secondaryColorDark);
 	--inputBorder: 0;
 	--inputFocusBorder: 0;
@@ -283,8 +283,10 @@ input[type="color"]::-webkit-color-swatch {
 		font-size: max(min(calc(10px + 2vw), 40px), 30px);
 		font-weight: 700;
 		line-height: 47px;
-		display: flex;
-		gap: 15px;
+
+		a {
+			padding-left: 15px;
+		}
 	}
 
 	.card-amount-diff {
