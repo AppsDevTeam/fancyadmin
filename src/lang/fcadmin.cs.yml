@@ -79,7 +79,7 @@ forms:
       submit: Odeslat link pro obnovu
     messages:
       success: E-mail pro obnovu odeslán
-      error: E-mail pro obnovu se nepodařilo odeslat
+      error: Účet nebyl nalezen
     errors:
       emailRequired: E-mail je povinný
 
