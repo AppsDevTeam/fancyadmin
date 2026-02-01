@@ -40,15 +40,16 @@ trait OnetimeTokenServiceTrait
 
 	public function findToken(OnetimeTokenType $type, string $token): ?OnetimeToken
 	{
-		$onetimeToken = $this->onetimeTokenQueryFactory->create()
+		if ($onetimeToken = $this->onetimeTokenQueryFactory->create()
 			->byIsValid()
 			->byType($type->value)
 			->byToken($token)
-			->fetchOneOrNull();
+			->fetchOneOrNull()
+		) {
+			$onetimeToken->setUsedAt(new DateTimeImmutable());
+			$this->em->flush();
+		}
 
-		$onetimeToken->setUsedAt(new DateTimeImmutable());
-		$this->em->flush();
-		
 		return $onetimeToken;
 	}
 }
