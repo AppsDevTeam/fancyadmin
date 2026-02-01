@@ -8,7 +8,6 @@ use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping\Column;
-use Nette\Utils\Random;
 
 trait OnetimeTokenTrait
 {
@@ -56,11 +55,6 @@ trait OnetimeTokenTrait
 	{
 		$this->usedAt = $usedAt;
 		return $this;
-	}
-
-	public static function generateRandomToken(): string
-	{
-		return Random::generate(32, 'a-zA-Z0-9');
 	}
 
 	public function setValidUntil(DateTimeImmutable $validUntil): static

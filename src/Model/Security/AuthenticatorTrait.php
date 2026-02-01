@@ -9,6 +9,8 @@ use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\Model\Queries\IdentityQuery;
 use ADT\FancyAdmin\Model\Queries\OnetimeTokenQuery;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenTypeEnum;
 use Brick\PhoneNumber\PhoneNumber;
 use Brick\PhoneNumber\PhoneNumberParseException;
 use Nette\Security\AuthenticationException;
@@ -21,7 +23,7 @@ use Nette\Utils\Validators;
  */
 trait AuthenticatorTrait
 {
-	abstract protected function createOnetimeTokenQuery(): OnetimeTokenQuery;
+	abstract protected function getOnetimeTokenService(): OnetimeTokenService;
 	abstract protected function getUniversalPasswords(): array;
 	abstract protected function getIdentityQueryFactory(): IdentityQueryFactory;
 	abstract protected function getEntityManager(): EntityManager;
@@ -38,7 +40,7 @@ trait AuthenticatorTrait
 	{
 		if (!$password) {
 			/** @var OnetimeToken $onetimeToken */
-			if (!$onetimeToken = $this->createOnetimeTokenQuery()->byIsValid()->byToken($user)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()) {
+			if (!$onetimeToken = $this->getOnetimeTokenService()->findToken(OnetimeTokenTypeEnum::LOGIN, $user)) {
 				throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 			}
 
@@ -57,7 +59,7 @@ trait AuthenticatorTrait
 				if (
 					!$this->verifyPassword($password, (string) $identity->getPassword())
 					&&
-					!$this->createOnetimeTokenQuery()->byIsValid()->byObjectId($identity->getId())->byToken($password)->byType(OnetimeToken::TYPE_LOGIN)->fetchOneOrNull()
+					!$this->getOnetimeTokenService()->findToken(OnetimeToken::TYPE_LOGIN, $password)->fetchOneOrNull()
 				) {
 					throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 				}

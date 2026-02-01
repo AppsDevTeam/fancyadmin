@@ -17,7 +17,6 @@ interface OnetimeToken extends Entity
 	const int PASSWORD_CREATION_VALID_FOR = 72; //hours (3 days)
 
 	const string TYPE_LOGIN = 'login';
-	const string TYPE_PHONE_NUMBER_VERIFICATION = 'phone_number_verification';
 
 	public function getToken(): string;
 	public function setToken(string $token): static;
@@ -25,7 +24,6 @@ interface OnetimeToken extends Entity
 	public function setObjectId(?int $objectId): static;
 	public function getUsedAt(): ?DateTimeImmutable;
 	public function setUsedAt(?DateTimeImmutable $usedAt): static;
-	public static function generateRandomToken(): string;
 	public function setValidUntil(DateTimeImmutable $validUntil): static;
 	public function getValidUntil(): DateTimeImmutable;
 	public function isValid(): bool;

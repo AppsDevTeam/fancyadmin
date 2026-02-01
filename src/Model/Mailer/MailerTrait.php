@@ -7,6 +7,8 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenType;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenTypeEnum;
 use ADT\SingleRecipient\SingleRecipient;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use Contributte\Translation\Translator;
@@ -132,7 +134,7 @@ trait MailerTrait
 		$this->em->beginTransaction();
 
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = $this->onetimeTokenService->generateToken($identity, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'));
+		$onetimeToken = $this->onetimeTokenService->generateToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity::class, $identity->getId());
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
@@ -157,7 +159,7 @@ trait MailerTrait
 		$this->em->beginTransaction();
 
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = $this->onetimeTokenService->generateToken($identity, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'));
+		$onetimeToken = $this->onetimeTokenService->generateToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'),  $identity::class, $identity->getId());
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',
