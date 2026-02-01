@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Services;
 
+use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
@@ -21,16 +22,16 @@ trait OnetimeTokenServiceTrait
 	 * @throws ReflectionException
 	 * @throws Exception
 	 */
-	public function generateToken(OnetimeTokenType $type, DateTimeImmutable $validUntil, ?string $objectClass = null, ?int $objectId = null, ?int $length = 32, ?string $charList = 'a-zA-Z0-9'): OnetimeToken
+	public function saveToken(OnetimeTokenType $type, DateTimeImmutable $validUntil, ?Entity $entity = null, ?string $token = null): OnetimeToken
 	{
 		/** @var OnetimeToken $onetimeToken */
 		$onetimeToken = new ($this->em->findEntityClassByInterface(OnetimeToken::class));
 		$onetimeToken
 			->setType($type->value)
 			->setValidUntil($validUntil)
-			->setObjectClass($objectClass)
-			->setObjectId($objectId)
-			->setToken(Random::generate(32, 'a-zA-Z0-9'))
+			->setObjectClass($entity ? $entity::class : null)
+			->setObjectId($entity?->getId())
+			->setToken($token ?: Random::generate(32, 'a-zA-Z0-9'))
 			->setIpAddress($_SERVER['REMOTE_ADDR']);
 		$this->em->persist($onetimeToken);
 		$this->em->flush();
@@ -39,10 +40,15 @@ trait OnetimeTokenServiceTrait
 
 	public function findToken(OnetimeTokenType $type, string $token): ?OnetimeToken
 	{
-		return $this->onetimeTokenQueryFactory->create()
+		$onetimeToken = $this->onetimeTokenQueryFactory->create()
 			->byIsValid()
 			->byType($type->value)
 			->byToken($token)
 			->fetchOneOrNull();
+
+		$onetimeToken->setUsedAt(new DateTimeImmutable());
+		$this->em->flush();
+		
+		return $onetimeToken;
 	}
 }

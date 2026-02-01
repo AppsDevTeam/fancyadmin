@@ -6,6 +6,7 @@ use ADT\FancyAdmin\DI\Injects\OnetimeTokenServiceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
+use ADT\FancyAdmin\Model\Services\OnetimeTokenTypeEnum;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 
 trait SignInAsIdentity
@@ -52,7 +53,7 @@ trait SignInAsIdentity
 
 	protected function createSignAsIdentityLink(Identity $identity): never
 	{
-		$token = $this->_onetimeTokenService->generateToken($identity, new \DateTimeImmutable('+15 minutes'));
+		$token = $this->_onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new \DateTimeImmutable('+15 minutes'), $identity);
 
 		$this->getPresenter()->payload->signAsIdentityLink = $this->getPresenter()->link('//Home:', [
 			'token' => $token->getToken(),
