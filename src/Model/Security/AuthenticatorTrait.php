@@ -59,7 +59,7 @@ trait AuthenticatorTrait
 				if (
 					!$this->verifyPassword($password, (string) $identity->getPassword())
 					&&
-					!$this->getOnetimeTokenService()->findToken(OnetimeTokenTypeEnum::LOGIN, $password)
+					!$this->getOnetimeTokenService()->findToken(OnetimeTokenTypeEnum::LOGIN, $user . ':' . $password)
 				) {
 					throw new AuthenticationException('fcadmin.appGeneral.exceptions.wrongCredentials');
 				}

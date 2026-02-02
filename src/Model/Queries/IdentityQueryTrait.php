@@ -11,12 +11,20 @@ use Doctrine\ORM\QueryBuilder;
 
 trait IdentityQueryTrait
 {
-	public function byEmailOrPhoneNumber(string $email, string $phoneNumber): static
+	public function byEmailOrPhoneNumber(?string $email = null, ?string $phoneNumber = null): static
 	{
 		$this->filter[] = function (QueryBuilder $qb) use ($email, $phoneNumber) {
-			$qb->andWhere('e.email = :email OR e.phoneNumber = :phoneNumber')
-				->setParameter('email', $email)
-				->setParameter('phoneNumber', $phoneNumber);
+			if ($email && $phoneNumber) {
+				$qb->andWhere('e.email = :email OR e.phoneNumber = :phoneNumber')
+					->setParameter('email', $email)
+					->setParameter('phoneNumber', $phoneNumber);
+			} elseif ($email) {
+				$qb->andWhere('e.email = :email')
+					->setParameter('email', $email);
+			} else {
+				$qb->andWhere('e.phoneNumber = :phoneNumber')
+					->setParameter('phoneNumber', $phoneNumber);
+			}
 		};
 
 		return $this;
