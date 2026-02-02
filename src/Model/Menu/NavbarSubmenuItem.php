@@ -67,7 +67,7 @@ class NavbarSubmenuItem
 		return $this->resource;
 	}
 
-	public function setAclResource(Resource $resource): self
+	public function setAclResource(?Resource $resource): self
 	{
 		$this->resource = $resource;
 		return $this;
