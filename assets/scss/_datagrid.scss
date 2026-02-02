@@ -399,3 +399,12 @@ form:has(> .table-responsive-wrapper) {
 	color: red;
 	text-decoration: line-through;
 }
+
+.handle-sort.ui-sortable-handle {
+	padding: 0 !important;
+}
+.col-action a {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
