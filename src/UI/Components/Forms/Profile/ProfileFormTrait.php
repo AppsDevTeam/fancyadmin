@@ -7,10 +7,9 @@ use ADT\DoctrineForms\Form;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\UI\Components\Forms\IdentityProfileFormTrait;
-use ADT\Forms\StaticContainer;
-use App\Model\Entities\Identity;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use Exception;
 use Nette\Application\UI\InvalidLinkException;
@@ -36,7 +35,7 @@ trait ProfileFormTrait
 	 * @throws InvalidLinkException
 	 * @throws \Doctrine\DBAL\Exception|\ReflectionException
 	 */
-	public function processForm(Profile $profile, array $values): void
+	public function processForm(Profile $profile): void
 	{
 		$this->processUserForm($profile->getIdentity());
 	}
@@ -53,13 +52,12 @@ trait ProfileFormTrait
 	 */
 	protected function initEntity(Entity $entity, array $values): void
 	{
-		parent::initEntity($entity, $values);
 		if (
 			!isset($values['identity']['email'])
 			||
 			(!$identity = $this->_identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byEmail($values['identity']['email'])->fetchOneOrNull())
 		) {
-			$identity = new Identity();
+			$identity = new ($this->_em->findEntityClassByInterface(Identity::class));
 			$identity->setContext($this->_fancyAdmin->getContext());
 			$this->_em->persist($identity);
 			$identity->setSelectedAccount($entity->getAccount());
