@@ -18,6 +18,6 @@ interface Profile extends IsActiveInterface, Entity, HasIdentity
 
 	public function isAllowed(Resource $resource): bool;
 
-	public function getAccount(): ?Account;
-	public function setAccount(?Account $account): static;
+	public function getAccount(): Account;
+	public function setAccount(Account $account): static;
 }

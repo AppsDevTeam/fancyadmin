@@ -1,11 +1,11 @@
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
 
 {block colors}
-	{if $account?->getCss()}
+	{if isset($account) && $account?->getCss()}
 		<style>
 			{$account->getCss()|noescape}
 		</style>
-	{else}
+	{elseif isset($parameters)}
 		<style>
 			body {
 				--backgroundColor: {$parameters['colors']['backgroundColor']|noescape};

@@ -13,7 +13,7 @@ trait TMenuItemsTrait {
 	public function addPermissionsItem(NavbarMenu|NavbarSubmenu $menu): void {
 		$menu->addMenuItem(
 			$this->createMenuItemEntity($menu)
-				->setLabel('Permissions')
+				->setLabel('fcadmin.presenters.permissions.title')
 				->setLink('Permissions:default')
 		);
 	}
@@ -21,14 +21,14 @@ trait TMenuItemsTrait {
 	public function addAclRolesItem(NavbarMenu|NavbarSubmenu $menu): void {
 		$menu->addMenuItem(
 			$this->createMenuItemEntity($menu)
-				->setLabel('AclRoles')
+				->setLabel('fcadmin.presenters.roles.title')
 				->setLink('AclRoles:default')
 		);
 	}
 
 	public function addIdentitiesItem(
 		NavbarMenu|NavbarSubmenu $menu,
-		string $label = 'Identities',
+		string $label = 'fcadmin.presenters.identity.title',
 		string $link = 'Identities:default',
 		?string $faIcon = null,
 		?Resource $alcResource = null,
@@ -47,7 +47,7 @@ trait TMenuItemsTrait {
 
 	public function addAccountsItem(
 		NavbarMenu|NavbarSubmenu $menu,
-		string $label = 'Accounts',
+		string $label = 'fcadmin.presenters.accounts.title',
 		string $link = 'Accounts:default',
 		?string $faIcon = null,
 		?Resource $alcResource = null,

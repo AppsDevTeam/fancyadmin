@@ -33,25 +33,35 @@ mailer:
 presenters:
   permissions:
     title: Oprávnění
-
+    pageTitle: Oprávnění
+    header: Oprávnění
     table:
       title: Title
 
   roles:
     title: Role
     pageTitle: Role
+    header: Role
 
   identity:
+    title: Uživatelé
     pageTitle: Uživatelé
     header: Uživatelé
 
   account:
+    title: Účty
     pageTitle: Účty
     header: Účty
 
   configurations:
+    title: Konfigurace
     pageTitle: Konfigurace
     header: Konfigurace
+
+  profiles:
+    title: Profily
+    pageTitle: Profily
+    header: Profily
 
 forms:
   # Sign Form
@@ -126,6 +136,11 @@ grids:
 
   account:
     name: Název
+
+  profile:
+    email: E-mail
+    fullName: Jméno
+    phoneNumber: Telefon
 
   user:
     labels:

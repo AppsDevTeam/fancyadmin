@@ -20,8 +20,8 @@ trait ProfileTrait
 	protected Identity $identity;
 
 	#[ManyToOne(targetEntity: 'Account', inversedBy: 'profiles')]
-	#[JoinColumn(nullable: true)]
-	protected ?Account $account = null;
+	#[JoinColumn(nullable: false)]
+	protected Account $account;
 
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]
@@ -76,12 +76,12 @@ trait ProfileTrait
 		return false;
 	}
 
-	public function getAccount(): ?Account
+	public function getAccount(): Account
 	{
 		return $this->account;
 	}
 
-	public function setAccount(?Account $account): static
+	public function setAccount(Account $account): static
 	{
 		$this->account = $account;
 		return $this;
