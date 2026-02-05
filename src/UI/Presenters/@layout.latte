@@ -52,7 +52,7 @@
 	data-adt-messaging
 	data-adt-translate
 	data-adt-safari-support
-	{ifset $summernoteUpload}data-summernote-upload="{$summernoteUpload}"{/ifset}
+	data-summernote-upload="{$summernoteUpload ?: ''}"
 >
 <div n:snippet="body">
 	{if $primaryTemplate}
