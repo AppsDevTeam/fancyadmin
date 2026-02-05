@@ -37,8 +37,8 @@
 	{block head}{/block}
 
 	<link rel="manifest" href="/manifest.webmanifest"/>
-	<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
-	<link rel="icon" type="image/png" href="/favicon/favicon.png">
+	<link n:ifset="$parameters['iconFileNameSvg']" rel="icon" type="image/svg+xml" href="{$basePath}/favicon/{$parameters['iconFileNameSvg']}">
+	<link n:ifset="$parameters['iconFileNamePng']" rel="icon" type="image/png" href="{$basePath}/favicon/{$parameters['iconFileNamePng']}">
 	{if $hmr}
 		<link rel="stylesheet" href="https://localhost:3000/dist/portal/css/portal.css">
 	{else}
