@@ -107,3 +107,4 @@ AdtJsComponents.init('select-account-form', '~UI/Components/Forms/SelectAccount'
 
 import './sideMenu'
 import './datagrid'
+import './summernote'

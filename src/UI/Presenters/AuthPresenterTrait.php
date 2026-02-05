@@ -8,6 +8,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
+use ADT\FancyAdmin\Model\Entities\File;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\Model\Menu\UserMenuFactory;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
@@ -16,6 +17,7 @@ use Nette\Application\AbortException;
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
+use Nette\Http\FileUpload;
 use Nette\Security\AuthenticationException;
 use ReflectionClass;
 use ReflectionException;
@@ -133,6 +135,27 @@ trait AuthPresenterTrait
 		}
 	}
 
+	public function handleSummernoteUpload(): void
+	{
+		/** @var FileUpload[] $files */
+		$files = $this->getHttpRequest()->getFiles();
+		if (!isset($files['file'])) {
+			$this->payload->status = false;
+			$this->sendPayload();
+		}
+
+		$fileEntityClass = $this->_em->findEntityClassByInterface(File::class);
+		/** @var File $fileEntity */
+		$fileEntity = (new $fileEntityClass)
+			->setTemporaryFile($files['file']->getTemporaryFile(), $files['file']->getUntrustedName());;
+
+		$this->_em->persist($fileEntity);
+		$this->_em->flush();
+
+		$this->payload->status = true;
+		$this->payload->filename = $fileEntity->getUrl();
+	}
+
 	public function beforeRender(): void
 	{
 		parent::beforeRender();
@@ -145,6 +168,8 @@ trait AuthPresenterTrait
 		$userMenuFactory = new $userMenuClassName();
 		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 		$this->getTemplate()->userMenu = $userMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
+		$this->getTemplate()->summernoteUpload = $this->getPresenter()->link('summernoteUpload!');
+
 	}
 
 	/**

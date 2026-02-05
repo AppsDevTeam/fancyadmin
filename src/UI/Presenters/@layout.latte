@@ -46,7 +46,14 @@
 	{/if}
 </head>
 
-<body data-app-body data-adt-js-components="{$jsComponentsConfig}" data-adt-messaging data-adt-translate data-adt-safari-support>
+<body
+	data-app-body
+	data-adt-js-components="{$jsComponentsConfig}"
+	data-adt-messaging
+	data-adt-translate
+	data-adt-safari-support
+	data-summernote-upload="{$summernoteUpload}"
+>
 <div n:snippet="body">
 	{if $primaryTemplate}
 		{block menu}
