@@ -37,7 +37,7 @@ trait OnetimeTokenTrait
 
 	public function getToken(): string
 	{
-		return $this->token;
+		return preg_replace('/^[^:]+:/', '', $this->token);
 	}
 
 	public function setToken(string $token): static
