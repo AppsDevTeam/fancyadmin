@@ -134,7 +134,7 @@ trait MailerTrait
 		$this->em->beginTransaction();
 
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity);
+		$onetimeToken = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity, $identity->getEmail());
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
@@ -159,7 +159,7 @@ trait MailerTrait
 		$this->em->beginTransaction();
 
 		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'),  $identity);
+		$onetimeToken = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'),  $identity, $identity->getEmail());
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',

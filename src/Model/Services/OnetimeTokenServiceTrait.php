@@ -22,7 +22,7 @@ trait OnetimeTokenServiceTrait
 	 * @throws ReflectionException
 	 * @throws Exception
 	 */
-	public function saveToken(OnetimeTokenType $type, DateTimeImmutable $validUntil, ?Entity $entity = null, ?string $token = null): OnetimeToken
+	public function saveToken(OnetimeTokenType $type, DateTimeImmutable $validUntil, ?Entity $entity = null, string $identifier = '', int $length = 32): OnetimeToken
 	{
 		/** @var OnetimeToken $onetimeToken */
 		$onetimeToken = new ($this->em->findEntityClassByInterface(OnetimeToken::class));
@@ -31,7 +31,7 @@ trait OnetimeTokenServiceTrait
 			->setValidUntil($validUntil)
 			->setObjectClass($entity ? $entity::class : null)
 			->setObjectId($entity?->getId())
-			->setToken($token ?: Random::generate(32, 'a-zA-Z0-9'))
+			->setToken(($identifier ? $identifier . ':' : '') . Random::generate($length, 'A-Z0-9'))
 			->setIpAddress($_SERVER['REMOTE_ADDR']);
 		$this->em->persist($onetimeToken);
 		$this->em->flush();

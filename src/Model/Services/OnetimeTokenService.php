@@ -9,6 +9,6 @@ use DateTimeImmutable;
 
 interface OnetimeTokenService
 {
-	public function saveToken(OnetimeTokenType $type, DateTimeImmutable $validUntil, ?Entity $entity = null, ?string $token = null): OnetimeToken;
+	public function saveToken(OnetimeTokenType $type, DateTimeImmutable $validUntil, ?Entity $entity = null, string $identifier = '', int $length = 32): OnetimeToken;
 	public function findToken(OnetimeTokenType $type, string $token): ?OnetimeToken;
 }
