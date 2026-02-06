@@ -22,18 +22,6 @@ trait BasePresenterTrait
 
 	#[Persistent]
 	public string $backlink = '';
-	
-	protected function startup(): void
-	{
-		parent::startup();
-
-		$this->getUser()->onLoggedIn[] = function(SecurityUser $securityUser) {
-			if ($onetimeToken = $securityUser->getIdentity()->getOnetimeToken()) {
-				$onetimeToken->setUsedAt(new \DateTimeImmutable());
-				$this->_em->flush();
-			}
-		};
-	}
 
 	protected function beforeRender(): void
 	{
