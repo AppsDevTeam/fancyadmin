@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\DI\Injects;
 
-use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
+use ADT\DoctrineAuthenticator\OTP\OnetimeTokenService;
 use Kdyby\Autowired\Attributes\Autowire;
 
 trait OnetimeTokenServiceInject
