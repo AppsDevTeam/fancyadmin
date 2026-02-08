@@ -223,7 +223,7 @@ trait IdentityTrait
 				return $_profile;
 			}
 		}
-		if ($selectedAccount->getParent()) {
+		if ($selectedAccount?->getParent()) {
 			foreach ($this->getProfiles() as $_profile) {
 				if ($_profile->getAccount() === $selectedAccount->getParent()) {
 					return $_profile;
