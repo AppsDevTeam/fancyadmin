@@ -11,7 +11,6 @@ use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
-use Nette\Application\UI\InvalidLinkException;
 use Nette\Security\AuthenticationException;
 
 trait SignInFormTrait
@@ -52,14 +51,13 @@ trait SignInFormTrait
 	{
 		try {
 			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->_fancyAdmin->getContext());
-		} catch (AuthenticationException $e) {
-			$form->addError($e->getMessage());
+		} catch (AuthenticationException) {
+			$form->addError('fcadmin.appGeneral.exceptions.wrongCredentials');
 		}
 	}
 
 	/**
 	 * @throws AuthenticationException
-	 * @throws InvalidLinkException
 	 */
 	public function processForm(): never
 	{
