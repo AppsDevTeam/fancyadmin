@@ -5,7 +5,6 @@ namespace ADT\FancyAdmin\UI\Presenters\Sign;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
-use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm;
@@ -23,7 +22,6 @@ trait SignPresenterTrait
 {
 	use PresenterTrait;
 	use RedirectAfterLoginTrait;
-	use OnetimeTokenQueryFactoryInject;
 	use EntityManagerInject;
 	use FancyAdminInject;
 	use SecurityUserInject;

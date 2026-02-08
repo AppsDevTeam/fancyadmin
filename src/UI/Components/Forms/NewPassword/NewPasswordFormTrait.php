@@ -20,7 +20,6 @@ trait NewPasswordFormTrait
 {
 	use ControlTrait;
 	use RedirectAfterLoginTrait;
-	use OnetimeTokenQueryFactoryInject;
 	use SecurityUserInject;
 	use EntityManagerInject;
 
