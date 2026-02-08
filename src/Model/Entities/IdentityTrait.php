@@ -217,8 +217,20 @@ trait IdentityTrait
 
 	public function getProfile(): ?Profile
 	{
-		return array_find($this->getProfiles(), fn($_profile) => $_profile->getAccount() === $this->getSelectedAccount());
-
+		$selectedAccount = $this->getSelectedAccount();
+		foreach ($this->getProfiles() as $_profile) {
+			if ($_profile->getAccount() === $selectedAccount) {
+				return $_profile;
+			}
+		}
+		if ($selectedAccount->getParent()) {
+			foreach ($this->getProfiles() as $_profile) {
+				if ($_profile->getAccount() === $selectedAccount->getParent()) {
+					return $_profile;
+				}
+			}
+		}
+		return null;
 	}
 
 	public function getGravatar(string $d = 'mp'): string
@@ -236,6 +248,18 @@ trait IdentityTrait
 			$accounts[] = $_profile->getAccount();
 		}
 		return $accounts;
+	}
+
+	/**
+	 * @return Account[]
+	 */
+	public function getSubaccounts(): array
+	{
+		$subaccounts = [];
+		foreach ($this->getAccounts() as $_account) {
+			$subaccounts = array_merge($subaccounts, $_account->getSubaccounts());
+		}
+		return $subaccounts;
 	}
 
 	/**

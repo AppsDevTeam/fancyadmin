@@ -12,4 +12,5 @@ interface Account extends Entity
 	public function setName(string $name): static;
 	public function getParent(): ?Account;
 	public function setParent(?Account $parent): static;
+	public function getSubaccounts(): array;
 }

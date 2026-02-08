@@ -38,4 +38,12 @@ trait AccountTrait
 		$this->parent = $parent;
 		return $this;
 	}
+
+	/**
+	 * @return Account[]
+	 */
+	public function getSubaccounts(): array
+	{
+		return $this->accounts->toArray();
+	}
 }

@@ -57,6 +57,7 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getFullName(): string;
 	public function getGravatar(): string;
 	public function getAccounts(): array;
+	public function getSubaccounts(): array;
 
 	// Auth
 	public function isAllowed(Resource $aclResource): bool;

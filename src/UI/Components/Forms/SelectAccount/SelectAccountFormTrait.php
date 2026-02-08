@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Components\Forms\FormTrait;
 use ADT\Forms\Form;
@@ -36,24 +37,13 @@ trait SelectAccountFormTrait
 	 */
 	public function initForm(Form $form): void
 	{
-		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			$usersCompanies = $this->_accountQueryFactory->create()
-				->disableAccountFilter()
-				->fetch();
-		} else {
-			$usersCompanies = $this->_securityUser->getIdentity()->getAccounts();
-		}
-		$usersCompanyPairs = [];
-		foreach ($usersCompanies as $_company) {
-			$usersCompanyPairs[$_company->getId()] = $_company->getFullName();
-		}
-		asort($usersCompanyPairs);
+		$accountPairs = $this->getAccountsPairs($this->getAccounts());
+		asort($accountPairs);
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			//pridani option pro presmerovani do settings, respektive pro odnastaveni spolcnosi pokud ma user global companies
-			$usersCompanyPairs[self::SETTINGS] = $this->_translator->translate('fcadmin.forms.systemSelectCompany.options.admin');
+			$accountPairs[self::SETTINGS] = $this->_translator->translate('fcadmin.forms.systemSelectCompany.options.admin');
 		}
-
-		$form->addSelect('account', '', $usersCompanyPairs)
+		$form->addSelect('account', '', $accountPairs)
 			->setDefaultValue($this->_securityUser->getIdentity()->getSelectedAccount()?->getId() ?: self::SETTINGS)
 			->setHtmlAttribute('class', 'primary-select')
 			->setHtmlAttribute('data-adt-select2', [
@@ -61,6 +51,29 @@ trait SelectAccountFormTrait
 			]);
 
 		$form->watchForSubmit($form['account']);
+	}
+	
+	protected function getAccounts(): array
+	{
+		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+			return $this->_accountQueryFactory->create()
+				->disableAccountFilter()
+				->fetch();
+		} else {
+			return array_merge($this->_securityUser->getIdentity()->getAccounts(), $this->_securityUser->getIdentity()->getSubaccounts());
+		}
+	}
+
+	/**
+	 * @param Account[] $accounts
+	 */
+	protected function getAccountsPairs(array $accounts): array
+	{
+		$accountPairs = [];
+		foreach ($accounts as $_account) {
+			$accountPairs[$_account->getId()] = $_account->getName();
+		}
+		return $accountPairs;
 	}
 
 	/**
