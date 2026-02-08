@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms;
 
+use ADT\DoctrineAuthenticator\OTP\OnetimeToken;
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
@@ -11,7 +12,6 @@ use ADT\FancyAdmin\DI\Injects\ProfileQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\Forms\DynamicContainer;
 use ADT\Forms\Form;
