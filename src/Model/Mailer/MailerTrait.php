@@ -2,13 +2,12 @@
 
 namespace ADT\FancyAdmin\Model\Mailer;
 
+use ADT\DoctrineAuthenticator\OTP\OnetimeToken;
+use ADT\DoctrineAuthenticator\OTP\OnetimeTokenService;
+use ADT\DoctrineAuthenticator\OTP\OnetimeTokenTypeEnum;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\OnetimeToken;
-use ADT\FancyAdmin\Model\Services\OnetimeTokenService;
-use ADT\FancyAdmin\Model\Services\OnetimeTokenType;
-use ADT\FancyAdmin\Model\Services\OnetimeTokenTypeEnum;
 use ADT\SingleRecipient\SingleRecipient;
 use Contributte\Translation\Exceptions\InvalidArgument;
 use Contributte\Translation\Translator;
@@ -133,14 +132,13 @@ trait MailerTrait
 	{
 		$this->em->beginTransaction();
 
-		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity, $identity->getEmail());
+		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity);
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
 			'Vytvoření účtu',
 			[
-				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()])
+				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $token])
 			]
 		);
 		$message->addTo($identity->getEmail());
@@ -158,14 +156,13 @@ trait MailerTrait
 	{
 		$this->em->beginTransaction();
 
-		/** @var OnetimeToken $onetimeToken */
-		$onetimeToken = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'),  $identity, $identity->getEmail());
+		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'),  $identity);
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',
 			'Nové heslo',
 			[
-				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $onetimeToken->getToken()]),
+				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $token]),
 			]
 		);
 		$message->addTo($identity->getEmail());

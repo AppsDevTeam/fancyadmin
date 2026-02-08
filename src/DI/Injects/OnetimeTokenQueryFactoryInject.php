@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\DI\Injects;
 
-use ADT\FancyAdmin\Model\Queries\Factories\OnetimeTokenQueryFactory;
+use ADT\DoctrineAuthenticator\OTP\OnetimeTokenQueryFactory;
 use Kdyby\Autowired\Attributes\Autowire;
 
 trait OnetimeTokenQueryFactoryInject

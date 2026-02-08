@@ -56,7 +56,7 @@ trait SignInAsIdentity
 		$token = $this->_onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new \DateTimeImmutable('+15 minutes'), $identity);
 
 		$this->getPresenter()->payload->signAsIdentityLink = $this->getPresenter()->link('//Home:', [
-			'token' => $token->getToken(),
+			'token' => $token,
 		]);
 
 		$this->getPresenter()->sendPayload();

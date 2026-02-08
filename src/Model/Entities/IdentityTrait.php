@@ -62,7 +62,6 @@ trait IdentityTrait
 	protected Collection $roles;
 
 	protected string $authToken;
-	protected ?OnetimeToken $onetimeToken = null;
 
 	public function __construct()
 	{
@@ -253,17 +252,6 @@ trait IdentityTrait
 			return $this;
 		}
 		$this->roles->add($role);
-		return $this;
-	}
-
-	public function getOnetimeToken(): ?OnetimeToken
-	{
-		return $this->onetimeToken;
-	}
-
-	public function setOnetimeToken(?OnetimeToken $onetimeToken): static
-	{
-		$this->onetimeToken = $onetimeToken;
 		return $this;
 	}
 

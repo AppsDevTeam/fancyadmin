@@ -2,12 +2,12 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms\LostPassword;
 
+use ADT\DoctrineAuthenticator\OTP\OnetimeToken;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\Forms\Form;
 
