@@ -37,13 +37,7 @@ trait SelectAccountFormTrait
 	 */
 	public function initForm(Form $form): void
 	{
-		$accountPairs = $this->getAccountsPairs($this->getAccounts());
-		asort($accountPairs);
-		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			//pridani option pro presmerovani do settings, respektive pro odnastaveni spolcnosi pokud ma user global companies
-			$accountPairs[self::SETTINGS] = $this->_translator->translate('fcadmin.forms.systemSelectCompany.options.admin');
-		}
-		$form->addSelect('account', '', $accountPairs)
+		$form->addSelect('account', '', $this->getAccountPairs())
 			->setDefaultValue($this->_securityUser->getIdentity()->getSelectedAccount()?->getId() ?: self::SETTINGS)
 			->setHtmlAttribute('class', 'primary-select')
 			->setHtmlAttribute('data-adt-select2', [
@@ -53,27 +47,31 @@ trait SelectAccountFormTrait
 		$form->watchForSubmit($form['account']);
 	}
 	
-	protected function getAccounts(): array
+	protected function getAccountPairs(): array
 	{
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			return $this->_accountQueryFactory->create()
+			$accounts = $this->_accountQueryFactory->create()
 				->disableAccountFilter()
 				->fetch();
 		} else {
-			return array_merge($this->_securityUser->getIdentity()->getAccounts(), $this->_securityUser->getIdentity()->getSubaccounts());
+			$accounts = array_merge($this->_securityUser->getIdentity()->getAccounts(), $this->_securityUser->getIdentity()->getSubaccounts());
 		}
-	}
 
-	/**
-	 * @param Account[] $accounts
-	 */
-	protected function getAccountsPairs(array $accounts): array
-	{
 		$accountPairs = [];
 		foreach ($accounts as $_account) {
-			$accountPairs[$_account->getId()] = $_account->getName();
+			$accountPairs[$_account->getId()] = $this->getAccountName($_account);
+		}
+		asort($accountPairs);
+		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+			//pridani option pro presmerovani do settings, respektive pro odnastaveni spolcnosi pokud ma user global companies
+			$accountPairs[self::SETTINGS] = $this->_translator->translate('fcadmin.forms.systemSelectCompany.options.admin');
 		}
 		return $accountPairs;
+	}
+	
+	protected function getAccountName(Account $account): string
+	{
+		return $account->getName();
 	}
 
 	/**
