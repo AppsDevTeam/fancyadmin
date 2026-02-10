@@ -23,7 +23,6 @@ trait AccountFieldListenerTrait
 
 	public function prePersistCallback(PrePersistEventArgs $args): void
 	{
-		bd($this->securityUser->getIdentity());
 		$entity = $args->getObject();
 		$identity = $this->securityUser->getIdentity();
 
