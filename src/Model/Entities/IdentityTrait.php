@@ -25,6 +25,7 @@ trait IdentityTrait
 	use CreatedByNullable;
 	use UpdatedBy;
 	use IsActive;
+	use \ADT\DoctrineAuthenticator\OTP\IdentityTrait;
 
 	abstract public function getId();
 
