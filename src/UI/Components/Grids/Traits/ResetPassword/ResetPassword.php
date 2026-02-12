@@ -2,9 +2,9 @@
 
 namespace ADT\FancyAdmin\UI\Components\Grids\Traits\ResetPassword;
 
+use ADT\DoctrineAuthenticator\OTP\OnetimeToken;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
-use ADT\FancyAdmin\Model\Entities\OnetimeToken;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
 use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
 use Contributte\Translation\Exceptions\InvalidArgument;
