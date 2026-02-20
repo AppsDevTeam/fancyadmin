@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 trait AccountTrait
 {
-	#[Column(unique: true, nullable: false)]
+	#[Column(nullable: false)]
 	protected string $name;
 
 	#[ORM\OneToMany(targetEntity: 'Account', mappedBy: 'parent')]
