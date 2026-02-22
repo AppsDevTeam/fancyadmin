@@ -20,23 +20,6 @@ trait SecurityUserTrait
 
 	protected Resource $fullDataAclResource;
 
-	public function __construct(
-		Request $httpRequest,
-		UserStorage $storage,
-		EntityManagerInterface $em,
-		?IAuthenticator $authenticator = null,
-		?Authorizator $authorizator = null,
-	)
-	{
-		parent::__construct($httpRequest, $storage, $authenticator, $authorizator);
-		$this->onLoggedIn[] = function(SecurityUser $securityUser) use ($em) {
-			if ($onetimeToken = $securityUser->getIdentity()->getOnetimeToken()) {
-				$onetimeToken->setUsedAt(new \DateTimeImmutable());
-				$em->flush();
-			}
-		};
-	}
-
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool
 	{
 		return array_any(
