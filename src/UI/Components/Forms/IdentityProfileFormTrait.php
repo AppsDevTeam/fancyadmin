@@ -69,16 +69,16 @@ trait IdentityProfileFormTrait
 					$form->addDynamicContainer(
 						'profiles',
 						function (StaticContainer $container) use ($form, $entity) {
-							static $i = 0;
+							$_profile = $entity?->getProfiles()[$container->getName()] ?? null;
+
 							$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
 							$this->addRoles($container, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
-							$container->addSelect('account', 'fcadmin.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->fetchPairs('fullName'))
+							$container->addSelect('account', 'fcadmin.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->orById($_profile?->getAccount()->getId())->fetchPairs('fullName'))
 								->setPrompt('---');
-							$container->addSection(function () use ($form, $container, $entity, $i) {
+							$container->addSection(function () use ($form, $container, $entity, $_profile) {
 								$form->mapToForm();
-								$this->addProfileFields($container, $entity?->getProfiles()[$i] ?? null, $container['roles']->getValue());
+								$this->addProfileFields($container, $_profile, $container['roles']->getValue());
 							}, 'account', watchForRedraw: [$container['account'], $container['roles']]);
-							$i++;
 						}
 					);
 
