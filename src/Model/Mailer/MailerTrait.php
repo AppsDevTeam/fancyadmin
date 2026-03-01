@@ -81,6 +81,7 @@ trait MailerTrait
 		$template->projectName = $this->administration->getProjectName();
 		$template->fromName = $this->fromName;
 		$template->logoFileName = $this->administration->getLogoBitmapPublicPath();
+		$template->backgroundColor = $this->administration->getEmailBackgroundColor();
 		$template->subject = $this->translator->translate($subject, $translateVariables);
 		$template->layoutFile = $layoutFile;
 

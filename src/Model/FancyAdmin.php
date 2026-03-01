@@ -13,6 +13,7 @@ class FancyAdmin
 		protected bool $lostPasswordEnabled,
 		protected string $logoPublicPath,
 		protected string $logoMenuPath,
+		protected string $emailBackgroundColor,
 		protected string $loginPageLogoPath,
 		protected string $logoBitmapPublicPath,
 		protected string $defaultCustomerRoute,
@@ -108,6 +109,17 @@ class FancyAdmin
 	public function setJsComponentsConfig(array $jsComponentsConfig): self
 	{
 		$this->jsComponentsConfig = $jsComponentsConfig;
+		return $this;
+	}
+
+	public function getEmailBackgroundColor(): string
+	{
+		return $this->emailBackgroundColor;
+	}
+
+	public function setEmailBackgroundColor(string $emailBackgroundColor): static
+	{
+		$this->emailBackgroundColor = $emailBackgroundColor;
 		return $this;
 	}
 }
