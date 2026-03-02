@@ -112,10 +112,7 @@ trait IdentityTrait
 
 	public function setEmail(?string $email): static
 	{
-		$this->email = $email ?: null;
-		if ($email) {
-			$this->username = $email;
-		}
+		$this->email = $email;
 		return $this;
 	}
 
