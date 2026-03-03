@@ -5,7 +5,7 @@
 		<style>
 			{$account->getCss()|noescape}
 		</style>
-	{elseif isset($parameters)}
+	{elseif isset($parameters['colors'])}
 		<style>
 			body {
 				--backgroundColor: {$parameters['colors']['backgroundColor']|noescape};

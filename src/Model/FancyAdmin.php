@@ -24,6 +24,7 @@ class FancyAdmin
 		protected Resource $fullDataAclResource,
 		protected ?string $context,
 		protected array $jsComponentsConfig = [],
+		protected array $parameters = [],
 	) {}
 
 	public function getProject(): string
@@ -120,6 +121,17 @@ class FancyAdmin
 	public function setEmailBackgroundColor(string $emailBackgroundColor): static
 	{
 		$this->emailBackgroundColor = $emailBackgroundColor;
+		return $this;
+	}
+
+	public function getParameters(): array
+	{
+		return $this->parameters;
+	}
+
+	public function setParameters(array $parameters): self
+	{
+		$this->parameters = $parameters;
 		return $this;
 	}
 }

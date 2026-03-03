@@ -51,6 +51,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'fullDataAclResource' => Expect::type(Resource::class)->default(null),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
+			'parameters' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
 		]);
 	}
@@ -87,6 +88,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
+				'parameters' => $this->config->parameters,
 			]);
 
 		//$this->validateTraitInterfaceCompliance();
