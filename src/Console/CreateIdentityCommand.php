@@ -6,6 +6,7 @@ use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Mailer\Mailer;
 use ADT\FancyAdmin\Model\Queries\Factories\AclRoleQueryFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
@@ -23,6 +24,7 @@ class CreateIdentityCommand extends \ADT\FancyAdmin\Console\Command
 		private readonly EntityManagerInterface $em,
 		private readonly AclRoleQueryFactory $aclRoleQueryFactory,
 		private readonly FancyAdmin $fancyAdmin,
+		private readonly Mailer $mailer
 	)
 	{
 		parent::__construct();
@@ -58,7 +60,7 @@ class CreateIdentityCommand extends \ADT\FancyAdmin\Console\Command
 		$this->em->persist($identity);
 		$this->em->flush();
 
-		// TODO send email
+		$this->mailer->sendAccountCreationEmail($identity);
 
 		return Command::SUCCESS;
 	}

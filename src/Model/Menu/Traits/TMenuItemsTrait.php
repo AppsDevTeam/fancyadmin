@@ -10,20 +10,42 @@ use Nette\Security\Resource;
 
 trait TMenuItemsTrait {
 
-	public function addPermissionsItem(NavbarMenu|NavbarSubmenu $menu): void {
-		$menu->addMenuItem(
-			$this->createMenuItemEntity($menu)
-				->setLabel('fcadmin.presenters.permissions.title')
-				->setLink('Permissions:default')
-		);
+	public function addPermissionsItem(
+		NavbarMenu|NavbarSubmenu $menu,
+		string $label = 'fcadmin.presenters.permissions.title',
+		string $link = 'Permissions:default',
+		?string $faIcon = null,
+		?Resource $alcResource = null,
+	): void {
+		$navbarMenuItem = $this->createMenuItemEntity($menu)
+			->setLabel($label)
+			->setLink($link)
+			->setAclResource($alcResource);
+
+		if ($faIcon) {
+			$navbarMenuItem->setFaIcon($faIcon);
+		}
+
+		$menu->addMenuItem($navbarMenuItem);
 	}
 
-	public function addAclRolesItem(NavbarMenu|NavbarSubmenu $menu): void {
-		$menu->addMenuItem(
-			$this->createMenuItemEntity($menu)
-				->setLabel('fcadmin.presenters.roles.title')
-				->setLink('AclRoles:default')
-		);
+	public function addAclRolesItem(
+		NavbarMenu|NavbarSubmenu $menu,
+		string $label = 'fcadmin.presenters.roles.title',
+		string $link = 'AclRoles:default',
+		?string $faIcon = null,
+		?Resource $alcResource = null,
+	): void {
+		$navbarMenuItem = $this->createMenuItemEntity($menu)
+			->setLabel($label)
+			->setLink($link)
+			->setAclResource($alcResource);
+
+		if ($faIcon) {
+			$navbarMenuItem->setFaIcon($faIcon);
+		}
+
+		$menu->addMenuItem($navbarMenuItem);
 	}
 
 	public function addIdentitiesItem(
@@ -47,7 +69,7 @@ trait TMenuItemsTrait {
 
 	public function addAccountsItem(
 		NavbarMenu|NavbarSubmenu $menu,
-		string $label = 'fcadmin.presenters.accounts.title',
+		string $label = 'fcadmin.presenters.account.title',
 		string $link = 'Accounts:default',
 		?string $faIcon = null,
 		?Resource $alcResource = null,
@@ -64,12 +86,23 @@ trait TMenuItemsTrait {
 		$menu->addMenuItem($navbarMenuItem);
 	}
 
-	public function addConfigurationsItem(NavbarMenu|NavbarSubmenu $menu): void {
-		$menu->addMenuItem(
-			$this->createMenuItemEntity($menu)
-				->setLabel('Configurations')
-				->setLink('Configurations:default')
-		);
+	public function addConfigurationsItem(
+		NavbarMenu|NavbarSubmenu $menu,
+		string $label = 'fcadmin.presenters.configurations.title',
+		string $link = 'Configurations:default',
+		?string $faIcon = null,
+		?Resource $alcResource = null,
+	): void {
+		$navbarMenuItem = $this->createMenuItemEntity($menu)
+			->setLabel($label)
+			->setLink($link)
+			->setAclResource($alcResource);
+
+		if ($faIcon) {
+			$navbarMenuItem->setFaIcon($faIcon);
+		}
+
+		$menu->addMenuItem($navbarMenuItem);
 	}
 
 	/**
