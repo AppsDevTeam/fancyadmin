@@ -30,6 +30,8 @@ trait BasePresenterTrait
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
 		$this->getTemplate()->jsComponentsConfig = Json::encode($this->_fancyAdmin->getJsComponentsConfig());
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
+		$this->getTemplate()->faviconFileNamePng = $this->_fancyAdmin->getFaviconFileNamePng();
+		$this->getTemplate()->faviconFileNameSvg = $this->_fancyAdmin->getFaviconFileNameSvg();
 		$this->getTemplate()->icon = $this->_fancyAdmin->getLogoMenuPath();
 		$this->getTemplate()->loginPageLogoPath = $this->_fancyAdmin->getLoginPageLogoPath();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();

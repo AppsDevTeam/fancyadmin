@@ -14,6 +14,8 @@ class FancyAdmin
 		protected string $logoPublicPath,
 		protected string $logoMenuPath,
 		protected string $emailBackgroundColor,
+		protected ?string $faviconFileNamePng,
+		protected ?string $faviconFileNameSvg,
 		protected string $loginPageLogoPath,
 		protected string $logoBitmapPublicPath,
 		protected string $defaultCustomerRoute,
@@ -120,6 +122,28 @@ class FancyAdmin
 	public function setEmailBackgroundColor(string $emailBackgroundColor): static
 	{
 		$this->emailBackgroundColor = $emailBackgroundColor;
+		return $this;
+	}
+
+	public function getFaviconFileNamePng(): ?string
+	{
+		return $this->faviconFileNamePng;
+	}
+
+	public function setFaviconFileNamePng(string $faviconFileNamePng): static
+	{
+		$this->faviconFileNamePng = $faviconFileNamePng;
+		return $this;
+	}
+
+	public function getFaviconFileNameSvg(): ?string
+	{
+		return $this->faviconFileNameSvg;
+	}
+
+	public function setFaviconFileNameSvg(string $faviconFileNameSvg): static
+	{
+		$this->faviconFileNameSvg = $faviconFileNameSvg;
 		return $this;
 	}
 }
