@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\AclRole;
 
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Entities\AclRole;
+use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\Forms\Form;
 use Exception;
 
@@ -20,6 +21,12 @@ trait AclRoleFormTrait
 	public function initForm(Form $form): void
 	{
 		$form->addText('name', 'fcadmin.forms.aclRole.name')
+			->setRequired();
+
+		$form->addSelect('type', 'fcadmin.forms.aclRole.type', [
+				AclRoleTypeEnum::IDENTITY->value => 'fcadmin.forms.aclRole.types.identity',
+				AclRoleTypeEnum::PROFILE->value => 'fcadmin.forms.aclRole.types.profile',
+			])
 			->setRequired();
 
 		$form->addSubmit('submit', 'fcadmin.forms.aclRole.submit');
