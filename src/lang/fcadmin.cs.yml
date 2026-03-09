@@ -123,7 +123,7 @@ forms:
 
   aclRole:
     name: Název
-    type: Typ
+    type: Typ role
     types:
       identity: Identita
       profile: Profil
