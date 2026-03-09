@@ -21,6 +21,10 @@ h2 {
 	margin-bottom: 0;
 }
 
+.modal {
+	--bs-modal-zindex: 9030;
+}
+
 @include media-breakpoint-down(sm) {
 	h1 {
 		font-size: 30px;
