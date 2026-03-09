@@ -123,6 +123,10 @@ forms:
 
   aclRole:
     name: Název
+    type: Typ
+    types:
+      identity: Identita
+      profile: Profil
     submit: Odeslat
 
   systemSelectCompany:
@@ -157,6 +161,9 @@ grids:
       newPassword: Opravdu chcete odeslat e-mail S výzvou pro nastavení hesla?
     messages:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
+  global:
+    isActive:
+      label: Aktivní
 
 appGeneral:
   labels:
