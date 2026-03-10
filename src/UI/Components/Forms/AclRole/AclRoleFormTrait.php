@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Components\Forms\AclRole;
 
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
@@ -15,6 +16,7 @@ use Exception;
 trait AclRoleFormTrait
 {
 	use EntityManagerInject;
+	use AclRoleQueryFactoryInject;
 	use FancyAdminInject;
 	
 	/**
@@ -39,13 +41,28 @@ trait AclRoleFormTrait
 		return $this->_em->findEntityClassByInterface(AclRole::class);
 	}
 
+	public function validateForm(?AclRole $entity, array $inputs): void
+	{
+		$query = $this->_aclRoleQueryFactory->create()
+			->disableSecurityFilter()
+			->byName($inputs['name']);
+
+		if ($entity && !$entity->isNew()) {
+			$query->byIdNot($entity->getId());
+		}
+
+		if ($query->fetch()) {
+			$this->form['name']->addError('fcadmin.forms.aclRole.errors.nameAlreadyExists');
+		}
+	}
+
 	/**
 	 * @throws Exception
 	 */
-	public function processForm(): void
+	public function processForm(AclRole $entity): void
 	{
-		if ($this->entity->isNew()) {
-			$this->entity->setContext($this->_fancyAdmin->getContext());;
+		if ($entity->isNew()) {
+			$entity->setContext($this->_fancyAdmin->getContext());;
 		}
 
 		$this->em->flush();
