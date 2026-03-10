@@ -23,6 +23,10 @@ interface AclRole extends Role, Entity
 	// Přístupová práva
 	public function isAllowed(Resource $aclResource): bool;
 
+	// Kontext
+	public function getContext(): ?string;
+	public function setContext(?string $context): static;
+
 	// AclRole flags
 	public function getIsAdmin(): bool;
 	public function setIsAdmin(bool $isAdmin): static;
