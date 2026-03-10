@@ -17,36 +17,27 @@
 	<div class="table-responsive-wrapper">
 		<div class="table-responsive">
 			<table class="table text-center mb-0" style="table-layout: fixed">
-				{foreach $resources as $_resource}
-					{var $rowIsFirst = $iterator->first}
-					{if $rowIsFirst}
-						<thead>
-					{/if}
+				<thead>
 					<tr>
-						{if $iterator->first}
-							<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
-						{else}
-							<td scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;">{_$_resource->getTitle()}</td>
-						{/if}
+						<th scope="col" style="text-align: left; width: 150px;">{_fcadmin.presenters.permissions.table.title}</th>
+						<th scope="col" class="text-center" n:foreach="$roles as $_roleName">{$_roleName}</th>
+					</tr>
+				</thead>
+				{foreach $resources as $_resource}
+					<tr>
+						<td scope="row" class="text-break" style="text-align: left; font-weight: 500 !important;">{_$_resource->getTitle()}</td>
 						{foreach $roles as $_roleId => $_roleName}
-							{if $rowIsFirst}
-								<th scope="col" class="text-center">{$_roleName}</th>
-							{else}
 							{var $permissionExists = false}
-								{foreach $rolesResources as $_roleResource}
-									{breakIf $permissionExists = $_roleResource['resourceId'] === $_resource->getId() && $_roleResource['roleId'] === $_roleId}
-								{/foreach}
-								{if $permissionExists}
-									<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), false}"><div class="w-100"><i class="fa fa-check"></i></div></a></td>
-								{else}
-									<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), true}"><div class="w-100"><i class="fa fa-times"></i></div></a></td>
-								{/if}
+							{foreach $rolesResources as $_roleResource}
+								{breakIf $permissionExists = $_roleResource['resourceId'] === $_resource->getId() && $_roleResource['roleId'] === $_roleId}
+							{/foreach}
+							{if $permissionExists}
+								<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), false}"><div class="w-100"><i class="fa fa-check"></i></div></a></td>
+							{else}
+								<td><a class="color-default-text" href="{link permission! $_roleId, $_resource->getId(), true}"><div class="w-100"><i class="fa fa-times"></i></div></a></td>
 							{/if}
 						{/foreach}
 					</tr>
-					{if $rowIsFirst}
-						</thead>
-					{/if}
 				{/foreach}
 			</table>
 		</div>
@@ -54,11 +45,11 @@
 </div>
 
 <style>
-    thead th {
-        width: 100px;
-    }
+	thead th {
+		width: 100px;
+	}
 
-    tbody tr > td:first-child {
-        width: 100px !important;
-    }
+	tbody tr > td:first-child {
+		width: 100px !important;
+	}
 </style>
