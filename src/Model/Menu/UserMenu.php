@@ -8,6 +8,8 @@ class UserMenu
 {
 	protected bool $addMyAccountMenuItem = true;
 
+	protected bool $addFirebaseMenuItem = true;
+
 	/** @var UserMenuItem[] */
 	protected array $menuItems = [];
 
@@ -60,5 +62,16 @@ class UserMenu
 	public function isAddMyAccountMenuItem(): bool
 	{
 		return $this->addMyAccountMenuItem;
+	}
+
+	public function setFirebaseMenuItem(bool $value): self
+	{
+		$this->addFirebaseMenuItem = $value;
+		return $this;
+	}
+
+	public function isFirebaseMenuItem(): bool
+	{
+		return $this->addFirebaseMenuItem;
 	}
 }
