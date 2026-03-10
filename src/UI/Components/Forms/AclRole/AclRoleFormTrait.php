@@ -41,7 +41,7 @@ trait AclRoleFormTrait
 		return $this->_em->findEntityClassByInterface(AclRole::class);
 	}
 
-	public function validateForm(?AclRole $entity, array $inputs): void
+	public function validateForm(?AclRole $entity, array $inputs, Form $form): void
 	{
 		$query = $this->_aclRoleQueryFactory->create()
 			->disableSecurityFilter()
@@ -52,7 +52,7 @@ trait AclRoleFormTrait
 		}
 
 		if ($query->fetch()) {
-			$this->form['name']->addError('fcadmin.forms.aclRole.errors.nameAlreadyExists');
+			$form['name']->addError('fcadmin.forms.aclRole.errors.nameAlreadyExists');
 		}
 	}
 
