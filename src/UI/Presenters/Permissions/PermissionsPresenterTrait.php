@@ -39,7 +39,7 @@ trait PermissionsPresenterTrait
 		$this->template->resources = $this->_em->getRepository($this->aclResourceEntityClass)
 			->createQueryBuilder('acl_resources')
 			->select('acl_resources')
-			->orderBy('acl_resources.name')
+			->orderBy('acl_resources.title')
 			->getQuery()
 			->getResult();
 
