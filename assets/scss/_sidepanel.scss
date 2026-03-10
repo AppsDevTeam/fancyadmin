@@ -84,6 +84,8 @@
 
 		.item.opened > .submenu {
 			display: block !important;
+			overflow-y: auto;
+			overflow-x: hidden;
 		}
 
 		.item {

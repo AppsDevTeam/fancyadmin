@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Components\Forms\AclRole;
 
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\Forms\Form;
@@ -14,6 +15,7 @@ use Exception;
 trait AclRoleFormTrait
 {
 	use EntityManagerInject;
+	use FancyAdminInject;
 	
 	/**
 	 * @throws Exception
@@ -42,6 +44,10 @@ trait AclRoleFormTrait
 	 */
 	public function processForm(): void
 	{
+		if ($this->entity->isNew()) {
+			$this->entity->setContext($this->_fancyAdmin->getContext());;
+		}
+
 		$this->em->flush();
 	}
 }
