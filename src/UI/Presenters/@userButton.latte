@@ -30,6 +30,16 @@
                     </div>
                 </div>
             </a>
+            <li n:if="$userMenu->isFirebaseMenuItem()" class="dropdown-item" data-adt-notifications="">
+                <div>
+                    <div>
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        Povolit notifikace
+                    </div>
+                </div>
+            </li>
             {foreach $userMenu->getMenuItems() as $item}
                 {var $link = $presenter->link($item->getLink(), $item->getLinkArgs())}
                 <a href="{$link}" class="dropdown-item">
