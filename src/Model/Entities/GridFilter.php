@@ -8,6 +8,7 @@ use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\UniqueConstraint;
 
 #[UniqueConstraint(fields: ["grid", "name"])]
@@ -24,6 +25,10 @@ trait GridFilter
 
 	#[Column(type: "json", nullable: false)]
 	protected array $value = [];
+
+	#[ORM\ManyToOne(targetEntity: 'Account')]
+	#[JoinColumn(nullable: true)]
+	protected ?Account $account = null;
 
 	public function getGrid(): string
 	{
@@ -55,6 +60,17 @@ trait GridFilter
 	public function setValue(array $value): self
 	{
 		$this->value = $value;
+		return $this;
+	}
+
+	public function getAccount(): ?Account
+	{
+		return $this->account;
+	}
+
+	public function setAccount(?Account $account): self
+	{
+		$this->account = $account;
 		return $this;
 	}
 }
