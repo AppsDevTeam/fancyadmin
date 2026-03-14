@@ -20,7 +20,7 @@ class Permission extends \Nette\Security\Permission
 	protected function setResources(): void
 	{
 		/** @var AclResource[] $resources */
-		$resources = $this->em->getRepository(AclResource::class)->findAll();
+		$resources = $this->em->getRepository($this->em->findEntityClassByInterface(AclResource::class))->findAll();
 
 		foreach ($resources as $resource) {
 			$this->addResource($resource->getName());
@@ -30,7 +30,7 @@ class Permission extends \Nette\Security\Permission
 	protected function setRoles(): void
 	{
 		/** @var AclRole[] $roles */
-		$roles = $this->em->getRepository(AclRole::class)->findAll();
+		$roles = $this->em->getRepository($this->em->findEntityClassByInterface(AclRole::class))->findAll();
 
 		foreach ($roles as $role) {
 			$this->addRole($role->getRoleId());
@@ -39,7 +39,7 @@ class Permission extends \Nette\Security\Permission
 
 	public function setAccess(): void
 	{
-		$allows = $this->em->getRepository(AclRole::class)
+		$allows = $this->em->getRepository($this->em->findEntityClassByInterface(AclRole::class))
 			->createQueryBuilder('role')
 			->select('role.name AS roleName, resource.name AS resourceName')
 			->innerJoin('role.resources', 'resource')

@@ -8,12 +8,12 @@ use Nette\Security\Resource;
 
 enum AclResourceNameEnum: string implements Resource
 {
-	case BACKOFFICE_ACCOUNTS = 'portal.backoffice.accounts';
-	case BACKOFFICE_IDENTITIES = 'portal.backoffice.identities';
+	case BACKOFFICE_ACCOUNTS = 'portalBackoffice.accounts';
+	case BACKOFFICE_IDENTITIES = 'portalBackoffice.identities';
 
-	case BACKOFFICE_CONFIGURATIONS = 'portal.backoffice.configurations';
+	case BACKOFFICE_CONFIGURATIONS = 'portalBackoffice.configurations';
 
-	case BACKOFFICE_ROLES_AND_PERMISSIONS = 'portal.backoffice.roles_and_permissions';
+	case BACKOFFICE_ROLES_AND_PERMISSIONS = 'portalBackoffice.roles_and_permissions';
 
 	public function getResourceId(): string
 	{

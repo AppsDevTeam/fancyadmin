@@ -63,6 +63,11 @@ class FancyAdminRouter
 				$this->accountQueryFactory
 			);
 
+			$this->backofficeRouteList->addRoute('<presenter>/<id \d+>', [
+				'presenter' => 'Home',
+				'action' => 'detail',
+			]);
+
 			$this->backofficeRouteList->addRoute('<presenter>[/<id \d+>][/<action>]', [
 				'presenter' => 'Home',
 				'action' => 'default',

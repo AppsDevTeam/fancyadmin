@@ -14,9 +14,7 @@ use ADT\FancyAdmin\UI\Components\Grids\Account\AccountGrid;
 use ADT\FancyAdmin\UI\Components\Grids\Account\AccountGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
-use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
-use Nette\Application\BadRequestException;
 
 trait AccountsPresenterTrait
 {
@@ -25,20 +23,17 @@ trait AccountsPresenterTrait
 	use AccountFormFactoryInject;
 	use AccountQueryFactoryInject;
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ACCOUNTS)]
 	public function actionDefault(): void
 	{
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ACCOUNTS)]
 	public function handleEdit(Account $account): void
 	{
 		$this->entity = $account;
 		$this->redrawSidePanel();
 	}
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_ACCOUNTS)]
 	public function handleNew(): void
 	{
 		$this->redrawSidePanel();

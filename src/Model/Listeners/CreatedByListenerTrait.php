@@ -10,7 +10,7 @@ use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 
-trait CreatedByListener
+trait CreatedByListenerTrait
 {
 	public function __construct(
 		protected readonly SecurityUser $securityUser,

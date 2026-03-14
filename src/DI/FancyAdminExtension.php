@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\DI;
 
-use ADT\FancyAdmin\Console\AclResourceSyncCommand;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Entities\AclResource;
@@ -99,10 +98,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$defs[] = $builder->addDefinition($this->prefix('createIdentity'))
 			->setFactory(CreateIdentityCommand::class)
-			->setAutowired(false);
-
-		$defs[] = $builder->addDefinition($this->prefix('aclResourceSync'))
-			->setFactory(AclResourceSyncCommand::class)
 			->setAutowired(false);
 
 		foreach ($defs as $_def) {

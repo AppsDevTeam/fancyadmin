@@ -12,8 +12,6 @@ use ADT\FancyAdmin\UI\Components\Grids\Configuration\ConfigurationGrid;
 use ADT\FancyAdmin\UI\Components\Grids\Configuration\ConfigurationGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
-use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
-use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 
 trait ConfigurationsPresenterTrait
 {
@@ -22,7 +20,6 @@ trait ConfigurationsPresenterTrait
 	use ConfigurationFormFactoryInject;
 	use ConfigurationQueryFactoryInject;
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_CONFIGURATIONS)]
 	public function actionDefault(?Configuration $configuration = null): void
 	{
 		if ($configuration) {
@@ -32,7 +29,6 @@ trait ConfigurationsPresenterTrait
 		$this->template->setFile(__DIR__ . '/default.latte');
 	}
 
-	#[SecurityCheckAttribute(AclResourceNameEnum::BACKOFFICE_CONFIGURATIONS)]
 	public function actionDetail(Configuration $configuration): void
 	{
 		$this->entity = $configuration;

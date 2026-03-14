@@ -19,6 +19,7 @@ use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Http\FileUpload;
 use Nette\Security\AuthenticationException;
+use App\Model\Entities\Enums\AclResourceNameEnum;
 use ReflectionClass;
 use ReflectionException;
 
@@ -50,7 +51,7 @@ trait AuthPresenterTrait
 
 		if ($token = $this->getParameter('token')) {
 			try {
-				$this->_securityUser->login($token, context: 'cashdesk'); // TODO enum
+				$this->_securityUser->login($token, context: $this->_fancyAdmin->getContext());
 				$this->redirect('this');
 			} catch (AuthenticationException) {}
 		}
@@ -99,21 +100,34 @@ trait AuthPresenterTrait
 	{
 		parent::checkRequirements($element);
 		if ($this->getUser()->isLoggedIn()) {
-			$this->validateSecurityAttributes();
+			if (
+				$this->getName() === trim($this->_fancyAdmin->getDefaultBackofficeRoute(), ':')
+				&&
+				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+			) {
+				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+			}
+
+			if (!$this->validateSecurityAttributes()) {
+				$this->validatePresenterPermission();
+			}
 		}
 	}
 
 	/**
 	 * @throws ReflectionException
 	 * @throws ForbiddenRequestException
+	 * @return bool Whether a SecurityCheckAttribute was found and processed
 	 */
-	private function validateSecurityAttributes(): void
+	private function validateSecurityAttributes(): bool
 	{
 		$reflection = new ReflectionClass($this->getPresenter()::class);
 		$reflectionMethod = $reflection->getMethod(static::ActionKey . ucfirst($this->getAction()));
 
+		$found = false;
 		foreach ($reflectionMethod->getAttributes() as $attribute) {
 			if ($attribute->getName() === SecurityCheckAttribute::class) {
+				$found = true;
 				$attributeInstance = $attribute->newInstance();
 				$aclResourceName = $attributeInstance->getResourceName();
 
@@ -121,6 +135,23 @@ trait AuthPresenterTrait
 					throw new ForbiddenRequestException();
 				}
 			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * @throws ForbiddenRequestException
+	 */
+	private function validatePresenterPermission(): void
+	{
+		$parts = explode(':', $this->getName());
+		$resource = lcfirst($parts[0]) . '.' . lcfirst($parts[1]);
+
+		bd ($resource);
+
+		if (!$this->getUser()->isAllowed($resource)) {
+			throw new ForbiddenRequestException();
 		}
 	}
 

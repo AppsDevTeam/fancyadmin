@@ -38,7 +38,7 @@ trait AclRoleTrait
 
 	public function getRoleId(): string
 	{
-		return (string) $this->getId();
+		return (string) $this->getName();
 	}
 
 	public function addResource(AclResource $resource): static
