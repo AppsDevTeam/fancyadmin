@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
+use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
@@ -98,6 +99,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$defs[] = $builder->addDefinition($this->prefix('createIdentity'))
 			->setFactory(CreateIdentityCommand::class)
+			->setAutowired(false);
+
+		$defs[] = $builder->addDefinition($this->prefix('generateMissingAclResources'))
+			->setFactory(GenerateMissingAclResourcesCommand::class, [
+				'appDir' => $builder->parameters['appDir'],
+			])
 			->setAutowired(false);
 
 		foreach ($defs as $_def) {

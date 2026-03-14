@@ -148,8 +148,6 @@ trait AuthPresenterTrait
 		$parts = explode(':', $this->getName());
 		$resource = lcfirst($parts[0]) . '.' . lcfirst($parts[1]);
 
-		bd ($resource);
-
 		if (!$this->getUser()->isAllowed($resource)) {
 			throw new ForbiddenRequestException();
 		}
