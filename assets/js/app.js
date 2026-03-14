@@ -106,5 +106,4 @@ AdtJsComponents.init('select-account-form', '~UI/Components/Forms/SelectAccount'
 // import 'forms-replicator';
 
 import './sideMenu'
-import './datagrid'
-import './summernote'
+import './datagrid/datagrid'
