@@ -65,8 +65,9 @@ trait IdentityGridTrait
 		$identity->setLastName(mb_substr($identity->getLastName(), 0, 1) . '.');
 		$identity->setEmail(null);
 		$identity->setPhoneNumber(null);
+		$identity->setUsername(null);
+		$identity->setPassword(null);
 		$identity->setIsActive(false);
-
 		foreach ($identity->getProfiles() as $_profile) {
 			$_profile->setIsActive(false);
 		}
