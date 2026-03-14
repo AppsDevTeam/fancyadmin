@@ -29,7 +29,8 @@
         {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
         <div id="submenu-{_$menuItem->getLabel()|webalize}-{$menuItemKey}" n:class="sub-menu, d-sm-none">
             {foreach $subMenu->getSubMenuItems() as $subMenuItem}
-                <a n:href="$subMenuItem->getLink() ?? '#'" n:class="$subMenuItem->isCurrent($presenter) ? active">
+				{var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
+				<a href="$link" n:class="$subMenuItem->isCurrent($presenter) ? active">
                     <i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i><span>{_$subMenuItem->getLabel()}</span>
                 </a>
             {/foreach}

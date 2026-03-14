@@ -9,11 +9,7 @@ use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\Routing\Route;
 use ADT\Routing\RouteList;
-use Closure;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\NoResultException;
-use Nette\Application\BadRequestException;
-use Nette\Routing\Route as RouteAlias;
 
 class FancyAdminRouteList extends RouteList
 {
@@ -37,39 +33,6 @@ class FancyAdminRouteList extends RouteList
 		}
 
 		return $adminHostPath;
-	}
-
-	public function addCustomerRoute(string $mask, Closure|array|string $metadata = [], int|bool $oneWay = 0): void
-	{
-		$metadata = array_merge(
-			[
-				'selectedAccount' => [
-					RouteAlias::FilterIn => function (string $selectedAccount) {
-						// nette vse natvrdo pretypovava na string
-						$selectedAccount = (int) $selectedAccount;
-
-						if ($this->securityUser->isLoggedIn()) {
-							try {
-								if ($this->securityUser->getIdentity()->getSelectedAccount()?->getId() !== $selectedAccount) {
-									$this->securityUser->getIdentity()->setSelectedAccount($this->accountQueryFactory->create()->disableAccountFilter()->byId($selectedAccount)->fetchOne());
-									$this->em->flush();
-								}
-							} catch (NoResultException $e) {
-								throw new BadRequestException();
-							}
-						}
-						return $selectedAccount;
-					},
-				]
-			],
-			$metadata
-		);
-
-		$this->addRoute(
-			'<selectedAccount \d+>/' . $mask,
-			$metadata,
-			$oneWay
-		);
 	}
 
 	public function createRoute(string $mask, $metadata = [], int $flags = 0): Route

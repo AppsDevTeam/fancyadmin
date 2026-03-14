@@ -13,10 +13,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nette\Application\BadRequestException;
 use Nette\Http\IResponse;
 use Nette\Routing\Route as RouteAlias;
-use Nette\Routing\RouteList;
 
 class FancyAdminRouter
 {
+	private ?FancyAdminCustomerRouteList $customerRouteList = null;
+	private ?FancyAdminRouteList $backofficeRouteList = null;
+	private ?\ADT\Routing\RouteList $routeList = null;
+
 	public function __construct(
 		protected FancyAdmin $administration,
 		protected SecurityUser $securityUser,
@@ -24,67 +27,92 @@ class FancyAdminRouter
 		protected AccountQueryFactory $accountQueryFactory,
 	) {}
 
-	public function createRouteList()
+	public function getCustomerRouteList(): FancyAdminCustomerRouteList
 	{
-		$routeList = new \ADT\Routing\RouteList();
+		if ($this->customerRouteList === null) {
+			$this->customerRouteList = new FancyAdminCustomerRouteList(
+				'PortalCustomer',
+				$this->administration,
+				$this->securityUser,
+				$this->em,
+				$this->accountQueryFactory
+			);
 
-		$routeList[] = $portal = new FancyAdminRouteList(
-			'Portal',
-			$this->administration,
-			$this->securityUser,
-			$this->em,
-			$this->accountQueryFactory
-		);
-
-		$portal->addRoute('sign/in', [
-			'presenter' => 'Sign',
-			'action' => 'in',
-		]);
-
-		$portal->addRoute('sign/out', [
-			'presenter' => 'Sign',
-			'action' => 'out',
-		]);
-
-		$portal->addRoute('sign/new-password', [
-			'presenter' => 'Sign',
-			'action' => 'newPassword',
-		]);
-
-		if ($this->administration->isLostPasswordEnabled()) {
-			$portal->addRoute('sign/lost-password', [
-				'presenter' => 'Sign',
-				'action' => 'lostPassword',
+			$this->customerRouteList->addRoute('<presenter>/[/<id>][/<action>]', [
+				'presenter' => 'Home',
+				'action' => 'default',
 			]);
 		}
 
-		$routeList[] = $portal = new FancyAdminRouteList(
-			'PortalCustomer',
-			$this->administration,
-			$this->securityUser,
-			$this->em,
-			$this->accountQueryFactory
-		);
+		return $this->customerRouteList;
+	}
 
-		$portal->addCustomerRoute('<presenter>/[/<id>][/<action>]', [
-			'presenter' => 'Home',
-			'action' => 'default',
-		]);
+	public function getBackofficeRouteList(): FancyAdminRouteList
+	{
+		if ($this->backofficeRouteList === null) {
+			$this->backofficeRouteList = new FancyAdminRouteList(
+				'PortalBackoffice',
+				$this->administration,
+				$this->securityUser,
+				$this->em,
+				$this->accountQueryFactory
+			);
 
-		$routeList[] = $portal = new FancyAdminRouteList(
-			'PortalBackoffice',
-			$this->administration,
-			$this->securityUser,
-			$this->em,
-			$this->accountQueryFactory
-		);
+			$this->backofficeRouteList->addRoute('<presenter>[/<id \d+>][/<action>]', [
+				'presenter' => 'Home',
+				'action' => 'default',
+			]);
+		}
 
-		$portal->addRoute('<presenter>[/<id \d+>][/<action>]', [
-			'presenter' => 'Home',
-			'action' => 'default',
-		]);
+		return $this->backofficeRouteList;
+	}
 
-		return $routeList;
+	public function getRouteList(): \ADT\Routing\RouteList
+	{
+		if ($this->routeList === null) {
+			$this->routeList = new \ADT\Routing\RouteList();
+
+			$portal = new FancyAdminRouteList(
+				'Portal',
+				$this->administration,
+				$this->securityUser,
+				$this->em,
+				$this->accountQueryFactory
+			);
+
+			$portal->addRoute('sign/in', [
+				'presenter' => 'Sign',
+				'action' => 'in',
+			]);
+
+			$portal->addRoute('sign/out', [
+				'presenter' => 'Sign',
+				'action' => 'out',
+			]);
+
+			$portal->addRoute('sign/new-password', [
+				'presenter' => 'Sign',
+				'action' => 'newPassword',
+			]);
+
+			if ($this->administration->isLostPasswordEnabled()) {
+				$portal->addRoute('sign/lost-password', [
+					'presenter' => 'Sign',
+					'action' => 'lostPassword',
+				]);
+			}
+
+			$this->routeList[] = $portal;
+			$this->routeList[] = $this->getCustomerRouteList();
+			$this->routeList[] = $this->getBackofficeRouteList();
+		}
+
+		return $this->routeList;
+	}
+
+	public function createRouteList(): \ADT\Routing\RouteList
+	{
+		return $this->getRouteList();
 	}
 
 	public function createFilterByQueryObject(BaseQuery $query): array
