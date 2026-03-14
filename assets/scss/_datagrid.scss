@@ -85,7 +85,7 @@
 				position: initial;
 			}
 
-			> div {
+			> div:not(.item-detail-content) {
 				width: 300px;
 				max-width: min(30vw, 300px);
 				white-space: normal;
@@ -407,4 +407,20 @@ form:has(> .table-responsive-wrapper) {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
+}
+
+.datagrid table tbody tr.row-item-detail {
+	display: none
+}
+
+.datagrid table tbody tr.row-item-detail.toggled {
+	display: table-row
+}
+
+.datagrid table tbody tr.row-item-detail .item-detail-content {
+	display: none
+}
+
+.datagrid table tbody tr:has(+ tr.row-item-detail) {
+	cursor: pointer;
 }

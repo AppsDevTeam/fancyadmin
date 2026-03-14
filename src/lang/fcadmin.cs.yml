@@ -59,9 +59,9 @@ presenters:
     header: Konfigurace
 
   profiles:
-    title: Profily
-    pageTitle: Profily
-    header: Profily
+    title: Uživatelé
+    pageTitle: Uživatelé
+    header: Uživatelé
 
 forms:
   # Sign Form

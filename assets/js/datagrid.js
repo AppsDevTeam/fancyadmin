@@ -98,3 +98,19 @@ $(document).on('click', 'a.link-confirmation', function (e) {
 		event.preventDefault();
 	}
 });
+
+$(document).on('click', 'tbody tr:not(.row-item-detail) td:not(.col-actions)', function (event) {
+	if (event.target.tagName.toLowerCase() === 'a' || $(event.target).hasClass('menu-open-button')) {
+		return;  // Klik byl na odkaz, takže nevyvoláváme žádnou akci.
+	}
+
+	let $tr = $(this).parent();
+
+	if ($tr.next().hasClass('toggled')) {
+		$tr.next().removeClass('toggled');
+		$tr.next().find('.item-detail-content').css('display', 'none');
+	} else {
+		$tr.next().addClass('toggled');
+		$tr.next().find('.item-detail-content').css('display', 'block');
+	}
+});

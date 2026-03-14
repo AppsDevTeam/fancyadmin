@@ -17,12 +17,12 @@ window.jQuery = $;
 
 global.jQuery = $;
 
-import {Chart} from "chart.js/auto";
+// import {Chart} from "chart.js/auto";
 import Nette from 'nette-forms';
 import './dependentSelectBox'
 Nette.initOnLoad();
 window.Nette = Nette;
-window.Chart = Chart;
+// window.Chart = Chart;
 
 import 'nette.ajax.js';
 $.nette.init({
@@ -53,7 +53,7 @@ $.nette.ext('live').after(function($el) {
 	$('[data-dependentselectbox]').dependentSelectBox();
 });
 
-import 'daterangepicker';
+// import 'daterangepicker';
 
 //
 // Modular vendor JS files
