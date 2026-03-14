@@ -53,3 +53,48 @@ $(function() {
 $.nette.ext('live').after(function (el) {
     return datagridSortable(el);
 });
+
+$(document).on('hidden.bs.collapse', '.datagrid form > .collapse', (e) => {
+	$(e.currentTarget).closest('form').find('.reset-filter').click();
+});
+
+/**
+ * Funkce zajistuje proklik na detail, pokud je na radku jenom jeden sloupec s odkazem ve sloupci col-name (musime mit
+ * name pokazde i kdyby slo o id nebo jiny identifikator) Je klikatelny cely radek az na bunky obsahujici tlacitka, selecty
+ * nebo inputy, stejne tak ignoruje sloupec col-action
+ */
+$(document).on('click', '.click-line-detail table tbody td:not(.col-action):not(:has(button, input, select))', (e) => {
+	$(e.currentTarget).closest('tr').find('.col-name > a').click();
+})
+
+/**
+ * Funkce zajistuje proklik na detail kery je uvedeny ve sloupci col-name (musime mit name pokazde i kdyby slo
+ * o id nebo jiny identifikator) a ignoruje kliknuti na bunky obsahujici odkaz, select, tlacitka ci inputy, steje tak
+ * ignoruje sloupec col-action. Sloupcum s odkazem (i col-name) je treba pridat tridu click-line-detail-no-link-im-the-link.
+ */
+$(document).on('click', '.click-line-detail-no-link table tbody td:not(.col-action):not(:has(a, button, input, select))', (e) => {
+	$(e.currentTarget).closest('tr').find('.col-name > a').click();
+})
+
+/**
+ * Funkce slouzi k prokliku pres bunku, ktera obsahuje link. Napriklad pokud budeme mit moznost se prokliknout jak na detail
+ * zarizeni, tak platby. Musime ale na bunku dat classu click-line-detail-no-link-im-the-link
+ */
+$(document).on('click', '.click-line-detail-no-link-im-the-link', (e) => {
+	$(e.currentTarget).find('a').click();
+})
+
+
+$(document).on('click', '.side-panel-template-backdrop', () => {
+	$('#snippet--sidePanel').html('');
+});
+
+$(document).on('click', '.side-panel-template-container .btn-close', () => {
+	$('#snippet--sidePanel').html('');
+});
+
+$(document).on('click', 'a.link-confirmation', function (e) {
+	if (!confirm($(this).data('confirm-text'))){
+		event.preventDefault();
+	}
+});
