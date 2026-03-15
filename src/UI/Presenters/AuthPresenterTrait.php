@@ -197,7 +197,10 @@ trait AuthPresenterTrait
 		$navbarMenuFactory = new $className();
 		/** @var UserMenuFactory $userMenuFactory */
 		$userMenuFactory = new $userMenuClassName();
-		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
+		$module = explode(':', $this->name)[0];
+		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()
+			->setLinkGenerator($this->_linkGenerator)
+			->resolveAclResources($module);
 		$this->getTemplate()->userMenu = $userMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 		$this->getTemplate()->summernoteUpload = $this->getPresenter()->link('summernoteUpload!');
 
