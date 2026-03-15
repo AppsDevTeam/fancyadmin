@@ -155,6 +155,7 @@ grids:
       emailUsername: E-mail / Uživatelské jméno
       phoneNumber: Telefon
       isActive: Aktivní
+      roles: Role
     actions:
       newPassword: Nové heslo
       signAsIdentity: Přihlásit se za uživatele

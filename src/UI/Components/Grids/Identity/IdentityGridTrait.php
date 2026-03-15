@@ -34,6 +34,11 @@ trait IdentityGridTrait
 	public function initGrid(DataGrid $grid): void
 	{
 		$this->addIdentityData($grid);
+
+		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles')
+			->setRenderer(function (Identity $identity) {
+				return implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()));
+			});
 	}
 
 	protected function getQueryObjectFactoryClass(): string
