@@ -66,10 +66,10 @@ trait AuthPresenterTrait
 
 		if ($this->getParameter('selectedAccount')) {
 			$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
-			$this->em->flush();
+			$this->_em->flush();
 		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$this->getUser()->getIdentity()->setSelectedAccount(null);
-			$this->em->flush();
+			$this->_em->flush();
 		} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
 			// TODO odstranit
 			try {
