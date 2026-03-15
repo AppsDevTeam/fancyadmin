@@ -156,6 +156,7 @@ grids:
       phoneNumber: Telefon
       isActive: Aktivní
       roles: Role
+      accounts: Účty
     actions:
       newPassword: Nové heslo
       signAsIdentity: Přihlásit se za uživatele

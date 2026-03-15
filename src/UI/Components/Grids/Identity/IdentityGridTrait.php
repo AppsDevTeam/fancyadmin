@@ -39,6 +39,11 @@ trait IdentityGridTrait
 			->setRenderer(function (Identity $identity) {
 				return implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()));
 			});
+
+		$grid->addColumnText('accounts', 'fcadmin.grids.user.labels.accounts')
+			->setRenderer(function (Identity $identity) {
+				return implode(', ', array_map(fn($account) => $account->getName(), $identity->getAccounts()));
+			});
 	}
 
 	protected function getQueryObjectFactoryClass(): string
