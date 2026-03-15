@@ -61,7 +61,7 @@
 			{include @mobileMenu.latte}
 		{/block}
 
-		<div class="container-fluid {*px-0*} delay-animate container-main" data-app-container>
+		<div class="container-fluid px-0 delay-animate container-main" data-app-container>
 			{if $presenter->getAction() === 'detail'}
 				<nav style="height: 70px" class="d-flex">
 					<div class="back-link">
@@ -80,25 +80,25 @@
 				{include content}
 			</div>
 
-			<div id="iOsA2HS" style="display: none;">
-				<div class="iOsA2HS_backdrop closeA2H"></div>
-				<div class="iOsA2HS_popup">
-					<span style="position: absolute; right: 20px;top: 15px;">
-						<i class="fa fa-times closeA2H"></i>
-					</span>
-					<div class="install-header">
-						<div>
-							<img src="/icon512_maskable.png" />
-						</div>
-						<div>Instalovat {$projectName}</div>
-					</div>
-					<hr />
-					<ul style="list-style-type: decimal;margin: 10px 0;">
-						<li>Klikněte na ikonu <i class="fa-regular fa-arrow-up-from-square"></i></li>
-						<li>Vyberte možnost <b>Přidat na plochu</b></li>
-					</ul>
-				</div>
-			</div>
+{*			<div id="iOsA2HS" style="display: none;">*}
+{*				<div class="iOsA2HS_backdrop closeA2H"></div>*}
+{*				<div class="iOsA2HS_popup">*}
+{*					<span style="position: absolute; right: 20px;top: 15px;">*}
+{*						<i class="fa fa-times closeA2H"></i>*}
+{*					</span>*}
+{*					<div class="install-header">*}
+{*						<div>*}
+{*							<img src="/icon512_maskable.png" />*}
+{*						</div>*}
+{*						<div>Instalovat {$projectName}</div>*}
+{*					</div>*}
+{*					<hr />*}
+{*					<ul style="list-style-type: decimal;margin: 10px 0;">*}
+{*						<li>Klikněte na ikonu <i class="fa-regular fa-arrow-up-from-square"></i></li>*}
+{*						<li>Vyberte možnost <b>Přidat na plochu</b></li>*}
+{*					</ul>*}
+{*				</div>*}
+{*			</div>*}
 		</div>
 
 		<div class="side-panel-template-backdrop"></div>
