@@ -16,6 +16,7 @@ use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
@@ -134,6 +135,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$securityUserDef = $builder->getDefinitionByType(SecurityUser::class);
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
+
+		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
+		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
 	}
 
 	private function validateTraitInterfaceCompliance(): void
