@@ -18,8 +18,6 @@ trait ConfigurationGridTrait
 {
 	use Editable;
 
-	protected AclResourceNameEnum $aclResource = AclResourceNameEnum::BACKOFFICE_CONFIGURATIONS;
-
 	public function initGrid(DataGrid $grid): void
 	{
 		$grid->addColumnText('name', 'Name');

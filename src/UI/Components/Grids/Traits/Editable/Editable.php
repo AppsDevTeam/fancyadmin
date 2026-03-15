@@ -8,6 +8,6 @@ trait Editable
 {
 	protected function allowEdit(): ?EditParams
 	{
-		return new EditParams($this->aclResource, 'edit!');
+		return new EditParams('edit!');
 	}
 }

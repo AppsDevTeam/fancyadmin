@@ -115,8 +115,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	public function beforeCompile(): void
 	{
 		$builder = $this->getContainerBuilder();
-		$baseQuery = $builder->getDefinitionByType(SecurityUser::class);
-		$baseQuery->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
+		$securityUserDef = $builder->getDefinitionByType(SecurityUser::class);
+		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
+		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
 	}
 
 	private function validateTraitInterfaceCompliance(): void

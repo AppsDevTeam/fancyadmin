@@ -19,6 +19,7 @@ trait SecurityUserTrait
 	abstract public function getIdentity(): ?IIdentity;
 
 	protected Resource $fullDataAclResource;
+	protected Resource $backofficeAclResource;
 
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool
 	{
@@ -62,5 +63,15 @@ trait SecurityUserTrait
 	public function isAllowedFullDataAclResource(): bool
 	{
 		return $this->isAllowed($this->fullDataAclResource);
+	}
+
+	public function setBackofficeAclResource(Resource $aclResource): void
+	{
+		$this->backofficeAclResource = $aclResource;
+	}
+
+	public function isAllowedBackoffice(): bool
+	{
+		return $this->isAllowed($this->backofficeAclResource);
 	}
 }

@@ -7,7 +7,9 @@ namespace ADT\FancyAdmin\Console;
 use ADT\FancyAdmin\UI\Presenters\AuthPresenter;
 use Doctrine\ORM\EntityManagerInterface;
 use Nette\Loaders\RobotLoader;
+use Nette\Security\Resource;
 use ReflectionClass;
+use ReflectionEnum;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,10 +30,21 @@ class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 	{
 		$io = new SymfonyStyle($input, $output);
 
-		$presenterResources = $this->findPresenterResources();
+		$loader = new RobotLoader();
+		$loader->addDirectory($this->appDir);
+		$loader->addDirectory(__DIR__ . '/../Model/Entities/Enums');
+		$loader->rebuild();
+		$classes = array_keys($loader->getIndexedClasses());
+
+		$requiredResources = array_unique(array_merge(
+			$this->findPresenterResources($classes),
+			$this->findEnumResources($classes),
+		));
+		sort($requiredResources);
+
 		$existingResources = $this->getExistingResources();
 
-		$missing = array_diff($presenterResources, $existingResources);
+		$missing = array_diff($requiredResources, $existingResources);
 
 		if (empty($missing)) {
 			$io->success('All ACL resources are already present in the database.');
@@ -51,17 +64,14 @@ class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 	}
 
 	/**
+	 * @param string[] $classes
 	 * @return string[]
 	 */
-	private function findPresenterResources(): array
+	private function findPresenterResources(array $classes): array
 	{
 		$resources = [];
 
-		$loader = new RobotLoader();
-		$loader->addDirectory($this->appDir . '/UI');
-		$loader->rebuild();
-
-		foreach (array_keys($loader->getIndexedClasses()) as $class) {
+		foreach ($classes as $class) {
 			if (!class_exists($class)) {
 				continue;
 			}
@@ -80,8 +90,36 @@ class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 			}
 		}
 
-		$resources = array_unique($resources);
-		sort($resources);
+		return $resources;
+	}
+
+	/**
+	 * Finds resource names from string-backed enums implementing Nette\Security\Resource.
+	 *
+	 * @param string[] $classes
+	 * @return string[]
+	 */
+	private function findEnumResources(array $classes): array
+	{
+		$resources = [];
+
+		foreach ($classes as $class) {
+			if (!enum_exists($class)) {
+				continue;
+			}
+
+			$reflection = new ReflectionEnum($class);
+			if (!$reflection->implementsInterface(Resource::class)) {
+				continue;
+			}
+			if (!$reflection->isBacked() || (string) $reflection->getBackingType() !== 'string') {
+				continue;
+			}
+
+			foreach ($class::cases() as $case) {
+				$resources[] = $case->value;
+			}
+		}
 
 		return $resources;
 	}

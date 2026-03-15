@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\UI\Components\Grids\Traits\SignInAsIdentity;
 use ADT\DoctrineAuthenticator\OTP\OnetimeTokenService;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenServiceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
 use ADT\FancyAdmin\Model\Services\OnetimeTokenTypeEnum;
@@ -19,7 +20,7 @@ trait SignInAsIdentity
 	public function injectSignInAsIdentity(): void
 	{
 		$this->onAnchor[] = function () {
-			if ($this->_securityUser->isAdmin()) {
+			if ($this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_IDENTITIES_SIGNAS)) {
 				$this['grid']->addHtmlDataAttribute('data-adt-portal-components-grids-traits-sign-in-as-identity');
 				$this['grid']
 					->addAction('signInAsIdentity', '')
@@ -40,7 +41,7 @@ trait SignInAsIdentity
 	public function handleSignInAsIdentity(int $id): void
 	{
 		if (
-			!$this->_securityUser->isAdmin()
+			!$this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_IDENTITIES_SIGNAS)
 			||
 			!(
 				/** @var HasIdentity $hasIdentity */

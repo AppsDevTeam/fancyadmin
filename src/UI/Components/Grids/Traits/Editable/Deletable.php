@@ -8,6 +8,6 @@ trait Deletable
 {
 	protected function allowDelete(): ?DeleteParams
 	{
-		return new DeleteParams($this->aclResource);
+		return new DeleteParams();
 	}
 }

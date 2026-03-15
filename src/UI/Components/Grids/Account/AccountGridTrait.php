@@ -13,8 +13,6 @@ trait AccountGridTrait
 {
 	use Editable;
 
-	protected AclResourceNameEnum $aclResource = AclResourceNameEnum::BACKOFFICE_ACCOUNTS;
-
 	public function initGrid(DataGrid $grid): void
 	{
 		$grid->addFilterText('search', '', ['name']);
