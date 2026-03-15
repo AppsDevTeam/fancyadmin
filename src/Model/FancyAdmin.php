@@ -26,6 +26,7 @@ class FancyAdmin
 		protected Resource $fullDataAclResource,
 		protected ?string $context,
 		protected array $jsComponentsConfig = [],
+		protected array $colors = [],
 	) {}
 
 	public function getProject(): string
@@ -145,5 +146,10 @@ class FancyAdmin
 	{
 		$this->faviconFileNameSvg = $faviconFileNameSvg;
 		return $this;
+	}
+
+	public function getColors(): array
+	{
+		return $this->colors;
 	}
 }

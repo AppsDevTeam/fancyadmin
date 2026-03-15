@@ -36,6 +36,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->loginPageLogoPath = $this->_fancyAdmin->getLoginPageLogoPath();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
+		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
 	}
 
 

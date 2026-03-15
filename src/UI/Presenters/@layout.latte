@@ -5,22 +5,22 @@
 		<style>
 			{$account->getCss()|noescape}
 		</style>
-	{elseif isset($parameters)}
+	{else}
 		<style>
 			body {
-				--backgroundColor: {$parameters['colors']['backgroundColor']|noescape};
-				--dashboardAccentColor: {$parameters['colors']['dashboardAccentColor']|noescape};
-				--primaryColor: {$parameters['colors']['primaryColor']|noescape};
-				--primaryColorDark: {$parameters['colors']['primaryColorDark']|noescape};
-				--primaryColorDark20: {$parameters['colors']['primaryColorDark20']|noescape};
-				--secondaryColor: {$parameters['colors']['secondaryColor']|noescape};
-				--secondaryColorDark: {$parameters['colors']['secondaryColorDark']|noescape};
-				--secondaryColorDarker: {$parameters['colors']['secondaryColorDarker']|noescape};
-				--tertiaryColor: {$parameters['colors']['ternaryColor']|noescape};
-				--tertiaryTextColor: {$parameters['colors']['ternaryTextColor']|noescape};
-				--loginBackground: {$parameters['colors']['loginBackground']|noescape};
-				--loginBackgroundInput: {$parameters['colors']['loginBackgroundInput']|noescape};
-				--loginBackgroundInputFocus: {$parameters['colors']['loginBackgroundInputFocus']|noescape};
+				--backgroundColor: {$colors['backgroundColor']|noescape};
+				--dashboardAccentColor: {$colors['dashboardAccentColor']|noescape};
+				--primaryColor: {$colors['primaryColor']|noescape};
+				--primaryColorDark: {$colors['primaryColorDark']|noescape};
+				--primaryColorDark20: {$colors['primaryColorDark20']|noescape};
+				--secondaryColor: {$colors['secondaryColor']|noescape};
+				--secondaryColorDark: {$colors['secondaryColorDark']|noescape};
+				--secondaryColorDarker: {$colors['secondaryColorDarker']|noescape};
+				--tertiaryColor: {$colors['ternaryColor']|noescape};
+				--tertiaryTextColor: {$colors['ternaryTextColor']|noescape};
+				--loginBackground: {$colors['loginBackground']|noescape};
+				--loginBackgroundInput: {$colors['loginBackgroundInput']|noescape};
+				--loginBackgroundInputFocus: {$colors['loginBackgroundInputFocus']|noescape};
 			}
 		</style>
 	{/if}

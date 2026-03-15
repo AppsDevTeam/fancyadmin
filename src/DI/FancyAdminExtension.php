@@ -54,6 +54,21 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
+			'colors' => Expect::structure([
+				'backgroundColor' => Expect::string()->required(),
+				'dashboardAccentColor' => Expect::string()->required(),
+				'primaryColor' => Expect::string()->required(),
+				'primaryColorDark' => Expect::string()->required(),
+				'primaryColorDark20' => Expect::string()->required(),
+				'secondaryColor' => Expect::string()->required(),
+				'secondaryColorDark' => Expect::string()->required(),
+				'secondaryColorDarker' => Expect::string()->required(),
+				'ternaryColor' => Expect::string()->required(),
+				'ternaryTextColor' => Expect::string()->required(),
+				'loginBackground' => Expect::string()->required(),
+				'loginBackgroundInput' => Expect::string()->required(),
+				'loginBackgroundInputFocus' => Expect::string()->required(),
+			]),
 		]);
 	}
 
@@ -91,6 +106,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
+				'colors' => (array) $this->config->colors,
 			]);
 
 		//$this->validateTraitInterfaceCompliance();
