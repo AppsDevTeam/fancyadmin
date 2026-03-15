@@ -36,6 +36,4 @@ interface AclRole extends Role, Entity
 	 * @return AclResource[]
 	 */
 	public function getResources(): array;
-	public function addResource(AclResource $resource): static;
-	public function removeResource(AclResource $resource): static;
 }

@@ -105,6 +105,11 @@ class FancyAdminRouter
 				'action' => 'newPassword',
 			]);
 
+			$portal->addRoute('sign/password-set', [
+				'presenter' => 'Sign',
+				'action' => 'passwordSet',
+			]);
+
 			if ($this->administration->isLostPasswordEnabled()) {
 				$portal->addRoute('sign/lost-password', [
 					'presenter' => 'Sign',

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 trait AclResourceTrait
@@ -15,34 +13,6 @@ trait AclResourceTrait
 
 	#[ORM\Column]
 	protected string $title;
-
-	#[ORM\ManyToMany(targetEntity: 'AclRole', mappedBy: 'resources', cascade: ["persist"])]
-	protected Collection $roles;
-
-	public function __construct()
-	{
-		$this->roles = new ArrayCollection();
-	}
-
-	public function addRole(AclRole $role): static
-	{
-		if ($this->roles->contains($role)) {
-			return $this;
-		}
-		$this->roles->add($role);
-		$role->addResource($this);
-		return $this;
-	}
-
-	public function removeRole(AclRole $role): static
-	{
-		if (!$this->roles->contains($role)) {
-			return $this;
-		}
-		$this->roles->removeElement($role);
-		$role->removeResource($this);
-		return $this;
-	}
 
 	public function getName(): string
 	{

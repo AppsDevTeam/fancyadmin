@@ -66,6 +66,16 @@ trait SignPresenterTrait
 		}
 	}
 
+	public function actionPasswordSet(): void
+	{
+		$this->template->canContinue = $this->getUser()->isLoggedIn();
+	}
+
+	public function handleContinue(): void
+	{
+		$this->redirectAfterLogin();
+	}
+
 	public function actionLostPassword(): void
 	{
 	}

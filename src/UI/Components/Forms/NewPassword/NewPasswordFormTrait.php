@@ -68,14 +68,21 @@ trait NewPasswordFormTrait
 
 	public function processForm(array $values): void
 	{
-		$this->_securityUser->logout(true);
+		/** @var Identity $identity */
+		$identity = $this->getEntity();
 
-		$this->_securityUser->login($this->getEntity(), context: $this->_fancyAdmin->getContext());
-
-		$this->_securityUser->getIdentity()->setPassword($values['password']);
+		$identity->setPassword($values['password']);
 		$this->_em->flush();
 
-		$this->redirectAfterLogin();
+		$canLogin = $identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
+			|| $identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource());
+
+		if ($canLogin) {
+			$this->_securityUser->logout(true);
+			$this->_securityUser->login($identity, context: $this->_fancyAdmin->getContext());
+		}
+
+		$this->getPresenter()->redirect('passwordSet');
 	}
 
 	public function getEntityClass(): ?string
