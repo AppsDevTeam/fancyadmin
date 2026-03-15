@@ -10,10 +10,10 @@ use Nette\Security\Resource;
 
 trait TMenuItemsTrait {
 
-	public function addPermissionsItem(
+	public function addAclItem(
 		NavbarMenu|NavbarSubmenu $menu,
 		string $label = 'fcadmin.presenters.permissions.title',
-		string $link = 'Permissions:default',
+		string $link = 'Acl:default',
 		?string $faIcon = null,
 		?Resource $alcResource = null,
 	): void {

@@ -29,9 +29,14 @@ trait BaseFormTrait
 			$refClass = new \ReflectionClass($this->getEntityClass());
 
 			if ($refClass->hasProperty('account')) {
-				if ($this->_accountQueryFactory->create()->count() > 1) {
+				$accountyQuery = $this->_accountQueryFactory->create();
+				if ($this->securityUser->getIdentity()->getSelectedAccount()) {
+					$accountyQuery->byIdOrParentId($this->securityUser->getIdentity()->getSelectedAccount());
+				}
+
+				if ($accountyQuery->count() > 1) {
 					$pairs = [];
-					foreach ($this->_accountQueryFactory->create()->orderBy(['parent' => 'ASC', 'name' => 'ASC'])->fetch() as $_account) {
+					foreach ($accountyQuery->orderBy(['parent' => 'ASC', 'name' => 'ASC'])->fetch() as $_account) {
 						if ($_account->getParent()) {
 							$pairs[$_account->getId()] = '-- ' . $_account->getName();
 						} else {

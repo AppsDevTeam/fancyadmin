@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,6 +18,10 @@ use Nette\Security\Resource;
 
 trait AclRoleTrait
 {
+	use CreatedAt;
+	use CreatedByNullable;
+	use UpdatedAt;
+	use UpdatedBy;
 	#[ORM\Column(unique: true, nullable: false)]
 	protected string $name;
 

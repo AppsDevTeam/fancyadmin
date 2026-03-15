@@ -6,5 +6,5 @@ use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 
 interface AccountQuery extends BaseQuery
 {
-
+	public function byIdOrParentId(string $id): static;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Security;
 
 use ADT\DoctrineComponents\EntityManager;
+use ADT\FancyAdmin\Model\Entities\Acl;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 
@@ -39,10 +40,13 @@ class Permission extends \Nette\Security\Permission
 
 	public function setAccess(): void
 	{
-		$allows = $this->em->getRepository($this->em->findEntityClassByInterface(AclRole::class))
-			->createQueryBuilder('role')
+		$allows = $this->em->getRepository($this->em->findEntityClassByInterface(Acl::class))
+			->createQueryBuilder('acl')
 			->select('role.name AS roleName, resource.name AS resourceName')
-			->innerJoin('role.resources', 'resource')
+			->innerJoin('acl.role', 'role')
+			->innerJoin('acl.resource', 'resource')
+			->andWhere('acl.isActive = :isActive')
+			->setParameter('isActive', true)
 			->getQuery()
 			->getResult();
 
