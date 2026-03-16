@@ -2,7 +2,11 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\InverseJoinColumn;
@@ -14,6 +18,10 @@ use Nette\Security\Resource;
 trait ProfileTrait
 {
 	use IsActive;
+	use CreatedAt;
+	use CreatedByNullable;
+	use UpdatedAt;
+	use UpdatedBy;
 
 	#[ManyToOne(targetEntity: 'Identity', inversedBy: 'profiles')]
 	#[JoinColumn(nullable: false)]

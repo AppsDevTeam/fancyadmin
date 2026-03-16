@@ -2,12 +2,20 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping as ORM;
 
 trait AccountTrait
 {
+	use CreatedAt;
+	use CreatedByNullable;
+	use UpdatedAt;
+	use UpdatedBy;
 	#[Column(nullable: false)]
 	protected string $name;
 
