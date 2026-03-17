@@ -64,7 +64,7 @@ $.nette.ext('live').after(function (el) {
 				keepHtml: true,
 				keepTagContents: ['span'], //Remove tags and keep the contents
 				badTags: ['applet', 'col', 'colgroup', 'embed', 'noframes', 'noscript', 'script', 'style', 'title', 'meta', 'link', 'head'], //Remove full tags with contents
-				badAttributes: ['bgcolor', 'height', 'lang', 'start', 'valign', 'data-(.*?)', 'class'], //Remove attributes from remaining tags
+				badAttributes: ['bgcolor', 'border', 'cellpadding', 'cellspacing', 'height', 'lang', 'start', 'style', 'valign', 'width', 'data-(.*?)', 'class'], //Remove attributes from remaining tags
 				limitChars: 0, // 0|# 0 disables option
 				limitDisplay: 'both', // none|text|html|both
 				limitStop: false, // true/false
