@@ -220,6 +220,12 @@ body:has(.side-panel-template-container form) {
   &:has(.side-panel-config[data-size="full-except-menu"]) {
     --width: calc(100vw - var(--side-panel-width));
   }
+
+  .note-editor .note-editable table {
+    tr, td {
+      border-width: 1px;
+    }
+  }
 }
 
 span.empty {
