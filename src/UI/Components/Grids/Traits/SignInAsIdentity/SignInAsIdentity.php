@@ -21,7 +21,7 @@ trait SignInAsIdentity
 	{
 		$this->onAnchor[] = function () {
 			if ($this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_IDENTITIES_SIGNAS)) {
-				$this['grid']->addHtmlDataAttribute('data-adt-portal-components-grids-traits-sign-in-as-identity');
+				$this['grid']->addHtmlDataAttribute('data-adt-portal-components-grids-traits-signInAsIdentity');
 				$this['grid']
 					->addAction('signInAsIdentity', '')
 					->setRenderer(function ($item) {

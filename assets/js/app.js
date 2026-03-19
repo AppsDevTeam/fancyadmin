@@ -80,6 +80,7 @@ import AdtJsComponents from 'adt-js-components';
 //
 // AdtJsComponents.init('components-panels-base-baseChartPanel', 'UI/Portal/Components/Panels/Base/BaseChartPanelControl');
 AdtJsComponents.init('select-account-form', '~UI/Components/Forms/SelectAccount');
+AdtJsComponents.init('portal-components-grids-traits-signInAsIdentity', '~UI/Components/Grids/Traits/SignInAsIdentity');
 // AdtJsComponents.init('portal-components-forms-dashboardFilter', 'UI/Portal/Components/Forms/DashboardFilter');
 // AdtJsComponents.init('portal-components-forms-changeLicenceForm', 'UI/Portal/Components/Forms/ChangeLicence');
 // AdtJsComponents.init('portal-components-forms-warehouseOperationForm', 'UI/Portal/Components/Forms/WarehouseOperation');
