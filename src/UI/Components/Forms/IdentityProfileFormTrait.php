@@ -59,7 +59,8 @@ trait IdentityProfileFormTrait
 
 			if ($isEdit || $primaryEl['email']->getValue()) {
 				$this->addIsActiveField($form);
-				if (!$isEdit) {
+				$submittedBySearch = $form->isSubmitted() instanceof SubmitterControl && $form->isSubmitted()->getName() === 'search';
+				if ($submittedBySearch) {
 					$form['isActive']->setValue(true);
 				}
 
@@ -68,10 +69,13 @@ trait IdentityProfileFormTrait
 
 					$form->addDynamicContainer(
 						'profiles',
-						function (StaticContainer $container) use ($form, $entity) {
+						function (StaticContainer $container) use ($form, $entity, $submittedBySearch) {
 							$_profile = $entity?->getProfiles()[$container->getName()] ?? null;
 
 							$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
+							if ($submittedBySearch) {
+								$container['isActive']->setValue(true);
+							}
 							$this->addRoles($container, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
 							$container->addSelect('account', 'fcadmin.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->orById($_profile?->getAccount()->getId())->fetchPairs('fullName'))
 								->setPrompt('---');
@@ -191,6 +195,18 @@ trait IdentityProfileFormTrait
 
 		if (!$identity->getPassword()) {
 			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_CREATION_VALID_FOR);
+		}
+	}
+
+	protected function validateForm(Form $form): void
+	{
+		if (!isset($form['profiles'])) {
+			return;
+		}
+
+		$hasProfiles = count($form['profiles']->getContainers()) > 0;
+		if (!$hasProfiles && !$form['roles']->getValue()) {
+			$form['roles']->addError('Role je povinná, pokud není přidaný žádný profil.');
 		}
 	}
 

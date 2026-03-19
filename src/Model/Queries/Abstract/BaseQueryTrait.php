@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\Model\Queries\Abstract;
 
 use ADT\Components\AjaxSelect\Traits\OrByIdFilterTrait;
 use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
+use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilterTrait;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
@@ -14,6 +15,7 @@ use Doctrine\ORM\QueryBuilder;
 trait BaseQueryTrait
 {
 	use OrByIdFilterTrait;
+	use IsActiveFilterTrait;
 
 	abstract protected function applySecurityFilter(): void;
 	abstract protected function applyAccountFilter(QueryBuilder $qb, Account $account): void;
