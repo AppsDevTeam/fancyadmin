@@ -67,8 +67,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'ternaryColor' => Expect::string()->required(),
 				'ternaryTextColor' => Expect::string()->required(),
 				'loginBackground' => Expect::string()->required(),
+				'loginInputTextColor' => Expect::string()->required(),
 				'loginBackgroundInput' => Expect::string()->required(),
 				'loginBackgroundInputFocus' => Expect::string()->required(),
+				'inputBorder' => Expect::string()->required(),
+				'inputFocusBorder' => Expect::string()->required(),
+				'inputFocusBackground' => Expect::string()->required(),
 			]),
 		]);
 	}
