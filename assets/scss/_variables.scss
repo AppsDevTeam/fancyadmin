@@ -29,7 +29,7 @@ $background: white;
 $background-dark: darken($background, 5);
 $background-darker: darken($background, 10);
 
-$login-background: rgb(255, 255, 255);
+$login-background: var(--loginBackground);
 
 $heading-color: #333333;
 $body-color: #333333;

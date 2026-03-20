@@ -1,31 +1,5 @@
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
 
-{block colors}
-	{if isset($account) && $account?->getCss()}
-		<style>
-			{$account->getCss()|noescape}
-		</style>
-	{else}
-		<style>
-			body {
-				--backgroundColor: {$colors['backgroundColor']|noescape};
-				--dashboardAccentColor: {$colors['dashboardAccentColor']|noescape};
-				--primaryColor: {$colors['primaryColor']|noescape};
-				--primaryColorDark: {$colors['primaryColorDark']|noescape};
-				--primaryColorDark20: {$colors['primaryColorDark20']|noescape};
-				--secondaryColor: {$colors['secondaryColor']|noescape};
-				--secondaryColorDark: {$colors['secondaryColorDark']|noescape};
-				--secondaryColorDarker: {$colors['secondaryColorDarker']|noescape};
-				--tertiaryColor: {$colors['ternaryColor']|noescape};
-				--tertiaryTextColor: {$colors['ternaryTextColor']|noescape};
-				--loginBackground: {$colors['loginBackground']|noescape};
-				--loginBackgroundInput: {$colors['loginBackgroundInput']|noescape};
-				--loginBackgroundInputFocus: {$colors['loginBackgroundInputFocus']|noescape};
-			}
-		</style>
-	{/if}
-{/block}
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -44,6 +18,36 @@
 	{else}
 		<link rel="stylesheet" href="{$basePath}/dist/portal/css/portal.css{v}">
 	{/if}
+
+	{block colors}
+		{if isset($account) && $account?->getCss()}
+			<style>
+				{$account->getCss()|noescape}
+			</style>
+		{else}
+			<style>
+				:root {
+					--backgroundColor: {$colors['backgroundColor']|noescape};
+					--dashboardAccentColor: {$colors['dashboardAccentColor']|noescape};
+					--primaryColor: {$colors['primaryColor']|noescape};
+					--primaryColorDark: {$colors['primaryColorDark']|noescape};
+					--primaryColorDark20: {$colors['primaryColorDark20']|noescape};
+					--secondaryColor: {$colors['secondaryColor']|noescape};
+					--secondaryColorDark: {$colors['secondaryColorDark']|noescape};
+					--secondaryColorDarker: {$colors['secondaryColorDarker']|noescape};
+					--tertiaryColor: {$colors['ternaryColor']|noescape};
+					--tertiaryTextColor: {$colors['ternaryTextColor']|noescape};
+					--loginBackground: {$colors['loginBackground']|noescape};
+					--loginBackgroundInput: {$colors['loginBackgroundInput']|noescape};
+					--loginInputTextColor: {$colors['loginInputTextColor']|noescape};
+					--loginBackgroundInputFocus: {$colors['loginBackgroundInputFocus']|noescape};
+					--inputBorder: {$colors['inputBorder']|noescape};
+					--inputFocusBorder: {$colors['inputFocusBorder']|noescape};
+					--inputFocusBackground: {$colors['inputFocusBackground']|noescape};
+				}
+			</style>
+		{/if}
+	{/block}
 </head>
 
 <body
