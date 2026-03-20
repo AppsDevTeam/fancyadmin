@@ -65,7 +65,7 @@
 			{if $presenter->getAction() === 'detail'}
 				<nav style="height: 70px" class="d-flex">
 					<div class="back-link">
-						<a href="{$showBackToOverviewLink ?? $template->link('default')}">{_fcadmin.appGeneral.labels.backToOverview}</a>
+						<a href="{ifset $showBackToOverviewLink}{$showBackToOverviewLink}{else}{plink default}{/ifset}">{_fcadmin.appGeneral.labels.backToOverview}</a>
 					</div>
 				</nav>
 			{else}
