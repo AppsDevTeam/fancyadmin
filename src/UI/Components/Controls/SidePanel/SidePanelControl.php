@@ -20,9 +20,12 @@ class SidePanelControl extends Control
 
 	private SidePanelSize $size = SidePanelSize::Medium;
 
+	private string $closeConfirm = 'fcadmin.sidePanels.control.closeConfirm';
+
 	public function render(): void
 	{
 		$this->template->size = $this->size->value;
+		$this->template->closeConfirm = $this->closeConfirm;
 		$this->template->setFile(__DIR__ . '/SidePanelControl.latte');
 		$this->template->render();
 	}
@@ -49,7 +52,7 @@ class SidePanelControl extends Control
 			$form->setAction((string) $url);
 		})
 			->setOnSuccess(function (Form $form) use ($baseForm) {
-				$this->getPresenter()->flashMessageSuccess('Formulář byl úspěšně uložen.'); // TODO translate
+				$this->getPresenter()->flashMessageSuccess('fcadmin.sidePanels.control.formSaved');
 				$this->getPresenter()->redirect('this');
 //				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
 //					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
@@ -65,6 +68,12 @@ class SidePanelControl extends Control
 	public function setSize(SidePanelSize $size): self
 	{
 		$this->size = $size;
+		return $this;
+	}
+
+	public function setCloseConfirm(string $closeConfirm): static
+	{
+		$this->closeConfirm = $closeConfirm;
 		return $this;
 	}
 }

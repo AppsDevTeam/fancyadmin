@@ -109,3 +109,4 @@ AdtJsComponents.init('portal-components-grids-traits-signInAsIdentity', '~UI/Com
 import './sideMenu'
 import './datagrid/datagrid'
 import './datagrid'
+import './sidePanel'
