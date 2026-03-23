@@ -188,6 +188,8 @@ sidePanels:
   control:
     itemEdit: "Položka byla upravena."
     itemAdd: "Položka byla přidána."
+    formSaved: "Formulář byl úspěšně uložen."
+    closeConfirm: "Opravdu zavřít bez uložení?"
 
 modules:
   web:
