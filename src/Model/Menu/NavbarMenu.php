@@ -53,6 +53,9 @@ class NavbarMenu
 
 			if ($menuItem->getSubmenu()) {
 				foreach ($menuItem->getSubmenu()->getSubMenuItems() as $subItem) {
+					if ($subItem instanceof NavbarSubmenuHeading) {
+						continue;
+					}
 					if (!$subItem->getAclResource()) {
 						$presenterName = explode(':', $subItem->getLink())[0];
 						$subItem->setAclResource(new StringResource(lcfirst($module) . '.' . lcfirst($presenterName)));

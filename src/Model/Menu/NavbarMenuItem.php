@@ -52,6 +52,9 @@ class NavbarMenuItem
 		}
 
 		foreach ($this->getSubmenu()->getSubMenuItems() as $subMenuItem) {
+			if ($subMenuItem instanceof NavbarSubmenuHeading) {
+				continue;
+			}
 			if (!$subMenuItem->getAclResource() || $user->isAllowed($subMenuItem->getAclResource())) {
 				$enabled = true;
 				break;
@@ -100,6 +103,9 @@ class NavbarMenuItem
 	public function isCurrent(Component $presenter): bool {
 		if ($this->getSubmenu()) {
 			foreach ($this->getSubmenu()->getSubMenuItems() as $submenuItem) {
+				if ($submenuItem instanceof NavbarSubmenuHeading) {
+					continue;
+				}
 				if ($submenuItem->isCurrent($presenter)) {
 					return true;
 				}

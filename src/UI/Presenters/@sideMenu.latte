@@ -29,12 +29,16 @@
                         <div class="submenu">
                             <div class="submenu-heading">{_$subMenu->getTitle()}</div>
                             {foreach $subMenu->getSubMenuItems() as $subMenuItem}
-                                {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
+                                {if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
+                                    <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
+                                {else}
+                                    {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
 
-                                <a n:if="is_null($subMenuItem->getAclResource()) || $user->isAllowed($subMenuItem->getAclResource())" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
-                                    <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
-                                    <div class="item-title">{_$subMenuItem->getLabel()}</div>
-                                </a>
+                                    <a n:if="is_null($subMenuItem->getAclResource()) || $user->isAllowed($subMenuItem->getAclResource())" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
+                                        <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
+                                        <div class="item-title">{_$subMenuItem->getLabel()}</div>
+                                    </a>
+                                {/if}
                             {/foreach}
                         </div>
                     {/if}

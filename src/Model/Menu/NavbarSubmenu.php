@@ -6,7 +6,7 @@ class NavbarSubmenu
 {
 	protected ?string $title = null;
 
-	/** @var NavbarSubmenuItem[] */
+	/** @var array<NavbarSubmenuItem|NavbarSubmenuHeading> */
 	protected array $subMenuItems = [];
 
 	public function __construct(
@@ -19,8 +19,14 @@ class NavbarSubmenu
 		return $this;
 	}
 
+	public function addHeading(string $label): self
+	{
+		$this->subMenuItems[] = new NavbarSubmenuHeading($label);
+		return $this;
+	}
+
 	/**
-	 * @return NavbarSubmenuItem[]
+	 * @return array<NavbarSubmenuItem|NavbarSubmenuHeading>
 	 */
 	public function getSubMenuItems(): array
 	{
