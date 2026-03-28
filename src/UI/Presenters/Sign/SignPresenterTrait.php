@@ -56,6 +56,18 @@ trait SignPresenterTrait
 		$this->redirect('in');
 	}
 
+	public function actionOutAll(): never
+	{
+		if ($this->getUser()->isLoggedIn()) {
+			$this->_authenticator->clearIdentity(
+				$this->getUser()->getIdentity()->getAuthObjectId()
+			);
+			$this->getUser()->logout(true);
+		}
+
+		$this->redirect('in');
+	}
+
 	public function actionNewPassword(string $token): void
 	{
 		try {

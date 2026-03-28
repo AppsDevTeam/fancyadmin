@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Components\Forms\NewPassword;
 
+use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
@@ -20,6 +21,7 @@ trait NewPasswordFormTrait
 {
 	use ControlTrait;
 	use RedirectAfterLoginTrait;
+	use AuthenticatorInject;
 	use SecurityUserInject;
 	use EntityManagerInject;
 
@@ -73,6 +75,8 @@ trait NewPasswordFormTrait
 
 		$identity->setPassword($values['password']);
 		$this->_em->flush();
+
+		$this->_authenticator->clearIdentity($identity->getAuthObjectId());
 
 		$canLogin = $identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
 			|| $identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource());

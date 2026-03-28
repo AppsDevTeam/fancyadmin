@@ -28,4 +28,5 @@ trait AuthenticatorTrait
 			throw new AuthenticationException('Nemáte oprávnění pro přihlášení');
 		}
 	}
+
 }
