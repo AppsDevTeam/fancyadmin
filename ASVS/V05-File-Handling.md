@@ -6,42 +6,42 @@ OWASP Application Security Verification Standard 5.0.0
 
 This section includes a requirement to document the expected characteristics of files accepted by the application, as a necessary precondition for developing and verifying relevant security checks.
 
-| # | Level | Requirement | Status | How We Comply |
-|---|-------|-------------|--------|---------------|
-| 5.1.1 | 2 | Verify that the documentation defines the permitted file types, expected file extensions, and maximum size (including unpacked size) for each upload feature. Additionally, ensure that the documentation specifies how files are made safe for end‑users to download and process, such as how the application behaves when a malicious file is detected. | Partial | No formal documentation of permitted file types, sizes, or frequency. Validation depends on per-project configuration. |
+| # | Level | Requirement | Status | How We Comply | What to Do |
+|---|-------|-------------|--------|---------------|------------|
+| 5.1.1 | 2 | Verify that the documentation defines the permitted file types, expected file extensions, and maximum size (including unpacked size) for each upload feature. Additionally, ensure that the documentation specifies how files are made safe for end‑users to download and process, such as how the application behaves when a malicious file is detected. | Partial | No formal documentation of permitted file types, sizes, or frequency. Validation depends on per-project configuration. | Create per-project documentation of allowed file types and sizes. |
 
 ## V5.2 File Upload and Content
 
 File upload functionality is a primary source of untrusted files. This section outlines the require‑ ments for ensuring that the presence, volume, or content of these files cannot harm the applica‑ tion.
 
-| # | Level | Requirement | Status | How We Comply |
-|---|-------|-------------|--------|---------------|
-| 5.2.1 | 1 | Verify that the application will only accept files of a size which it can process without causing a loss of performance or a denial of service attack. | Compliant | BaseForm asserts every UploadControl has Form::MaxFileSize rule (throws LogicException if missing). Configuration form uses native Nette MaxFileSize rule (10 MB). Summernote handler validated by FileUploadValidator service. |
-| 5.2.2 | 1 | Verify that when the application accepts a file, either on its own or within an archive such as a zip file, it checks if the file extension matches an expected file extension and validates that the contents correspond to the type represented by the extension. This includes, but is not limited to, checking the initial 'magic bytes', performing image re‑writing, and using specialized libraries for file content validation. For L1, this can focus just on files which are used to make specific business or security decisions. For L2 and up, this must apply to all files being accepted. | Compliant | BaseForm asserts every UploadControl has Form::MimeType or Form::Image rule (throws LogicException if missing). Nette validates MIME via finfo magic bytes. Configuration form uses Form::MimeType with explicit allowlist. Summernote handler validated by FileUploadValidator. |
-| 5.2.3 | 2 | Verify that the application checks compressed files (e.g., zip, gz, docx, odt) against maximum allowed uncompressed size and against maximum number of files before uncompressing the file. | Partial | No compressed file (zip bomb) validation. Needs implementation if compressed files are accepted. |
-| 5.2.4 | 3 | Verify that a file size quota and maximum number of files per user are enforced to ensure that a single user cannot fill up the storage with too many files, or excessively large files. | | |
-| 5.2.5 | 3 | Verify that the application does not allow uploading compressed files containing symlinks unless this is specifically required (in which case it will be necessary to enforce an allowlist of the files that can be symlinked to). | | |
-| 5.2.6 | 3 | Verify that the application rejects uploaded images with a pixel size larger than the maximum allowed, to prevent pixel flood attacks. | | |
+| # | Level | Requirement | Status | How We Comply | What to Do |
+|---|-------|-------------|--------|---------------|------------|
+| 5.2.1 | 1 | Verify that the application will only accept files of a size which it can process without causing a loss of performance or a denial of service attack. | Compliant | BaseForm asserts every UploadControl has Form::MaxFileSize rule (throws LogicException if missing). Summernote handler checks size against FileUploadRules::MAX_FILE_SIZE. | — |
+| 5.2.2 | 1 | Verify that when the application accepts a file, either on its own or within an archive such as a zip file, it checks if the file extension matches an expected file extension and validates that the contents correspond to the type represented by the extension. This includes, but is not limited to, checking the initial 'magic bytes', performing image re‑writing, and using specialized libraries for file content validation. For L1, this can focus just on files which are used to make specific business or security decisions. For L2 and up, this must apply to all files being accepted. | Compliant | BaseForm asserts every UploadControl has Form::MimeType or Form::Image rule (throws LogicException if missing). Nette validates MIME via finfo magic bytes. Summernote handler checks against FileUploadRules::ALLOWED_MIME_TYPES. | — |
+| 5.2.3 | 2 | Verify that the application checks compressed files (e.g., zip, gz, docx, odt) against maximum allowed uncompressed size and against maximum number of files before uncompressing the file. | Partial | No compressed file (zip bomb) validation. Needs implementation if compressed files are accepted. | Implement zip bomb protection if compressed uploads are used. |
+| 5.2.4 | 3 | Verify that a file size quota and maximum number of files per user are enforced to ensure that a single user cannot fill up the storage with too many files, or excessively large files. | | | |
+| 5.2.5 | 3 | Verify that the application does not allow uploading compressed files containing symlinks unless this is specifically required (in which case it will be necessary to enforce an allowlist of the files that can be symlinked to). | | | |
+| 5.2.6 | 3 | Verify that the application rejects uploaded images with a pixel size larger than the maximum allowed, to prevent pixel flood attacks. | | | |
 
 ## V5.3 File Storage
 
 This section includes requirements to prevent files from being inappropriately executed after upload, to detect dangerous content, and to avoid untrusted data being used to control where files are being stored.
 
-| # | Level | Requirement | Status | How We Comply |
-|---|-------|-------------|--------|---------------|
-| 5.3.1 | 1 | Verify that files uploaded or generated by untrusted input and stored in a public folder, are not executed as server‑side program code when accessed directly with an HTTP request. | Partial | Private files stored outside webroot (isPrivate flag). Public files may be served directly. Filename randomized with hash, not using original name. |
-| 5.3.2 | 1 | Verify that when the application creates file paths for file operations, instead of user‑submitted filenames, it uses internally generated or trusted data, or if user‑submitted filenames or file metadata must be used, strict validation and sanitization must be applied. This is to protect against path traversal, local or remote file inclusion (LFI, RFI), and server‑side request forgery (SSRF) attacks. | Compliant | Filenames are generated by adt/files with ID-based directory structure and random hash. Original filename is webalized and sanitized. No user input in filesystem paths. |
-| 5.3.3 | 3 | Verify that server‑side file processing, such as file decompression, ignores user‑provided path information to prevent vulnerabilities such as zip slip. | | |
+| # | Level | Requirement | Status | How We Comply | What to Do |
+|---|-------|-------------|--------|---------------|------------|
+| 5.3.1 | 1 | Verify that files uploaded or generated by untrusted input and stored in a public folder, are not executed as server‑side program code when accessed directly with an HTTP request. | Compliant | Nginx snippet provided in config/nginx/uploads.conf blocks PHP execution in upload directory. Private files stored outside webroot. Filenames randomized with hash. | Include `vendor/adt/fancyadmin/config/nginx/uploads.conf` in your nginx server block. Adjust the location path to match your FileListener dataDir. |
+| 5.3.2 | 1 | Verify that when the application creates file paths for file operations, instead of user‑submitted filenames, it uses internally generated or trusted data, or if user‑submitted filenames or file metadata must be used, strict validation and sanitization must be applied. This is to protect against path traversal, local or remote file inclusion (LFI, RFI), and server‑side request forgery (SSRF) attacks. | Compliant | Filenames are generated by adt/files with ID-based directory structure and random hash. Original filename is webalized and sanitized. No user input in filesystem paths. | — |
+| 5.3.3 | 3 | Verify that server‑side file processing, such as file decompression, ignores user‑provided path information to prevent vulnerabilities such as zip slip. | | | |
 
 ## V5.4 File Download
 
-This section contains requirements to mitigate risks when serving files to be downloaded, including path traversal and injection attacks. This also includes making sure they don’t contain dangerous content.
+This section contains requirements to mitigate risks when serving files to be downloaded, including path traversal and injection attacks. This also includes making sure they don't contain dangerous content.
 
-| # | Level | Requirement | Status | How We Comply |
-|---|-------|-------------|--------|---------------|
-| 5.4.1 | 2 | Verify that the application validates or ignores user‑submitted filenames, including in a JSON, JSONP, or URL parameter and specifies a filename in the Content‑Disposition header field in the response. | Partial | No explicit metadata stripping. Original EXIF data preserved in uploaded images. |
-| 5.4.2 | 2 | Verify that file names served (e.g., in HTTP response header fields or email attachments) are encoded or sanitized (e.g., following RFC 6266) to preserve document structure and prevent injection attacks. | Compliant | Filenames served are generated by the system (webalized + random hash). No user-controlled filename in HTTP responses. |
-| 5.4.3 | 2 | Verify that files obtained from untrusted sources are scanned by antivirus scanners to prevent serving of known malicious content. | Partial | No antivirus scanning of uploaded files. Needs implementation (e.g., ClamAV integration). |
+| # | Level | Requirement | Status | How We Comply | What to Do |
+|---|-------|-------------|--------|---------------|------------|
+| 5.4.1 | 2 | Verify that the application validates or ignores user‑submitted filenames, including in a JSON, JSONP, or URL parameter and specifies a filename in the Content‑Disposition header field in the response. | Partial | No explicit metadata stripping. Original EXIF data preserved in uploaded images. | Implement EXIF stripping for uploaded images. |
+| 5.4.2 | 2 | Verify that file names served (e.g., in HTTP response header fields or email attachments) are encoded or sanitized (e.g., following RFC 6266) to preserve document structure and prevent injection attacks. | Compliant | Filenames served are generated by the system (webalized + random hash). No user-controlled filename in HTTP responses. | — |
+| 5.4.3 | 2 | Verify that files obtained from untrusted sources are scanned by antivirus scanners to prevent serving of known malicious content. | Partial | No antivirus scanning of uploaded files. Needs implementation (e.g., ClamAV integration). | Integrate ClamAV or similar antivirus scanning for uploaded files. |
 
 ---
 
