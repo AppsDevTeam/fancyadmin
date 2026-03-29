@@ -50,8 +50,12 @@ presenters:
 
   account:
     title: Účty
-    pageTitle: Účty
+    pageTitle: Můj účet
     header: Účty
+    myProfile: Můj profil
+    editPersonalData: Upravit osobní údaje
+    email: E-mail
+    sessions: Přihlášená zařízení
 
   configurations:
     title: Konfigurace
@@ -121,6 +125,16 @@ forms:
       noMatch: Hesla se neshodují
       required: Zadejte heslo
 
+  personalData:
+    labels:
+      firstName: Jméno
+      lastName: Příjmení
+      phoneNumber: Telefonní číslo
+      submit: Uložit
+    errors:
+      required: Toto pole je povinné
+      phoneNumber: Neplatné telefonní číslo
+
   aclRole:
     name: Název
     type: Typ role
@@ -137,6 +151,15 @@ forms:
       isTest: Testovací
 
 grids:
+  session:
+    ip: IP adresa
+    userAgent: Zařízení
+    createdAt: Přihlášeno
+    validUntil: Platnost do
+    isCurrent: ""
+    currentDevice: Toto zařízení
+    invalidate: Odhlásit
+
   aclRole:
     name: Název
 

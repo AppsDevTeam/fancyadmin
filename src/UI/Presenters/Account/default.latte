@@ -1,0 +1,46 @@
+{define title}
+	{_fcadmin.presenters.account.pageTitle}
+{/define}
+
+{block content}
+
+<div class="header">
+	<h1 class="header-title">
+		{_fcadmin.presenters.account.myProfile}
+	</h1>
+
+	<div class="header-actions">
+		<a n:href="editPersonalData!" class="btn btn-primary ajax">{_fcadmin.presenters.account.editPersonalData}</a>
+	</div>
+</div>
+
+<div class="card">
+	<div class="card-body">
+		<table class="table table-borderless mb-0">
+			<tr>
+				<th>{_fcadmin.forms.personalData.labels.firstName}</th>
+				<td>{$identity->getFirstName()}</td>
+			</tr>
+			<tr>
+				<th>{_fcadmin.forms.personalData.labels.lastName}</th>
+				<td>{$identity->getLastName()}</td>
+			</tr>
+			<tr>
+				<th>{_fcadmin.presenters.account.email}</th>
+				<td>{$identity->getEmail()}</td>
+			</tr>
+			<tr>
+				<th>{_fcadmin.forms.personalData.labels.phoneNumber}</th>
+				<td>{$identity->getPhoneNumber()}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<div class="header mt-4">
+	<h2 class="header-title">
+		{_fcadmin.presenters.account.sessions}
+	</h2>
+</div>
+
+{control sessionGrid}
