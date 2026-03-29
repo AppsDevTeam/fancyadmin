@@ -8,8 +8,8 @@ Comprehensive authorization documentation is essential to ensure that security d
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 8.1.1 | 1 | Verify that authorization documentation defines rules for restricting function‑level and data‑specific access based on consumer permissions and resource attributes. | | |
-| 8.1.2 | 2 | Verify that authorization documentation defines rules for field‑level access restrictions (both read and write) based on consumer permissions and resource attributes. Note that these rules might depend on other attribute values of the relevant data object, such as state or status. | | |
+| 8.1.1 | 1 | Verify that authorization documentation defines rules for restricting function‑level and data‑specific access based on consumer permissions and resource attributes. | Partial | ACL resources and roles documented in code. No formal authorization documentation. |
+| 8.1.2 | 2 | Verify that authorization documentation defines rules for field‑level access restrictions (both read and write) based on consumer permissions and resource attributes. Note that these rules might depend on other attribute values of the relevant data object, such as state or status. | Partial | Field-level access not formally documented. ACL handles resource-level access. |
 | 8.1.3 | 3 | Verify that the application’s documentation defines the environmental and contextual attributes (including but not limited to, time of day, user location, IP address, or device) that are used in the application to make security decisions, including those pertaining to authentication and authorization. | | |
 | 8.1.4 | 3 | Verify that authentication and authorization documentation defines how environmental and contextual factors are used in decision‑making, in addition to function‑level, data‑specific, and field‑level authorization. This should include the attributes evaluated, thresholds for risk, and actions taken (e.g., allow, challenge, deny, step‑up authentication). | | |
 
@@ -20,8 +20,8 @@ Implementing granular authorization controls at the function, data, and field le
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
 | 8.2.1 | 1 | Verify that the application ensures that function‑level access is restricted to consumers with explicit permissions. | Compliant | Nette Security with ACL-based authorization. Permission checks via SecurityUser and AclResource system. |
-| 8.2.2 | 1 | Verify that the application ensures that data‑specific access is restricted to consumers with explicit permissions to specific data items to mitigate insecure direct object reference (IDOR) and broken object level authorization (BOLA). | | |
-| 8.2.3 | 2 | Verify that the application ensures that field‑level access is restricted to consumers with explicit permissions to specific fields to mitigate broken object property level authorization (BOPLA). | | |
+| 8.2.2 | 1 | Verify that the application ensures that data‑specific access is restricted to consumers with explicit permissions to specific data items to mitigate insecure direct object reference (IDOR) and broken object level authorization (BOLA). | Compliant | Doctrine security filters enforce data-specific access control per Account (tenant). Users only see data belonging to their Account. |
+| 8.2.3 | 2 | Verify that the application ensures that field‑level access is restricted to consumers with explicit permissions to specific fields to mitigate broken object property level authorization (BOPLA). | Partial | Field-level access control not systematically implemented. ACL works at resource/action level. |
 | 8.2.4 | 3 | Verify that adaptive security controls based on a consumer’s environmental and contextual attributes (such as time of day, location, IP address, or device) are implemented for authentication and authorization decisions, as defined in the application’s documentation. These controls must be applied when the consumer tries to start a new session and also during an existing session. | | |
 
 ## V8.3 Operation Level Authorization
@@ -40,7 +40,7 @@ Additional considerations for authorization, particularly for administrative int
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 8.4.1 | 2 | Verify that multi‑tenant applications use cross‑tenant controls to ensure consumer operations will never affect tenants with which they do not have permissions to interact. | | |
+| 8.4.1 | 2 | Verify that multi‑tenant applications use cross‑tenant controls to ensure consumer operations will never affect tenants with which they do not have permissions to interact. | Compliant | Multi-tenant data isolation via Doctrine security filters. Queries automatically scoped to current Account. Cross-tenant access prevented at ORM level. |
 | 8.4.2 | 3 | Verify that access to administrative interfaces incorporates multiple layers of security, including continuous consumer identity verification, device security posture assessment, and contextual risk analysis, ensuring that network location or trusted endpoints are not the sole factors for authorization even though they may reduce the likelihood of unauthorized access. | | |
 
 ---

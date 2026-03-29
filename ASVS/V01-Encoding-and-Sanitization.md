@@ -8,8 +8,8 @@ In the sections below, syntax‑specific or interpreter‑specific requirements 
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 1.1.1 | 2 | Verify that input is decoded or unescaped into a canonical form only once, it is only decoded when encoded data in that form is expected, and that this is done before processing the input further, for example it is not performed after input validation or sanitization. | | |
-| 1.1.2 | 2 | Verify that the application performs output encoding and escaping either as a final step before being used by the interpreter for which it is intended or by the interpreter itself. | | |
+| 1.1.1 | 2 | Verify that input is decoded or unescaped into a canonical form only once, it is only decoded when encoded data in that form is expected, and that this is done before processing the input further, for example it is not performed after input validation or sanitization. | Compliant | Nette framework handles URL decoding at router level. Latte auto-escapes output. No double-decoding vulnerabilities. |
+| 1.1.2 | 2 | Verify that the application performs output encoding and escaping either as a final step before being used by the interpreter for which it is intended or by the interpreter itself. | Compliant | Latte templating engine performs context-aware output encoding (HTML, JS, URL, CSS contexts) automatically. |
 
 ## V1.2 Injection Prevention
 
@@ -23,7 +23,7 @@ Output encoding or escaping, performed close to or adjacent to a potentially dan
 | 1.2.4 | 1 | Verify that data selection or database queries (e.g., SQL, HQL, NoSQL, Cypher) use parameterized queries, ORMs, entity frameworks, or are otherwise protected from SQL Injection and other database injection attacks. This is also relevant when writing stored procedures. | Compliant | Doctrine ORM with parameterized queries (DQL, QueryBuilder). No raw SQL. |
 | 1.2.5 | 1 | Verify that the application protects against OS command injection and that operating system calls use parameterized OS queries or use contextual command line output encoding. | Compliant | Doctrine ORM parameterized queries handle all database interactions. |
 | 1.2.6 | 2 | Verify that the application protects against LDAP injection vulnerabilities, or that specific security controls to prevent LDAP injection have been implemented. | Compliant | No OS command execution in the application code. |
-| 1.2.7 | 2 | Verify that the application is protected against XPath injection attacks by using query parameterization or precompiled queries. | | |
+| 1.2.7 | 2 | Verify that the application is protected against XPath injection attacks by using query parameterization or precompiled queries. | N/A | Application does not use XPath or XML queries. |
 | 1.2.8 | 2 | Verify that LaTeX processors are configured securely (such as not using the “– shell‑escape”flag) and an allowlist of commands is used to prevent LaTeX injection attacks. | Compliant | Latte auto-escaping prevents XSS. Content rendered through Latte templates. |
 | 1.2.9 | 2 | Verify that the application escapes special characters in regular expressions (typically using a backslash) to prevent them from being misinterpreted as metacharacters. | Compliant | HTTP response headers set via Nette\Http\Response with proper encoding. |
 | 1.2.10 | 3 | Verify that the application is protected against CSV and Formula Injection. The application must follow the escaping rules defined in RFC 4180 sections 2.6 and 2.7 when exporting CSV content. Additionally, when exporting to CSV or other spreadsheet formats (such as XLS, XLSX, or ODF), special characters (including ‘=’, ‘+’, ‘‑’, ‘@’, ‘\t’(tab), and ‘\0’(null character)) must be escaped with a single quote if they appear as the first character in a field value. Note: Using parameterized queries or escaping SQL is not always sufficient. Query parts such as table and column names (including “ORDER BY”column names) cannot be escaped. Including escaped user‑supplied data in these fields results in failed queries or SQL injection. | | |
@@ -34,17 +34,17 @@ The ideal protection against using untrusted content in an unsafe context is to 
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 1.3.1 | 1 | Verify that all untrusted HTML input from WYSIWYG editors or similar is sanitized using a well‑known and secure HTML sanitization library or framework feature. | | |
-| 1.3.2 | 1 | Verify that the application avoids the use of eval() or other dynamic code execution features such as Spring Expression Language (SpEL). Where there is no alternative, any user input being included must be sanitized before being executed. | | |
-| 1.3.3 | 2 | Verify that data being passed to a potentially dangerous context is sanitized beforehand to enforce safety measures, such as only allowing characters which are safe for this context and trimming input which is too long. | | |
-| 1.3.4 | 2 | Verify that user‑supplied Scalable Vector Graphics (SVG) scriptable content is validated or sanitized to contain only tags and attributes (such as draw graphics) that are safe for the application, e.g., do not contain scripts and foreignObject. | | |
-| 1.3.5 | 2 | Verify that the application sanitizes or disables user‑supplied scriptable or expression template language content, such as Markdown, CSS or XSL stylesheets, BBCode, or similar. | | |
-| 1.3.6 | 2 | Verify that the application protects against Server‑side Request Forgery (SSRF) attacks, by validating untrusted data against an allowlist of protocols, domains, paths and ports and sanitizing potentially dangerous characters before using the data to call another service. | | |
-| 1.3.7 | 2 | Verify that the application protects against template injection attacks by not allowing templates to be built based on untrusted input. Where there is no alternative, any untrusted input being included dynamically during template creation must be sanitized or strictly validated. | | |
-| 1.3.8 | 2 | Verify that the application appropriately sanitizes untrusted input before use in Java Naming and Directory Interface (JNDI) queries and that JNDI is configured securely to prevent JNDI injection attacks. | | |
-| 1.3.9 | 2 | Verify that the application sanitizes content before it is sent to memcache to prevent injection attacks. | | |
-| 1.3.10 | 2 | Verify that format strings which might resolve in an unexpected or malicious way when used are sanitized before being processed. | | |
-| 1.3.11 | 2 | Verify that the application sanitizes user input before passing to mail systems to protect against SMTP or IMAP injection. | | |
+| 1.3.1 | 1 | Verify that all untrusted HTML input from WYSIWYG editors or similar is sanitized using a well‑known and secure HTML sanitization library or framework feature. | N/A | Application does not use WYSIWYG editors or accept HTML input. |
+| 1.3.2 | 1 | Verify that the application avoids the use of eval() or other dynamic code execution features such as Spring Expression Language (SpEL). Where there is no alternative, any user input being included must be sanitized before being executed. | Compliant | No eval() or dynamic code execution in application code. Latte templates are compiled, not evaluated at runtime. |
+| 1.3.3 | 2 | Verify that data being passed to a potentially dangerous context is sanitized beforehand to enforce safety measures, such as only allowing characters which are safe for this context and trimming input which is too long. | Partial | Server-side Latte auto-escapes. Client-side JS uses minimal DOM manipulation. No comprehensive audit of client-side code yet. |
+| 1.3.4 | 2 | Verify that user‑supplied Scalable Vector Graphics (SVG) scriptable content is validated or sanitized to contain only tags and attributes (such as draw graphics) that are safe for the application, e.g., do not contain scripts and foreignObject. | N/A | Application does not accept user-supplied SVG content. |
+| 1.3.5 | 2 | Verify that the application sanitizes or disables user‑supplied scriptable or expression template language content, such as Markdown, CSS or XSL stylesheets, BBCode, or similar. | N/A | Application does not accept user-supplied scriptable or embedded content (no markdown, template syntax in user input). |
+| 1.3.6 | 2 | Verify that the application protects against Server‑side Request Forgery (SSRF) attacks, by validating untrusted data against an allowlist of protocols, domains, paths and ports and sanitizing potentially dangerous characters before using the data to call another service. | Compliant | Application does not make HTTP requests based on user-supplied URLs. No SSRF vectors. |
+| 1.3.7 | 2 | Verify that the application protects against template injection attacks by not allowing templates to be built based on untrusted input. Where there is no alternative, any untrusted input being included dynamically during template creation must be sanitized or strictly validated. | Compliant | Latte templates are pre-compiled. User input is never used in template compilation. No SSTI vectors. |
+| 1.3.8 | 2 | Verify that the application appropriately sanitizes untrusted input before use in Java Naming and Directory Interface (JNDI) queries and that JNDI is configured securely to prevent JNDI injection attacks. | Compliant | No untrusted content passed to system interpreters. Doctrine ORM handles database queries via parameterized DQL. |
+| 1.3.9 | 2 | Verify that the application sanitizes content before it is sent to memcache to prevent injection attacks. | Compliant | No OS command execution with user input in the application. |
+| 1.3.10 | 2 | Verify that format strings which might resolve in an unexpected or malicious way when used are sanitized before being processed. | Compliant | PHP is not susceptible to traditional format string attacks. sprintf() calls use controlled format strings. |
+| 1.3.11 | 2 | Verify that the application sanitizes user input before passing to mail systems to protect against SMTP or IMAP injection. | Compliant | No user input used in regex patterns. All regex patterns are hardcoded. |
 | 1.3.12 | 3 | Verify that regular expressions are free from elements causing exponential backtracking, and ensure untrusted input is sanitized to mitigate ReDoS or Runaway Regex attacks. | | |
 
 ## V1.4 Memory, String, and Unmanaged Code
@@ -53,9 +53,9 @@ The following requirements address risks associated with unsafe memory use, whic
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 1.4.1 | 2 | Verify that the application uses memory‑safe string, safer memory copy and pointer arithmetic to detect or prevent stack, buffer, or heap overflows. | | |
-| 1.4.2 | 2 | Verify that sign, range, and input validation techniques are used to prevent integer overflows. | | |
-| 1.4.3 | 2 | Verify that dynamically allocated memory and resources are released, and that references or pointers to freed memory are removed or set to null to prevent dangling pointers and use‑after‑free vulnerabilities. | | |
+| 1.4.1 | 2 | Verify that the application uses memory‑safe string, safer memory copy and pointer arithmetic to detect or prevent stack, buffer, or heap overflows. | N/A | PHP is a memory-managed language. No manual memory management. |
+| 1.4.2 | 2 | Verify that sign, range, and input validation techniques are used to prevent integer overflows. | N/A | PHP handles integer overflow/underflow automatically. No C/C++ style issues. |
+| 1.4.3 | 2 | Verify that dynamically allocated memory and resources are released, and that references or pointers to freed memory are removed or set to null to prevent dangling pointers and use‑after‑free vulnerabilities. | N/A | PHP handles memory allocation/deallocation automatically via garbage collector. |
 
 ## V1.5 Safe Deserialization
 
@@ -64,7 +64,7 @@ The conversion of data from a stored or transmitted representation into actual a
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
 | 1.5.1 | 1 | Verify that the application configures XML parsers to use a restrictive configuration and that unsafe features such as resolving external entities are disabled to prevent XML eXternal Entity (XXE) attacks. | Compliant | No custom deserialization of untrusted data. Nette\Utils\Json used for JSON parsing. |
-| 1.5.2 | 2 | Verify that deserialization of untrusted data enforces safe input handling, such as using an allowlist of object types or restricting client‑defined object types, to prevent deserialization attacks. Deserialization mechanisms that are explicitly defined as insecure must not be used with untrusted input. | | |
+| 1.5.2 | 2 | Verify that deserialization of untrusted data enforces safe input handling, such as using an allowlist of object types or restricting client‑defined object types, to prevent deserialization attacks. Deserialization mechanisms that are explicitly defined as insecure must not be used with untrusted input. | Compliant | No deserialization of untrusted data. JSON parsing via Nette\Utils\Json. No unserialize() on user input. |
 | 1.5.3 | 3 | Verify that different parsers used in the application for the same data type (e.g., JSON parsers, XML parsers, URL parsers), perform parsing in a consistent way and use the same character encoding mechanism to avoid issues such as JSON Interoperability vulnerabilities or different URI or file parsing behavior being exploited in Remote File Inclusion (RFI) or Server‑side Request Forgery (SSRF) attacks. | | |
 
 ---

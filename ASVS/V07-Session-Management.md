@@ -8,9 +8,9 @@ There is no single pattern that suits all applications. Therefore, it is not fea
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 7.1.1 | 2 | Verify that the user’s session inactivity timeout and absolute maximum session lifetime are documented, are appropriate in combination with other controls, and that the documentation includes justification for any deviations from NIST SP 800‑63B re‑authentication requirements. | | |
-| 7.1.2 | 2 | Verify that the documentation defines how many concurrent (parallel) sessions are allowed for one account as well as the intended behaviors and actions to be taken when the maximum number of active sessions is reached. | | |
-| 7.1.3 | 2 | Verify that all systems that create and manage user sessions as part of a federated identity management ecosystem (such as SSO systems) are documented along with controls to coordinate session lifetimes, termination, and any other conditions that require re‑authentication. | | |
+| 7.1.1 | 2 | Verify that the user’s session inactivity timeout and absolute maximum session lifetime are documented, are appropriate in combination with other controls, and that the documentation includes justification for any deviations from NIST SP 800‑63B re‑authentication requirements. | Partial | Inactivity timeout: 14 days (configurable via SessionExpirationCallback). Absolute lifetime: same as inactivity (extended on each request). Documentation not yet formalized. |
+| 7.1.2 | 2 | Verify that the documentation defines how many concurrent (parallel) sessions are allowed for one account as well as the intended behaviors and actions to be taken when the maximum number of active sessions is reached. | Partial | No limit on concurrent sessions. Documentation not yet formalized. |
+| 7.1.3 | 2 | Verify that all systems that create and manage user sessions as part of a federated identity management ecosystem (such as SSO systems) are documented along with controls to coordinate session lifetimes, termination, and any other conditions that require re‑authentication. | N/A | No federated identity management / SSO in use. |
 
 ## V7.2 Fundamental Session Management Security
 
@@ -60,8 +60,8 @@ This section relates to those writing Relying Party (RP) or Identity Provider (I
 
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
-| 7.6.1 | 2 | Verify that session lifetime and termination between Relying Parties (RPs) and Identity Providers (IdPs) behave as documented, requiring re‑authentication as necessary such as when the maximum time between IdP authentication events is reached. | | |
-| 7.6.2 | 2 | Verify that creation of a session requires either the user’s consent or an explicit action, preventing the creation of new application sessions without user interaction. | | |
+| 7.6.1 | 2 | Verify that session lifetime and termination between Relying Parties (RPs) and Identity Providers (IdPs) behave as documented, requiring re‑authentication as necessary such as when the maximum time between IdP authentication events is reached. | N/A | No federated identity management / SSO in use. |
+| 7.6.2 | 2 | Verify that creation of a session requires either the user’s consent or an explicit action, preventing the creation of new application sessions without user interaction. | Compliant | Session is only created after explicit user login action (form submission with credentials). |
 
 ---
 
