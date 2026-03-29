@@ -39,6 +39,9 @@ http:
 		object-src: "'none'"
 		base-uri: "'none'"
 
+services:
+	- ADT\FancyAdmin\Model\Security\BreachedPasswordChecker
+
 session:
 	autoStart: no
 	cookieSecure: auto

@@ -134,6 +134,7 @@ forms:
       requireLowercase: Heslo musí obsahovat alespoň jedno malé písmeno
       requireDigit: Heslo musí obsahovat alespoň jednu číslici
       requireSpecialChar: Heslo musí obsahovat alespoň jeden speciální znak
+      breachedPassword: Toto heslo bylo nalezeno v databázi uniklých hesel. Zvolte prosím jiné heslo.
 
   personalData:
     labels:

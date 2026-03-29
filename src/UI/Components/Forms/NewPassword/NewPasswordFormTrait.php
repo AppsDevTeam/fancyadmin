@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Forms\NewPassword;
 
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
+use ADT\FancyAdmin\DI\Injects\BreachedPasswordCheckerInject;
 use ADT\FancyAdmin\DI\Injects\ConfigurationQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
@@ -23,6 +24,7 @@ trait NewPasswordFormTrait
 	use ControlTrait;
 	use RedirectAfterLoginTrait;
 	use AuthenticatorInject;
+	use BreachedPasswordCheckerInject;
 	use ConfigurationQueryFactoryInject;
 	use SecurityUserInject;
 	use EntityManagerInject;
@@ -68,6 +70,10 @@ trait NewPasswordFormTrait
 	{
 		if ($values['password'] !== $values['passwordRepeat']) {
 			$form->getComponentTextInput('passwordRepeat')->addError('fcadmin.forms.newPassword.errors.noMatch'); // TODO
+		}
+
+		if ($this->_breachedPasswordChecker->isBreached($values['password'])) {
+			$form->getComponentTextInput('password')->addError('fcadmin.forms.newPassword.errors.breachedPassword');
 		}
 
 		$this->validatePasswordPolicy($values['password'], $form);
