@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\Account;
 
+use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\PersonalDataFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -16,6 +17,7 @@ trait AccountPresenterTrait
 {
 	use PresenterTrait;
 	use SecurityUserInject;
+	use AuthenticatorInject;
 	use PersonalDataFormFactoryInject;
 
 	public function actionDefault(): void
@@ -27,6 +29,15 @@ trait AccountPresenterTrait
 	public function handleEditPersonalData(): void
 	{
 		$this->redrawSidePanel('personalData');
+	}
+
+	public function handleLogoutAll(): never
+	{
+		$this->_authenticator->clearIdentity(
+			$this->_securityUser->getIdentity()->getAuthObjectId()
+		);
+		$this->getUser()->logout(true);
+		$this->redirect(':Portal:Sign:in');
 	}
 
 	public function createComponentPersonalDataSidePanel(SidePanelControlFactory $factory): SidePanelControl

@@ -41,6 +41,21 @@
 	<h2 class="header-title">
 		{_fcadmin.presenters.account.sessions}
 	</h2>
+
+	<div class="header-actions">
+		<div class="dropdown">
+			<button class="btn btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+				<i class="fa-solid fa-ellipsis-vertical"></i>
+			</button>
+			<ul class="dropdown-menu dropdown-menu-end">
+				<li>
+					<a n:href="logoutAll!" class="dropdown-item text-danger" onclick="if(!confirm('{_fcadmin.presenters.account.logoutAllConfirm}')){ event.preventDefault(); return false; }">
+						{_fcadmin.presenters.account.logoutAll}
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
 </div>
 
 {control sessionGrid}
