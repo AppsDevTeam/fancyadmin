@@ -9,6 +9,7 @@ use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\File;
+use ADT\FancyAdmin\Model\FileUploadRules;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\Model\Menu\UserMenuFactory;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
@@ -180,7 +181,7 @@ trait AuthPresenterTrait
 		}
 
 		$file = $files['file'];
-		if (!$file->isOk() || !$file->isImage() || $file->getSize() > 10 * 1024 * 1024) {
+		if (!$file->isOk() || $file->getSize() > FileUploadRules::MAX_FILE_SIZE || !in_array($file->getContentType(), FileUploadRules::ALLOWED_MIME_TYPES, true)) {
 			$this->payload->status = false;
 			$this->sendPayload();
 		}

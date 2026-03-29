@@ -6,6 +6,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Entities\Configuration;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
 use ADT\FancyAdmin\Model\Entities\File;
+use ADT\FancyAdmin\Model\FileUploadRules;
 use ADT\Forms\Form;
 use App\Model\Entities\Account;
 use Nette\Http\FileUpload;
@@ -43,15 +44,8 @@ trait ConfigurationFormTrait
 
 		$form->addSection(function() use ($form) {
 			$form->addUpload('_file', 'File')
-				->addRule(Form::MaxFileSize, 'fcadmin.forms.fileUpload.errors.tooLarge', 10 * 1024 * 1024)
-				->addRule(Form::MimeType, 'fcadmin.forms.fileUpload.errors.mimeTypeMismatch', [
-					'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-					'application/pdf',
-					'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-					'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-					'text/csv', 'text/plain',
-					'application/zip',
-				])
+				->addRule(Form::MaxFileSize, 'fcadmin.forms.fileUpload.errors.tooLarge', FileUploadRules::MAX_FILE_SIZE)
+				->addRule(Form::MimeType, 'fcadmin.forms.fileUpload.errors.mimeTypeMismatch', FileUploadRules::ALLOWED_MIME_TYPES)
 				->addConditionOn($form['type'], Form::EQUAL, ConfigurationTypeEnum::TYPE_FILE)
 				->setRequired();
 		}, 'fileInput');
