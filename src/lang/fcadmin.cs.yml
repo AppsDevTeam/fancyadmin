@@ -54,6 +54,7 @@ presenters:
     header: Účty
     myProfile: Můj profil
     editPersonalData: Upravit osobní údaje
+    changePassword: Změnit heslo
     email: E-mail
     sessions: Přihlášená zařízení
     logoutAll: Odhlásit ze všech zařízení
@@ -135,6 +136,16 @@ forms:
       requireDigit: Heslo musí obsahovat alespoň jednu číslici
       requireSpecialChar: Heslo musí obsahovat alespoň jeden speciální znak
       breachedPassword: Toto heslo bylo nalezeno v databázi uniklých hesel. Zvolte prosím jiné heslo.
+
+  changePassword:
+    labels:
+      currentPassword: Aktuální heslo
+      password: Nové heslo
+      passwordRepeat: Nové heslo znovu
+      submit: Změnit heslo
+    errors:
+      required: Toto pole je povinné
+      wrongPassword: Aktuální heslo není správné
 
   personalData:
     labels:
