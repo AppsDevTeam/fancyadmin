@@ -58,6 +58,7 @@ trait BaseFormTrait
 		$form->setTranslator($this->_translator);
 		$form->setEntityManager($this->_em);
 		$form->setRenderer(new BootstrapFormRenderer($form));
+		$form->addProtection('fcadmin.forms.errors.csrf');
 		return $form;
 	}
 

@@ -70,6 +70,9 @@ presenters:
     header: Uživatelé
 
 forms:
+  errors:
+    csrf: Platnost formuláře vypršela. Odešlete jej prosím znovu.
+
   # Sign Form
   signIn:
     links:
