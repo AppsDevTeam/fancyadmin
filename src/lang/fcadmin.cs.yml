@@ -147,6 +147,11 @@ forms:
       required: Toto pole je povinné
       wrongPassword: Aktuální heslo není správné
 
+  fileUpload:
+    errors:
+      tooLarge: Soubor je příliš velký.
+      mimeTypeMismatch: Obsah souboru neodpovídá jeho příponě.
+
   personalData:
     labels:
       firstName: Jméno

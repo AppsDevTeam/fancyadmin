@@ -179,10 +179,16 @@ trait AuthPresenterTrait
 			$this->sendPayload();
 		}
 
+		$file = $files['file'];
+		if (!$file->isOk() || !$file->isImage() || $file->getSize() > 10 * 1024 * 1024) {
+			$this->payload->status = false;
+			$this->sendPayload();
+		}
+
 		$fileEntityClass = $this->_em->findEntityClassByInterface(File::class);
 		/** @var File $fileEntity */
 		$fileEntity = (new $fileEntityClass)
-			->setTemporaryFile($files['file']->getTemporaryFile(), $files['file']->getUntrustedName());;
+			->setTemporaryFile($file->getTemporaryFile(), $file->getUntrustedName());
 
 		$this->_em->persist($fileEntity);
 		$this->_em->flush();

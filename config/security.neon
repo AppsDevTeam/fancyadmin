@@ -41,6 +41,7 @@ http:
 
 services:
 	- ADT\FancyAdmin\Model\Security\BreachedPasswordChecker
+	- ADT\FancyAdmin\Model\Security\FileUploadValidator
 
 session:
 	autoStart: no

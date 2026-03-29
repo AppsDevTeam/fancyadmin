@@ -43,6 +43,15 @@ trait ConfigurationFormTrait
 
 		$form->addSection(function() use ($form) {
 			$form->addUpload('_file', 'File')
+				->addRule(Form::MaxFileSize, 'fcadmin.forms.fileUpload.errors.tooLarge', 10 * 1024 * 1024)
+				->addRule(Form::MimeType, 'fcadmin.forms.fileUpload.errors.mimeTypeMismatch', [
+					'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+					'application/pdf',
+					'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+					'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+					'text/csv', 'text/plain',
+					'application/zip',
+				])
 				->addConditionOn($form['type'], Form::EQUAL, ConfigurationTypeEnum::TYPE_FILE)
 				->setRequired();
 		}, 'fileInput');
