@@ -15,6 +15,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToMany;
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use Nette\Security\Passwords;
 use Nette\Security\Resource;
 
@@ -36,6 +37,7 @@ trait IdentityTrait
 	protected ?string $lastName = null;
 
 	#[ORM\Column(nullable:true)]
+	#[LoggableProperty]
 	protected ?string $email = null;
 
 	#[ORM\Column(nullable: true)]
@@ -48,6 +50,7 @@ trait IdentityTrait
 	protected ?string $phoneNumber = null;
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?string $password = null;
 
 	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist", "remove"], orphanRemoval: true)]
@@ -60,6 +63,7 @@ trait IdentityTrait
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
+	#[LoggableProperty]
 	protected Collection $roles;
 
 	protected string $authToken;

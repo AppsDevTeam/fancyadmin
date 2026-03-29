@@ -33,7 +33,7 @@ This section contains requirements preventing data from leaking in specific ways
 | # | Level | Requirement | Status | How We Comply |
 |---|-------|-------------|--------|---------------|
 | 14.3.1 | 1 | Verify that authenticated data is cleared from client storage, such as the browser DOM, after the client or session is terminated. The ‘Clear‑Site‑Data’ HTTP response header field may be able to help with this but the client‑side should also be able to clear up if the server connection is not available when the session is terminated. | Compliant | Logout clears authentication cookie via CookieStorage::clearAuthentication(). Session invalidated server-side. |
-| 14.3.2 | 2 | Verify that the application sets sufficient anti‑caching HTTP response header fields (i.e., Cache‑Control: no‑store) so that sensitive data is not cached in browsers. | Partial | No explicit Cache-Control: no-store headers on authenticated pages. Should be added for sensitive responses. |
+| 14.3.2 | 2 | Verify that the application sets sufficient anti‑caching HTTP response header fields (i.e., Cache‑Control: no‑store) so that sensitive data is not cached in browsers. | Compliant | Cache-Control: no-store set globally via fancyadmin config/security.neon http: headers:. Prevents browser caching of sensitive responses. |
 | 14.3.3 | 2 | Verify that data stored in browser storage (such as localStorage, sessionStorage, IndexedDB, or cookies) does not contain sensitive data, with the exception of session tokens. | Partial | No audit of client-side storage (localStorage, sessionStorage) for sensitive data. Minimal client-side storage used. |
 
 ---

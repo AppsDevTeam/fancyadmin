@@ -6,6 +6,18 @@
 # Override any values in your project config as needed.
 # Project-specific CSP sources (e.g. HMR dev server) should be added in project config.
 
+extensions:
+	doctrineLoggable: ADT\DoctrineLoggable\DI\LoggableExtension
+
+nettrine.orm:
+	managers:
+		default:
+			mapping:
+				doctrineLoggable:
+					namespace: ADT\DoctrineLoggable\Entity
+					directories:
+						- %appDir%/../vendor/adt/doctrine-loggable/src/Entity
+
 security:
 	authentication:
 		cookieName: __Host-userid
@@ -16,6 +28,7 @@ http:
 		X-Content-Type-Options: nosniff
 		X-Frame-Options: DENY
 		Referrer-Policy: strict-origin-when-cross-origin
+		Cache-Control: no-store
 	csp:
 		script-src: "'self'"
 		style-src: "'self' 'unsafe-inline'"
