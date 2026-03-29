@@ -1,0 +1,33 @@
+# FancyAdmin recommended security configuration
+# Include this file in your project's common.neon:
+#   includes:
+#       - ../vendor/adt/fancyadmin/config/security.neon
+#
+# Override any values in your project config as needed.
+# Project-specific CSP sources (e.g. HMR dev server) should be added in project config.
+
+security:
+	authentication:
+		cookieName: __Host-userid
+
+http:
+	cookieSecure: auto
+	headers:
+		X-Content-Type-Options: nosniff
+		X-Frame-Options: DENY
+		Referrer-Policy: strict-origin-when-cross-origin
+	csp:
+		script-src: "'self'"
+		style-src: "'self' 'unsafe-inline'"
+		img-src: "'self' data:"
+		font-src: "'self'"
+		connect-src: "'self'"
+		frame-ancestors: "'none'"
+		object-src: "'none'"
+		base-uri: "'none'"
+
+session:
+	autoStart: no
+	cookieSecure: auto
+	cookieHttponly: true
+	cookieSamesite: Lax
