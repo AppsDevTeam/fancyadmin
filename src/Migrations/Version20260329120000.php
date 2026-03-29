@@ -16,8 +16,8 @@ final class Version20260329120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("INSERT INTO configuration (`key`, name, `type`, `value`, updated_at) VALUES ('password.policy.backoffice', 'Politika hesel - Backoffice', 'json', '{\"enabled\":false,\"minLength\":12,\"requireUppercase\":true,\"requireLowercase\":true,\"requireDigit\":true,\"requireSpecialChar\":true}', NOW())");
-        $this->addSql("INSERT INTO configuration (`key`, name, `type`, `value`, updated_at) VALUES ('password.policy.admin', 'Politika hesel - Administrátor', 'json', '{\"enabled\":false,\"minLength\":17,\"requireUppercase\":true,\"requireLowercase\":true,\"requireDigit\":true,\"requireSpecialChar\":true}', NOW())");
+        $this->addSql("INSERT INTO configuration (`key`, name, `type`, `value`, updated_at) VALUES ('password.policy.backoffice', 'Politika hesel - Backoffice', 'json', '{\"enabled\":false,\"minLength\":12,\"requireUppercase\":true,\"requireLowercase\":true,\"requireDigit\":true,\"requireSpecialChar\":true,\"sessionExpirationMinutes\":null}', NOW())");
+        $this->addSql("INSERT INTO configuration (`key`, name, `type`, `value`, updated_at) VALUES ('password.policy.admin', 'Politika hesel - Administrátor', 'json', '{\"enabled\":false,\"minLength\":17,\"requireUppercase\":true,\"requireLowercase\":true,\"requireDigit\":true,\"requireSpecialChar\":true,\"sessionExpirationMinutes\":null}', NOW())");
     }
 
     public function down(Schema $schema): void
