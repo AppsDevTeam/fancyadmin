@@ -18,10 +18,12 @@ use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
+use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\DI\CompilerExtension;
+use Nette\DI\Config\Loader;
 use Nette\Loaders\RobotLoader;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
@@ -113,6 +115,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
 			]);
+
+		$builder->addDefinition($this->prefix('jsComponents'))
+			->setFactory(JsComponents::class);
 
 		//$this->validateTraitInterfaceCompliance();
 
