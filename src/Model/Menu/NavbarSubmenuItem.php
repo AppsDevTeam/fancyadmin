@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Menu;
 
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Nette\Application\UI\Component;
 use Nette\Security\Resource;
 
@@ -12,6 +13,7 @@ class NavbarSubmenuItem
 	protected string $link = '#';
 	protected array $linkArgs = [];
 	protected ?Resource $resource = null;
+	protected ?\Closure $condition = null;
 
 	public function getLabel(): string
 	{
@@ -71,5 +73,19 @@ class NavbarSubmenuItem
 	{
 		$this->resource = $resource;
 		return $this;
+	}
+
+	public function setCondition(\Closure $condition): self
+	{
+		$this->condition = $condition;
+		return $this;
+	}
+
+	public function isVisible(SecurityUser $user, Component $presenter): bool
+	{
+		if ($this->getAclResource() && !$user->isAllowed($this->getAclResource())) {
+			return false;
+		}
+		return $this->condition === null || ($this->condition)($user, $presenter);
 	}
 }
