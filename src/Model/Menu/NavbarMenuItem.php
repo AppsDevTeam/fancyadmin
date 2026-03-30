@@ -15,6 +15,7 @@ class NavbarMenuItem
 	protected ?string $link = null;
 	protected array $linkArgs = [];
 	protected ?Resource $resource = null;
+	protected ?\Closure $condition = null;
 
 	public function getLabel(): string
 	{
@@ -43,25 +44,44 @@ class NavbarMenuItem
 		return $this->submenu;
 	}
 
-	public function isEnabledSubmenu(SecurityUser $user): bool
+	public function setCondition(\Closure $condition): self
 	{
-		$enabled = false;
+		$this->condition = $condition;
+		return $this;
+	}
 
-		if ($this->getAclResource() || count($this->getSubmenu()->getSubMenuItems()) === 0) {
+	public function isVisible(SecurityUser $user, Component $presenter): bool
+	{
+		if ($this->getAclResource() && !$user->isAllowed($this->getAclResource())) {
+			return false;
+		}
+		return $this->condition === null || ($this->condition)($user, $presenter);
+	}
+
+	public function isEnabledSubmenu(SecurityUser $user, Component $presenter): bool
+	{
+		if ($this->getAclResource()) {
 			return $user->isAllowed($this->getAclResource());
+		}
+
+		if ($this->condition !== null && !($this->condition)($user, $presenter)) {
+			return false;
+		}
+
+		if (!$this->getSubmenu() || count($this->getSubmenu()->getSubMenuItems()) === 0) {
+			return true;
 		}
 
 		foreach ($this->getSubmenu()->getSubMenuItems() as $subMenuItem) {
 			if ($subMenuItem instanceof NavbarSubmenuHeading) {
 				continue;
 			}
-			if (!$subMenuItem->getAclResource() || $user->isAllowed($subMenuItem->getAclResource())) {
-				$enabled = true;
-				break;
+			if ($subMenuItem->isVisible($user, $presenter)) {
+				return true;
 			}
 		}
 
-		return $enabled;
+		return false;
 	}
 
 	private function setSubmenu(NavbarSubmenu $submenu): self

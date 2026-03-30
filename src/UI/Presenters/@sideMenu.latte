@@ -16,12 +16,12 @@
             {if $menuItem->getLink()}
                 {var $link = $presenter->link($menuItem->getLink(), $menuItem->getLinkArgs())}
 
-                <a n:if="!$menuItem->getAclResource() || $user->isAllowed($menuItem->getAclResource())" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
+                <a n:if="$menuItem->isVisible($user, $presenter)" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
                     <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
                     <div class="title">{_$menuItem->getLabel()}</div>
                 </a>
             {else}
-                <span n:if="$menuItem->isEnabledSubmenu($user)" href="#" n:class="item, $menuItem->isCurrent($presenter) ? active">
+                <span n:if="$menuItem->isEnabledSubmenu($user, $presenter)" href="#" n:class="item, $menuItem->isCurrent($presenter) ? active">
                     <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
                     <div class="title">{_$menuItem->getLabel()}</div>
                     {if $menuItem->getSubmenu()}
@@ -34,7 +34,7 @@
                                 {else}
                                     {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
 
-                                    <a n:if="is_null($subMenuItem->getAclResource()) || $user->isAllowed($subMenuItem->getAclResource())" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
+                                    <a n:if="$subMenuItem->isVisible($user, $presenter)" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
                                         <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
                                         <div class="item-title">{_$subMenuItem->getLabel()}</div>
                                     </a>

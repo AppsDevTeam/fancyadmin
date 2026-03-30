@@ -10,6 +10,8 @@ class UserMenu
 
 	protected bool $addFirebaseMenuItem = true;
 
+	protected ?string $profileLink = null;
+
 	/** @var UserMenuItem[] */
 	protected array $menuItems = [];
 
@@ -73,5 +75,16 @@ class UserMenu
 	public function isFirebaseMenuItem(): bool
 	{
 		return $this->addFirebaseMenuItem;
+	}
+
+	public function setProfileLink(string $profileLink): self
+	{
+		$this->profileLink = $profileLink;
+		return $this;
+	}
+
+	public function getProfileLink(): ?string
+	{
+		return $this->profileLink;
 	}
 }

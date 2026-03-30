@@ -2,7 +2,7 @@
 
 <div class="row bottom-mobile-menu d-sm-none">
     {foreach $navbarMenu->getMenuItems() as $menuItemKey => $menuItem}
-        {continueIf !is_null($menuItem->getAclResource()) && !$user->isAllowed($menuItem->getAclResource())}
+        {continueIf !$menuItem->isVisible($user, $presenter)}
 
         <div class="col">
             {if $menuItem->getLink()}

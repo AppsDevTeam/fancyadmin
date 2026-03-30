@@ -7,8 +7,8 @@
 			<div class="me-1">{$user->getIdentity()->getFirstName()}</div>
 		</a>
 		<ul class="dropdown-menu">
-			<li n:if="!empty($allowToEditProfileResource) && $user->isAllowed($allowToEditProfileResource)">
-				<a class="dropdown-item" n:href=":Portal:Account:profile">
+			<li n:if="$userMenu?->getProfileLink() && !empty($allowToEditProfileResource) && $user->isAllowed($allowToEditProfileResource)">
+				<a class="dropdown-item" n:href="$userMenu->getProfileLink()">
 					<i class="fa-solid fa-edit"></i> {_fcadmin.layout.profileMenu.profile.edit}
 				</a>
 			</li>
