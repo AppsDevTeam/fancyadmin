@@ -33,7 +33,7 @@
                     <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
                 {else}
                     {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
-                    <a href="$link" n:class="$subMenuItem->isCurrent($presenter) ? active">
+                    <a href="{$link}" n:class="$subMenuItem->isCurrent($presenter) ? active">
                         <i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i><span>{_$subMenuItem->getLabel()}</span>
                     </a>
                 {/if}
