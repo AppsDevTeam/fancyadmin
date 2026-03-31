@@ -214,7 +214,6 @@ trait AuthPresenterTrait
 			->resolveAclResources($module);
 		$this->getTemplate()->userMenu = $userMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 		$this->getTemplate()->summernoteUpload = $this->getPresenter()->link('summernoteUpload!');
-
 	}
 
 	/**

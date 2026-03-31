@@ -20,7 +20,7 @@ trait CreatedByNullable
 		return $this;
 	}
 
-	public function getCreatedBy(): Identity
+	public function getCreatedBy(): ?Identity
 	{
 		return $this->createdBy;
 	}
