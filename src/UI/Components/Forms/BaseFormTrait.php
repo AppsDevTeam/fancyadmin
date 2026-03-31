@@ -21,6 +21,8 @@ trait BaseFormTrait
 	protected bool $disableAccountInput = false;
 	protected bool $csrfProtection = true;
 
+	abstract protected function getEntityClass(): ?string;
+
 	/**
 	 * @throws \ReflectionException
 	 */
