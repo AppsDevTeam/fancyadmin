@@ -18,7 +18,7 @@ class FancyAdminRouter
 {
 	private ?FancyAdminCustomerRouteList $customerRouteList = null;
 	private ?FancyAdminRouteList $backofficeRouteList = null;
-	private ?\ADT\Routing\RouteList $routeList = null;
+	private ?FancyAdminRouteList $portalRouteList = null;
 
 	public function __construct(
 		protected FancyAdmin $administration,
@@ -77,12 +77,10 @@ class FancyAdminRouter
 		return $this->backofficeRouteList;
 	}
 
-	public function getRouteList(): \ADT\Routing\RouteList
+	public function getPortalRouteList(): FancyAdminRouteList
 	{
-		if ($this->routeList === null) {
-			$this->routeList = new \ADT\Routing\RouteList('Portal');
-
-			$portal = new FancyAdminRouteList(
+		if ($this->portalRouteList === null) {
+			$this->portalRouteList = new FancyAdminRouteList(
 				'Portal',
 				$this->administration,
 				$this->securityUser,
@@ -90,44 +88,35 @@ class FancyAdminRouter
 				$this->accountQueryFactory
 			);
 
-			$portal->addRoute('sign/in', [
+			$this->portalRouteList->addRoute('sign/in', [
 				'presenter' => 'Sign',
 				'action' => 'in',
 			]);
 
-			$portal->addRoute('sign/out', [
+			$this->portalRouteList->addRoute('sign/out', [
 				'presenter' => 'Sign',
 				'action' => 'out',
 			]);
 
-			$portal->addRoute('sign/new-password', [
+			$this->portalRouteList->addRoute('sign/new-password', [
 				'presenter' => 'Sign',
 				'action' => 'newPassword',
 			]);
 
-			$portal->addRoute('sign/password-set', [
+			$this->portalRouteList->addRoute('sign/password-set', [
 				'presenter' => 'Sign',
 				'action' => 'passwordSet',
 			]);
 
 			if ($this->administration->isLostPasswordEnabled()) {
-				$portal->addRoute('sign/lost-password', [
+				$this->portalRouteList->addRoute('sign/lost-password', [
 					'presenter' => 'Sign',
 					'action' => 'lostPassword',
 				]);
 			}
-
-			$this->routeList[] = $portal;
-			$this->routeList[] = $this->getCustomerRouteList();
-			$this->routeList[] = $this->getBackofficeRouteList();
 		}
 
-		return $this->routeList;
-	}
-
-	public function createRouteList(): \ADT\Routing\RouteList
-	{
-		return $this->getRouteList();
+		return $this->portalRouteList;
 	}
 
 	public function createFilterByQueryObject(BaseQuery $query): array
