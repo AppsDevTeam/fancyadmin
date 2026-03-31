@@ -19,6 +19,7 @@ trait BaseFormTrait
 	use AccountQueryFactoryInject;
 
 	protected bool $disableAccountInput = false;
+	protected bool $csrfProtection = true;
 
 	/**
 	 * @throws \ReflectionException
@@ -58,7 +59,9 @@ trait BaseFormTrait
 		$form->setTranslator($this->_translator);
 		$form->setEntityManager($this->_em);
 		$form->setRenderer(new BootstrapFormRenderer($form));
-		$form->addProtection('fcadmin.forms.errors.csrf');
+		if ($this->csrfProtection) {
+			$form->addProtection('fcadmin.forms.errors.csrf');
+		}
 		return $form;
 	}
 
