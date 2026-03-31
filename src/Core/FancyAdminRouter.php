@@ -80,7 +80,7 @@ class FancyAdminRouter
 	public function getRouteList(): \ADT\Routing\RouteList
 	{
 		if ($this->routeList === null) {
-			$this->routeList = new \ADT\Routing\RouteList();
+			$this->routeList = new \ADT\Routing\RouteList('Portal');
 
 			$portal = new FancyAdminRouteList(
 				'Portal',
