@@ -50,8 +50,7 @@ trait SelectAccountFormTrait
 	protected function getAccountPairs(): array
 	{
 		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			$accounts = $this->_accountQueryFactory->create()
-				->disableAccountFilter()
+			$accounts = $this->createBackofficeAccountQuery()
 				->fetch();
 		} else {
 			$accounts = array_merge($this->_securityUser->getIdentity()->getAccounts(), $this->_securityUser->getIdentity()->getSubaccounts());
@@ -69,6 +68,12 @@ trait SelectAccountFormTrait
 		return $accountPairs;
 	}
 	
+	protected function createBackofficeAccountQuery()
+	{
+		return $this->_accountQueryFactory->create()
+			->disableAccountFilter();
+	}
+
 	protected function getAccountName(Account $account): string
 	{
 		return $account->getName();
