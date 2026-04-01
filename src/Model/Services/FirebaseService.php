@@ -18,7 +18,7 @@ abstract class FirebaseService
 	public function __construct(
 		protected string $serviceAccount,
 		readonly protected EntityManager $entityManager,
-		readonly protected IdentityQueryFactory $userQueryFactory,
+		readonly protected IdentityQueryFactory $identityQueryFactory,
 		readonly protected Translator $translator,
 	) {
 	}
@@ -36,13 +36,14 @@ abstract class FirebaseService
 				->withServiceAccount($this->serviceAccount)
 				->createMessaging()
 				->send(
-					CloudMessage::withTarget('token', $token)
+					CloudMessage::new()
+						->withToken($token)
 						->withData($body)
 						->withHighestPossiblePriority()
 				);
 		} catch (NotFound) {
 			$validTokens = [];
-			foreach ($this->userQueryFactory->create()->byFirebaseToken($token)->fetch() as $_user) {
+			foreach ($this->identityQueryFactory->create()->byFirebaseToken($token)->fetch() as $_user) {
 				Debugger::log($_user->getId() . ' ' . $token, 'firebase-not-found');
 				foreach ($_user->getFirebaseTokens() as $userToken) {
 					if ($userToken === $token) {

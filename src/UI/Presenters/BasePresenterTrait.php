@@ -39,7 +39,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
-		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->link('setFirebaseToken!', ['token' => '__token__']));
+		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 	}
 
@@ -113,10 +113,10 @@ trait BasePresenterTrait
 		return $list;
 	}
 
-	public function handleSetFirebaseToken(string $token): void
+	public function handleSetFirebaseToken(string $firebaseToken): void
 	{
 		$this->getUser()->getIdentity()
-			->addFirebaseToken($token);
+			->addFirebaseToken($firebaseToken);
 
 		$this->em->flush();
 

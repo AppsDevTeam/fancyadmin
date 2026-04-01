@@ -1,17 +1,28 @@
+import { getToken } from "firebase/messaging";
+
 const run = (config) => {
     $('[data-adt-notifications]').on('click', function () {
         if (window.messaging) {
-            Notification.requestPermission().then(function () {
-                messaging.getToken().then(function (currentToken) {
-                    $.nette.ajax({
-                        url: config.setFirebaseTokenLink.replace('__token__', currentToken)
-                    });
-                }).catch(function (err) {
+            Notification.requestPermission().then(function (permission) {
+                if (permission !== 'granted') {
                     alert(_('appJs.firebase.error.notificationsPermissionError'));
-                });
+                    return;
+                }
 
-            }).catch(function (err) {
-                alert(_('appJs.firebase.error.notificationsPermissionError'));
+                getToken(window.messaging, { vapidKey: config.vapidKey })
+                    .then(function (currentToken) {
+                        if (currentToken) {
+                            $.nette.ajax({
+                                url: config.setFirebaseTokenLink.replace('__firebaseToken__', currentToken)
+                            });
+                        } else {
+                            alert(_('appJs.firebase.error.notificationsPermissionError'));
+                        }
+                    })
+                    .catch(function (err) {
+                        console.error(err);
+                        alert(_('appJs.firebase.error.notificationsPermissionError'));
+                    });
             });
         } else {
             alert(_('appJs.firebase.error.notificationsNotSupported'));
@@ -19,4 +30,4 @@ const run = (config) => {
     });
 }
 
-export default {run};
+export default { run };
