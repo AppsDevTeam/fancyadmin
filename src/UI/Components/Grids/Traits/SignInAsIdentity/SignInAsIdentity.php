@@ -55,7 +55,7 @@ trait SignInAsIdentity
 
 	protected function createSignAsIdentityLink(Identity $identity): never
 	{
-		$token = $this->_onetimeTokenService->saveToken(\ADT\DoctrineAuthenticator\OTP\OnetimeTokenTypeEnum::LOGIN, new \DateTimeImmutable('+15 minutes'), $identity);
+		$token = $this->_onetimeTokenService->saveToken(\ADT\DoctrineAuthenticator\OTP\OnetimeTokenTypeEnum::LOGIN, new \DateTimeImmutable('+15 minutes'), $identity, checkLimit: false);
 
 		$this->getPresenter()->payload->signAsIdentityLink = $this->getPresenter()->link('//Home:', [
 			'token' => $token,
