@@ -241,6 +241,11 @@ sidePanels:
     formSaved: "Formulář byl úspěšně uložen."
     closeConfirm: "Opravdu zavřít bez uložení?"
 
+firebase:
+  notifications:
+    flashes:
+      success: Notifikace úspěšně povoleny.
+
 modules:
   web:
     navbar:

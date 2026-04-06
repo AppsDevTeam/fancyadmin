@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\JsComponentsInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Exception;
@@ -17,6 +18,7 @@ trait BasePresenterTrait
 	use FancyAdminInject;
 	use EntityManagerInject;
 	use TranslatorInject;
+	use JsComponentsInject;
 
 	protected bool $primaryTemplate = false;
 
@@ -37,6 +39,8 @@ trait BasePresenterTrait
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
+		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
+		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 	}
 
 
@@ -107,5 +111,15 @@ trait BasePresenterTrait
 		$list = parent::formatLayoutTemplateFiles();
 		$list[] = __DIR__ . "/@layout.latte";
 		return $list;
+	}
+
+	public function handleSetFirebaseToken(string $firebaseToken): void
+	{
+		$this->getUser()->getIdentity()
+			->addFirebaseToken($firebaseToken);
+
+		$this->em->flush();
+
+		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.success'); // TODO translate
 	}
 }

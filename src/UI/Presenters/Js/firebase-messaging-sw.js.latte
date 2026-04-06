@@ -1,0 +1,19 @@
+{varType array $firebaseConfig}
+
+importScripts('https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging-compat.js');
+
+// Initialize the Firebase app in the service worker by passing in the
+// messagingSenderId.
+
+firebase.initializeApp({\Nette\Utils\Json::encode($firebaseConfig)|noescape});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+    self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => {
+            client.postMessage(payload);
+        });
+    });
+});
