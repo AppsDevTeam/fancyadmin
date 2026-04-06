@@ -87,17 +87,10 @@ AdtJsComponents.init('portal-components-grids-traits-signInAsIdentity', '~UI/Com
 // AdtJsComponents.init('companySitePlanDetail', 'UI/Portal/Presenters/CompanySitePlans');
 // AdtJsComponents.init('dashboard', 'UI/Portal/Presenters/Dashboard');
 // AdtJsComponents.init('dashboard', 'assets/js/dashboard');
-AdtJsComponents.init('messaging', (config) =>
-	import('./messaging/index.js').then(m => m.default.run(config))
-);
+AdtJsComponents.init('messaging', 'Messaging');
+AdtJsComponents.init('notifications', 'Notifications');
+AdtJsComponents.init('translate', 'Translate');
 
-AdtJsComponents.init('notifications', (config) =>
-	import('./notifications/index.js').then(m => m.default.run(config))
-);
-
-AdtJsComponents.init('translate', (config) =>
-	import('./translate/index.js').then(m => m.default.run(config))
-);
 // AdtJsComponents.init('print-dashboard', 'assets/js/printDashboard');
 // AdtJsComponents.init('safari-support', 'assets/js/safariSupport');
 //
