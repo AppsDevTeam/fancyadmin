@@ -30,7 +30,6 @@ trait BasePresenterTrait
 		parent::beforeRender();
 		$this->getTemplate()->originalTemplate = __DIR__ . '/@layout.latte';
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
-		$this->getTemplate()->jsComponentsConfig = Json::encode($this->_fancyAdmin->getJsComponentsConfig());
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
 		$this->getTemplate()->faviconFileNamePng = $this->_fancyAdmin->getFaviconFileNamePng();
 		$this->getTemplate()->faviconFileNameSvg = $this->_fancyAdmin->getFaviconFileNameSvg();
@@ -39,6 +38,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
+		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 	}
