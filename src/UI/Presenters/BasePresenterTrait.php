@@ -40,6 +40,8 @@ trait BasePresenterTrait
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
+		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
+		$this->_jsComponents->setFirebaseLink('removeAllFirebaseTokensLink', $this->getPresenter()->link('removeAllFirebaseTokens!'));
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 	}
 
@@ -121,5 +123,25 @@ trait BasePresenterTrait
 		$this->em->flush();
 
 		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.success'); // TODO translate
+	}
+
+	public function handleRemoveFirebaseToken(string $firebaseToken): void
+	{
+		$this->getUser()->getIdentity()
+			->removeFirebaseToken($firebaseToken);
+
+		$this->em->flush();
+
+		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled'); // TODO translate
+	}
+
+	public function handleRemoveAllFirebaseTokens(): void
+	{
+		$this->getUser()->getIdentity()
+			->setFirebaseTokens([]);
+
+		$this->em->flush();
+
+		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled'); // TODO translate
 	}
 }
