@@ -247,7 +247,7 @@
 			z-index: 99;
 		}
 
-		tr:hover {
+		tr:not(.row-item-detail):hover {
 			td {
 				background-color: $background-dark;
 			}
