@@ -86,7 +86,7 @@ $(document).on('click', 'a.link-confirmation', function (e) {
 	}
 });
 
-$(document).on('click', 'tbody tr:not(.row-item-detail) td:not(.col-actions)', function (event) {
+$(document).on('click', 'tbody tr:not(.row-item-detail) td:not(.col-action)', function (event) {
 	if (event.target.tagName.toLowerCase() === 'a' || $(event.target).hasClass('menu-open-button')) {
 		return;  // Klik byl na odkaz, takže nevyvoláváme žádnou akci.
 	}
