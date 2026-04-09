@@ -245,7 +245,7 @@ firebase:
   notifications:
     flashes:
       success: Notifikace úspěšně povoleny.
-      disabled: Notifikace úspěšně zrušeny. Pro úplné vypnutí je ještě nutné odebrat povolení oznámení v nastavení prohlížeče.
+      disabled: Notifikace úspěšně zrušeny.
 
 modules:
   web:
