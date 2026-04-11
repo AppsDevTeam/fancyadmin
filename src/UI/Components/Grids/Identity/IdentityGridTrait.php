@@ -13,7 +13,6 @@ use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\AnonymizeIdentity\AnonymizeIdentity;
-use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Deletable;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\IdentityData;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\ResetPassword\ResetPassword;
@@ -26,7 +25,6 @@ trait IdentityGridTrait
 {
 	use ResetPassword;
 	use Editable;
-	use Deletable;
 	use SignInAsIdentity;
 	use IdentityData;
 	use AnonymizeIdentity;

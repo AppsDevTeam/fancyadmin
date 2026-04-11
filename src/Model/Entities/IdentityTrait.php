@@ -133,7 +133,8 @@ trait IdentityTrait
 
 	public function getFullName(): string
 	{
-		return $this->firstName . " " . $this->lastName;
+		$fullName = trim(($this->firstName ?? '') . ' ' . ($this->lastName ?? ''));
+		return $fullName !== '' ? $fullName : ($this->username ?? '');
 	}
 
 	public function getAuthObjectId(): string
