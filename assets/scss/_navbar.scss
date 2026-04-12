@@ -110,7 +110,7 @@ nav {
     display: flex;
     align-items: center;
     gap: 15px;
-    min-width: 0;
+    min-width: 100%;
   }
 
   .mb-3 {
@@ -124,6 +124,18 @@ nav {
 
     @include media-breakpoint-down(sm) {
       max-width: calc(100vw - 120px);
+    }
+  }
+
+}
+
+.select2-dropdown.select2-primary-dropdown {
+  @include media-breakpoint-down(md) {
+    max-width: 100vw !important;
+    width: calc(100vw - 2rem) !important;
+
+    .select2-results__option {
+      text-wrap: wrap !important;
     }
   }
 }
