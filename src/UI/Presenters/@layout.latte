@@ -76,7 +76,7 @@
 				</nav>
 			{else}
 				<nav n:if="$user->isAllowedFullDataAclResource() || $user->isAllowedBackoffice() || count($user->getIdentity()->getAccounts()) + count($user->getIdentity()->getSubaccounts()) > 1" style="height: 70px" class="d-flex">
-					<div class="col-auto align-items-center" style="display: flex">
+					<div class="d-flex align-items-center" style="min-width: 100%; overflow: hidden">
 						{control selectAccountForm}
 					</div>
 				</nav>
