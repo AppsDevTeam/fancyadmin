@@ -35,7 +35,16 @@ trait IdentityGridTrait
 
 		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles')
 			->setRenderer(function (Identity $identity) {
-				return implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()));
+				$roles = [];
+				foreach ($identity->getProfiles() as $profile) {
+					foreach ($profile->getRoles() as $role) {
+						$roles[$role->getId()] = $role->getName();
+					}
+				}
+				foreach ($identity->getRoles() as $role) {
+					$roles[$role->getId()] = $role->getName();
+				}
+				return implode(', ', $roles);
 			});
 
 		$grid->addColumnText('accounts', 'fcadmin.grids.user.labels.accounts')
