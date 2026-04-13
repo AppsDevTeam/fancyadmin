@@ -3,6 +3,12 @@ import 'summernote/dist/summernote-bs5';
 import 'summernote/dist/lang/summernote-cs-CZ';
 import '@emericklaw/summernote-cleaner'
 
+import 'codemirror/lib/codemirror.css';
+import CodeMirror from 'codemirror/lib/codemirror';
+import 'codemirror/mode/xml/xml';
+import 'codemirror/mode/htmlmixed/htmlmixed';
+window.CodeMirror = CodeMirror;
+
 $.nette.ext('live').after(function (el) {
 	$(el).find('.summernote').each((i, el) => {
 		$(el).summernote({
@@ -11,6 +17,12 @@ $.nette.ext('live').after(function (el) {
 			maxHeight: null,
 			linkTargetBlank: false,
 			lang: 'cs-CZ',
+			codemirror: {
+				mode: 'text/html',
+				htmlMode: true,
+				lineNumbers: true,
+				theme: 'default',
+			},
 			callbacks: {
 				onInit: function () {
 					$(this).next().find('.note-editable').addClass('portal-collapse-detail-content');
