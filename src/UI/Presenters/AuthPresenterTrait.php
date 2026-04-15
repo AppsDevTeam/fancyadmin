@@ -106,7 +106,7 @@ trait AuthPresenterTrait
 		parent::checkRequirements($element);
 		if ($this->getUser()->isLoggedIn()) {
 			if (
-				$this->getName() === trim($this->_fancyAdmin->getDefaultBackofficeRoute(), ':')
+				$this->isLinkCurrent($this->_fancyAdmin->getDefaultBackofficeRoute())
 				&&
 				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
 			) {
