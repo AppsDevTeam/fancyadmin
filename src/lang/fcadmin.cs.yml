@@ -211,8 +211,10 @@ grids:
       newPassword: Nové heslo
       signAsIdentity: Přihlásit se za uživatele
       signAsIdentityOpenInIncognitoWindow: Otevřít v anonymním okně
+      anonymize: Anonymizovat
     confirms:
       newPassword: Opravdu chcete odeslat e-mail S výzvou pro nastavení hesla?
+      anonymize: Opravdu chcete anonymizovat tuto identitu?
     messages:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
   global:

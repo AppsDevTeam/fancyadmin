@@ -22,10 +22,10 @@ trait AnonymizeIdentity
 			if ($this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_IDENTITIES_ANONYMIZE)) {
 				$this['grid']->addAction('anonymize', 'Anonymizovat')
 					->setRenderer(function (Identity $identity) {
-						echo '<a href="' . $this->link('anonymize!', $identity->getId()) . '">
+						echo '<a href="' . $this->link('anonymize!', $identity->getId()) . '" class="ajax" data-datagrid-confirm="' . $this->_translator->translate('fcadmin.grids.user.confirms.anonymize') . '">
 						<span class="fa fa-face-disguise"></span>
-						Anonymizovat 
-					</a>'; // TODO translate
+						' . $this->_translator->translate('fcadmin.grids.user.actions.anonymize') . '
+					</a>';
 					});
 			}
 		};
@@ -42,6 +42,8 @@ trait AnonymizeIdentity
 			$this->getPresenter()->error();
 		}
 
+		$identity->setAnonymizedAt(new \DateTimeImmutable());
+		$identity->setAnonymizedBy($this->_securityUser->getIdentity());
 		$identity->setLastName(mb_substr($identity->getLastName(), 0, 1) . '.');
 		$identity->setEmail(null);
 		$identity->setPhoneNumber(null);
