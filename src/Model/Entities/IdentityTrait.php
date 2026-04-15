@@ -9,6 +9,7 @@ use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
@@ -65,6 +66,13 @@ trait IdentityTrait
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	#[LoggableProperty]
 	protected Collection $roles;
+
+	#[ORM\Column(nullable: true)]
+	protected ?DateTimeImmutable $anonymizedAt = null;
+
+	#[ORM\ManyToOne(targetEntity: 'Identity')]
+	#[JoinColumn(nullable: true)]
+	protected ?Identity $anonymizedBy = null;
 
 	protected string $authToken;
 
@@ -279,6 +287,28 @@ trait IdentityTrait
 			return $this;
 		}
 		$this->roles->add($role);
+		return $this;
+	}
+
+	public function getAnonymizedAt(): ?DateTimeImmutable
+	{
+		return $this->anonymizedAt;
+	}
+
+	public function setAnonymizedAt(?DateTimeImmutable $anonymizedAt): static
+	{
+		$this->anonymizedAt = $anonymizedAt;
+		return $this;
+	}
+
+	public function getAnonymizedBy(): ?Identity
+	{
+		return $this->anonymizedBy;
+	}
+
+	public function setAnonymizedBy(?Identity $anonymizedBy): static
+	{
+		$this->anonymizedBy = $anonymizedBy;
 		return $this;
 	}
 

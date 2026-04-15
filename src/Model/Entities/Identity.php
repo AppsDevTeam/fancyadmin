@@ -65,4 +65,11 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function isAdmin(): bool;
 	
 	public function addRole(AclRole $role): static;
+
+	// Anonymized
+	public function getAnonymizedAt(): ?DateTimeImmutable;
+	public function setAnonymizedAt(?DateTimeImmutable $anonymizedAt): static;
+
+	public function getAnonymizedBy(): ?Identity;
+	public function setAnonymizedBy(?Identity $anonymizedBy): static;
 }
