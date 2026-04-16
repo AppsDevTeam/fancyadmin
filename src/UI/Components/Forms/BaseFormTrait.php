@@ -77,6 +77,11 @@ trait BaseFormTrait
 		return null;
 	}
 
+	public function getSnippetsToRedraw(): array
+	{
+		return [];
+	}
+
 	public static function getDefaultTemplateFile(): string
 	{
 		return __DIR__ . '/BaseForm.latte';

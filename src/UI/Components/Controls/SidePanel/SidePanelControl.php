@@ -53,13 +53,16 @@ class SidePanelControl extends Control
 		})
 			->setOnSuccess(function (Form $form) use ($baseForm) {
 				$this->getPresenter()->flashMessageSuccess('fcadmin.sidePanels.control.formSaved');
-				$this->getPresenter()->redirect('this');
-//				if ($redirect = $baseForm->getRedirect($form->getEntity())) {
-//					$this->getPresenter()->redirect($redirect[0], array_merge($redirect[1], ['redrawSidePanel' => true]));
-//				} else {
-//					$this->getPresenter()->redrawControl('container');
-//					$this->getPresenter()->redrawControl('sidePanelContainer');
-//				}
+				$snippets = $baseForm->getSnippetsToRedraw();
+				if ($this->getPresenter()->isAjax() && $snippets) {
+					foreach ($snippets as $snippet) {
+						$this->getPresenter()->redrawControl($snippet);
+					}
+					$this->getPresenter()->redrawControl('sidePanel');
+					$this->getPresenter()->redrawControl('flashes');
+				} else {
+					$this->getPresenter()->redirect('this');
+				}
 			});
 
 		return $baseForm;
