@@ -45,6 +45,48 @@ trait SignInFormTrait
 			->getControlPrototype()->class[] = 'w-100';
 
 		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
+
+		// Keycloak email check — přidá data atribut pro JS kontrolu
+		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			$form->getElementPrototype()->setAttribute('data-adt-sign-in-form', true);
+
+			$form['email']->setHtmlAttribute(
+				'data-keycloak-check-url',
+				$this->link('checkKeycloak!', ['email' => '__EMAIL__'])
+			);
+		}
+	}
+
+	/**
+	 * AJAX signal — ověří, zda email existuje v Keycloaku.
+	 * Pokud ano, vrátí loginUrl s login_hint pro redirect.
+	 */
+	public function handleCheckKeycloak(string $email): void
+	{
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			$this->getPresenter()->sendJson(['loginUrl' => null]);
+			return;
+		}
+
+		if (empty(trim($email))) {
+			$this->getPresenter()->sendJson(['loginUrl' => null]);
+			return;
+		}
+
+		$keycloak = $this->_fancyAdmin->getKeycloak();
+
+		$keycloakUser = $keycloak->findUser($email);
+
+		if ($keycloakUser === null) {
+			$this->getPresenter()->sendJson(['loginUrl' => null]);
+			return;
+		}
+
+		$backRedirect = $this->getPresenter()->link(':Portal:Sign:in');
+
+		$this->getPresenter()->sendJson([
+			'loginUrl' => $keycloak->getLoginUrl($backRedirect, $email, true),
+		]);
 	}
 
 	public function validateForm(array $values, Form $form): void

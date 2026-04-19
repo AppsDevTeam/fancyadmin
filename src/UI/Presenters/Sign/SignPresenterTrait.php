@@ -50,6 +50,18 @@ trait SignPresenterTrait
 	public function actionOut(): never
 	{
 		if ($this->getUser()->isLoggedIn()) {
+			// Pokud je Keycloak zapnutý a uživatel se přihlásil přes Keycloak, přesměrujeme na Keycloak logout
+			if ($this->_fancyAdmin->isKeycloakEnabled()) {
+				$keycloak = $this->_fancyAdmin->getKeycloak();
+				$redirectUrl = $this->getPresenter()->link(':Portal:Sign:in');
+				$logoutUrl = $keycloak->getLogoutUrl($redirectUrl);
+
+				if ($logoutUrl !== null) {
+					$this->getUser()->logout(true);
+					$this->redirectUrl($logoutUrl);
+				}
+			}
+
 			$this->getUser()->logout(true);
 		}
 
