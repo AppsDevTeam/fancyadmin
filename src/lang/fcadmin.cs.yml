@@ -249,6 +249,16 @@ firebase:
       success: Notifikace úspěšně povoleny.
       disabled: Notifikace úspěšně zrušeny.
 
+keycloak:
+  logout:
+    title: Odhlášení
+    loading: Odhlašování...
+    noscriptLink: Pro odhlášení <a href="%url%">klikněte zde</a>.
+  errors:
+    authFailed: Přihlášení přes SSO se nezdařilo.
+    noEmail: Účet SSO nemá přiřazený e-mail.
+    loopDetected: Bylo detekováno opakované přesměrování. Zkuste to prosím znovu.
+
 modules:
   web:
     navbar:

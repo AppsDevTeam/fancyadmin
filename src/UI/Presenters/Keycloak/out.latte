@@ -4,7 +4,7 @@
 
 <html lang="cs">
 	<head>
-		<title>Odhlášení</title>
+		<title>{_fcadmin.keycloak.logout.title}</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<style>
@@ -38,10 +38,10 @@
 	</head>
 	<body>
 		<div class="loader"></div>
-		<div>Odhlašování...</div>
+		<div>{_fcadmin.keycloak.logout.loading}</div>
 
 		<noscript>
-			<p>Pro odhlášení <a href="{$keycloakLogoutUrl}">klikněte zde</a>.</p>
+			<p>{_fcadmin.keycloak.logout.noscriptLink, ['url' => $keycloakLogoutUrl]|noescape}</p>
 		</noscript>
 
 		<script>
