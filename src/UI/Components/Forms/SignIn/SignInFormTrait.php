@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
@@ -20,6 +21,7 @@ trait SignInFormTrait
 	use FancyAdminInject;
 	use AuthenticatorInject;
 	use SecurityUserInject;
+	use IdentityQueryFactoryInject;
 
 	private Identity $_identity;
 
@@ -58,8 +60,9 @@ trait SignInFormTrait
 	}
 
 	/**
-	 * AJAX signal — ověří, zda email existuje v Keycloaku.
-	 * Pokud ano, vrátí loginUrl s login_hint pro redirect.
+	 * AJAX signal — ověří, zda se uživatel má přihlašovat přes SSO.
+	 * Najde identitu podle emailu, zjistí přiřazenou SSO instanci,
+	 * a pokud existuje, vrátí loginUrl s login_hint pro redirect.
 	 */
 	public function handleCheckKeycloak(string $email): void
 	{
@@ -73,20 +76,29 @@ trait SignInFormTrait
 			return;
 		}
 
-		$keycloak = $this->_fancyAdmin->getKeycloak();
-
-		$keycloakUser = $keycloak->findUser($email);
-
-		if ($keycloakUser === null) {
+		$manager = $this->_fancyAdmin->getKeycloakManager();
+		if ($manager === null) {
 			$this->getPresenter()->sendJson(['loginUrl' => null]);
 			return;
 		}
 
-		$backRedirect = $this->getPresenter()->link(':Portal:Sign:in');
+		// Najdeme identitu podle emailu a zjistíme přiřazenou SSO instanci
+		$identity = $this->_identityQueryFactory->create()
+			->byEmail($email)
+			->fetchOneOrNull();
 
-		$this->getPresenter()->sendJson([
-			'loginUrl' => $keycloak->getLoginUrl($backRedirect, $email, true),
-		]);
+		if ($identity !== null) {
+			$keycloak = $manager->getInstanceForIdentity($identity);
+			if ($keycloak !== null) {
+				$backRedirect = $this->getPresenter()->link(':Portal:Sign:in');
+				$this->getPresenter()->sendJson([
+					'loginUrl' => $keycloak->getLoginUrl($backRedirect, $email, true),
+				]);
+				return;
+			}
+		}
+
+		$this->getPresenter()->sendJson(['loginUrl' => null]);
 	}
 
 	public function validateForm(array $values, Form $form): void

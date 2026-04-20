@@ -53,12 +53,15 @@ trait BasePresenterTrait
 				&& $this->getPresenter()->getSession(KeycloakSessionSection::SECTION_NAME)->get(KeycloakSessionSection::ID_TOKEN) !== null;
 
 			if ($isKeycloakUserLoggedIn) {
-				$keycloakSettingsJson = Json::encode([
-					'realm' => $this->_fancyAdmin->getKeycloakRealm(),
-					'clientId' => $this->_fancyAdmin->getKeycloakFrontendClientId(),
-					'url' => $this->_fancyAdmin->getKeycloakHostUrl(),
-					'silentCheckSsoUrl' => $this->getPresenter()->link('//:Portal:KeycloakAuth:silentCheckSso'),
-				]);
+				$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceFromSession();
+				if ($keycloak !== null) {
+					$keycloakSettingsJson = Json::encode([
+						'realm' => $keycloak->getRealm(),
+						'clientId' => $keycloak->getFrontendClientId(),
+						'url' => $keycloak->getHostUrl(),
+						'silentCheckSsoUrl' => $this->getPresenter()->link('//:Portal:KeycloakAuth:silentCheckSso'),
+					]);
+				}
 			}
 		}
 		$this->getTemplate()->keycloakSettingsJson = $keycloakSettingsJson;

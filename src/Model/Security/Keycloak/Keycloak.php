@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\Model\Security\Keycloak;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\AclRoleQueryFactory;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
@@ -47,6 +48,10 @@ class Keycloak
 
 	private ?KeycloakAdminAccessToken $adminAccessToken = null;
 
+	private string $instanceName = 'default';
+
+	private ?string $defaultRoleName;
+
 	protected EntityManager $em;
 
 	public function __construct(
@@ -64,6 +69,7 @@ class Keycloak
 		FancyAdmin $fancyAdmin,
 		Session $session,
 		Storage $storage,
+		?string $defaultRole = null,
 	) {
 		$this->realm = $realm;
 		$this->baseUrl = $baseUrl;
@@ -71,6 +77,7 @@ class Keycloak
 		$this->clientId = $clientId;
 		$this->clientSecret = $clientSecret;
 		$this->frontendClientId = $frontendClientId;
+		$this->defaultRoleName = $defaultRole;
 		$this->em = $em;
 		$this->linkGenerator = $linkGenerator;
 		$this->securityUser = $securityUser;
@@ -168,7 +175,7 @@ class Keycloak
 	 */
 	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null): string
 	{
-		$redirectParams = [];
+		$redirectParams = ['instance' => $this->instanceName];
 		if ($backRedirect) {
 			$redirectParams['backRedirect'] = $backRedirect;
 		}
@@ -192,7 +199,7 @@ class Keycloak
 
 	public function getAuthRedirectUri(): string
 	{
-		return $this->linkGenerator->link('//:Portal:KeycloakAuth:callback');
+		return $this->linkGenerator->link('//:Portal:KeycloakAuth:callback', ['instance' => $this->instanceName]);
 	}
 
 	/**
@@ -341,7 +348,17 @@ class Keycloak
 	}
 
 	/**
+	 * Najde Sso entitu podle názvu této instance.
+	 */
+	protected function findSsoEntity(): ?Sso
+	{
+		$ssoClass = $this->em->findEntityClassByInterface(Sso::class);
+		return $this->em->getRepository($ssoClass)->findOneBy(['name' => $this->instanceName]);
+	}
+
+	/**
 	 * Vytvoří novou identitu z Keycloak user info.
+	 * Přiřadí SSO instanci a default roli (z configu, nebo fallback na role navázané na SSO).
 	 * Metoda je protected, aby ji bylo možné přepsat v konkrétním projektu.
 	 */
 	protected function createIdentity(array $userInfo): Identity
@@ -354,12 +371,29 @@ class Keycloak
 		$identity->setFirstName($userInfo['given_name'] ?? null);
 		$identity->setLastName($userInfo['family_name'] ?? null);
 
-		$adminRole = $this->aclRoleQueryFactory->create()
-			->byIsAdmin(true)
-			->fetchOneOrNull();
+		// Přiřadit SSO instanci
+		$sso = $this->findSsoEntity();
+		if ($sso !== null) {
+			$identity->setSso($sso);
+		}
 
-		if ($adminRole !== null) {
-			$identity->addRole($adminRole);
+		// Přiřadit roli — buď defaultRole z configu, nebo role navázané na SSO
+		if ($this->defaultRoleName !== null) {
+			$role = $this->aclRoleQueryFactory->create()
+				->byName($this->defaultRoleName)
+				->fetchOneOrNull();
+
+			if ($role !== null) {
+				$identity->addRole($role);
+			}
+		} elseif ($sso !== null) {
+			$roles = $this->aclRoleQueryFactory->create()
+				->bySso($sso)
+				->fetchAll();
+
+			foreach ($roles as $role) {
+				$identity->addRole($role);
+			}
 		}
 
 		$this->em->persist($identity);
@@ -379,7 +413,7 @@ class Keycloak
 			return null;
 		}
 
-		$data = $this->cache->load($email, function (&$dependencies) use ($adminAccessToken, $email) {
+		$data = $this->cache->load($this->instanceName . ':' . $email, function (&$dependencies) use ($adminAccessToken, $email) {
 			$dependencies[Cache::Expire] = '1 hour';
 
 			$query = $this->client->get(
@@ -550,7 +584,7 @@ class Keycloak
 
 			if ($response->getStatusCode() === 201) {
 				// Invalidovat cache pro tohoto uživatele
-				$this->cache->remove($email);
+				$this->cache->remove($this->instanceName . ':' . $email);
 
 				// Získat vytvořeného uživatele (response obsahuje jen Location header)
 				return $this->findUser($email);
@@ -560,7 +594,7 @@ class Keycloak
 		} catch (RequestException $e) {
 			// 409 Conflict = user already exists
 			if ($e->getResponse()?->getStatusCode() === 409) {
-				$this->cache->remove($email);
+				$this->cache->remove($this->instanceName . ':' . $email);
 				return $this->findUser($email);
 			}
 
@@ -612,7 +646,7 @@ class Keycloak
 				]
 			);
 
-			$this->cache->remove($email);
+			$this->cache->remove($this->instanceName . ':' . $email);
 			return $this->findUser($email);
 		} catch (RequestException $e) {
 			return null;
@@ -651,7 +685,7 @@ class Keycloak
 				]
 			);
 
-			$this->cache->remove($email);
+			$this->cache->remove($this->instanceName . ':' . $email);
 			return true;
 		} catch (RequestException $e) {
 			return false;
@@ -690,7 +724,7 @@ class Keycloak
 				]
 			);
 
-			$this->cache->remove($email);
+			$this->cache->remove($this->instanceName . ':' . $email);
 			return true;
 		} catch (RequestException $e) {
 			return false;
@@ -739,6 +773,16 @@ class Keycloak
 		} catch (RequestException $e) {
 			return false;
 		}
+	}
+
+	public function getInstanceName(): string
+	{
+		return $this->instanceName;
+	}
+
+	public function setInstanceName(string $instanceName): void
+	{
+		$this->instanceName = $instanceName;
 	}
 
 	public function getHostUrl(): string

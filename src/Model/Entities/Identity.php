@@ -54,6 +54,9 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getSelectedAccount(): ?Account;
 	public function setSelectedAccount(?Account $selectedAccount): static;
 
+	public function getSso(): ?Sso;
+	public function setSso(?Sso $sso): static;
+
 	public function getFullName(): string;
 	public function getGravatar(): string;
 	public function getAccounts(): array;

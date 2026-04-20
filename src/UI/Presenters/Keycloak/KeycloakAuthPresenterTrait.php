@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\Keycloak;
 
-use ADT\FancyAdmin\DI\Injects\KeycloakInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use Nette\Application\Attributes\CrossOrigin;
@@ -13,31 +13,32 @@ use Nette\Utils\Validators;
 trait KeycloakAuthPresenterTrait
 {
 	use PresenterTrait;
-	use KeycloakInject;
+	use FancyAdminInject;
 
 	private const int MAX_AUTH_ATTEMPTS = 3;
 	private const int AUTH_ATTEMPT_WINDOW_SECONDS = 120;
 
 	/**
 	 * Keycloak callback — zpracuje authorization code po redirectu z Keycloaku.
+	 * Parametr `instance` identifikuje, ze které Keycloak instance callback přišel.
 	 */
 	#[CrossOrigin]
-	public function actionCallback(?string $state = null, ?string $code = null, ?string $error = null): void
+	public function actionCallback(?string $state = null, ?string $code = null, ?string $error = null, ?string $instance = null): void
 	{
-		if ($error !== null || $code === null) {
+		if ($error !== null || $code === null || $instance === null) {
 			$this->redirect(':Portal:Sign:in');
 			return;
 		}
 
-		$this->processKeycloakAuthRequest($code, $state);
+		$this->processKeycloakAuthRequest($code, $instance, $state);
 	}
 
 	/**
 	 * Silent SSO check — Keycloak přesměruje sem po prompt=none.
 	 */
-	public function actionSilentCheck(?string $code = null, ?string $error = null, ?string $backRedirect = null): void
+	public function actionSilentCheck(?string $code = null, ?string $error = null, ?string $backRedirect = null, ?string $instance = null): void
 	{
-		if ($error !== null || $code === null) {
+		if ($error !== null || $code === null || $instance === null) {
 			if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
 				$this->redirectUrl($backRedirect);
 			}
@@ -45,20 +46,20 @@ trait KeycloakAuthPresenterTrait
 			return;
 		}
 
-		$this->processKeycloakAuthRequest($code, $backRedirect);
+		$this->processKeycloakAuthRequest($code, $instance, $backRedirect);
 	}
 
 	/**
 	 * Po přihlášení přes Keycloak — silent check pro ověření, že session funguje.
 	 */
-	public function actionAfterLoginSilentCheck(?string $code = null, ?string $error = null, ?string $backRedirect = null): void
+	public function actionAfterLoginSilentCheck(?string $code = null, ?string $error = null, ?string $backRedirect = null, ?string $instance = null): void
 	{
 		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
 		$afterLoginSilentCheck = $keycloakSession->get(KeycloakSessionSection::AFTER_LOGIN_SILENT_CHECK);
 		$keycloakSession->remove(KeycloakSessionSection::AFTER_LOGIN_SILENT_CHECK);
 
-		if ($afterLoginSilentCheck && $error === null && $code !== null) {
-			$this->processKeycloakAuthRequest($code, $backRedirect);
+		if ($afterLoginSilentCheck && $error === null && $code !== null && $instance !== null) {
+			$this->processKeycloakAuthRequest($code, $instance, $backRedirect);
 			return;
 		}
 
@@ -89,8 +90,16 @@ trait KeycloakAuthPresenterTrait
 		$this->setLayout(false);
 	}
 
-	private function processKeycloakAuthRequest(string $code, ?string $backRedirect = null): void
+	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $backRedirect = null): void
 	{
+		$manager = $this->_fancyAdmin->getKeycloakManager();
+		$keycloak = $manager?->getInstance($instanceName);
+
+		if ($keycloak === null) {
+			$this->redirect(':Portal:Sign:in');
+			return;
+		}
+
 		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
 
 		// Loop detection — max 3 pokusy za 120 sekund
@@ -114,7 +123,7 @@ trait KeycloakAuthPresenterTrait
 			return;
 		}
 
-		$keycloakAuthentication = $this->_keycloak->checkSessionValidity($code);
+		$keycloakAuthentication = $keycloak->checkSessionValidity($code);
 
 		if ($keycloakAuthentication === null) {
 			$this->redirect(':Portal:Sign:in');
@@ -130,18 +139,21 @@ trait KeycloakAuthPresenterTrait
 		}
 
 		try {
-			$this->_keycloak->loginOrRegisterUser($keycloakAuthentication);
+			$keycloak->loginOrRegisterUser($keycloakAuthentication);
 		} catch (\Nette\Security\AuthenticationException $e) {
 			$this->redirect(':Portal:Sign:in');
 			return;
 		}
+
+		// Uložíme název instance do session pro logout a frontend
+		$manager->storeInstanceInSession($instanceName);
 
 		// Reset auth attempt counter
 		$keycloakSession->set(KeycloakSessionSection::AUTH_ATTEMPT_COUNT, 0);
 
 		// Po přihlášení zkontrolujeme silent check
 		$keycloakSession->set(KeycloakSessionSection::AFTER_LOGIN_SILENT_CHECK, true);
-		$silentCheckUrl = $this->_keycloak->getSilentLoginUrl($backRedirect, 'afterLoginSilentCheck');
+		$silentCheckUrl = $keycloak->getSilentLoginUrl($backRedirect, 'afterLoginSilentCheck');
 		$this->redirectUrl($silentCheckUrl);
 	}
 

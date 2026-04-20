@@ -52,9 +52,13 @@ trait SignPresenterTrait
 		if ($this->getUser()->isLoggedIn()) {
 			// Pokud je Keycloak zapnutý a uživatel se přihlásil přes Keycloak, přesměrujeme na Keycloak logout
 			if ($this->_fancyAdmin->isKeycloakEnabled()) {
-				$keycloak = $this->_fancyAdmin->getKeycloak();
+				$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceFromSession();
+				if ($keycloak === null) {
+					// Fallback — zkusíme najít instanci dle identity
+					$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($this->getUser()->getIdentity());
+				}
 				$redirectUrl = $this->getPresenter()->link(':Portal:Sign:in');
-				$logoutUrl = $keycloak->getLogoutUrl($redirectUrl);
+				$logoutUrl = $keycloak?->getLogoutUrl($redirectUrl);
 
 				if ($logoutUrl !== null) {
 					$this->getUser()->logout(true);

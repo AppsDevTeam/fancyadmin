@@ -18,6 +18,7 @@ use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\Keycloak;
+use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -58,8 +59,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
-			'keycloak' => Expect::anyOf(
-				Expect::null(),
+			'keycloak' => Expect::arrayOf(
 				Expect::structure([
 					'realm' => Expect::string()->required(),
 					'baseUrl' => Expect::string()->required(),
@@ -67,8 +67,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'clientId' => Expect::string()->required(),
 					'clientSecret' => Expect::string()->required(),
 					'frontendClientId' => Expect::string()->required(),
+					'defaultRole' => Expect::string()->default(null),
 				]),
-			)->default(null),
+			)->default([]),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -126,23 +127,30 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
-				'keycloak' => $this->config->keycloak !== null ? (array) $this->config->keycloak : null,
+				'keycloakEnabled' => count((array) $this->config->keycloak) > 0,
 			]);
 
 		$builder->addDefinition($this->prefix('jsComponents'))
 			->setFactory(JsComponents::class);
 
-		// Keycloak service — registruje se jen pokud je keycloak konfigurace nastavena
-		if ($this->config->keycloak !== null) {
-			$builder->addDefinition($this->prefix('keycloak'))
-				->setFactory(Keycloak::class, [
-					'realm' => $this->config->keycloak->realm,
-					'baseUrl' => $this->config->keycloak->baseUrl,
-					'hostUrl' => $this->config->keycloak->hostUrl,
-					'clientId' => $this->config->keycloak->clientId,
-					'clientSecret' => $this->config->keycloak->clientSecret,
-					'frontendClientId' => $this->config->keycloak->frontendClientId,
-				]);
+		// Keycloak — registrace KeycloakManager a jednotlivých instancí
+		if (count((array) $this->config->keycloak) > 0) {
+			$builder->addDefinition($this->prefix('keycloakManager'))
+				->setFactory(KeycloakManager::class);
+
+			foreach ((array) $this->config->keycloak as $name => $instanceConfig) {
+				$builder->addDefinition($this->prefix("keycloak.$name"))
+					->setFactory(Keycloak::class, [
+						'realm' => $instanceConfig->realm,
+						'baseUrl' => $instanceConfig->baseUrl,
+						'hostUrl' => $instanceConfig->hostUrl,
+						'clientId' => $instanceConfig->clientId,
+						'clientSecret' => $instanceConfig->clientSecret,
+						'frontendClientId' => $instanceConfig->frontendClientId,
+						'defaultRole' => $instanceConfig->defaultRole,
+					])
+					->setAutowired(false);
+			}
 		}
 
 		//$this->validateTraitInterfaceCompliance();
@@ -174,9 +182,16 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
 
-		if ($this->config->keycloak !== null) {
+		if (count((array) $this->config->keycloak) > 0) {
 			$fancyAdminDef = $builder->getDefinition($this->prefix('administration'));
-			$fancyAdminDef->addSetup('setKeycloak', [$this->prefix('@keycloak')]);
+			$fancyAdminDef->addSetup('setKeycloakManager', [$this->prefix('@keycloakManager')]);
+
+			$managerDef = $builder->getDefinition($this->prefix('keycloakManager'));
+			foreach (array_keys((array) $this->config->keycloak) as $name) {
+				$keycloakDef = $builder->getDefinition($this->prefix("keycloak.$name"));
+				$keycloakDef->addSetup('setInstanceName', [$name]);
+				$managerDef->addSetup('addInstance', [$name, $this->prefix("@keycloak.$name")]);
+			}
 		}
 	}
 

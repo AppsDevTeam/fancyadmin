@@ -15,6 +15,7 @@ class KeycloakSessionSection
 	const string LOGOUT_URL                = 'logoutUrl';
 	const string AUTH_ATTEMPT_COUNT        = 'authAttemptCount';
 	const string AUTH_ATTEMPT_LAST_TIME    = 'authAttemptLastTime';
+	const string SSO_INSTANCE_NAME         = 'ssoInstanceName';
 
 
 	public function getSessionKeys(): array
@@ -26,6 +27,7 @@ class KeycloakSessionSection
 			self::LOGOUT_URL,
 			self::AUTH_ATTEMPT_COUNT,
 			self::AUTH_ATTEMPT_LAST_TIME,
+			self::SSO_INSTANCE_NAME,
 		];
 	}
 
