@@ -6,9 +6,11 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\JsComponentsInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Exception;
 use Nette\Application\Attributes\Persistent;
+use Nette\Http\Session;
 use Nette\Utils\Json;
 use stdClass;
 
@@ -43,6 +45,26 @@ trait BasePresenterTrait
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeAllFirebaseTokensLink', $this->getPresenter()->link('removeAllFirebaseTokens!'));
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
+
+		// Keycloak settings pro frontend (keycloak-js adapter)
+		$keycloakSettingsJson = '';
+		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			$isKeycloakUserLoggedIn = $this->getUser()->isLoggedIn()
+				&& $this->getPresenter()->getSession(KeycloakSessionSection::SECTION_NAME)->get(KeycloakSessionSection::ID_TOKEN) !== null;
+
+			if ($isKeycloakUserLoggedIn) {
+				$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceFromSession();
+				if ($keycloak !== null) {
+					$keycloakSettingsJson = Json::encode([
+						'realm' => $keycloak->getRealm(),
+						'clientId' => $keycloak->getFrontendClientId(),
+						'url' => $keycloak->getHostUrl(),
+						'silentCheckSsoUrl' => $this->getPresenter()->link('//:Portal:KeycloakAuth:silentCheckSso'),
+					]);
+				}
+			}
+		}
+		$this->getTemplate()->keycloakSettingsJson = $keycloakSettingsJson;
 	}
 
 

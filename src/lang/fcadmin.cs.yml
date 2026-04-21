@@ -65,6 +65,42 @@ presenters:
     pageTitle: Konfigurace
     header: Konfigurace
 
+  sso:
+    title: SSO instance
+    pageTitle: SSO instance
+    header: SSO instance
+    confirms:
+      delete: Opravdu chcete smazat tuto SSO instanci?
+    errors:
+      cannotDeleteHasIdentities: Nelze smazat — existují uživatelé navázaní na tuto SSO instanci.
+    messages:
+      deleted: SSO instance byla smazána.
+    grid:
+      name: Název
+      realm: Realm
+      hostUrl: URL
+      clientId: Client ID
+      defaultRole: Výchozí role
+      delete: Smazat
+    form:
+      name: Název
+      realm: Realm
+      baseUrl: Interní URL (API)
+      hostUrl: Veřejná URL
+      clientId: Client ID
+      clientSecret: Client Secret
+      frontendClientId: Frontend Client ID
+      defaultRole: Výchozí role pro nové uživatele
+      submit: Uložit
+      errors:
+        nameRequired: Název je povinný
+        realmRequired: Realm je povinný
+        baseUrlRequired: Interní URL je povinná
+        hostUrlRequired: Veřejná URL je povinná
+        clientIdRequired: Client ID je povinný
+        clientSecretRequired: Client Secret je povinný
+        frontendClientIdRequired: Frontend Client ID je povinný
+
   profiles:
     title: Uživatelé
     pageTitle: Uživatelé
@@ -116,11 +152,13 @@ forms:
       company: Společnost
       isActive: Aktivní
       role: Role
+      sso: SSO instance
       submit: Uložit
     errors:
       phoneNumber: Neplatné telefonní číslo
       credentialsConstrain: "E-mail / Uživatelské jméno nebo telefonní číslo jsou již použity"
       requiredBranch: "Je nutné vyplnit pobočku"
+      ssoRequired: "SSO instance je povinná pro vybranou roli"
 
   newPassword:
     labels:
@@ -168,6 +206,7 @@ forms:
     types:
       identity: Identita
       profile: Profil
+    needsSso: Vyžaduje přihlášení přes SSO
     submit: Odeslat
     errors:
       nameAlreadyExists: Role s tímto názvem již existuje
@@ -248,6 +287,16 @@ firebase:
     flashes:
       success: Notifikace úspěšně povoleny.
       disabled: Notifikace úspěšně zrušeny.
+
+keycloak:
+  logout:
+    title: Odhlášení
+    loading: Odhlašování...
+    noscriptLink: Pro odhlášení <a href="%url%">klikněte zde</a>.
+  errors:
+    authFailed: Přihlášení přes SSO se nezdařilo.
+    noEmail: Účet SSO nemá přiřazený e-mail.
+    loopDetected: Bylo detekováno opakované přesměrování. Zkuste to prosím znovu.
 
 modules:
   web:

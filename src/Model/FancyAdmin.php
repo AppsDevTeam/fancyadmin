@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model;
 
+use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use Nette\Security\Resource;
 
 class FancyAdmin
@@ -27,6 +28,7 @@ class FancyAdmin
 		protected ?string $context,
 		protected array $jsComponentsConfig = [],
 		protected array $colors = [],
+		protected bool $keycloakEnabled = false,
 	) {}
 
 	public function getProject(): string
@@ -151,5 +153,22 @@ class FancyAdmin
 	public function getColors(): array
 	{
 		return $this->colors;
+	}
+
+	protected ?KeycloakManager $keycloakManager = null;
+
+	public function setKeycloakManager(KeycloakManager $keycloakManager): void
+	{
+		$this->keycloakManager = $keycloakManager;
+	}
+
+	public function getKeycloakManager(): ?KeycloakManager
+	{
+		return $this->keycloakManager;
+	}
+
+	public function isKeycloakEnabled(): bool
+	{
+		return $this->keycloakEnabled;
 	}
 }

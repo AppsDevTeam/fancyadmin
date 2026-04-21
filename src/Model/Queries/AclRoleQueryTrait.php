@@ -27,6 +27,11 @@ trait AclRoleQueryTrait
 		return $this->by('context', $context);
 	}
 
+	public function byNeedsSso(bool $needsSso): static
+	{
+		return $this->by('needsSso', $needsSso);
+	}
+
 	protected function setDefaultOrder(): void
 	{
 		$this->orderBy('name', 'ASC');

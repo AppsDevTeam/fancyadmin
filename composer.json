@@ -26,6 +26,9 @@
     "adt/route-port": "^3.0",
     "adt/doctrine-loggable": "^3.0"
   },
+  "suggest": {
+    "guzzlehttp/guzzle": "Required for Keycloak SSO integration"
+  },
   "autoload": {
     "psr-4": {
       "ADT\\FancyAdmin\\": "src/"

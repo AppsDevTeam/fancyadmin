@@ -957,6 +957,231 @@ app/
 
 ---
 
+## 18. Keycloak SSO integrace (volitelné)
+
+Fancyadmin podporuje napojení na jeden nebo více Keycloak serverů/realmů pro SSO autentizaci. Integrace je ve výchozím stavu **vypnutá** a aktivuje se přidáním `keycloak` sekce do konfigurace.
+
+### 18.1 Předpoklady
+
+- Keycloak server s nakonfigurovaným realmem
+- Klient v Keycloaku s:
+  - **Client authentication**: zapnuto (confidential client)
+  - **Service accounts roles**: zapnuto (pro Admin API — vyhledávání a správa uživatelů)
+  - **Valid redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/*`
+  - **Web origins**: `https://admin.muj-projekt.cz`
+- Service account musí mít roli `manage-users` z `realm-management` clienta
+- Druhý (public) klient pro frontend keycloak-js adapter — s **Client authentication: vypnuto**
+- `guzzlehttp/guzzle` nainstalovaný v projektu:
+  ```bash
+  composer require guzzlehttp/guzzle:^7.0
+  ```
+
+### 18.2 Sso entita
+
+Fancyadmin vyžaduje entitu `Sso`, která uchovává kompletní konfiguraci Keycloak instancí:
+
+```php
+// app/Model/Entities/Sso.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Model\Entities;
+
+use ADT\FancyAdmin\Model\Entities\SsoTrait;
+use App\Model\Entities\Abstract\BaseEntity;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+class Sso extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Sso
+{
+    use SsoTrait;
+}
+```
+
+Po vytvoření entity spusťte migraci.
+
+**SsoTrait poskytuje:**
+
+| Sloupec | Typ | Popis |
+|---|---|---|
+| `name` | string (unique) | Identifikátor instance |
+| `realm` | string | Název Keycloak realmu |
+| `baseUrl` | string | Interní URL pro API volání (např. `http://keycloak:8080`) |
+| `hostUrl` | string | Veřejná URL pro redirect uživatele (např. `https://auth.muj-projekt.cz`) |
+| `clientId` | string | Confidential client ID |
+| `clientSecret` | string | Client secret |
+| `frontendClientId` | string | Public client ID pro keycloak-js adapter |
+| `defaultRole` | string (nullable) | Název role, která se přiřadí novému uživateli při SSO registraci |
+
+### 18.3 NEON konfigurace
+
+V neonu se Keycloak pouze zapíná/vypíná. Veškerá konfigurace instancí je v tabulce `sso`:
+
+```neon
+fancyadmin:
+    # ... ostatní konfigurace ...
+    keycloakEnabled: true
+```
+
+Pokud je `keycloakEnabled` nastaveno na `false` (výchozí), vše Keycloak-related je vypnuté a projekt funguje jako dříve.
+
+### 18.4 Nastavení SSO v databázi
+
+1. **Vytvořte záznamy v tabulce `sso`** s kompletní konfigurací Keycloak instance:
+
+   | id | name | realm | baseUrl | hostUrl | clientId | clientSecret | frontendClientId | defaultRole |
+   |---|---|---|---|---|---|---|---|---|
+   | 1 | hlavni | muj-realm | http://keycloak:8080 | https://auth.example.cz | app-client | secret123 | app-public | user |
+
+2. **Navažte role na SSO instance** — v tabulce `acl_role` nastavte `sso_id` u rolí, které se mají přihlašovat přes SSO
+
+3. **Volitelně navažte identity** — v tabulce `identity` lze nastavit `sso_id` přímo (má přednost před rolí)
+
+Při zadání emailu na login stránce fancyadmin zjistí SSO instanci z identity (přímo, nebo přes její roli) a přesměruje na odpovídající Keycloak. Pokud identita nemá SSO vazbu, zobrazí se standardní přihlášení heslem.
+
+### 18.5 Presentery
+
+Vytvořte dva presentery pro Keycloak OAuth2 flow:
+
+```php
+// app/UI/Portal/Presenters/KeycloakAuth/KeycloakAuthPresenter.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Presenters\KeycloakAuth;
+
+use ADT\FancyAdmin\UI\Presenters\Keycloak\KeycloakAuthPresenterTrait;
+use App\UI\Portal\Presenters\BasePresenter;
+
+class KeycloakAuthPresenter extends BasePresenter
+{
+    use KeycloakAuthPresenterTrait;
+}
+```
+
+```php
+// app/UI/Portal/Presenters/KeycloakLog/KeycloakLogPresenter.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Presenters\KeycloakLog;
+
+use ADT\FancyAdmin\UI\Presenters\Keycloak\KeycloakLogPresenterTrait;
+use App\UI\Portal\Presenters\BasePresenter;
+
+class KeycloakLogPresenter extends BasePresenter
+{
+    use KeycloakLogPresenterTrait;
+}
+```
+
+### 18.6 JavaScript
+
+V `app.js` projektu přidejte import keycloak adaptéru pro silent SSO check:
+
+```js
+import { keycloakLoginSync } from '../path/to/vendor/adt/fancyadmin/assets/js/keycloak';
+keycloakLoginSync();
+```
+
+Pro keycloak email check na login formuláři vytvořte `SignIn/index.js` s re-exportem:
+
+```js
+// app/UI/Portal/Components/Forms/SignIn/index.js
+export { default } from '../path/to/vendor/adt/fancyadmin/assets/js/signInKeycloak';
+```
+
+…a zaregistrujte v `app.js`:
+
+```js
+import AdtJsComponents from 'adt-js-components';
+AdtJsComponents.init('sign-in-form', 'UI/Portal/Components/Forms/SignIn');
+```
+
+**Závislost:** Projekt musí mít nainstalovaný npm balíček `keycloak-js`:
+```bash
+yarn add keycloak-js
+```
+
+### 18.7 Co se děje automaticky
+
+Po zapnutí Keycloak konfigurace fancyadmin automaticky:
+
+- **Registruje routy** `keycloak-auth/<action>` a `keycloak-log/<action>` v Portal modulu
+- **Login formulář** — přidá `data-keycloak-check-url` atribut na email input; po zadání emailu JS zjistí SSO instanci z identity/role a přesměruje na odpovídající Keycloak
+- **Logout** — `Sign:out` automaticky odhlásí i z Keycloaku (pokud se uživatel přihlásil přes SSO)
+- **Frontend** — do layoutu injektuje `window.__keycloakSettings` pro keycloak-js adapter (silent SSO check, token refresh)
+- **Registrace při SSO** — pokud se přes Keycloak přihlásí uživatel, který v aplikaci neexistuje, automaticky se mu vytvoří identita s vazbou na SSO instanci a `defaultRole` (pokud je nakonfigurovaná)
+
+### 18.8 Keycloak služba — správa uživatelů
+
+Keycloak instance jsou dostupné přes `KeycloakManager`:
+
+```php
+$manager = $this->_fancyAdmin->getKeycloakManager(); // null pokud je Keycloak vypnutý
+
+// Získat konkrétní instanci podle názvu
+$keycloak = $manager->getInstance('hlavni');
+
+// Získat instanci podle identity (z identity.sso nebo role.sso)
+$keycloak = $manager->getInstanceForIdentity($identity);
+
+// Získat instanci, přes kterou je přihlášen aktuální uživatel (ze session)
+$keycloak = $manager->getInstanceFromSession();
+```
+
+Každá instance poskytuje metody pro správu uživatelů přes Admin API:
+
+```php
+// Registrace uživatele v Keycloaku (vrací existujícího pokud už existuje)
+$keycloakUser = $keycloak->registerUser($identity, 'heslo', temporaryPassword: false);
+
+// Aktualizace údajů (email, jméno, příjmení)
+$keycloakUser = $keycloak->updateUser($identity);
+
+// Deaktivace / aktivace
+$keycloak->disableUser($identity);
+$keycloak->enableUser($identity);
+
+// Nastavení hesla
+$keycloak->setUserPassword($identity, 'noveHeslo', temporary: true);
+
+// Vyhledání uživatele podle emailu
+$keycloakUser = $keycloak->findUser('user@example.com');
+```
+
+### 18.9 Přidání nové Keycloak instance
+
+Postup pro přidání další SSO instance do existujícího projektu:
+
+1. **DB** — vytvořte nový záznam v tabulce `sso` s kompletní konfigurací (realm, URL, credentials)
+2. **DB** — u příslušných rolí/identit nastavte vazbu na nové SSO
+
+Žádná změna PHP kódu, `.env` ani neon konfigurace není potřeba. Instance se vytváří dynamicky z databáze.
+
+### 18.10 Rozšíření chování
+
+Keycloak službu lze rozšířit v projektu — např. pro úpravu logiky vytváření identity při SSO loginu:
+
+```php
+class MyKeycloak extends \ADT\FancyAdmin\Model\Security\Keycloak\Keycloak
+{
+    protected function createIdentity(array $userInfo): Identity
+    {
+        $identity = parent::createIdentity($userInfo);
+        // vlastní logika — přiřazení kontextu, notifikace, atd.
+        return $identity;
+    }
+}
+```
+
+Pro použití vlastní třídy je potřeba rozšířit `KeycloakManager::createInstanceFromSso()` v projektu.
+
+---
+
 ## Shrnutí
 
 | Krok | Co | Proč |

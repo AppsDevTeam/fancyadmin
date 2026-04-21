@@ -31,6 +31,10 @@ interface AclRole extends Role, Entity
 	public function getIsAdmin(): bool;
 	public function setIsAdmin(bool $isAdmin): static;
 
+	// SSO
+	public function getNeedsSso(): bool;
+	public function setNeedsSso(bool $needsSso): static;
+
 	// Zdroje
 	/**
 	 * @return AclResource[]

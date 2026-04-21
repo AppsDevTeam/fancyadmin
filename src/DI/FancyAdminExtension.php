@@ -17,6 +17,7 @@ use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Security\Authenticator;
+use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -57,6 +58,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
+			'keycloakEnabled' => Expect::bool()->default(false),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -114,10 +116,17 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
+				'keycloakEnabled' => $this->config->keycloakEnabled,
 			]);
 
 		$builder->addDefinition($this->prefix('jsComponents'))
 			->setFactory(JsComponents::class);
+
+		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
+		if ($this->config->keycloakEnabled) {
+			$builder->addDefinition($this->prefix('keycloakManager'))
+				->setFactory(KeycloakManager::class);
+		}
 
 		//$this->validateTraitInterfaceCompliance();
 
@@ -147,6 +156,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
+
+		if ($this->config->keycloakEnabled) {
+			$fancyAdminDef = $builder->getDefinition($this->prefix('administration'));
+			$fancyAdminDef->addSetup('setKeycloakManager', [$this->prefix('@keycloakManager')]);
+		}
 	}
 
 	private function validateTraitInterfaceCompliance(): void

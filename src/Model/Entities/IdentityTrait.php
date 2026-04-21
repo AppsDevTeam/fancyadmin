@@ -61,6 +61,10 @@ trait IdentityTrait
 	#[JoinColumn(nullable: true)]
 	protected ?Account $selectedAccount = null;
 
+	#[ORM\ManyToOne(targetEntity: 'Sso')]
+	#[JoinColumn(nullable: true)]
+	protected ?Sso $sso = null;
+
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
@@ -223,6 +227,17 @@ trait IdentityTrait
 	public function setSelectedAccount(?Account $selectedAccount): static
 	{
 		$this->selectedAccount = $selectedAccount;
+		return $this;
+	}
+
+	public function getSso(): ?Sso
+	{
+		return $this->sso;
+	}
+
+	public function setSso(?Sso $sso): static
+	{
+		$this->sso = $sso;
 		return $this;
 	}
 

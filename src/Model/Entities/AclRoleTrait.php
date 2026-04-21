@@ -36,6 +36,9 @@ trait AclRoleTrait
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isAdmin = false;
 
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	protected bool $needsSso = false;
+
 	public function __construct()
 	{
 		$this->acls = new ArrayCollection();
@@ -96,6 +99,17 @@ trait AclRoleTrait
 	public function setContext(?string $context): static
 	{
 		$this->context = $context;
+		return $this;
+	}
+
+	public function getNeedsSso(): bool
+	{
+		return $this->needsSso;
+	}
+
+	public function setNeedsSso(bool $needsSso): static
+	{
+		$this->needsSso = $needsSso;
 		return $this;
 	}
 

@@ -8,6 +8,9 @@
 
 	<title n:snippet="title">{ifset title}{include title|stripHtml} | {/ifset}{$projectName}</title>
 
+	{if !empty($keycloakSettingsJson ?? '')}
+		<script>window.__keycloakSettings = {$keycloakSettingsJson|noescape};</script>
+	{/if}
 	{block head}{/block}
 
 	<link rel="manifest" href="/manifest.webmanifest"/>

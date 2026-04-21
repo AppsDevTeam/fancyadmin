@@ -1,0 +1,53 @@
+{layout none}
+
+{varType string|null $keycloakLogoutUrl}
+
+<html lang="cs">
+	<head>
+		<title>{_fcadmin.keycloak.logout.title}</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<style>
+			body {
+				margin: 0;
+				height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+				background-color: #ffffff;
+				font-family: sans-serif;
+				color: #343a40;
+			}
+
+			.loader {
+				border: 6px solid #e6e6e6;
+				border-top: 6px solid #656565;
+				border-radius: 50%;
+				width: 50px;
+				height: 50px;
+				animation: spin 1s linear infinite;
+				margin-bottom: 15px;
+			}
+
+			@keyframes spin {
+				from { transform: rotate(0deg); }
+				to { transform: rotate(360deg); }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="loader"></div>
+		<div>{_fcadmin.keycloak.logout.loading}</div>
+
+		<noscript>
+			<p>{_fcadmin.keycloak.logout.noscriptLink, ['url' => $keycloakLogoutUrl]|noescape}</p>
+		</noscript>
+
+		<script>
+			setTimeout(function () {
+				window.location.href = {$keycloakLogoutUrl};
+			}, 100);
+		</script>
+	</body>
+</html>
