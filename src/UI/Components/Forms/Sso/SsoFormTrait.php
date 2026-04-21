@@ -43,6 +43,11 @@ trait SsoFormTrait
 		$form->addSubmit('submit', 'fcadmin.presenters.sso.form.submit');
 	}
 
+	public function processForm(Sso $entity): void
+	{
+		$this->_em->flush();
+	}
+
 	protected function getEntityClass(): ?string
 	{
 		return $this->_em->findEntityClassByInterface(Sso::class);
