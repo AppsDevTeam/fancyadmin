@@ -3,7 +3,6 @@
 namespace ADT\FancyAdmin\Model\Queries;
 
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
-use ADT\FancyAdmin\Model\Entities\Sso;
 use Doctrine\ORM\QueryBuilder;
 
 trait AclRoleQueryTrait
@@ -28,9 +27,9 @@ trait AclRoleQueryTrait
 		return $this->by('context', $context);
 	}
 
-	public function bySso(Sso $sso): static
+	public function byNeedsSso(bool $needsSso): static
 	{
-		return $this->by('sso', $sso);
+		return $this->by('needsSso', $needsSso);
 	}
 
 	protected function setDefaultOrder(): void

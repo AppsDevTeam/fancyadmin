@@ -13,6 +13,7 @@ use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Profile;
+use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\Forms\DynamicContainer;
 use ADT\Forms\Form;
 use ADT\Forms\Section;
@@ -95,6 +96,31 @@ trait IdentityProfileFormTrait
 					foreach ($form['profiles']->getContainers() as $_profileContainer) {
 						$roleControls[] = $_profileContainer['roles'];
 					}
+
+					// SSO select — zobrazí se jen pokud vybraná role vyžaduje SSO
+					if ($this->_fancyAdmin->isKeycloakEnabled()) {
+						$form->addSection(function () use ($form, $entity) {
+							$roleIds = $form['roles']->getValue();
+							if (!empty($roleIds)) {
+								$roles = $this->_aclRoleQueryFactory->create()->byId($roleIds)->fetch();
+								$needsSso = array_any($roles, fn(AclRole $role) => $role->getNeedsSso());
+
+								if ($needsSso) {
+									$ssoClass = $this->_em->findEntityClassByInterface(Sso::class);
+									$ssoRecords = $this->_em->getRepository($ssoClass)->findAll();
+									$ssoPairs = [];
+									foreach ($ssoRecords as $_sso) {
+										$ssoPairs[$_sso->getId()] = $_sso->getName();
+									}
+
+									$form->addSelect('sso', 'fcadmin.forms.user.labels.sso', $ssoPairs)
+										->setPrompt('---')
+										->setRequired('fcadmin.forms.user.errors.ssoRequired');
+								}
+							}
+						}, name: 'ssoSelect', watchForRedraw: $roleControls);
+					}
+
 					$form->addSection(function () use ($form, $entity) {
 						$roleIds = $form['roles']->getValue();
 						foreach ($form['profiles']->getContainers() as $_profileContainer) {

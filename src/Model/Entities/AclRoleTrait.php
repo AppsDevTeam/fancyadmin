@@ -36,9 +36,8 @@ trait AclRoleTrait
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	protected bool $isAdmin = false;
 
-	#[ORM\ManyToOne(targetEntity: 'Sso')]
-	#[ORM\JoinColumn(nullable: true)]
-	protected ?Sso $sso = null;
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	protected bool $needsSso = false;
 
 	public function __construct()
 	{
@@ -103,14 +102,14 @@ trait AclRoleTrait
 		return $this;
 	}
 
-	public function getSso(): ?Sso
+	public function getNeedsSso(): bool
 	{
-		return $this->sso;
+		return $this->needsSso;
 	}
 
-	public function setSso(?Sso $sso): static
+	public function setNeedsSso(bool $needsSso): static
 	{
-		$this->sso = $sso;
+		$this->needsSso = $needsSso;
 		return $this;
 	}
 

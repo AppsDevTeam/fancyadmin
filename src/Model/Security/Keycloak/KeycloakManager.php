@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Security\Keycloak;
 
+use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Sso;
+use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Queries\Factories\AclRoleQueryFactory;
+use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
+use Nette\Application\LinkGenerator;
+use Nette\Caching\Storage;
 use Nette\Http\Session;
 
 class KeycloakManager
@@ -13,47 +20,62 @@ class KeycloakManager
 	/** @var array<string, Keycloak> */
 	private array $instances = [];
 
-	private Session $session;
+	private ?string $ssoClass = null;
 
-	public function __construct(Session $session)
-	{
-		$this->session = $session;
-	}
-
-	public function addInstance(string $name, Keycloak $instance): void
-	{
-		$this->instances[$name] = $instance;
-	}
+	public function __construct(
+		private readonly EntityManager $em,
+		private readonly LinkGenerator $linkGenerator,
+		private readonly SecurityUser $securityUser,
+		private readonly IdentityQueryFactory $identityQueryFactory,
+		private readonly AclRoleQueryFactory $aclRoleQueryFactory,
+		private readonly FancyAdmin $fancyAdmin,
+		private readonly Session $session,
+		private readonly Storage $storage,
+	) {}
 
 	/**
-	 * Vrátí Keycloak instanci podle názvu.
+	 * Vrátí Keycloak instanci podle názvu. Vytvoří ji lazy z DB.
 	 */
 	public function getInstance(string $name): ?Keycloak
 	{
-		return $this->instances[$name] ?? null;
+		if (isset($this->instances[$name])) {
+			return $this->instances[$name];
+		}
+
+		$sso = $this->findSso($name);
+		if ($sso === null) {
+			return null;
+		}
+
+		return $this->createInstanceFromSso($sso);
 	}
 
 	/**
 	 * Vrátí Keycloak instanci přiřazenou k dané identitě.
-	 * Hledá nejprve na identitě (identity.sso), pak na jejích rolích (role.sso).
+	 * Identita musí mít nastavenou SSO vazbu (identity.sso) a zároveň
+	 * alespoň jedna její role musí mít needsSso = true.
 	 */
 	public function getInstanceForIdentity(Identity $identity): ?Keycloak
 	{
-		// Přímá vazba na identitě
 		$sso = $identity->getSso();
-		if ($sso !== null) {
-			return $this->getInstance($sso->getName());
+		if ($sso === null) {
+			return null;
 		}
 
-		// Fallback — SSO z role
+		// Zkontrolujeme, zda alespoň jedna role vyžaduje SSO
+		$needsSso = false;
 		foreach ($identity->getRoles() as $role) {
-			$sso = $role->getSso();
-			if ($sso !== null) {
-				return $this->getInstance($sso->getName());
+			if ($role->getNeedsSso()) {
+				$needsSso = true;
+				break;
 			}
 		}
 
-		return null;
+		if (!$needsSso) {
+			return null;
+		}
+
+		return $this->getInstance($sso->getName());
 	}
 
 	/**
@@ -93,26 +115,53 @@ class KeycloakManager
 		$keycloakSession->set(KeycloakSessionSection::SSO_INSTANCE_NAME, $name);
 	}
 
-	/**
-	 * Vrátí názvy všech registrovaných instancí.
-	 *
-	 * @return string[]
-	 */
-	public function getInstanceNames(): array
-	{
-		return array_keys($this->instances);
-	}
-
-	/**
-	 * @return array<string, Keycloak>
-	 */
-	public function getInstances(): array
-	{
-		return $this->instances;
-	}
-
 	public function hasInstances(): bool
 	{
-		return count($this->instances) > 0;
+		return count($this->getAllSsoRecords()) > 0;
+	}
+
+	/**
+	 * @return Sso[]
+	 */
+	private function getAllSsoRecords(): array
+	{
+		return $this->em->getRepository($this->getSsoClass())->findAll();
+	}
+
+	private function findSso(string $name): ?Sso
+	{
+		return $this->em->getRepository($this->getSsoClass())->findOneBy(['name' => $name]);
+	}
+
+	private function getSsoClass(): string
+	{
+		if ($this->ssoClass === null) {
+			$this->ssoClass = $this->em->findEntityClassByInterface(Sso::class);
+		}
+		return $this->ssoClass;
+	}
+
+	private function createInstanceFromSso(Sso $sso): Keycloak
+	{
+		$instance = new Keycloak(
+			realm: $sso->getRealm(),
+			baseUrl: $sso->getBaseUrl(),
+			hostUrl: $sso->getHostUrl(),
+			clientId: $sso->getClientId(),
+			clientSecret: $sso->getClientSecret(),
+			frontendClientId: $sso->getFrontendClientId(),
+			em: $this->em,
+			linkGenerator: $this->linkGenerator,
+			securityUser: $this->securityUser,
+			identityQueryFactory: $this->identityQueryFactory,
+			aclRoleQueryFactory: $this->aclRoleQueryFactory,
+			fancyAdmin: $this->fancyAdmin,
+			session: $this->session,
+			storage: $this->storage,
+		);
+		$instance->setInstanceName($sso->getName());
+
+		$this->instances[$sso->getName()] = $instance;
+		return $instance;
 	}
 }

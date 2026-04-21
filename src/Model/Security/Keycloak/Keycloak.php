@@ -50,8 +50,6 @@ class Keycloak
 
 	private string $instanceName = 'default';
 
-	private ?string $defaultRoleName;
-
 	protected EntityManager $em;
 
 	public function __construct(
@@ -69,7 +67,6 @@ class Keycloak
 		FancyAdmin $fancyAdmin,
 		Session $session,
 		Storage $storage,
-		?string $defaultRole = null,
 	) {
 		$this->realm = $realm;
 		$this->baseUrl = $baseUrl;
@@ -77,7 +74,6 @@ class Keycloak
 		$this->clientId = $clientId;
 		$this->clientSecret = $clientSecret;
 		$this->frontendClientId = $frontendClientId;
-		$this->defaultRoleName = $defaultRole;
 		$this->em = $em;
 		$this->linkGenerator = $linkGenerator;
 		$this->securityUser = $securityUser;
@@ -377,23 +373,9 @@ class Keycloak
 			$identity->setSso($sso);
 		}
 
-		// Přiřadit roli — buď defaultRole z configu, nebo role navázané na SSO
-		if ($this->defaultRoleName !== null) {
-			$role = $this->aclRoleQueryFactory->create()
-				->byName($this->defaultRoleName)
-				->fetchOneOrNull();
-
-			if ($role !== null) {
-				$identity->addRole($role);
-			}
-		} elseif ($sso !== null) {
-			$roles = $this->aclRoleQueryFactory->create()
-				->bySso($sso)
-				->fetchAll();
-
-			foreach ($roles as $role) {
-				$identity->addRole($role);
-			}
+		// Přiřadit default roli ze Sso entity
+		if ($sso?->getDefaultRole() !== null) {
+			$identity->addRole($sso->getDefaultRole());
 		}
 
 		$this->em->persist($identity);
