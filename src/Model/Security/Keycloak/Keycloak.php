@@ -198,6 +198,11 @@ class Keycloak
 		return $this->linkGenerator->link('//:Portal:KeycloakAuth:callback', ['instance' => $this->instanceName]);
 	}
 
+	public function getBackchannelLogoutUrl(): string
+	{
+		return $this->linkGenerator->link('//:Portal:KeycloakAuth:backchannelLogout', ['instance' => $this->instanceName]);
+	}
+
 	/**
 	 * Autentizace uživatele přes password nebo refresh token.
 	 * Pokud $password je NULL, pak se 1. parametr bere jako refreshToken.
@@ -507,6 +512,46 @@ class Keycloak
 		} catch (RequestException $e) {
 			return null;
 		}
+	}
+
+	/**
+	 * Získá uživatele z Keycloaku podle jeho ID (sub claim).
+	 */
+	public function getUserById(string $keycloakUserId): ?KeycloakUser
+	{
+		$adminAccessToken = $this->getAdminAccessToken();
+		if ($adminAccessToken === null) {
+			return null;
+		}
+
+		try {
+			$response = $this->client->get(
+				$this->getAdminRealmUrl("users/$keycloakUserId"),
+				[
+					'headers' => ['Authorization' => 'Bearer ' . $adminAccessToken->getToken()],
+				]
+			);
+
+			$data = Json::decode((string) $response->getBody(), true);
+
+			return new KeycloakUser(
+				$data['id'],
+				$data['username'],
+				$data['firstName'] ?? null,
+				$data['lastName'] ?? null,
+				$data['email'] ?? null,
+			);
+		} catch (RequestException $e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Dekóduje backchannel logout token (JWT) a vrátí claims.
+	 */
+	public function decodeLogoutToken(string $logoutToken): ?array
+	{
+		return $this->decodeIdToken($logoutToken);
 	}
 
 	/**
