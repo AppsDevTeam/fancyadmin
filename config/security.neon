@@ -1,6 +1,7 @@
 # FancyAdmin recommended security configuration
-# Include this file in your project's common.neon:
+# FancyAdmin configuration files:
 #   includes:
+#       - ../vendor/adt/fancyadmin/config/common.neon
 #       - ../vendor/adt/fancyadmin/config/security.neon
 #
 # Override any values in your project config as needed.

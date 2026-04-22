@@ -1,0 +1,25 @@
+# FancyAdmin common configuration
+# Include this file in your project's common.neon:
+#   includes:
+#       - ../vendor/adt/fancyadmin/config/common.neon
+#
+# Override any values in your project config as needed.
+
+services:
+	security.userStorage: Nette\Bridges\SecurityHttp\CookieStorage
+	security.authorizator: ADT\FancyAdmin\Model\Security\Permission
+	- ADT\DoctrineAuthenticator\OTP\OnetimeTokenService
+	- ADT\FancyAdmin\Model\Security\BreachedPasswordChecker
+	fancyadmin.sessionExpirationCallback: ADT\FancyAdmin\Model\Security\SessionExpirationCallback
+
+session:
+	autoStart: false
+	cookieSecure: auto
+	cookieHttponly: true
+	cookieSamesite: Lax
+
+latte:
+	strictTypes: false
+	strictParsing: false
+	extensions:
+		- ADT\Forms\LatteExtension

@@ -25,6 +25,7 @@ use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Config\Loader;
+use Nette\DI\Definitions\Statement;
 use Nette\Loaders\RobotLoader;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
@@ -156,6 +157,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
+		$authenticatorDef->addSetup('setExpirationCallback', [
+			new Statement('Closure::fromCallable', ['@fancyadmin.sessionExpirationCallback']),
+		]);
 
 		if ($this->config->keycloakEnabled) {
 			$fancyAdminDef = $builder->getDefinition($this->prefix('administration'));
