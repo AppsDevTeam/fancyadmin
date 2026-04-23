@@ -165,7 +165,9 @@
 {else}
 	<script src="{$basePath}/dist/portal/js/portal.js{v}"></script>
 {/if}
-{block modals}{/block}
+{snippet modals}
+	{block modals}{/block}
+{/snippet}
 {block scripts}{/block}
 </body>
 </html>
