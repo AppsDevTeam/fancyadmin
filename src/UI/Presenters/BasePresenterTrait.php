@@ -116,6 +116,7 @@ trait BasePresenterTrait
 		if (!$this->isControlInvalid()) {
 			$this->redrawControl('title');
 			$this->redrawControl('body');
+			$this->redrawControl('modals');
 		}
 	}
 
