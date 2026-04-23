@@ -95,7 +95,7 @@ AdtJsComponents.init('translate', 'Translate');
 // AdtJsComponents.init('safari-support', 'assets/js/safariSupport');
 //
 // import './netteForm';
-// import './flashes';
+import './flashes';
 // import './userDropdown';
 // import './tableActionsShadow';
 // import './_datagrid';
