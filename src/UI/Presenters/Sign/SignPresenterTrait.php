@@ -86,6 +86,8 @@ trait SignPresenterTrait
 
 	public function actionNewPassword(string $token): void
 	{
+		$this->user->logout(clearIdentity: true);
+
 		try {
 			$this->identity = $this->_authenticator->authenticate($token);
 		} catch(AuthenticationException) {
