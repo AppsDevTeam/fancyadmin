@@ -1,0 +1,327 @@
+global:
+  buttons:
+    new: Nový
+    add: Pridať
+
+  flashes:
+    close: Beriem na vedomie
+
+layout:
+  sideMenu:
+    user:
+      logout: Odhlásiť sa
+  profileMenu:
+    profile:
+      edit: Upraviť údaje
+  links:
+    back: späť
+    backToHomepage: späť na hlavnú stránku
+    goToLogin: prejsť na prihlásenie
+aclResource:
+  title:
+    portal:
+      backoffice:
+        identities: Používatelia
+        roles_and_permissions: Roly a práva
+
+mailer:
+  base:
+    salutation: 'Dobrý deň,<br><br>'
+    signature: 'Ďakujeme, že využívate naše služby.<br><br>S pozdravom<br><br>'
+
+  accountCreation:
+    text: 'práve Vám bol vytvorený účet v aplikácii <strong>%projectName%</strong>. Pre prístup k vášmu účtu si nastavte heslo tu:<br><br>'
+
+  passwordRecovery:
+    text: 'pre nastavenie nového hesla do aplikácie <strong>%projectName%</strong> kliknite na odkaz nižšie. <strong>Ak ste o nové heslo nežiadali, e-mail ignorujte.</strong><br><br>'
+
+presenters:
+  permissions:
+    title: Oprávnenia
+    pageTitle: Oprávnenia
+    header: Oprávnenia
+    table:
+      title: Title
+
+  roles:
+    title: Roly
+    pageTitle: Roly
+    header: Roly
+
+  identity:
+    title: Používatelia
+    pageTitle: Používatelia
+    header: Používatelia
+
+  account:
+    title: Účty
+    pageTitle: Môj účet
+    header: Účty
+    myProfile: Môj profil
+    editPersonalData: Upraviť osobné údaje
+    changePassword: Zmeniť heslo
+    email: E-mail
+    sessions: Prihlásené zariadenia
+    logoutAll: Odhlásiť zo všetkých zariadení
+    logoutAllConfirm: Naozaj sa chcete odhlásiť zo všetkých zariadení?
+
+  configurations:
+    title: Konfigurácia
+    pageTitle: Konfigurácia
+    header: Konfigurácia
+
+  sso:
+    title: SSO inštancie
+    pageTitle: SSO inštancie
+    header: SSO inštancie
+    confirms:
+      delete: Naozaj chcete zmazať túto SSO inštanciu?
+    errors:
+      cannotDeleteHasIdentities: Nie je možné zmazať — existujú používatelia naviazaní na túto SSO inštanciu.
+    messages:
+      deleted: SSO inštancia bola zmazaná.
+    grid:
+      name: Názov
+      realm: Realm
+      hostUrl: URL
+      clientId: Client ID
+      defaultRole: Predvolená rola
+      delete: Zmazať
+    form:
+      name: Názov
+      realm: Realm
+      baseUrl: Interná URL (API)
+      hostUrl: Verejná URL
+      clientId: Client ID
+      clientSecret: Client Secret
+      frontendClientId: Frontend Client ID
+      defaultRole: Predvolená rola pre nových používateľov
+      submit: Uložiť
+      errors:
+        nameRequired: Názov je povinný
+        realmRequired: Realm je povinný
+        baseUrlRequired: Interná URL je povinná
+        hostUrlRequired: Verejná URL je povinná
+        clientIdRequired: Client ID je povinný
+        clientSecretRequired: Client Secret je povinný
+        frontendClientIdRequired: Frontend Client ID je povinný
+
+  profiles:
+    title: Používatelia
+    pageTitle: Používatelia
+    header: Používatelia
+
+  sign:
+    errors:
+      expiredLink: "Odkaz už nie je platný. Pre vygenerovanie nového odošlite znovu formulár."
+
+forms:
+  errors:
+    csrf: Platnosť formulára vypršala. Odošlite ho prosím znovu.
+
+  # Sign Form
+  signIn:
+    links:
+      lostPassword: Zabudnuté heslo
+
+    labels:
+      email: E-mail
+      password: Heslo
+      rememberMe: Zapamätaj si ma
+      logIn: Prihlásiť
+
+    errors:
+      emailRequired: Je nutné vyplniť e-mail.
+      passwordRequired: Je nutné vyplniť heslo.
+      wrongEmailOrPassword: Nesprávny e-mail alebo heslo.
+      suspendedAccount: Váš účet bol dočasne znepristupnený alebo bol zrušený
+      expiredRecovery: Token pre nastavenie hesla už expiroval
+
+  # Lost password Form
+  lostPassword:
+    labels:
+      email: E-mail
+      submit: Odoslať odkaz pre obnovu
+    messages:
+      success: E-mail pre obnovu odoslaný
+      error: Účet nebol nájdený
+    errors:
+      emailRequired: E-mail je povinný
+
+  account:
+    name: Názov
+    submit: Uložiť
+
+  user:
+    labels:
+      firstName: Meno
+      lastName: Priezvisko
+      email: E-mail
+      phoneNumber: Telefónne číslo
+      company: Spoločnosť
+      isActive: Aktívny
+      role: Rola
+      sso: SSO inštancia
+      account: Účet
+      submit: Uložiť
+    errors:
+      phoneNumber: Neplatné telefónne číslo
+      credentialsConstrain: "E-mail / Používateľské meno alebo telefónne číslo sú už použité"
+      requiredBranch: "Je nutné vyplniť pobočku"
+      ssoRequired: "SSO inštancia je povinná pre vybranú rolu"
+      userAlreadyExists: "Používateľ už vo vybranom účte existuje."
+
+  newPassword:
+    labels:
+      password: Heslo
+      passwordAgain: Heslo znovu
+      submit: Uložiť
+    errors:
+      noMatch: Heslá sa nezhodujú
+      required: Zadajte heslo
+      minLength: Heslo musí mať aspoň %d znakov
+      requireUppercase: Heslo musí obsahovať aspoň jedno veľké písmeno
+      requireLowercase: Heslo musí obsahovať aspoň jedno malé písmeno
+      requireDigit: Heslo musí obsahovať aspoň jednu číslicu
+      requireSpecialChar: Heslo musí obsahovať aspoň jeden špeciálny znak
+      breachedPassword: Toto heslo bolo nájdené v databáze uniknutých hesiel. Zvoľte prosím iné heslo.
+
+  changePassword:
+    labels:
+      currentPassword: Aktuálne heslo
+      password: Nové heslo
+      passwordRepeat: Nové heslo znovu
+      submit: Zmeniť heslo
+    errors:
+      required: Toto pole je povinné
+      wrongPassword: Aktuálne heslo nie je správne
+
+  fileUpload:
+    errors:
+      tooLarge: Súbor je príliš veľký.
+      mimeTypeMismatch: Obsah súboru nezodpovedá jeho prípone.
+
+  personalData:
+    labels:
+      firstName: Meno
+      lastName: Priezvisko
+      phoneNumber: Telefónne číslo
+      submit: Uložiť
+    errors:
+      required: Toto pole je povinné
+      phoneNumber: Neplatné telefónne číslo
+
+  aclRole:
+    name: Názov
+    type: Typ roly
+    types:
+      identity: Identita
+      profile: Profil
+    needsSso: Vyžaduje prihlásenie cez SSO
+    submit: Odoslať
+    errors:
+      nameAlreadyExists: Rola s týmto názvom už existuje
+
+  systemSelectCompany:
+    options:
+      admin: Backoffice
+      isTest: Testovacie
+
+grids:
+  session:
+    ip: IP adresa
+    userAgent: Zariadenie
+    createdAt: Prihlásené
+    validUntil: Platnosť do
+    isCurrent: ""
+    currentDevice: Toto zariadenie
+    invalidate: Odhlásiť
+
+  aclRole:
+    name: Názov
+
+  account:
+    name: Názov
+
+  profile:
+    email: E-mail
+    fullName: Meno
+    phoneNumber: Telefón
+
+  user:
+    labels:
+      fullName: Meno
+      email: E-mail
+      emailUsername: E-mail / Používateľské meno
+      phoneNumber: Telefón
+      isActive: Aktívny
+      roles: Roly
+      accounts: Účty
+    actions:
+      newPassword: Nové heslo
+      signAsIdentity: Prihlásiť sa za používateľa
+      signAsIdentityOpenInIncognitoWindow: Otvoriť v anonymnom okne
+      anonymize: Anonymizovať
+    confirms:
+      newPassword: Naozaj chcete odoslať e-mail s výzvou pre nastavenie hesla?
+      anonymize: Naozaj chcete anonymizovať túto identitu?
+    messages:
+      mailSuccess: E-mail pre nastavenie hesla bol odoslaný
+  global:
+    isActive:
+      label: Aktívny
+
+appGeneral:
+  labels:
+    backToOverview: "Späť na prehľad"
+  model:
+    filters:
+      empty: neuvedené
+      yes: áno
+      no: nie
+      decimalSeparator: ','
+      thousandsSeparator: ' '
+  exceptions:
+    userNotFound: "Používateľ nenájdený"
+    wrongCredentials: "Neplatné prihlasovacie údaje"
+    inactiveUser: "Neaktívny používateľ"
+
+sidePanels:
+  control:
+    itemEdit: "Položka bola upravená."
+    itemAdd: "Položka bola pridaná."
+    formSaved: "Formulár bol úspešne uložený."
+    closeConfirm: "Naozaj zavrieť bez uloženia?"
+
+firebase:
+  notifications:
+    flashes:
+      success: Notifikácie úspešne povolené.
+      disabled: Notifikácie úspešne zrušené.
+
+keycloak:
+  logout:
+    title: Odhlásenie
+    loading: Odhlasovanie...
+    noscriptLink: Pre odhlásenie <a href="%url%">kliknite tu</a>.
+  errors:
+    authFailed: Prihlásenie cez SSO sa nepodarilo.
+    noEmail: Účet SSO nemá priradený e-mail.
+    loopDetected: Bolo detegované opakované presmerovanie. Skúste to prosím znovu.
+
+modules:
+  web:
+    navbar:
+      account:
+        myAccount: "Môj účet"
+    presenters:
+      sign:
+        in:
+          pageTitle: "Prihlásenie"
+          renewLink: "Zabudnuté heslo"
+        lostPassword:
+          pageTitle: "Obnovenie hesla"
+        newPassword:
+          pageTitle: "Obnova hesla"
+      flashFraud: "Bolo detegované podozrivé správanie."
+      flashWrongToken: "Neplatný token"
