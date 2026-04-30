@@ -145,7 +145,7 @@ trait BasePresenterTrait
 
 		$this->em->flush();
 
-		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.success'); // TODO translate
+		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.success');
 	}
 
 	public function handleRemoveFirebaseToken(string $firebaseToken): void
@@ -155,7 +155,7 @@ trait BasePresenterTrait
 
 		$this->em->flush();
 
-		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled'); // TODO translate
+		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled');
 	}
 
 	public function handleRemoveAllFirebaseTokens(): void
@@ -165,6 +165,6 @@ trait BasePresenterTrait
 
 		$this->em->flush();
 
-		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled'); // TODO translate
+		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled');
 	}
 }

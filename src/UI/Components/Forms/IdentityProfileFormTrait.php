@@ -141,7 +141,7 @@ trait IdentityProfileFormTrait
 					}, name: 'profileFields', watchForRedraw: $watchForRedraw);
 				}
 
-				$form->addSubmit('submit', 'fcadmin.forms.user.labels.submit'); // TODO translate
+				$form->addSubmit('submit', 'fcadmin.forms.user.labels.submit');
 			}
 		});
 	}
@@ -158,7 +158,7 @@ trait IdentityProfileFormTrait
 			};
 
 		if (!$isEdit && $this->_identityQueryFactory->create()->byEmail($container['email']->getValue())->fetchOneOrNull()) {
-			$container['email']->addError('Uživatel již ve vybraném účtu existuje.'); // TODO translate
+			$container['email']->addError('fcadmin.forms.user.errors.userAlreadyExists');
 		}
 
 		if ($isEdit || $container['email']->getValue()) {

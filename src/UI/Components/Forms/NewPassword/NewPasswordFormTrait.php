@@ -51,16 +51,16 @@ trait NewPasswordFormTrait
 //				->setRequired();
 
 			$form->addPassword('password')
-				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.password') // TODO translate
+				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.password')
 				->setRequired('fcadmin.forms.newPassword.errors.required')
 				->addRule($form::MinLength, 'fcadmin.forms.newPassword.errors.minLength', 8);
 
 			$form->addPassword('passwordRepeat')
-				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.passwordAgain') // TODO translate
+				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.passwordAgain')
 				->setRequired('fcadmin.forms.newPassword.errors.required');
 		}, 'inputsWrap');
 
-		$form->addSubmit('submit', 'Uložit'); // TODO translate
+		$form->addSubmit('submit', 'fcadmin.forms.newPassword.labels.submit');
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn ';
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'w-100';
 		$form->getComponentSubmitButton('submit')->getControlPrototype()->class[] = 'btn-primary';

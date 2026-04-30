@@ -1,6 +1,7 @@
 global:
   buttons:
     new: Nový
+    add: Přidat
 
   flashes:
     close: Beru na vědomí
@@ -12,6 +13,10 @@ layout:
   profileMenu:
     profile:
       edit: Editovat údaje
+  links:
+    back: zpět
+    backToHomepage: zpět na hlavní stránku
+    goToLogin: přejít na přihlášení
 aclResource:
   title:
     portal:
@@ -106,6 +111,10 @@ presenters:
     pageTitle: Uživatelé
     header: Uživatelé
 
+  sign:
+    errors:
+      expiredLink: "Odkaz již není platný. Pro vygenerování nového odešlete znovu formulář."
+
 forms:
   errors:
     csrf: Platnost formuláře vypršela. Odešlete jej prosím znovu.
@@ -153,12 +162,14 @@ forms:
       isActive: Aktivní
       role: Role
       sso: SSO instance
+      account: Účet
       submit: Uložit
     errors:
       phoneNumber: Neplatné telefonní číslo
       credentialsConstrain: "E-mail / Uživatelské jméno nebo telefonní číslo jsou již použity"
       requiredBranch: "Je nutné vyplnit pobočku"
       ssoRequired: "SSO instance je povinná pro vybranou roli"
+      userAlreadyExists: "Uživatel již ve vybraném účtu existuje."
 
   newPassword:
     labels:

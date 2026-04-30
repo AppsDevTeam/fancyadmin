@@ -9,7 +9,7 @@ trait IsActiveFormField
 {
 	public function addIsActiveField(Form|StaticContainer $form): void
 	{
-		$form->addCheckbox('isActive', 'Aktivní') // TODO translate
+		$form->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive')
 			->setDefaultValue(true);
 	}
 }

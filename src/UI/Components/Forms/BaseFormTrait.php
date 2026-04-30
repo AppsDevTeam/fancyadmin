@@ -47,7 +47,7 @@ trait BaseFormTrait
 						}
 					}
 
-					$form->addSelect('account', 'Účet', $pairs)  // TODO translate
+					$form->addSelect('account', 'fcadmin.forms.user.labels.account', $pairs)
 						->setPrompt('---')
 						->setRequired();
 				}

@@ -91,7 +91,7 @@ trait SignPresenterTrait
 		try {
 			$this->identity = $this->_authenticator->authenticate($token);
 		} catch(AuthenticationException) {
-			$this->flashMessageError('Odkaz již není platný. Pro vygenerováno nového odešlete znovu formulář.'); // TODO translate
+			$this->flashMessageError('fcadmin.presenters.sign.errors.expiredLink');
 			$this->redirect(':Portal:Sign:lostPassword');
 		}
 	}
