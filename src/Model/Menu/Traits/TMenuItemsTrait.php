@@ -105,6 +105,25 @@ trait TMenuItemsTrait {
 		$menu->addMenuItem($navbarMenuItem);
 	}
 
+	public function addChangeLogsItem(
+		NavbarMenu|NavbarSubmenu $menu,
+		string $label = 'fcadmin.presenters.changeLogs.title',
+		string $link = 'ChangeLogs:default',
+		?string $faIcon = null,
+		?Resource $alcResource = null,
+	): void {
+		$navbarMenuItem = $this->createMenuItemEntity($menu)
+			->setLabel($label)
+			->setLink($link)
+			->setAclResource($alcResource);
+
+		if ($faIcon) {
+			$navbarMenuItem->setFaIcon($faIcon);
+		}
+
+		$menu->addMenuItem($navbarMenuItem);
+	}
+
 	/**
 	 * @param NavbarMenu|NavbarSubmenu $menu
 	 * @return ($menu is NavbarMenu ? NavbarMenuItem : NavbarSubmenuItem)
