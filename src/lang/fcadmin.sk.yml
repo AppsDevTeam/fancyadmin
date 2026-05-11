@@ -23,6 +23,7 @@ aclResource:
       backoffice:
         identities: Používatelia
         roles_and_permissions: Roly a práva
+        change_logs: Logy zmien
 
 mailer:
   base:
@@ -64,6 +65,11 @@ presenters:
     sessions: Prihlásené zariadenia
     logoutAll: Odhlásiť zo všetkých zariadení
     logoutAllConfirm: Naozaj sa chcete odhlásiť zo všetkých zariadení?
+
+  changeLogs:
+    title: Logy zmien
+    pageTitle: Logy zmien
+    header: Logy zmien
 
   configurations:
     title: Konfigurácia
@@ -247,6 +253,22 @@ grids:
     email: E-mail
     fullName: Meno
     phoneNumber: Telefón
+
+  changeLog:
+    createdAt: Dátum
+    action: Akcia
+    objectClass: Entita
+    objectId: ID entity
+    identity: Používateľ
+    changeSet: Zmeny
+    actions:
+      create: Vytvorenie
+      edit: Úprava
+      delete: Zmazanie
+    file:
+      uploaded: Nahraný nový súbor
+      removed: Súbor odstránený
+      changed: Súbor zmenený
 
   user:
     labels:
