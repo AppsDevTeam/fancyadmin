@@ -33,9 +33,7 @@ trait ChangeLogGridTrait
 
 		$grid->addColumnText('objectClass', 'fcadmin.grids.changeLog.objectClass')
 			->setRenderer(function (ChangeLog $changeLog) {
-				$class = $changeLog->getObjectClass();
-				$parts = explode('\\', $class);
-				return end($parts);
+				return $this->resolveEntityLabel($changeLog->getObjectClass());
 			});
 
 		$grid->addColumnText('objectId', 'fcadmin.grids.changeLog.objectId');
@@ -101,6 +99,28 @@ trait ChangeLogGridTrait
 		}
 
 		return $container;
+	}
+
+	protected function resolveEntityLabel(string $entityClass): string
+	{
+		static $cache = [];
+
+		if (!isset($cache[$entityClass])) {
+			$array = explode('\\', $entityClass);
+			$fallback = end($array);
+
+			if (class_exists($entityClass)) {
+				$reflection = new ReflectionClass($entityClass);
+				$attributes = $reflection->getAttributes(Label::class);
+				if ($attributes) {
+					$cache[$entityClass] = $this->getTranslator()->translate($attributes[0]->newInstance()->translationKey);
+				}
+			}
+
+			$cache[$entityClass] ??= $fallback;
+		}
+
+		return $cache[$entityClass];
 	}
 
 	protected function resolvePropertyLabels(string $entityClass): array
