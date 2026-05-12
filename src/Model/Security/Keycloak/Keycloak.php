@@ -320,10 +320,10 @@ class Keycloak
 	}
 
 	/**
-	 * Přihlásí nebo zaregistruje uživatele na základě Keycloak autentizace.
-	 * Vyhledání probíhá výhradně podle emailu.
+	 * Přihlásí uživatele na základě Keycloak autentizace.
+	 * Uživatel musí již existovat v lokální databázi.
 	 */
-	public function loginOrRegisterUser(KeycloakAuthentication $keycloakAuthentication): void
+	public function loginUser(KeycloakAuthentication $keycloakAuthentication, bool $autoRegister = false): void
 	{
 		$userInfo = $keycloakAuthentication->getUserInfo();
 		$email = $userInfo['email'] ?? null;
@@ -337,7 +337,11 @@ class Keycloak
 			->fetchOneOrNull();
 
 		if ($identity === null) {
-			$identity = $this->createIdentity($userInfo);
+            if ($autoRegister) {
+                $identity = $this->createIdentity($userInfo);
+            } else {
+			    throw new \Nette\Security\AuthenticationException('User not found in application.');
+            }
 		}
 
 		if ($keycloakAuthentication->getIdToken()) {
@@ -559,11 +563,12 @@ class Keycloak
 	 * Pokud uživatel s daným emailem již existuje, vrátí existujícího.
 	 *
 	 * @param Identity $identity Lokální identita
-	 * @param string|null $password Heslo — pokud je null, uživatel se vytvoří bez hesla
+	 * @param string|null $password Heslo — pokud je null, uživatel se vytvoří bez hesla a Keycloak ho vyzve k nastavení při prvním přihlášení
 	 * @param bool $temporaryPassword Pokud true, Keycloak vynutí změnu hesla při prvním přihlášení
+	 * @param bool $requirePasswordSetup Pokud true a $password je null, Keycloak vyzve uživatele k nastavení hesla při prvním přihlášení
 	 * @return KeycloakUser|null Vytvořený nebo existující uživatel, null při chybě
 	 */
-	public function registerUser(Identity $identity, ?string $password = null, bool $temporaryPassword = false): ?KeycloakUser
+	public function registerUser(Identity $identity, ?string $password = null, bool $temporaryPassword = false, bool $requirePasswordSetup = true): ?KeycloakUser
 	{
 		$email = $identity->getEmail();
 		if (empty($email)) {
@@ -596,6 +601,14 @@ class Keycloak
 					'type' => 'password',
 					'value' => $password,
 					'temporary' => $temporaryPassword,
+				],
+			];
+		} elseif ($requirePasswordSetup) {
+			$userData['credentials'] = [
+				[
+					'type' => 'password',
+					'value' => bin2hex(random_bytes(32)),
+					'temporary' => true,
 				],
 			];
 		}
@@ -677,6 +690,53 @@ class Keycloak
 			return $this->findUser($email);
 		} catch (RequestException $e) {
 			return null;
+		}
+	}
+
+	/**
+	 * Odešle email pro reset hesla přes Keycloak (execute-actions-email).
+	 * Keycloak pošle svůj email s odkazem na formulář pro nastavení nového hesla.
+	 *
+	 * @param Identity $identity Lokální identita
+	 * @param string|null $redirectUri URL kam přesměrovat po nastavení hesla
+	 * @return bool True pokud byl email odeslán
+	 */
+	public function sendPasswordResetEmail(Identity $identity, ?string $redirectUri = null): bool
+	{
+		$email = $identity->getEmail();
+		if (empty($email)) {
+			return false;
+		}
+
+		$adminAccessToken = $this->getAdminAccessToken();
+		if ($adminAccessToken === null) {
+			return false;
+		}
+
+		$existingUser = $this->findUser($email);
+		if ($existingUser === null) {
+			return false;
+		}
+
+		$queryParams = [];
+		if ($redirectUri !== null) {
+			$queryParams['redirect_uri'] = $redirectUri;
+			$queryParams['client_id'] = $this->clientId;
+		}
+
+		try {
+			$this->client->put(
+				$this->getAdminRealmUrl("users/{$existingUser->getId()}/execute-actions-email"),
+				[
+					'query' => $queryParams,
+					'json' => ['UPDATE_PASSWORD'],
+					'headers' => ['Authorization' => 'Bearer ' . $adminAccessToken->getToken()],
+				]
+			);
+
+			return true;
+		} catch (RequestException $e) {
+			return false;
 		}
 	}
 

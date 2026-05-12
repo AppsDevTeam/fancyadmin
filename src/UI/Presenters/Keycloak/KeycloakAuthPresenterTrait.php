@@ -23,6 +23,14 @@ trait KeycloakAuthPresenterTrait
 	private const int MAX_AUTH_ATTEMPTS = 3;
 	private const int AUTH_ATTEMPT_WINDOW_SECONDS = 120;
 
+	protected function startup(): void
+	{
+		parent::startup();
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			$this->error('Keycloak is not enabled', 404);
+		}
+	}
+
 	/**
 	 * Keycloak callback — zpracuje authorization code po redirectu z Keycloaku.
 	 * Parametr `instance` identifikuje, ze které Keycloak instance callback přišel.
@@ -195,7 +203,7 @@ trait KeycloakAuthPresenterTrait
 		}
 
 		try {
-			$keycloak->loginOrRegisterUser($keycloakAuthentication);
+			$keycloak->loginUser($keycloakAuthentication);
 		} catch (\Nette\Security\AuthenticationException $e) {
 			$this->redirect(':Portal:Sign:in');
 			return;
