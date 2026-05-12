@@ -223,6 +223,7 @@ forms:
     types:
       identity: Identita
       profile: Profil
+    isAdmin: Administrátor
     needsSso: Vyžaduje přihlášení přes SSO
     submit: Odeslat
     errors:

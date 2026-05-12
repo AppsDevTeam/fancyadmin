@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\Keycloak;
 
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use Nette\Application\Attributes\CrossOrigin;
@@ -11,6 +12,15 @@ use Nette\Application\Attributes\CrossOrigin;
 trait KeycloakLogPresenterTrait
 {
 	use PresenterTrait;
+	use FancyAdminInject;
+
+	protected function startup(): void
+	{
+		parent::startup();
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			$this->error('Keycloak is not enabled', 404);
+		}
+	}
 
 	/**
 	 * Logout stránka — vykreslí spinner a JS redirectne na Keycloak logout URL.

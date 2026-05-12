@@ -46,6 +46,30 @@ trait BasePresenterTrait
 		$this->_jsComponents->setFirebaseLink('removeAllFirebaseTokensLink', $this->getPresenter()->link('removeAllFirebaseTokens!'));
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 
+		// Keycloak — dynamický frame-src CSP header pro silent SSO iframe
+		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			$ssoClass = $this->_em->findEntityClassByInterface(\ADT\FancyAdmin\Model\Entities\Sso::class);
+			$ssoRecords = $this->_em->getRepository($ssoClass)->findAll();
+			if (!empty($ssoRecords)) {
+				$ssoUrls = [];
+				foreach ($ssoRecords as $sso) {
+					$ssoUrls[] = $sso->getHostUrl();
+				}
+				$urls = implode(' ', $ssoUrls);
+				$currentCsp = $this->getHttpResponse()->getHeader('Content-Security-Policy') ?? '';
+
+				// Přidáme SSO URL k existujícím connect-src a přidáme frame-src
+				if (preg_match('/connect-src\s+([^;]+)/', $currentCsp, $m)) {
+					$currentCsp = str_replace($m[0], $m[0] . ' ' . $urls, $currentCsp);
+				} else {
+					$currentCsp .= '; connect-src \'self\' ' . $urls;
+				}
+				$currentCsp .= '; frame-src \'self\' ' . $urls;
+
+				$this->getHttpResponse()->setHeader('Content-Security-Policy', $currentCsp);
+			}
+		}
+
 		// Keycloak settings pro frontend (keycloak-js adapter)
 		$keycloakSettingsJson = '';
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
@@ -60,6 +84,7 @@ trait BasePresenterTrait
 						'clientId' => $keycloak->getFrontendClientId(),
 						'url' => $keycloak->getHostUrl(),
 						'silentCheckSsoUrl' => $this->getPresenter()->link('//:Portal:KeycloakAuth:silentCheckSso'),
+						'logoutUrl' => $this->getPresenter()->link('//:Portal:Sign:out'),
 					]);
 				}
 			}

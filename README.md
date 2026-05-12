@@ -1153,16 +1153,47 @@ $keycloak->setUserPassword($identity, 'noveHeslo', temporary: true);
 $keycloakUser = $keycloak->findUser('user@example.com');
 ```
 
-### 18.9 Přidání nové Keycloak instance
+### 18.9 Backchannel logout
+
+Keycloak podporuje backchannel logout — při ukončení session v Keycloaku (odhlášení, expirace, deaktivace uživatele) Keycloak pošle POST request na aplikaci, která invaliduje lokální session uživatele.
+
+#### Nastavení v Keycloaku
+
+V Keycloak admin panelu → **Clients** → váš confidential client → **Settings**:
+
+1. **Backchannel logout URL**:
+   ```
+   https://admin.muj-projekt.cz/keycloak-auth/backchannel-logout?instance=nazev-sso
+   ```
+   Kde `nazev-sso` odpovídá hodnotě `name` v tabulce `sso`.
+
+2. **Backchannel logout session required**: **On**
+
+Opakujte pro každou SSO instanci s odpovídajícím `?instance=` parametrem.
+
+#### Co se děje
+
+1. Keycloak pošle POST s `logout_token` (JWT) na backchannel URL
+2. Aplikace dekóduje token, získá `sub` (Keycloak user ID)
+3. Přes Admin API zjistí email uživatele
+4. Najde lokální identitu podle emailu
+5. Invaliduje všechny její sessions (`Authenticator::clearIdentity`)
+
+Tím je zajištěno, že:
+- Uživatel odhlášený z Keycloaku je automaticky odhlášen i z aplikace
+- Uživatel deaktivovaný v Keycloaku ztrácí přístup okamžitě (session je ukončena a nové SSO přihlášení selže)
+
+### 18.10 Přidání nové Keycloak instance
 
 Postup pro přidání další SSO instance do existujícího projektu:
 
 1. **DB** — vytvořte nový záznam v tabulce `sso` s kompletní konfigurací (realm, URL, credentials)
 2. **DB** — u příslušných rolí/identit nastavte vazbu na nové SSO
+3. **Keycloak** — v novém clientu nastavte backchannel logout URL (viz 18.9)
 
 Žádná změna PHP kódu, `.env` ani neon konfigurace není potřeba. Instance se vytváří dynamicky z databáze.
 
-### 18.10 Rozšíření chování
+### 18.11 Rozšíření chování
 
 Keycloak službu lze rozšířit v projektu — např. pro úpravu logiky vytváření identity při SSO loginu:
 

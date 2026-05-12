@@ -33,6 +33,8 @@ trait AclRoleFormTrait
 			])
 			->setRequired();
 
+		$form->addCheckbox('isAdmin', 'fcadmin.forms.aclRole.isAdmin');
+
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
 			$form->addCheckbox('needsSso', 'fcadmin.forms.aclRole.needsSso');
 		}
