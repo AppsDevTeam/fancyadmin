@@ -39,6 +39,16 @@ trait LostPasswordFormTrait
 			$this->getPresenter()->redirect('this');
 		}
 
+		// Pokud má identita SSO vazbu a Keycloak je zapnutý, pošle reset email přes Keycloak
+		if ($this->_fancyAdmin->isKeycloakEnabled() && $identity->getSso() !== null) {
+			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
+			if ($keycloak !== null) {
+				$redirectUri = $this->getPresenter()->link('//:Portal:Sign:in');
+				$keycloak->sendPasswordResetEmail($identity, $redirectUri);
+				$this->processFormRedirect($identity);
+			}
+		}
+
 		$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
 		$this->processFormRedirect($identity);
 	}

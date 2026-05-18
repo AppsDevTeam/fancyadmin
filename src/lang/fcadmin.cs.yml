@@ -23,6 +23,7 @@ aclResource:
       backoffice:
         identities: Uživatelé
         roles_and_permissions: Role a práva
+        change_logs: Logy změn
 
 mailer:
   base:
@@ -64,6 +65,11 @@ presenters:
     sessions: Přihlášená zařízení
     logoutAll: Odhlásit ze všech zařízení
     logoutAllConfirm: Opravdu se chcete odhlásit ze všech zařízení?
+
+  changeLogs:
+    title: Logy změn
+    pageTitle: Logy změn
+    header: Logy změn
 
   configurations:
     title: Konfigurace
@@ -217,6 +223,7 @@ forms:
     types:
       identity: Identita
       profile: Profil
+    isAdmin: Administrátor
     needsSso: Vyžaduje přihlášení přes SSO
     submit: Odeslat
     errors:
@@ -247,6 +254,22 @@ grids:
     email: E-mail
     fullName: Jméno
     phoneNumber: Telefon
+
+  changeLog:
+    createdAt: Datum
+    action: Akce
+    objectClass: Entita
+    objectId: ID entity
+    identity: Uživatel
+    changeSet: Změny
+    actions:
+      create: Vytvoření
+      edit: Úprava
+      delete: Smazání
+    file:
+      uploaded: Nahrán nový soubor
+      removed: Soubor odstraněn
+      changed: Soubor změněn
 
   user:
     labels:

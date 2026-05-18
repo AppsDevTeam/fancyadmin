@@ -4,19 +4,32 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\Keycloak;
 
+use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use Nette\Application\Attributes\CrossOrigin;
+use Nette\Application\Responses\TextResponse;
 use Nette\Utils\Validators;
 
 trait KeycloakAuthPresenterTrait
 {
 	use PresenterTrait;
 	use FancyAdminInject;
+	use AuthenticatorInject;
+	use IdentityQueryFactoryInject;
 
 	private const int MAX_AUTH_ATTEMPTS = 3;
 	private const int AUTH_ATTEMPT_WINDOW_SECONDS = 120;
+
+	protected function startup(): void
+	{
+		parent::startup();
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			$this->error('Keycloak is not enabled', 404);
+		}
+	}
 
 	/**
 	 * Keycloak callback — zpracuje authorization code po redirectu z Keycloaku.
@@ -83,6 +96,57 @@ trait KeycloakAuthPresenterTrait
 	}
 
 	/**
+	 * Backchannel logout — Keycloak pošle POST při ukončení session.
+	 * Endpoint musí být veřejně dostupný (volá ho Keycloak server).
+	 */
+	#[CrossOrigin]
+	public function actionBackchannelLogout(?string $instance = null): void
+	{
+		$logoutToken = $this->getHttpRequest()->getPost('logout_token');
+
+		if ($logoutToken === null || $instance === null) {
+			$this->getHttpResponse()->setCode(400);
+			$this->sendResponse(new TextResponse('Missing logout_token or instance'));
+		}
+
+		$manager = $this->_fancyAdmin->getKeycloakManager();
+		$keycloak = $manager?->getInstance($instance);
+
+		if ($keycloak === null) {
+			$this->getHttpResponse()->setCode(400);
+			$this->sendResponse(new TextResponse('Unknown instance'));
+		}
+
+		$claims = $keycloak->decodeLogoutToken($logoutToken);
+		$sub = $claims['sub'] ?? null;
+
+		if ($sub === null) {
+			$this->getHttpResponse()->setCode(400);
+			$this->sendResponse(new TextResponse('Missing sub claim'));
+		}
+
+		// Najdeme uživatele v Keycloaku podle sub → získáme email
+		$keycloakUser = $keycloak->getUserById($sub);
+		if ($keycloakUser === null || $keycloakUser->getEmail() === null) {
+			$this->getHttpResponse()->setCode(200);
+			$this->sendResponse(new TextResponse('OK'));
+		}
+
+		// Najdeme lokální identitu podle emailu a invalidujeme všechny její sessions
+		$identity = $this->_identityQueryFactory->create()
+			->disableSecurityFilter()
+			->byEmail($keycloakUser->getEmail())
+			->fetchOneOrNull();
+
+		if ($identity !== null) {
+			$this->_authenticator->clearIdentity($identity->getAuthObjectId());
+		}
+
+		$this->getHttpResponse()->setCode(200);
+		$this->sendResponse(new TextResponse('OK'));
+	}
+
+	/**
 	 * Stránka pro silent SSO iframe check (keycloak-js adapter).
 	 */
 	public function actionSilentCheckSso(): void
@@ -139,7 +203,7 @@ trait KeycloakAuthPresenterTrait
 		}
 
 		try {
-			$keycloak->loginOrRegisterUser($keycloakAuthentication);
+			$keycloak->loginUser($keycloakAuthentication);
 		} catch (\Nette\Security\AuthenticationException $e) {
 			$this->redirect(':Portal:Sign:in');
 			return;

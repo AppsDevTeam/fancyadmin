@@ -12,6 +12,7 @@ window.CodeMirror = CodeMirror;
 $.nette.ext('live').after(function (el) {
 	$(el).find('.summernote').each((i, el) => {
 		$(el).summernote({
+			dialogsInBody: true,
 			height: null,
 			minHeight: 200,
 			maxHeight: null,

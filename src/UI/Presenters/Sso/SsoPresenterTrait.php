@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters\Sso;
 
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineForms\BaseFormInterface;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\SsoFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SsoQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\Sso;
@@ -17,8 +18,17 @@ trait SsoPresenterTrait
 {
 	use SidePanel;
 	use PresenterTrait;
+	use FancyAdminInject;
 	use SsoFormFactoryInject;
 	use SsoQueryFactoryInject;
+
+	protected function startup(): void
+	{
+		parent::startup();
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			$this->error('Keycloak is not enabled', 404);
+		}
+	}
 
 	public function actionDefault(?Sso $sso = null): void
 	{
