@@ -48,16 +48,16 @@ trait SelectAccountListenerTrait
 
 		foreach ($identities as $identity) {
 			$selectedAccount = $identity->getSelectedAccount();
-			$hasBackoffice = $identity->isAllowed($this->fancyAdmin->getBackofficeAclResource());
+			$hasFullData = $identity->isAllowed($this->fancyAdmin->getFullDataAclResource());
 
-			// 1) nemá backoffice přístup a nemá nastavený selectedAccount -> nastav první aktivní profil
-			if (!$hasBackoffice && !$selectedAccount) {
+			// 1) nemá full data přístup a nemá nastavený selectedAccount -> nastav první aktivní profil
+			if (!$hasFullData && !$selectedAccount) {
 				$identity->setSelectedAccount($this->getFirstActiveProfile($identity)?->getAccount());
 				$this->entitiesToRecompute[] = $identity;
 			}
 
-			// 2) má nastavený selectedAccount, ale odpovídající profil je neaktivní
-			if ($selectedAccount) {
+			// 2) nemá full data přístup, má nastavený selectedAccount, ale odpovídající profil je neaktivní
+			if (!$hasFullData && $selectedAccount) {
 				$profileIsActive = false;
 				foreach ($identity->getProfiles() as $_profile) {
 					if ($_profile->getAccount() === $selectedAccount && $_profile->getIsActive()) {
@@ -67,11 +67,7 @@ trait SelectAccountListenerTrait
 				}
 
 				if (!$profileIsActive) {
-					if ($hasBackoffice) {
-						$identity->setSelectedAccount(null);
-					} else {
-						$identity->setSelectedAccount($this->getFirstActiveProfile($identity)?->getAccount());
-					}
+					$identity->setSelectedAccount($this->getFirstActiveProfile($identity)?->getAccount());
 					$this->entitiesToRecompute[] = $identity;
 				}
 			}
