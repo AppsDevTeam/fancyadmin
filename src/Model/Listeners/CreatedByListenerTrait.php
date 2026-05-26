@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Listeners;
 
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByInterface;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullableInterface;
 use App\Model\Security\SecurityUser;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
@@ -32,7 +33,7 @@ trait CreatedByListenerTrait
 		if (
 			$entity instanceof CreatedByInterface
 			||
-			($entity instanceof CreatedByNullInterface && $this->securityUser->isLoggedIn())
+			($entity instanceof CreatedByNullableInterface && $this->securityUser->isLoggedIn())
 		) {
 			$entity->setCreatedBy($this->securityUser->getIdentity());
 		}
