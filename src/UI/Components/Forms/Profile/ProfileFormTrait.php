@@ -55,7 +55,7 @@ trait ProfileFormTrait
 		if (
 			!isset($values['identity']['email'])
 			||
-			(!$identity = $this->_identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byEmail($values['identity']['email'])->fetchOneOrNull())
+			(!$identity = $this->_identityQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byContext($this->_fancyAdmin->getContext())->byEmail($values['identity']['email'])->fetchOneOrNull())
 		) {
 			/** @var Identity $identity */
 			$identity = new ($this->_em->findEntityClassByInterface(Identity::class));

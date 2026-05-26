@@ -68,7 +68,7 @@ trait AclRoleFormTrait
 	public function processForm(AclRole $entity): void
 	{
 		if ($entity->isNew()) {
-			$entity->setContext($this->_fancyAdmin->getContext());;
+			$entity->setContext($this->_fancyAdmin->getContext());
 		}
 
 		$this->em->flush();
