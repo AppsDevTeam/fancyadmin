@@ -129,11 +129,11 @@ trait MailerTrait
 	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 */
-	public function sendAccountCreationEmail(Identity $identity): void
+	public function sendAccountCreationEmail(Identity $identity, bool $checkLimit = true): void
 	{
 		$this->em->beginTransaction();
 
-		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity);
+		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+' . OnetimeToken::PASSWORD_CREATION_VALID_FOR . ' hours'), $identity, checkLimit: $checkLimit);
 
 		$message = $this->createTemplateMessage(
 			'accountCreation',
@@ -153,11 +153,11 @@ trait MailerTrait
 	 * @throws InvalidArgument
 	 * @throws Exception
 	 */
-	public function sendPasswordRecoveryMail(Identity $identity, int $tokenLifetime): void
+	public function sendPasswordRecoveryMail(Identity $identity, int $tokenLifetime, bool $checkLimit = true): void
 	{
 		$this->em->beginTransaction();
 
-		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'),  $identity);
+		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'), $identity, checkLimit: $checkLimit);
 
 		$message = $this->createTemplateMessage(
 			'passwordRecovery',

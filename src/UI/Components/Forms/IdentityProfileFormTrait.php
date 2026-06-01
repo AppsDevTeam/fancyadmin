@@ -220,7 +220,7 @@ trait IdentityProfileFormTrait
 		}
 
 		if (!$identity->getPassword()) {
-			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_CREATION_VALID_FOR);
+			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_CREATION_VALID_FOR, checkLimit: false);
 		}
 	}
 
