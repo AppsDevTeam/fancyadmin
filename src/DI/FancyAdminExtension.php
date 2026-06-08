@@ -9,6 +9,7 @@ use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
+use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\AclRoleTrait;
 use ADT\FancyAdmin\Model\Entities\Identity;
@@ -53,9 +54,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'faviconFileNamePng' => Expect::string()->nullable()->default(null),
 			'faviconFileNameSvg' => Expect::string()->nullable()->default(null),
 			'hmr' => Expect::bool()->default(false),
-			'customerAclResource' => Expect::type(Resource::class)->default(null),
-			'backofficeAclResource' => Expect::type(Resource::class)->default(null),
-			'fullDataAclResource' => Expect::type(Resource::class)->default(null),
+			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
+			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
+			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
