@@ -49,7 +49,7 @@ trait SelectAccountFormTrait
 	
 	protected function getAccountPairs(): array
 	{
-		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+		if ($this->_securityUser->isAllowedFullDataAclResource()) {
 			$query = $this->createBackofficeAccountQuery();
 
 			$selectedAccount = $this->_securityUser->getIdentity()->getSelectedAccount();
@@ -67,7 +67,7 @@ trait SelectAccountFormTrait
 			$accountPairs[$_account->getId()] = $this->getAccountName($_account);
 		}
 		asort($accountPairs);
-		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+		if ($this->_securityUser->isAllowedFullDataAclResource()) {
 			//pridani option pro presmerovani do settings, respektive pro odnastaveni spolcnosi pokud ma user global companies
 			$accountPairs[self::SETTINGS] = $this->_translator->translate('fcadmin.forms.systemSelectCompany.options.admin');
 		}
