@@ -49,7 +49,7 @@ trait SelectAccountFormTrait
 	
 	protected function getAccountPairs(): array
 	{
-		if ($this->_securityUser->isAllowedFullDataAclResource()) {
+		if ($this->_securityUser->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
 			$query = $this->createBackofficeAccountQuery();
 
 			$selectedAccount = $this->_securityUser->getIdentity()->getSelectedAccount();
