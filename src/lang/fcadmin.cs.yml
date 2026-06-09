@@ -307,6 +307,7 @@ appGeneral:
   exceptions:
     userNotFound: "Uživatel nenalezen"
     wrongCredentials: "Neplatné přihlašovací údaje"
+    noPermission: "Nemáte právo pro přihlášení"
     inactiveUser: "Neaktivní uživatel"
 
 sidePanels:

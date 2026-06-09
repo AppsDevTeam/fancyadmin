@@ -105,6 +105,15 @@ trait SignInFormTrait
 	{
 		try {
 			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->_fancyAdmin->getContext());
+
+			if (
+				!$this->_identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
+				&&
+				!$this->_identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+			) {
+				$form->addError('fcadmin.appGeneral.exceptions.noPermission');
+			}
+
 		} catch (AuthenticationException) {
 			$form->addError('fcadmin.appGeneral.exceptions.wrongCredentials');
 		}
