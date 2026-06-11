@@ -44,6 +44,11 @@ trait ConfigurationGridTrait
 				} elseif ($configuration->getType() === ConfigurationTypeEnum::TYPE_FILE) {
 					return $configuration->getFile()->getUrl();
 				}
+
+				if ($this->isSensitiveConfiguration($configuration->getKey())) {
+					return $this->maskSensitiveValue((string) $configuration->getValue());
+				}
+
 				return $configuration->getValue();
 			});
 	}
@@ -51,6 +56,33 @@ trait ConfigurationGridTrait
 	protected function getQueryObjectFactoryClass(): string
 	{
 		return ConfigurationQueryFactory::class;
+	}
+
+	private function isSensitiveConfiguration(string $key): bool
+	{
+		foreach (['key', 'secret', 'token', 'password'] as $needle) {
+			if (str_contains(strtolower($key), $needle)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function maskSensitiveValue(string $value): string
+	{
+		$length = mb_strlen($value);
+
+		// krátké hodnoty schováme celé
+		if ($length <= 8) {
+			return str_repeat('•', max($length, 1));
+		}
+
+		$visible = 4;
+
+		return mb_substr($value, 0, $visible)
+			. str_repeat('•', max($length - 2 * $visible, 1))
+			. mb_substr($value, -$visible);
 	}
 
 	private function renderConfigurationValueList(array $values): Html
