@@ -75,6 +75,17 @@ presenters:
     title: Konfigurace
     pageTitle: Konfigurace
     header: Konfigurace
+    grid:
+      name: Název
+      value: Hodnota
+    valueKeys:
+      enabled: Aktivní
+      minLength: Minimální délka
+      requireUppercase: Vyžadovat velké písmeno
+      requireLowercase: Vyžadovat malé písmeno
+      requireDigit: Vyžadovat číslici
+      requireSpecialChar: Vyžadovat speciální znak
+      sessionExpirationMinutes: Expirace session (minuty)
 
   sso:
     title: SSO instance

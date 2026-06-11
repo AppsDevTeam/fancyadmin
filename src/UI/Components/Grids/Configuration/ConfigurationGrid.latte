@@ -1,11 +1,1 @@
 {varType ADT\FancyAdmin\Model\Entities\Configuration $item}
-
-{define col-value}
-	{if $item->getType() === \ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum::TYPE_JSON}
-		{= Nette\Utils\Json::encode($item->getValue(), pretty: true)};
-	{elseif $item->getType() === \ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum::TYPE_FILE}
-		<a n:if="$item->getFile()" href="{$item->getFile()->getUrl()}" target="_blank">{$item->getFile()->getOriginalName()}</a>
-	{else}
-		{$item->getValue()}
-	{/if}
-{/define}

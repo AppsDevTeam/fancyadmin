@@ -9,7 +9,9 @@ use ADT\FancyAdmin\Model\Entities\Configuration;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
 use ADT\FancyAdmin\Model\Queries\Factories\ConfigurationQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
+use Nette\Utils\Html;
 use Nette\Utils\Json;
+use Nette\Utils\JsonException;
 
 trait ConfigurationGridTrait
 {
@@ -17,11 +19,28 @@ trait ConfigurationGridTrait
 
 	public function initGrid(DataGrid $grid): void
 	{
-		$grid->addColumnText('name', 'Name');
-		$grid->addColumnText('value', 'Value')
+		$grid->addColumnText('name', 'fcadmin.presenters.configurations.grid.name');
+		$grid->addColumnText('value', 'fcadmin.presenters.configurations.grid.value')
 			->setRenderer(function(Configuration $configuration) {
 				if ($configuration->getType() === ConfigurationTypeEnum::TYPE_JSON) {
-					return Json::encode($configuration->getValue(), pretty: true);
+					try {
+						// hodnota může mít v DB navíc koncový středník (legacy serializace)
+						$rawValue = rtrim(trim((string) $configuration->getValue()), ';');
+
+						$decoded = Json::decode($rawValue, Json::FORCE_ARRAY);
+						// hodnota mohla být v DB uložena dvojitě zakódovaná (string místo objektu)
+						if (is_string($decoded)) {
+							$decoded = Json::decode($decoded, Json::FORCE_ARRAY);
+						}
+
+						if (is_array($decoded)) {
+							return $this->renderConfigurationValueList($decoded);
+						}
+
+						return $configuration->getValue();
+					} catch (JsonException) {
+						return $configuration->getValue();
+					}
 				} elseif ($configuration->getType() === ConfigurationTypeEnum::TYPE_FILE) {
 					return $configuration->getFile()->getUrl();
 				}
@@ -32,5 +51,45 @@ trait ConfigurationGridTrait
 	protected function getQueryObjectFactoryClass(): string
 	{
 		return ConfigurationQueryFactory::class;
+	}
+
+	private function renderConfigurationValueList(array $values): Html
+	{
+		$container = Html::el();
+
+		foreach ($values as $key => $value) {
+			$container->addHtml(
+				Html::el('div')
+					->addHtml(Html::el('strong')->setText($this->translateConfigurationValueKey((string) $key) . ': '))
+					->addText($this->formatConfigurationValue($value))
+			);
+		}
+
+		return $container;
+	}
+
+	private function translateConfigurationValueKey(string $key): string
+	{
+		$translationKey = 'fcadmin.presenters.configurations.valueKeys.' . $key;
+		$translated = $this->getTranslator()->translate($translationKey);
+
+		return $translated === $translationKey ? $key : $translated;
+	}
+
+	private function formatConfigurationValue(mixed $value): string
+	{
+		if (is_bool($value)) {
+			return $this->getTranslator()->translate($value ? 'fcadmin.appGeneral.model.filters.yes' : 'fcadmin.appGeneral.model.filters.no');
+		}
+
+		if ($value === null) {
+			return '—';
+		}
+
+		if (is_array($value)) {
+			return Json::encode($value);
+		}
+
+		return (string) $value;
 	}
 }
