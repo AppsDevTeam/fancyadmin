@@ -56,11 +56,18 @@ trait SelectAccountListenerTrait
 				$this->entitiesToRecompute[] = $identity;
 			}
 
-			// 2) nemá full data přístup, má nastavený selectedAccount, ale odpovídající profil je neaktivní
+			// 2) nemá full data přístup, má nastavený selectedAccount, ale nemá pro něj
+			//    (ani pro jeho nadřazený účet) aktivní profil. Parent-aware shoda je konzistentní
+			//    s Identity::getProfile() i s tím, že SelectAccountForm nabízí přes getSubaccounts()
+			//    i subúčty - majitel holdingu má profil jen na nadřazeném účtu.
 			if (!$hasFullData && $selectedAccount) {
+				$parentAccount = $selectedAccount->getParent();
 				$profileIsActive = false;
 				foreach ($identity->getProfiles() as $_profile) {
-					if ($_profile->getAccount() === $selectedAccount && $_profile->getIsActive()) {
+					if (
+						$_profile->getIsActive()
+						&& ($_profile->getAccount() === $selectedAccount || $_profile->getAccount() === $parentAccount)
+					) {
 						$profileIsActive = true;
 						break;
 					}
