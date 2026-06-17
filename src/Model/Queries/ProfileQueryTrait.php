@@ -25,7 +25,7 @@ trait ProfileQueryTrait
 
 	public function setDefaultOrder(): void
 	{
-		$this->orderBy(['identity.firstName' => 'ASC', 'identity.lastName' => 'ASC']);
+		$this->orderBy(['identity.firstName' => 'ASC', 'identity.lastName' => 'ASC', 'id' => 'ASC']);
 	}
 
 	protected function getPrimaryEntityAlias(): string
