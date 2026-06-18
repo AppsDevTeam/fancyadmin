@@ -21,9 +21,9 @@ trait ProfileGridTrait
 	use ResetPassword;
 	use SignInAsIdentity;
 
-	public function initGrid(DataGrid $grid, array $searchFields = []): void
+	public function initGrid(DataGrid $grid): void
 	{
-		$this->addIdentityData($grid, columnPrefix: 'identity.', searchFields: $searchFields);
+		$this->addIdentityData($grid, columnPrefix: 'identity.');
 
 		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles')
 			->setRenderer(function (Profile $profile) {

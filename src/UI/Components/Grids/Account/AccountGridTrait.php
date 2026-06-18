@@ -9,15 +9,17 @@ use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Queries\Factories\AccountQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
+use ADT\FancyAdmin\UI\Components\Grids\Traits\SearchFilter;
 
 trait AccountGridTrait
 {
 	use Editable;
 	use FancyAdminInject;
+	use SearchFilter;
 
 	public function initGrid(DataGrid $grid): void
 	{
-		$grid->addFilterText('search', '', ['name']);
+		$this->addSearchFilter($grid, ['name']);
 
 		$grid->addColumnText('name', 'fcadmin.grids.account.name');
 
