@@ -29,9 +29,9 @@ trait IdentityGridTrait
 	use IdentityData;
 	use AnonymizeIdentity;
 
-	public function initGrid(DataGrid $grid): void
+	public function initGrid(DataGrid $grid, array $searchFields = []): void
 	{
-		$this->addIdentityData($grid);
+		$this->addIdentityData($grid, searchFields: $searchFields);
 
 		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles')
 			->setRenderer(function (Identity $identity) {
