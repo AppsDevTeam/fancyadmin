@@ -23,7 +23,7 @@ trait ProfileGridTrait
 
 	public function initGrid(DataGrid $grid): void
 	{
-		$this->addIdentityData($grid, 'identity.');
+		$this->addIdentityData($grid, columnPrefix: 'identity.');
 
 		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles')
 			->setRenderer(function (Profile $profile) {

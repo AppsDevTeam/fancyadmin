@@ -12,12 +12,15 @@ use ADT\DoctrineLoggable\Entity\ChangeLog;
 use ADT\FancyAdmin\Model\Attributes\Label;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Queries\Factories\ChangeLogQueryFactory;
+use ADT\FancyAdmin\UI\Components\Grids\Traits\SearchFilter;
 use Nette\Utils\Html;
 use Nette\Utils\Strings;
 use ReflectionClass;
 
 trait ChangeLogGridTrait
 {
+	use SearchFilter;
+
 	public function initGrid(DataGrid $grid): void
 	{
 		$this->withoutIsActiveColumn = true;
@@ -53,7 +56,7 @@ trait ChangeLogGridTrait
 				return $this->renderChangeSet($changeLog);
 			});
 
-		$grid->addFilterText('search', '', ['objectClass', 'objectId']);
+		$this->addSearchFilter($grid, ['objectClass', 'objectId']);
 
 		$grid->addFilterSelect('action', 'fcadmin.grids.changeLog.action', [
 			'create' => $this->getTranslator()->translate('fcadmin.grids.changeLog.actions.create'),
