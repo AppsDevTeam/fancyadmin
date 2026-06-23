@@ -152,7 +152,7 @@ trait BasePresenterTrait
 	public function formatTemplateFiles(): array
 	{
 		$list = parent::formatTemplateFiles();
-		$list[] = __DIR__ . '/' . explode(':', $this->name)[1] . '/' . $this->view . '.latte';
+		$list[] = __DIR__ . '/' . explode(':', $this->getName())[1] . '/' . $this->view . '.latte';
 		return $list;
 	}
 

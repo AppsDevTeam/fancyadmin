@@ -201,14 +201,14 @@ trait AuthPresenterTrait
 	public function beforeRender(): void
 	{
 		parent::beforeRender();
-		$submodule = str_replace('Portal', '', explode(':', $this->name)[0]);
+		$submodule = str_replace('Portal', '', explode(':', $this->getName())[0]);
 		$className = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\NavbarMenuFactory";
 		$userMenuClassName = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\UserMenuFactory";
 		/** @var NavbarMenuFactory $className */
 		$navbarMenuFactory = new $className();
 		/** @var UserMenuFactory $userMenuFactory */
 		$userMenuFactory = new $userMenuClassName();
-		$module = explode(':', $this->name)[0];
+		$module = explode(':', $this->getName())[0];
 		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()
 			->setLinkGenerator($this->_linkGenerator)
 			->resolveAclResources($module);
