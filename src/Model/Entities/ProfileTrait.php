@@ -49,6 +49,7 @@ trait ProfileTrait
 	public function setIdentity(Identity $identity): static
 	{
 		$this->identity = $identity;
+		$identity->addProfile($this);
 		return $this;
 	}
 

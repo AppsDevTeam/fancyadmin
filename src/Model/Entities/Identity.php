@@ -69,6 +69,12 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	
 	public function addRole(AclRole $role): static;
 
+	/**
+	 * @return Profile[]
+	 */
+	public function getProfiles(): array;
+	public function addProfile(Profile $profile): static;
+
 	// Anonymized
 	public function getAnonymizedAt(): ?DateTimeImmutable;
 	public function setAnonymizedAt(?DateTimeImmutable $anonymizedAt): static;

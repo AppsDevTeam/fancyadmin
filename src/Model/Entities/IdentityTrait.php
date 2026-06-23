@@ -204,7 +204,11 @@ trait IdentityTrait
 
 	public function addProfile(Profile $profile): static
 	{
+		if ($this->profiles->contains($profile)) {
+			return $this;
+		}
 		$this->profiles->add($profile);
+		$profile->setIdentity($this);
 		return $this;
 	}
 
