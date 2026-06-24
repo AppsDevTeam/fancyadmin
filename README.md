@@ -1087,19 +1087,16 @@ import { keycloakLoginSync } from '../path/to/vendor/adt/fancyadmin/assets/js/ke
 keycloakLoginSync();
 ```
 
-Pro keycloak email check na login formuláři vytvořte `SignIn/index.js` s re-exportem:
+Pro keycloak email check na login formuláři importujte modul **eagerly** v `app.js`:
 
 ```js
-// app/UI/Portal/Components/Forms/SignIn/index.js
-export { default } from '../path/to/vendor/adt/fancyadmin/assets/js/signInKeycloak';
+import '../path/to/vendor/adt/fancyadmin/assets/js/signInKeycloak';
 ```
 
-…a zaregistrujte v `app.js`:
-
-```js
-import AdtJsComponents from 'adt-js-components';
-AdtJsComponents.init('sign-in-form', 'UI/Portal/Components/Forms/SignIn');
-```
+> **Důležité:** import musí být eager (ne přes `AdtJsComponents.init`, který modul načítá lazy až
+> když je formulář na stránce). Modul si při importu naváže delegovaný `change` listener na `document`,
+> takže funguje i pro login formulář vložený přes AJAX (např. po odhlášení), aniž by se musel
+> reinicializovat. Při lazy načtení by se po AJAX přepnutí na `/sign/in` listener nenavázal.
 
 **Závislost:** Projekt musí mít nainstalovaný npm balíček `keycloak-js`:
 ```bash
