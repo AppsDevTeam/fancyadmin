@@ -171,16 +171,7 @@ class Keycloak
 	 */
 	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null): string
 	{
-		$redirectParams = ['instance' => $this->instanceName];
-		if ($backRedirect) {
-			$redirectParams['backRedirect'] = $backRedirect;
-		}
-
-		if ($action === null) {
-			$action = 'silentCheck';
-		}
-
-		$redirectUrl = $this->linkGenerator->link("//:Portal:KeycloakAuth:$action", $redirectParams);
+		$redirectUrl = $this->getSilentRedirectUri($backRedirect, $action);
 
 		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
 
@@ -191,6 +182,22 @@ class Keycloak
 		$url->setQueryParameter('prompt', 'none');
 
 		return (string) $url;
+	}
+
+	/**
+	 * Sestaví redirect_uri pro silent login. Musí být identické s tím, které se použije
+	 * při výměně authorization code za tokeny, jinak Keycloak výměnu odmítne (redirect_uri mismatch).
+	 */
+	public function getSilentRedirectUri(?string $backRedirect = null, ?string $action = null): string
+	{
+		$action ??= 'silentCheck';
+
+		$redirectParams = ['instance' => $this->instanceName];
+		if ($backRedirect) {
+			$redirectParams['backRedirect'] = $backRedirect;
+		}
+
+		return $this->linkGenerator->link("//:Portal:KeycloakAuth:$action", $redirectParams);
 	}
 
 	public function getAuthRedirectUri(): string
@@ -241,9 +248,9 @@ class Keycloak
 	/**
 	 * Výměna authorization code za tokeny (Authorization Code Flow).
 	 */
-	public function checkSessionValidity(string $code): ?KeycloakAuthentication
+	public function checkSessionValidity(string $code, ?string $redirectUri = null): ?KeycloakAuthentication
 	{
-		$redirectUri = $this->getAuthRedirectUri();
+		$redirectUri ??= $this->getAuthRedirectUri();
 
 		$formParams =  [
 			'grant_type' => 'authorization_code',

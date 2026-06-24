@@ -59,7 +59,7 @@ trait KeycloakAuthPresenterTrait
 			return;
 		}
 
-		$this->processKeycloakAuthRequest($code, $instance, $backRedirect);
+		$this->processKeycloakAuthRequest($code, $instance, $backRedirect, isSilent: true);
 	}
 
 	/**
@@ -133,7 +133,7 @@ trait KeycloakAuthPresenterTrait
 		$this->setLayout(false);
 	}
 
-	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $backRedirect = null): void
+	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $backRedirect = null, bool $isSilent = false): void
 	{
 		$manager = $this->_fancyAdmin->getKeycloakManager();
 		$keycloak = $manager?->getInstance($instanceName);
@@ -166,7 +166,13 @@ trait KeycloakAuthPresenterTrait
 			return;
 		}
 
-		$keycloakAuthentication = $keycloak->checkSessionValidity($code);
+		// redirect_uri musí být totožné s tím, které bylo použito v autorizačním requestu,
+		// jinak Keycloak výměnu code za token odmítne (silent check používá jiné redirect_uri než callback).
+		$redirectUri = $isSilent
+			? $keycloak->getSilentRedirectUri($backRedirect)
+			: $keycloak->getAuthRedirectUri();
+
+		$keycloakAuthentication = $keycloak->checkSessionValidity($code, $redirectUri);
 
 		if ($keycloakAuthentication === null) {
 			$this->redirect(':Portal:Sign:in');
