@@ -63,27 +63,6 @@ trait KeycloakAuthPresenterTrait
 	}
 
 	/**
-	 * Po přihlášení přes Keycloak — silent check pro ověření, že session funguje.
-	 */
-	public function actionAfterLoginSilentCheck(?string $code = null, ?string $error = null, ?string $backRedirect = null, ?string $instance = null): void
-	{
-		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
-		$afterLoginSilentCheck = $keycloakSession->get(KeycloakSessionSection::AFTER_LOGIN_SILENT_CHECK);
-		$keycloakSession->remove(KeycloakSessionSection::AFTER_LOGIN_SILENT_CHECK);
-
-		if ($afterLoginSilentCheck && $error === null && $code !== null && $instance !== null) {
-			$this->processKeycloakAuthRequest($code, $instance, $backRedirect);
-			return;
-		}
-
-		if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
-			$this->redirectUrl($backRedirect);
-		}
-
-		$this->redirect(':Portal:Sign:in');
-	}
-
-	/**
 	 * Keycloak post-logout redirect — sem Keycloak přesměruje po úspěšném logoutu.
 	 */
 	public function actionPostLogOut(?string $state = null): void
@@ -212,13 +191,16 @@ trait KeycloakAuthPresenterTrait
 		// Uložíme název instance do session pro logout a frontend
 		$manager->storeInstanceInSession($instanceName);
 
-		// Reset auth attempt counter
+		// Reset auth attempt counteru a příznaku silent SSO pokusů
 		$keycloakSession->set(KeycloakSessionSection::AUTH_ATTEMPT_COUNT, 0);
+		$keycloakSession->remove(KeycloakSessionSection::SSO_SILENT_TRIED);
 
-		// Po přihlášení zkontrolujeme silent check
-		$keycloakSession->set(KeycloakSessionSection::AFTER_LOGIN_SILENT_CHECK, true);
-		$silentCheckUrl = $keycloak->getSilentLoginUrl($backRedirect, 'afterLoginSilentCheck');
-		$this->redirectUrl($silentCheckUrl);
+		// Přihlášení proběhlo úspěšně — přesměrujeme zpět tam, odkud uživatel přišel.
+		if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
+			$this->redirectUrl($backRedirect);
+		}
+
+		$this->redirect(':Portal:Sign:in');
 	}
 
 	public function formatTemplateFiles(): array

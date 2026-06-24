@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordForm;
 use ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordFormFactory;
 use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm;
@@ -38,12 +39,60 @@ trait SignPresenterTrait
 			$this->redirectAfterLogin();
 		}
 
+		// Automatický pokus o SSO přihlášení (silent check, prompt=none).
+		// Pokud má uživatel aktivní session v Keycloaku a v aplikaci existuje
+		// odpovídající identita, přihlásí se rovnou bez zadávání údajů.
+		$this->attemptSilentSso();
+
 		if ($errorMsg) {
 			$this->flashMessageError($errorMsg);
 		}
 
 		if ($this->getParameter('fraudDetected')) {
 			$this->flashMessageError('_fcadmin.modules.web.presenters.sign.flashFraud');
+		}
+	}
+
+	/**
+	 * Zkusí nepřihlášeného uživatele automaticky přihlásit přes existující Keycloak SSO session.
+	 *
+	 * Pro každou SSO instanci provede jeden silent check (prompt=none). Keycloak buď vrátí
+	 * authorization code (existuje aktivní SSO session) a uživatel se přihlásí v callbacku,
+	 * nebo vrátí chybu (login_required) a uživatel se vrátí sem na formulář.
+	 *
+	 * Každá instance se v rámci jedné session zkusí maximálně jednou (kvůli ochraně před smyčkou).
+	 */
+	private function attemptSilentSso(): void
+	{
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			return;
+		}
+
+		$manager = $this->_fancyAdmin->getKeycloakManager();
+		if ($manager === null || !$manager->hasInstances()) {
+			return;
+		}
+
+		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
+		$tried = $keycloakSession->get(KeycloakSessionSection::SSO_SILENT_TRIED) ?? [];
+
+		foreach ($manager->getInstanceNames() as $name) {
+			if (in_array($name, $tried, true)) {
+				continue;
+			}
+
+			$keycloak = $manager->getInstance($name);
+			if ($keycloak === null) {
+				continue;
+			}
+
+			$tried[] = $name;
+			$keycloakSession->set(KeycloakSessionSection::SSO_SILENT_TRIED, $tried);
+
+			// Po úspěšném (i neúspěšném) silent checku se vrátíme na tuto přihlašovací stránku
+			// (včetně případného backlinku), odkud se buď pokračuje na další instanci, nebo se zobrazí formulář.
+			$backRedirect = $this->getHttpRequest()->getUrl()->getAbsoluteUrl();
+			$this->redirectUrl($keycloak->getSilentLoginUrl($backRedirect));
 		}
 	}
 

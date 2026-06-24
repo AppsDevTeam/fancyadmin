@@ -121,6 +121,19 @@ class KeycloakManager
 	}
 
 	/**
+	 * Vrátí názvy všech dostupných SSO instancí.
+	 *
+	 * @return string[]
+	 */
+	public function getInstanceNames(): array
+	{
+		return array_map(
+			fn (Sso $sso) => $sso->getName(),
+			$this->getAllSsoRecords()
+		);
+	}
+
+	/**
 	 * @return Sso[]
 	 */
 	private function getAllSsoRecords(): array
