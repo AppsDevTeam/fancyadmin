@@ -17,6 +17,9 @@ class KeycloakSessionSection
 	const string SSO_INSTANCE_NAME         = 'ssoInstanceName';
 	// Názvy SSO instancí, u kterých už v této session proběhl automatický silent SSO pokus
 	const string SSO_SILENT_TRIED          = 'ssoSilentTried';
+	// Po explicitním odhlášení potlačí jeden následující automatický silent SSO pokus,
+	// aby uživatele hned znovu nepřihlásilo (a nešlo se odhlásit)
+	const string SSO_SUPPRESS_SILENT       = 'ssoSuppressSilent';
 
 
 	public function getSessionKeys(): array
@@ -29,6 +32,7 @@ class KeycloakSessionSection
 			self::AUTH_ATTEMPT_LAST_TIME,
 			self::SSO_INSTANCE_NAME,
 			self::SSO_SILENT_TRIED,
+			self::SSO_SUPPRESS_SILENT,
 		];
 	}
 

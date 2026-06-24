@@ -18,6 +18,7 @@ use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use Nette\Application\Attributes\Persistent;
 use Nette\Security\AuthenticationException;
+use Nette\Utils\Validators;
 
 trait SignPresenterTrait
 {
@@ -74,6 +75,14 @@ trait SignPresenterTrait
 		}
 
 		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
+
+		// Po explicitním odhlášení přeskočíme jeden silent SSO pokus,
+		// jinak by uživatele mohlo hned znovu přihlásit a nešlo by se odhlásit.
+		if ($keycloakSession->get(KeycloakSessionSection::SSO_SUPPRESS_SILENT)) {
+			$keycloakSession->remove(KeycloakSessionSection::SSO_SUPPRESS_SILENT);
+			return;
+		}
+
 		$tried = $keycloakSession->get(KeycloakSessionSection::SSO_SILENT_TRIED) ?? [];
 
 		foreach ($manager->getInstanceNames() as $name) {
@@ -83,6 +92,12 @@ trait SignPresenterTrait
 
 			$keycloak = $manager->getInstance($name);
 			if ($keycloak === null) {
+				continue;
+			}
+
+			// Pojistka proti chybné konfiguraci — bez validní absolutní hostUrl
+			// by se vygenerovala rozbitá relativní redirect URL.
+			if (!Validators::isUrl($keycloak->getHostUrl())) {
 				continue;
 			}
 
@@ -96,9 +111,25 @@ trait SignPresenterTrait
 		}
 	}
 
+	/**
+	 * Potlačí jeden následující automatický silent SSO pokus na přihlašovací stránce.
+	 * Voláme při explicitním odhlášení, aby uživatele po logoutu hned znovu nepřihlásilo.
+	 */
+	private function suppressSilentSso(): void
+	{
+		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
+			return;
+		}
+
+		$this->getSession(KeycloakSessionSection::SECTION_NAME)
+			->set(KeycloakSessionSection::SSO_SUPPRESS_SILENT, true);
+	}
+
 	public function actionOut(): never
 	{
 		if ($this->getUser()->isLoggedIn()) {
+			$this->suppressSilentSso();
+
 			// Pokud je Keycloak zapnutý a uživatel se přihlásil přes Keycloak, přesměrujeme na Keycloak logout
 			if ($this->_fancyAdmin->isKeycloakEnabled()) {
 				$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceFromSession();
@@ -124,6 +155,8 @@ trait SignPresenterTrait
 	public function actionOutAll(): never
 	{
 		if ($this->getUser()->isLoggedIn()) {
+			$this->suppressSilentSso();
+
 			$this->_authenticator->clearIdentity(
 				$this->getUser()->getIdentity()->getAuthObjectId()
 			);
