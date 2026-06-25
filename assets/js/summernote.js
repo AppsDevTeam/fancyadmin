@@ -9,6 +9,70 @@ import 'codemirror/mode/xml/xml';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 window.CodeMirror = CodeMirror;
 
+// HTML tagy bez obsahu (nezvyšují úroveň zanoření).
+const CODEVIEW_VOID_TAGS = new Set([
+	'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+	'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+function codeviewTokenType(token) {
+	if (token[0] !== '<') return 'text';
+	if (token.startsWith('<!')) return 'void';       // komentář, doctype
+	if (token.startsWith('</')) return 'close';
+	if (/\/>\s*$/.test(token)) return 'void';        // self-closing tag
+	const name = token.match(/^<\s*([a-zA-Z0-9:-]+)/);
+	if (name && CODEVIEW_VOID_TAGS.has(name[1].toLowerCase())) return 'void';
+	return 'open';
+}
+
+/**
+ * Zformátuje HTML pro čitelné zobrazení v codeview – každý tag na vlastní řádek
+ * a s odsazením podle zanoření (včetně inline tagů jako <span>, <b>, ...).
+ *
+ * Zalomení (\n + odsazení) se vkládá VÝHRADNĚ mezi dva sousedící tagy (`><`).
+ * Nikdy nezasahuje mezi tag a text ani tam, kde už mezi tagy je mezera –
+ * díky tomu je deformatHtmlFromCodeview() přesnou inverzí a obsah se nemění.
+ */
+function formatHtmlForCodeview(html, unit = '  ') {
+	const tokens = html.match(/<!--[\s\S]*?-->|<[^>]+>|[^<]+/g) || [];
+	let depth = 0;
+	let out = '';
+
+	for (const token of tokens) {
+		const type = codeviewTokenType(token);
+
+		if (type === 'text') {
+			out += token;
+			continue;
+		}
+
+		if (type === 'close') {
+			depth = Math.max(0, depth - 1);
+		}
+
+		// Zalomit jen pokud výstup končí tagem (tj. dva sousedící tagy `><`).
+		if (/>$/.test(out)) {
+			out += '\n' + unit.repeat(depth);
+		}
+
+		out += token;
+
+		if (type === 'open') {
+			depth += 1;
+		}
+	}
+
+	return out;
+}
+
+/**
+ * Přesná inverze formatHtmlForCodeview() – odstraní zalomení a odsazení vložené
+ * mezi tagy, takže uložené HTML zůstává kompaktní a beze změny obsahu.
+ */
+function deformatHtmlFromCodeview(html) {
+	return html.replace(/>\n[ \t]*</g, '><');
+}
+
 $.nette.ext('live').after(function (el) {
 	$(el).find('.summernote').each((i, el) => {
 		$(el).summernote({
@@ -18,6 +82,9 @@ $.nette.ext('live').after(function (el) {
 			maxHeight: null,
 			linkTargetBlank: false,
 			lang: 'cs-CZ',
+			// prettifyHtml musí zůstat vypnuté – formátování i jeho zrušení
+			// si plně řídíme sami (viz formatHtmlForCodeview / deformatHtmlFromCodeview).
+			prettifyHtml: false,
 			codemirror: {
 				mode: 'text/html',
 				htmlMode: true,
@@ -30,6 +97,23 @@ $.nette.ext('live').after(function (el) {
 				},
 				onFileUpload: function (file) {
 					myOwnCallBack(file[0], el);
+				},
+				onCodeviewToggled: function () {
+					const $note = $(this);
+					const $editor = $note.next();
+
+					if ($editor.hasClass('codeview')) {
+						// Otevření codeview – zformátujeme zdroj pro čitelnost.
+						const cmElement = $editor.find('.CodeMirror')[0];
+						if (cmElement && cmElement.CodeMirror) {
+							const cm = cmElement.CodeMirror;
+							cm.setValue(formatHtmlForCodeview(cm.getValue()));
+							cm.refresh();
+						}
+					} else {
+						// Zavření codeview – vrátíme kompaktní HTML, aby se do obsahu nedostalo odsazení vložené jen kvůli zobrazení.
+						$note.summernote('code', deformatHtmlFromCodeview($note.summernote('code')));
+					}
 				},
 			},
 			styleTags: [
