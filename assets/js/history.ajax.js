@@ -168,3 +168,44 @@
 	});
 
 })(jQuery);
+
+(function ($, undefined) {
+
+	var getScrollContainer = function () {
+		var $container = $('[data-app-container]');
+		return $container.length ? $container.get(0) : (document.scrollingElement || document.documentElement);
+	};
+
+	var pendingScroll = null;
+	var inFlight = 0;
+
+	$.nette.ext('scrollRestore', {
+		before: function (xhr, settings) {
+			if (settings.nette && settings.nette.form) {
+				var container = getScrollContainer();
+				pendingScroll = {
+					top: container.scrollTop,
+					left: container.scrollLeft
+				};
+			}
+		},
+		start: function () {
+			inFlight++;
+		},
+		complete: function () {
+			inFlight = Math.max(0, inFlight - 1);
+			if (inFlight === 0 && pendingScroll !== null) {
+				var scroll = pendingScroll;
+				pendingScroll = null;
+				var restore = function () {
+					var container = getScrollContainer();
+					container.scrollTop = scroll.top;
+					container.scrollLeft = scroll.left;
+				};
+				restore();
+				window.requestAnimationFrame(restore);
+			}
+		}
+	});
+
+})(jQuery);
