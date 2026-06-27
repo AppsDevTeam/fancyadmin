@@ -915,3 +915,14 @@ dataGridRegisterExtension('datagrid.reset-filter-by-column', {
 		}
 	}
 });
+
+// Expose datagrid helpers as globals for ublaboo's inline scripts. Under webpack these
+// top-level `var`s were implicit globals; ESM modules are scoped, so expose explicitly.
+window.datagridFitlerMultiSelect = datagridFitlerMultiSelect;
+window.datagridGroupActionMultiSelect = datagridGroupActionMultiSelect;
+window.datagridShiftGroupSelection = datagridShiftGroupSelection;
+window.datagridSortableTree = datagridSortableTree;
+window.getEventDomPath = getEventDomPath;
+if (typeof datagridSortable !== 'undefined') {
+	window.datagridSortable = datagridSortable;
+}
