@@ -1,4 +1,6 @@
-datagridSortable = function($el) {
+// Explicit global: ublaboo renders inline scripts that call datagridSortable().
+// ESM modules are strict, so the previous implicit global assignment threw.
+window.datagridSortable = function($el) {
     if (typeof $.fn.sortable === 'undefined') {
         return;
     }

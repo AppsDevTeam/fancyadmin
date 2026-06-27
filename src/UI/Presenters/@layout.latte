@@ -16,11 +16,8 @@
 	<link rel="manifest" href="/manifest.webmanifest"/>
 	<link n:ifset="$faviconFileNamePng" rel="icon" type="image/svg+xml" href="{$basePath}/favicon/{$faviconFileNamePng}">
 	<link n:ifset="$faviconFileNameSvg" rel="icon" type="image/png" href="{$basePath}/favicon/{$faviconFileNameSvg}">
-	{if $hmr}
-		<link rel="stylesheet" href="https://localhost:3000/dist/portal/css/portal.css">
-	{else}
-		<link rel="stylesheet" href="{$basePath}/dist/portal/css/portal.css{v}">
-	{/if}
+	{* Vite entry (portal mapping) — emits the module script + its extracted CSS (and dev-server HMR client). *}
+	{asset 'portal:js/portal.js'}
 
 	{block colors}
 		{if isset($account) && $account?->getCss()}
@@ -160,11 +157,6 @@
 		</div>
 	</div>
 </div>
-{if $hmr}
-	<script src="https://localhost:3000/dist/portal/js/portal.js"></script>
-{else}
-	<script src="{$basePath}/dist/portal/js/portal.js{v}"></script>
-{/if}
 {snippet modals}
 	{block modals}{/block}
 {/snippet}

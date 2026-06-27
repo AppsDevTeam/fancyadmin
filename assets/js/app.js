@@ -1,21 +1,24 @@
 //
+// jQuery as a global — MUST be first so it is set before the legacy plugins below
+// (and bundled deps like nette.ajax.js) are evaluated. Imports are hoisted.
+//
+import $ from './_jquery-global';
+
+//
+// Register FancyAdmin's own JS components (before the init() calls below).
+//
+import './_registerFancyadminComponents';
+
+//
 // SCSS styles
 //
 import '../scss/app.scss';
 
 //
-// Old non-modular JS vendor files
+// Legacy non-modular jQuery plugins (rely on the global set above).
 //
-// import jQuery from 'jquery';
-import $ from 'jquery';
 import 'jquery-ui-bundle';
 import '@regru/jquery-menu-aim';
-
-window.$ = $;
-window.jquery = $;
-window.jQuery = $;
-
-global.jQuery = $;
 
 // import {Chart} from "chart.js/auto";
 import Nette from 'nette-forms';
