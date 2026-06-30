@@ -12,13 +12,33 @@ $(function () {
 		closeSidePanel();
 	}
 
-	// Po AJAX odpovědi: reset dirty jen při úspěšném save
-	// payload.hasErrors = true nastavuje BootstrapFormRenderer při validační chybě
+	function isPanelForm(settings) {
+		return !!(settings && settings.nette && settings.nette.form
+			&& settings.nette.form.closest
+			&& settings.nette.form.closest('#snippet--sidePanel').length);
+	}
+
+	// Reset dirty řešíme už v "before" fázi odeslání formuláře z panelu.
+	// Důvod: po úspěchu může jiná extension (submitForm) ve své "success"
+	// fázi panel rovnou zavřít (např. po stažení souboru), a to dřív, než by
+	// se sem stihl dostat "success" – reset by tak přišel pozdě a vyskočil by
+	// potvrzovací dialog "Opravdu zavřít bez uložení?".
 	$.nette.ext('sidePanelDirty', {
+		before: function (xhr, settings) {
+			// Optimisticky bereme odeslání panel formuláře jako "uloženo".
+			if (isPanelForm(settings)) {
+				isDirty = false;
+			}
+		},
 		success: function (payload) {
-			if (payload.hasErrors) return; // validace selhala → dirty zůstane
-			if (payload.snippets && ('snippet--sidePanel' in payload.snippets)) {
-				isDirty = false; // save OK nebo panel se otevřel → čisté
+			// Validace na serveru selhala → formulář zůstává rozdělaný.
+			if (payload && payload.hasErrors) {
+				isDirty = true;
+				return;
+			}
+			// Otevření panelu / standardní uložení s překreslením snippetu → čisté.
+			if (payload && payload.snippets && ('snippet--sidePanel' in payload.snippets)) {
+				isDirty = false;
 			}
 		}
 	});
