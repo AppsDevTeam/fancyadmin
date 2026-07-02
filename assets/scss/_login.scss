@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 .bg-primary-variant {
 	background-color: $tertiary;
 	color: $tertiary-text;

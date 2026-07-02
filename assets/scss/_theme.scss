@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 body {
 	--inputBackground: var(--secondaryColor);
 	--inputFocusBackground: var(--secondaryColorDark);
@@ -348,7 +350,12 @@ input[type="color"]::-webkit-color-swatch {
 	}
 }
 
-.container-fluid {
+.container-fluid,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl {
 	--bs-gutter-x: 4.5rem !important;
 
 	> div {
@@ -361,12 +368,12 @@ input[type="color"]::-webkit-color-swatch {
 			margin: 20px 0;
 		}
 
-		> .header:has(h1) {
+		> .header:has(h1, .h1) {
 			display: flex;
 			margin: 20px 0 20px 0;
 		}
 
-		> .header:has(h2) {
+		> .header:has(h2, .h2) {
 			display: flex;
 			margin: 40px 0 20px 0;
 		}

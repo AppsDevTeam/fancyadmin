@@ -1,5 +1,7 @@
 // FontAwesome's own $fa-font-path default ("../webfonts") is used as-is; the build
 // copies the webfonts to that location relative to the emitted CSS.
-@import '@fortawesome/fontawesome-pro/scss/fontawesome';
-@import '@fortawesome/fontawesome-pro/scss/solid';
-@import '@fortawesome/fontawesome-pro/scss/sharp-solid';
+$fa-font-path: '../webfonts' !default;
+
+@use '@fortawesome/fontawesome-pro/scss/fontawesome' with ($fa-font-path: $fa-font-path);
+@use '@fortawesome/fontawesome-pro/scss/solid' with ($fa-font-path: $fa-font-path);
+@use '@fortawesome/fontawesome-pro/scss/sharp-solid' with ($fa-font-path: $fa-font-path);
