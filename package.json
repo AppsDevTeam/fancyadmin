@@ -20,8 +20,7 @@
     "nette.ajax.js": "github:appsdevteam/nette.ajax.js#fix-nette-32",
     "postcss": "^8.4.47",
     "sass": "^1.79.4",
-    "ua-parser-js": "^1.0.39",
-    "kreait/firebase-php": "^7.0"
+    "ua-parser-js": "^1.0.39"
   },
   "packageManager": "yarn@3.2.0",
   "devDependencies": {
@@ -29,6 +28,10 @@
     "sass-embedded": "^1.95.1",
     "vite": "^6.4.0",
     "yarn-upgrade-all": "^0.7.4"
+  },
+  "resolutions": {
+    "protobufjs": "7.6.5",
+    "form-data": "4.0.6"
   },
   "scripts": {
     "build": "vite build",
