@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 @property --button-primary-color {
 	syntax: '<color>';
 	inherits: false;

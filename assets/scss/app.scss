@@ -1,21 +1,20 @@
-@import 'variables';
-@import 'bootstrap/scss/bootstrap';
+@use 'variables';
+@forward 'fontawesome';
 
-//@import 'select2/src/scss/core';
-//@import 'select2-bootstrap-5-theme/src/include-all';
-@import 'fontawesome';
-//@import 'daterangepicker';
-@import 'jquery-ui/datepicker';
+//@use 'select2/src/scss/core';
+//@use 'select2-bootstrap-5-theme/src/include-all';
+//@use 'daterangepicker';
+@use 'jquery-ui/datepicker';
 
-@import 'base';
-@import 'buttons';
+@use 'base';
+@use 'buttons';
 
-@import "fonts";
-@import 'layout';
-@import 'login';
-@import 'sidepanel';
-@import 'navbar';
-@import 'datagrid';
-@import 'theme';
-@import 'select2';
-@import 'structured-filter.scss';
+@use 'fonts';
+@use 'layout';
+@use 'login';
+@use 'sidepanel';
+@use 'navbar';
+@use 'datagrid';
+@use 'theme';
+@use 'select2';
+@use 'structured-filter';
