@@ -58,10 +58,10 @@ trait AuthPresenterTrait
 		}
 
 		if (!$this->getUser()->isLoggedIn()) {
-			$parameters = array_merge($this->request->getParameters());
+			$parameters = array_merge($this->getRequest()->getParameters());
 			unset($parameters['token']);
 
-			$this->request->setParameters(array_merge($this->request->getParameters()));
+			$this->getRequest()->setParameters(array_merge($this->getRequest()->getParameters()));
 			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);
 		}
 

@@ -160,9 +160,9 @@ class FancyAdminRouter
 	{
 		if ($this->routeList === null) {
 			$this->routeList = new RouteList();
-			$this->routeList[] = $this->getPortalRouteList();
-			$this->routeList[] = $this->getCustomerRouteList();
-			$this->routeList[] = $this->getBackofficeRouteList();
+			$this->routeList->add($this->getPortalRouteList());
+			$this->routeList->add($this->getCustomerRouteList());
+			$this->routeList->add($this->getBackofficeRouteList());
 		}
 
 		return $this->routeList;
