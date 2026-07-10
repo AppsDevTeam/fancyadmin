@@ -160,6 +160,9 @@ class Keycloak
 		$url->setQueryParameter('post_logout_redirect_uri', $logoutUrl);
 		$url->setQueryParameter('state', $backRedirect);
 		$url->setQueryParameter('id_token_hint', $keycloakSession->get(KeycloakSessionSection::ID_TOKEN));
+		// client_id explicitně, aby Keycloak uměl zvalidovat post_logout_redirect_uri i když je
+		// KC session už neaktivní (jinak stale id_token_hint nemusí klienta identifikovat → "Invalid redirect URL")
+		$url->setQueryParameter('client_id', $this->clientId);
 
 		$keycloakSession->remove(KeycloakSessionSection::ID_TOKEN);
 

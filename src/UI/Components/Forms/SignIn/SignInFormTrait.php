@@ -66,20 +66,22 @@ trait SignInFormTrait
 	 */
 	public function handleCheckKeycloak(string $email): void
 	{
-		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
-			$this->getPresenter()->sendJson(['loginUrl' => null]);
-			return;
-		}
+		$this->getPresenter()->sendJson(['loginUrl' => $this->getKeycloakLoginUrl($email)]);
+	}
 
-		if (empty(trim($email))) {
-			$this->getPresenter()->sendJson(['loginUrl' => null]);
-			return;
+	/**
+	 * Vrátí Keycloak login URL, pokud se má uživatel s daným emailem přihlašovat přes SSO.
+	 * Jinak vrátí null (uživatel neexistuje, nemá SSO instanci nebo Keycloak není zapnutý).
+	 */
+	private function getKeycloakLoginUrl(string $email): ?string
+	{
+		if (!$this->_fancyAdmin->isKeycloakEnabled() || empty(trim($email))) {
+			return null;
 		}
 
 		$manager = $this->_fancyAdmin->getKeycloakManager();
 		if ($manager === null) {
-			$this->getPresenter()->sendJson(['loginUrl' => null]);
-			return;
+			return null;
 		}
 
 		// Najdeme identitu podle emailu a zjistíme přiřazenou SSO instanci
@@ -87,22 +89,28 @@ trait SignInFormTrait
 			->byEmail($email)
 			->fetchOneOrNull();
 
-		if ($identity !== null) {
-			$keycloak = $manager->getInstanceForIdentity($identity);
-			if ($keycloak !== null) {
-				$backRedirect = $this->getPresenter()->link(':Portal:Sign:in');
-				$this->getPresenter()->sendJson([
-					'loginUrl' => $keycloak->getLoginUrl($backRedirect, $email, true),
-				]);
-				return;
-			}
+		if ($identity === null) {
+			return null;
 		}
 
-		$this->getPresenter()->sendJson(['loginUrl' => null]);
+		$keycloak = $manager->getInstanceForIdentity($identity);
+		if ($keycloak === null) {
+			return null;
+		}
+
+		$backRedirect = $this->getPresenter()->link(':Portal:Sign:in');
+		return $keycloak->getLoginUrl($backRedirect, $email, true);
 	}
 
 	public function validateForm(array $values, Form $form): void
 	{
+		// Fallback pro klienty bez JS: AJAX kontrola (checkKeycloak) neproběhla,
+		// takže SSO uživatele přesměrujeme na Keycloak login až při odeslání formuláře.
+		// Heslo se v tom případě ignoruje - autorita pro SSO uživatele je Keycloak.
+		if ($loginUrl = $this->getKeycloakLoginUrl($values['email'])) {
+			$this->getPresenter()->redirectUrl($loginUrl);
+		}
+
 		try {
 			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->_fancyAdmin->getContext());
 

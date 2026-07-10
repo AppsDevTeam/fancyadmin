@@ -69,6 +69,13 @@ trait SignPresenterTrait
 			return;
 		}
 
+		// Signálové požadavky (např. AJAX kontrola emailu signInForm-checkKeycloak) nesmí
+		// spouštět silent SSO — fetch by následoval cross-origin redirect na Keycloak
+		// a spadl by na CORS chybu místo doručení odpovědi signálu.
+		if ($this->getSignal() !== null) {
+			return;
+		}
+
 		$manager = $this->_fancyAdmin->getKeycloakManager();
 		if ($manager === null || !$manager->hasInstances()) {
 			return;
