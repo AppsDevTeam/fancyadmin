@@ -27,6 +27,10 @@ Nette.initOnLoad();
 window.Nette = Nette;
 // window.Chart = Chart;
 
+// Must run before nette.ajax.js so its `validation` extension calls the wrapped
+// Nette.validateForm (see the comment in the bridge file).
+import './netteAjaxValidationBridge';
+
 import 'nette.ajax.js';
 $.nette.init({
 	load: function (rh) {

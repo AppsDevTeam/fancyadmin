@@ -1,7 +1,7 @@
 import 'summernote/dist/summernote-bs5.css';
 import 'summernote/dist/summernote-bs5';
 import 'summernote/dist/lang/summernote-cs-CZ';
-import '@emericklaw/summernote-cleaner'
+import './summernote-cleaner'
 
 import 'codemirror/lib/codemirror.css';
 import CodeMirror from 'codemirror/lib/codemirror';
