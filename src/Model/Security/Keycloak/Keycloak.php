@@ -132,6 +132,19 @@ class Keycloak
 	}
 
 	/**
+	 * Sestaví URL pro změnu hesla přes Application-Initiated Action (kc_action=UPDATE_PASSWORD).
+	 * Keycloak si sám vyžádá re-autentizaci současným heslem, ohlídá password policy i 2FA
+	 * a po nastavení nového hesla vrátí uživatele zpět do aplikace (přes auth callback).
+	 */
+	public function getUpdatePasswordUrl(?string $backRedirect = null, ?string $loginHint = null): string
+	{
+		$url = new Url($this->getLoginUrl($backRedirect, $loginHint));
+		$url->setQueryParameter('kc_action', 'UPDATE_PASSWORD');
+
+		return (string) $url;
+	}
+
+	/**
 	 * Vytvoří logoutUrl na Keycloak v případě, že se Uživatel přihlásil přes Keycloak a má nastaveno v Sessioně idToken.
 	 */
 	public function getLogoutUrl(?string $backRedirect = null): ?string

@@ -65,8 +65,6 @@ presenters:
     sessions: Přihlášená zařízení
     logoutAll: Odhlásit ze všech zařízení
     logoutAllConfirm: Opravdu se chcete odhlásit ze všech zařízení?
-    keycloakPasswordResetSent: Odeslali jsme vám e-mail s odkazem pro změnu hesla.
-    keycloakPasswordResetFailed: E-mail pro změnu hesla se nepodařilo odeslat. Zkuste to prosím znovu.
 
   changeLogs:
     title: Logy změn

@@ -38,17 +38,16 @@ trait AccountPresenterTrait
 	public function handleChangePassword(): void
 	{
 		// SSO (Keycloak) uživatel si heslo spravuje v Keycloaku - místo formuláře pro změnu
-		// lokálního hesla mu pošleme reset email z Keycloaku s odkazem na změnu hesla tam.
+		// lokálního hesla ho přesměrujeme na Keycloak (kc_action=UPDATE_PASSWORD), kde si
+		// heslo změní rovnou (včetně ověření současného hesla) a vrátí se zpět na tuto stránku.
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
 			$identity = $this->_securityUser->getIdentity();
 			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
 			if ($keycloak !== null) {
-				if ($keycloak->sendPasswordResetEmail($identity, $this->getPresenter()->link('//:Portal:Sign:in'))) {
-					$this->flashMessageSuccess('fcadmin.presenters.account.keycloakPasswordResetSent');
-				} else {
-					$this->flashMessageError('fcadmin.presenters.account.keycloakPasswordResetFailed');
-				}
-				$this->redirect('this');
+				$backRedirect = $this->getPresenter()->link('//this');
+				$this->getPresenter()->redirectUrl(
+					$keycloak->getUpdatePasswordUrl($backRedirect, $identity->getEmail())
+				);
 			}
 		}
 
