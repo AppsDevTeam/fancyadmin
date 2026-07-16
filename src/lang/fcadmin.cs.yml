@@ -65,6 +65,7 @@ presenters:
     sessions: Přihlášená zařízení
     logoutAll: Odhlásit ze všech zařízení
     logoutAllConfirm: Opravdu se chcete odhlásit ze všech zařízení?
+    passwordChanged: Heslo bylo úspěšně změněno.
 
   changeLogs:
     title: Logy změn

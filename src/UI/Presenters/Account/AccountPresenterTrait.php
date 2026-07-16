@@ -26,6 +26,13 @@ trait AccountPresenterTrait
 
 	public function actionDefault(): void
 	{
+		// Návrat z Keycloaku po úspěšné změně hesla (kc_action=UPDATE_PASSWORD) —
+		// redirect zároveň vyčistí parametr z URL, aby se hláška neopakovala při refreshi.
+		if ($this->getParameter('kcActionSuccess')) {
+			$this->flashMessageSuccess('fcadmin.presenters.account.passwordChanged');
+			$this->redirect('default');
+		}
+
 		$this->getTemplate()->identity = $this->_securityUser->getIdentity();
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
