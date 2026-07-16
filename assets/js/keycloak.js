@@ -4,6 +4,10 @@
  * - Inicializuje keycloak-js adapter s check-sso
  * - Periodicky refreshuje token (každých 30s)
  * - Při ztrátě session (expirovaný token, odhlášení z KC) odhlásí uživatele z aplikace
+ * - Ve skryté záložce (Page Visibility API) refresh pozastavuje, aby session v Keycloaku
+ *   neudržovala naživu neaktivní záložka na pozadí — SSO Session Idle tak reálně tiká.
+ *   Při návratu do záložky se token hned obnoví; pokud mezitím vypršel i refresh token,
+ *   uživatel se odhlásí.
  *
  * Nastavení se čtou z window.__keycloakSettings (injektováno v @layout.latte).
  * Vyžaduje npm balíček `keycloak-js` v projektu.
@@ -29,10 +33,17 @@ export async function keycloakLoginSync() {
 			clientId: settings.clientId
 		});
 
-		keycloak.onTokenExpired = () => {
+		const refreshToken = () => {
 			keycloak.updateToken(TOKEN_MIN_VALIDITY).catch(() => {
 				window.location.href = settings.logoutUrl || '/sign/out';
 			});
+		};
+
+		keycloak.onTokenExpired = () => {
+			if (document.hidden) {
+				return;
+			}
+			refreshToken();
 		};
 
 		keycloak.onAuthLogout = () => {
@@ -52,10 +63,19 @@ export async function keycloakLoginSync() {
 		}
 
 		setInterval(() => {
-			keycloak.updateToken(TOKEN_MIN_VALIDITY).catch(() => {
-				window.location.href = settings.logoutUrl || '/sign/out';
-			});
+			if (document.hidden) {
+				return;
+			}
+			refreshToken();
 		}, TOKEN_REFRESH_INTERVAL * 1000);
+
+		// Po návratu do skryté záložky hned obnovíme token — pokud mezitím vypršel
+		// jen access token, uživatel nic nepozná; pokud i refresh token, odhlásí se.
+		document.addEventListener('visibilitychange', () => {
+			if (!document.hidden) {
+				refreshToken();
+			}
+		});
 
 	} catch (error) {
 		console.error('Failed to initialize Keycloak adapter:', error);
