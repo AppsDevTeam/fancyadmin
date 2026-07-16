@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Presenters\Account;
 
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\ChangePasswordFormFactoryInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\PersonalDataFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -21,6 +22,7 @@ trait AccountPresenterTrait
 	use AuthenticatorInject;
 	use PersonalDataFormFactoryInject;
 	use ChangePasswordFormFactoryInject;
+	use FancyAdminInject;
 
 	public function actionDefault(): void
 	{
@@ -35,6 +37,21 @@ trait AccountPresenterTrait
 
 	public function handleChangePassword(): void
 	{
+		// SSO (Keycloak) uživatel si heslo spravuje v Keycloaku - místo formuláře pro změnu
+		// lokálního hesla mu pošleme reset email z Keycloaku s odkazem na změnu hesla tam.
+		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			$identity = $this->_securityUser->getIdentity();
+			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
+			if ($keycloak !== null) {
+				if ($keycloak->sendPasswordResetEmail($identity, $this->getPresenter()->link('//:Portal:Sign:in'))) {
+					$this->flashMessageSuccess('fcadmin.presenters.account.keycloakPasswordResetSent');
+				} else {
+					$this->flashMessageError('fcadmin.presenters.account.keycloakPasswordResetFailed');
+				}
+				$this->redirect('this');
+			}
+		}
+
 		$this->redrawSidePanel('changePassword');
 	}
 

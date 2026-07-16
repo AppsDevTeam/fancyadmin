@@ -65,6 +65,8 @@ presenters:
     sessions: Přihlášená zařízení
     logoutAll: Odhlásit ze všech zařízení
     logoutAllConfirm: Opravdu se chcete odhlásit ze všech zařízení?
+    keycloakPasswordResetSent: Odeslali jsme vám e-mail s odkazem pro změnu hesla.
+    keycloakPasswordResetFailed: E-mail pro změnu hesla se nepodařilo odeslat. Zkuste to prosím znovu.
 
   changeLogs:
     title: Logy změn
@@ -301,6 +303,7 @@ grids:
       anonymize: Opravdu chcete anonymizovat tuto identitu?
     messages:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
+      mailError: E-mail pro nastavení hesla se nepodařilo odeslat
   global:
     isActive:
       label: Aktivní
