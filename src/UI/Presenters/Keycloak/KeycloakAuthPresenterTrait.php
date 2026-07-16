@@ -11,6 +11,7 @@ use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use Nette\Application\Attributes\CrossOrigin;
 use Nette\Application\Responses\TextResponse;
+use Nette\Http\Url;
 use Nette\Utils\Validators;
 
 trait KeycloakAuthPresenterTrait
@@ -41,6 +42,12 @@ trait KeycloakAuthPresenterTrait
 		if ($error !== null || $code === null || $instance === null) {
 			$this->redirect(':Portal:Sign:in');
 			return;
+		}
+
+		// Úspěšně dokončená Application-Initiated Action (např. změna hesla z Můj profil) —
+		// propíšeme do návratové URL, aby cílová stránka mohla zobrazit success hlášku.
+		if ($state !== null && $this->getHttpRequest()->getQuery('kc_action_status') === 'success') {
+			$state = (string) (new Url($state))->setQueryParameter('kcActionSuccess', '1');
 		}
 
 		$this->processKeycloakAuthRequest($code, $instance, $state);

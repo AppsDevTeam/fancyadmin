@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Components\Grids\Traits\ResetPassword;
 
 use ADT\DoctrineAuthenticator\OTP\OnetimeToken;
 use ADT\DoctrineComponents\QueryObject\QueryObject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\MailerInject;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
 use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
@@ -16,6 +17,7 @@ use ReflectionException;
 trait ResetPassword
 {
 	use MailerInject;
+	use FancyAdminInject;
 
 	abstract protected function createQueryObject(): QueryObject;
 
@@ -43,7 +45,22 @@ trait ResetPassword
 			$this->error();
 		}
 
-		$this->_mailer->sendPasswordRecoveryMail($hasIdentity->getIdentity(), OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
+		$identity = $hasIdentity->getIdentity();
+
+		// SSO (Keycloak) uživateli pošleme reset hesla přes Keycloak místo lokálního recovery mailu
+		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
+			if ($keycloak !== null) {
+				if ($keycloak->sendPasswordResetEmail($identity, $this->getPresenter()->link('//:Portal:Sign:in'))) {
+					$this->getPresenter()->flashMessageSuccess('fcadmin.grids.user.messages.mailSuccess');
+				} else {
+					$this->getPresenter()->flashMessageError('fcadmin.grids.user.messages.mailError');
+				}
+				return;
+			}
+		}
+
+		$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
 
 		$this->getPresenter()->flashMessageSuccess('fcadmin.grids.user.messages.mailSuccess');
 	}

@@ -65,6 +65,7 @@ presenters:
     sessions: Přihlášená zařízení
     logoutAll: Odhlásit ze všech zařízení
     logoutAllConfirm: Opravdu se chcete odhlásit ze všech zařízení?
+    passwordChanged: Heslo bylo úspěšně změněno.
 
   changeLogs:
     title: Logy změn
@@ -301,6 +302,7 @@ grids:
       anonymize: Opravdu chcete anonymizovat tuto identitu?
     messages:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
+      mailError: E-mail pro nastavení hesla se nepodařilo odeslat
   global:
     isActive:
       label: Aktivní
