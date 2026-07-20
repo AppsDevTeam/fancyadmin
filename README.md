@@ -968,6 +968,7 @@ Fancyadmin podporuje napojení na jeden nebo více Keycloak serverů/realmů pro
   - **Client authentication**: zapnuto (confidential client)
   - **Service accounts roles**: zapnuto (pro Admin API — vyhledávání a správa uživatelů)
   - **Valid redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/*`
+  - **Post logout redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/*`
   - **Web origins**: `https://admin.muj-projekt.cz`
 - Service account musí mít roli `manage-users` z `realm-management` clienta
 - Druhý (public) klient pro frontend keycloak-js adapter — s **Client authentication: vypnuto**
@@ -1012,7 +1013,7 @@ Po vytvoření entity spusťte migraci.
 | `clientId` | string | Confidential client ID |
 | `clientSecret` | string | Client secret |
 | `frontendClientId` | string | Public client ID pro keycloak-js adapter |
-| `defaultRole` | string (nullable) | Název role, která se přiřadí novému uživateli při SSO registraci |
+| `defaultRole` | AclRole (nullable) | Role, která se přiřadí novému uživateli při SSO registraci — relace na entitu `AclRole` (v DB sloupec `default_role_id`) |
 
 ### 18.3 NEON konfigurace
 
@@ -1030,9 +1031,11 @@ Pokud je `keycloakEnabled` nastaveno na `false` (výchozí), vše Keycloak-relat
 
 1. **Vytvořte záznamy v tabulce `sso`** s kompletní konfigurací Keycloak instance:
 
-   | id | name | realm | baseUrl | hostUrl | clientId | clientSecret | frontendClientId | defaultRole |
+   | id | name | realm | baseUrl | hostUrl | clientId | clientSecret | frontendClientId | default_role_id |
    |---|---|---|---|---|---|---|---|---|
-   | 1 | hlavni | muj-realm | http://keycloak:8080 | https://auth.example.cz | app-client | secret123 | app-public | user |
+   | 1 | hlavni | muj-realm | http://keycloak:8080 | https://auth.example.cz | app-client | secret123 | app-public | 5 |
+
+   Kde `default_role_id` je cizí klíč na `acl_role.id` — ID role, která se automaticky přiřadí novému uživateli při prvním SSO přihlášení. Pokud nechcete automatické přiřazení role, nechte `NULL`.
 
 2. **Navažte role na SSO instance** — v tabulce `acl_role` nastavte `sso_id` u rolí, které se mají přihlašovat přes SSO
 
@@ -1111,7 +1114,7 @@ Po zapnutí Keycloak konfigurace fancyadmin automaticky:
 - **Login formulář** — přidá `data-keycloak-check-url` atribut na email input; po zadání emailu JS zjistí SSO instanci z identity/role a přesměruje na odpovídající Keycloak
 - **Logout** — `Sign:out` automaticky odhlásí i z Keycloaku (pokud se uživatel přihlásil přes SSO)
 - **Frontend** — do layoutu injektuje `window.__keycloakSettings` pro keycloak-js adapter (silent SSO check, token refresh)
-- **Registrace při SSO** — pokud se přes Keycloak přihlásí uživatel, který v aplikaci neexistuje, automaticky se mu vytvoří identita s vazbou na SSO instanci a `defaultRole` (pokud je nakonfigurovaná)
+- **Registrace při SSO** — pokud se přes Keycloak přihlásí uživatel, který v aplikaci neexistuje, automaticky se mu vytvoří identita s vazbou na SSO instanci a `defaultRole` (pokud je nakonfigurovaná). Toto chování zajišťuje `autoRegister: true` v interním volání `loginUser()` — lze přepsat rozšířením třídy `Keycloak` (viz 18.11)
 
 ### 18.8 Keycloak služba — správa uživatelů
 
@@ -1148,6 +1151,21 @@ $keycloak->setUserPassword($identity, 'noveHeslo', temporary: true);
 
 // Vyhledání uživatele podle emailu
 $keycloakUser = $keycloak->findUser('user@example.com');
+
+// Odeslání emailu pro reset hesla přes Keycloak (execute-actions-email)
+// Keycloak pošle svůj email s odkazem na formulář; po nastavení hesla KC přesměruje na $redirectUri
+$keycloak->sendPasswordResetEmail($identity, redirectUri: 'https://admin.muj-projekt.cz/sign/in');
+```
+
+Pro přesměrování přihlášeného uživatele na změnu hesla přímo v Keycloaku (Application-Initiated Action) použijte `getUpdatePasswordUrl()` — Keycloak si sám vyžádá re-autentizaci současným heslem, ohlídá password policy i 2FA a po nastavení nového hesla vrátí uživatele zpět do aplikace:
+
+```php
+// URL pro přesměrování na změnu hesla v Keycloaku
+$url = $keycloak->getUpdatePasswordUrl(
+    backRedirect: 'https://admin.muj-projekt.cz/profil',
+    loginHint: $identity->getEmail(),
+);
+$this->redirectUrl($url);
 ```
 
 ### 18.9 Backchannel logout
