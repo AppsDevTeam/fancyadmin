@@ -961,6 +961,8 @@ app/
 
 Fancyadmin podporuje napojení na jeden nebo více Keycloak serverů/realmů pro SSO autentizaci. Integrace je ve výchozím stavu **vypnutá** a aktivuje se přidáním `keycloak` sekce do konfigurace.
 
+> Technický popis integrace (použité OAuth2/OIDC flows, volané endpointy, bezpečnostní mechanismy) — vhodný pro security review nebo externí partnery provozující vlastní Keycloak — je v [docs/keycloak.md](docs/keycloak.md).
+
 ### 18.1 Předpoklady
 
 - Keycloak server s nakonfigurovaným realmem
