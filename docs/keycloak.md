@@ -2,7 +2,7 @@
 
 Tento dokument popisuje, jak přesně aplikace (postavená na fancyadmin) komunikuje s Keycloak serverem — jaké OAuth2/OIDC flows používá, jaké endpointy volá a jaké endpointy sama vystavuje. Určeno pro security review a pro provozovatele vlastního Keycloak serveru.
 
-Návod na integraci na straně projektu je v [README.md](../README.md), sekce **18. Keycloak SSO integrace**. Návod na konfiguraci Keycloak serveru a klientů je v repozitáři sobit-auth (`docs/external/keycloak-setup.md`).
+Návod na integraci na straně projektu je v [README.md](../README.md), sekce **18. Keycloak SSO integrace**.
 
 ---
 
