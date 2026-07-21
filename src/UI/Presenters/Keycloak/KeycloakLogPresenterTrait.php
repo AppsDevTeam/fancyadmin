@@ -47,7 +47,7 @@ trait KeycloakLogPresenterTrait
 	public function formatTemplateFiles(): array
 	{
 		$list = parent::formatTemplateFiles();
-		$list[] = __DIR__ . '/' . $this->view . '.latte';
+		$list[] = __DIR__ . '/' . $this->getView() . '.latte';
 		return $list;
 	}
 }
