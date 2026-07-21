@@ -969,14 +969,18 @@ Fancyadmin podporuje napojení na jeden nebo více Keycloak serverů/realmů pro
 - Klient v Keycloaku s:
   - **Client authentication**: zapnuto (confidential client)
   - **Service accounts roles**: zapnuto (pro Admin API — vyhledávání a správa uživatelů)
-  - **Valid redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/*`
-  - **Post logout redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/*`
+  - **Valid redirect URIs** — pouze exact URIs, žádné wildcardy (OAuth 2.1); `nazev-sso` nahraďte názvem SSO instance (sloupec `name` v Sso entitě):
+    - `https://admin.muj-projekt.cz/keycloak-auth/callback?instance=nazev-sso`
+    - `https://admin.muj-projekt.cz/keycloak-auth/silent-check?instance=nazev-sso`
+  - **Valid post logout redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/post-log-out`
   - **Web origins**: `https://admin.muj-projekt.cz`
+  - **Require PKCE**: zapnuto, **PKCE Method**: `S256` (Settings → Capability config; server pak request bez `code_challenge` odmítne).
 - Service account musí mít roli `manage-users` z `realm-management` clienta
-- Druhý (public) klient pro frontend keycloak-js adapter — s **Client authentication: vypnuto**
-- `guzzlehttp/guzzle` nainstalovaný v projektu:
+- Druhý (public) klient pro frontend keycloak-js adapter — s **Client authentication: vypnuto**, **Require PKCE** + **PKCE Method** `S256` a **Valid redirect URIs**: `https://admin.muj-projekt.cz/keycloak-auth/silent-check-sso`
+- Doporučeno: v realmu aktivovat client policies s vestavěnými profily `oauth-2-1-for-confidential-client` a `oauth-2-1-for-public-client` — Keycloak pak požadavky OAuth 2.1 (PKCE, exact URIs, zakázané granty) vynucuje sám
+- `guzzlehttp/guzzle` a `firebase/php-jwt` (validace backchannel logout tokenů) nainstalované v projektu:
   ```bash
-  composer require guzzlehttp/guzzle:^7.0
+  composer require guzzlehttp/guzzle:^7.0 firebase/php-jwt:^6.0
   ```
 
 ### 18.2 Sso entita
@@ -1028,6 +1032,8 @@ fancyadmin:
 ```
 
 Pokud je `keycloakEnabled` nastaveno na `false` (výchozí), vše Keycloak-related je vypnuté a projekt funguje jako dříve.
+
+Pro lokální vývoj se self-signed certifikátem lze vypnout validaci TLS certifikátu Keycloak serveru volbou `keycloakVerifySsl: false`. Na produkci musí zůstat výchozí `true` — přes tento kanál jde výměna authorization code za tokeny včetně client_secret.
 
 ### 18.4 Nastavení SSO v databázi
 
@@ -1191,10 +1197,11 @@ Opakujte pro každou SSO instanci s odpovídajícím `?instance=` parametrem.
 #### Co se děje
 
 1. Keycloak pošle POST s `logout_token` (JWT) na backchannel URL
-2. Aplikace dekóduje token, získá `sub` (Keycloak user ID)
-3. Přes Admin API zjistí email uživatele
-4. Najde lokální identitu podle emailu
-5. Invaliduje všechny její sessions (`Authenticator::clearIdentity`)
+2. Aplikace token zvaliduje podle OIDC Back-Channel Logout spec (podpis proti JWKS realmu, iss, aud, events, replay ochrana) — vyžaduje `firebase/php-jwt`; nevalidní token dostane `400`
+3. Z tokenu získá `sub` (Keycloak user ID)
+4. Přes Admin API zjistí email uživatele
+5. Najde lokální identitu podle emailu
+6. Invaliduje všechny její sessions (`Authenticator::clearIdentity`)
 
 Tím je zajištěno, že:
 - Uživatel odhlášený z Keycloaku je automaticky odhlášen i z aplikace

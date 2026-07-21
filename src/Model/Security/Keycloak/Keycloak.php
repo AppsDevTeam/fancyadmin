@@ -11,6 +11,8 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\AclRoleQueryFactory;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
+use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Nette\Application\LinkGenerator;
@@ -23,6 +25,11 @@ use Psr\Http\Message\ResponseInterface;
 
 class Keycloak
 {
+	/** Platnost rozpracovaného autorizačního requestu (state + PKCE verifier) v session */
+	private const int AUTH_STATE_TTL_SECONDS = 600;
+	/** Max počet souběžně rozpracovaných autorizačních requestů v jedné session */
+	private const int AUTH_STATE_MAX_ENTRIES = 10;
+
 	private string $realm;
 	private string $baseUrl;
 	private string $hostUrl;
@@ -46,6 +53,8 @@ class Keycloak
 
 	private Cache $cache;
 
+	private Cache $jwksCache;
+
 	private ?KeycloakAdminAccessToken $adminAccessToken = null;
 
 	private string $instanceName = 'default';
@@ -67,6 +76,7 @@ class Keycloak
 		FancyAdmin $fancyAdmin,
 		Session $session,
 		Storage $storage,
+		bool $verifySsl = true,
 	) {
 		$this->realm = $realm;
 		$this->baseUrl = $baseUrl;
@@ -82,12 +92,15 @@ class Keycloak
 		$this->fancyAdmin = $fancyAdmin;
 		$this->session = $session;
 		$this->cache = new Cache($storage, 'keycloak-user-search');
+		$this->jwksCache = new Cache($storage, 'keycloak-jwks');
 
+		// Validace TLS certifikátu musí být zapnutá — přes tento kanál jde výměna code za tokeny
+		// i client_secret. Vypnout ji lze config volbou keycloakVerifySsl jen pro lokální vývoj.
 		$this->client = new Client(
 			[
 				'base_uri' => $this->baseUrl,
 				'timeout'  => 5.0,
-				'verify'   => false
+				'verify'   => $verifySsl
 			]
 		);
 	}
@@ -103,22 +116,25 @@ class Keycloak
 	}
 
 	/**
-	 * Sestaví login URL na Keycloak (Authorization Code Flow).
+	 * Sestaví login URL na Keycloak (Authorization Code Flow s PKCE).
+	 * Návratová URL ($backRedirect) se neposílá do Keycloaku — uloží se do session
+	 * pod náhodný state (CSRF token) a callback si ji vyzvedne po ověření state.
 	 */
 	public function getLoginUrl(?string $backRedirect = null, ?string $loginHint = null, bool $autoFocusPassword = false): string
 	{
 		$redirectUri = $this->getAuthRedirectUri();
 
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
+
 		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
 
-		if ($backRedirect) {
-			$url->setQueryParameter('state', $backRedirect);
-		}
-
+		$url->setQueryParameter('state', $state);
 		$url->setQueryParameter('client_id', $this->clientId);
 		$url->setQueryParameter('response_type', 'code');
 		$url->setQueryParameter('redirect_uri', $redirectUri);
 		$url->setQueryParameter('scope', 'openid email profile');
+		$url->setQueryParameter('code_challenge', $codeChallenge);
+		$url->setQueryParameter('code_challenge_method', 'S256');
 
 		if (!empty($loginHint)) {
 			$url->setQueryParameter('login_hint', $loginHint);
@@ -184,17 +200,23 @@ class Keycloak
 
 	/**
 	 * Sestaví URL pro silent login (prompt=none) — pro kontrolu, zda je uživatel v Keycloaku přihlášen.
+	 * Návratová URL putuje přes session (viz getLoginUrl), redirect_uri je statické.
 	 */
 	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null): string
 	{
-		$redirectUrl = $this->getSilentRedirectUri($backRedirect, $action);
+		$redirectUrl = $this->getSilentRedirectUri($action);
+
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
 
 		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
 
+		$url->setQueryParameter('state', $state);
 		$url->setQueryParameter('client_id', $this->clientId);
 		$url->setQueryParameter('response_type', 'code');
 		$url->setQueryParameter('redirect_uri', $redirectUrl);
 		$url->setQueryParameter('scope', 'openid email profile');
+		$url->setQueryParameter('code_challenge', $codeChallenge);
+		$url->setQueryParameter('code_challenge_method', 'S256');
 		$url->setQueryParameter('prompt', 'none');
 
 		return (string) $url;
@@ -203,17 +225,14 @@ class Keycloak
 	/**
 	 * Sestaví redirect_uri pro silent login. Musí být identické s tím, které se použije
 	 * při výměně authorization code za tokeny, jinak Keycloak výměnu odmítne (redirect_uri mismatch).
+	 * URI je statické (bez proměnlivých parametrů), aby šlo v Keycloaku vyjmenovat
+	 * exact redirect URIs bez wildcardů.
 	 */
-	public function getSilentRedirectUri(?string $backRedirect = null, ?string $action = null): string
+	public function getSilentRedirectUri(?string $action = null): string
 	{
 		$action ??= 'silentCheck';
 
-		$redirectParams = ['instance' => $this->instanceName];
-		if ($backRedirect) {
-			$redirectParams['backRedirect'] = $backRedirect;
-		}
-
-		return $this->linkGenerator->link("//:Portal:KeycloakAuth:$action", $redirectParams);
+		return $this->linkGenerator->link("//:Portal:KeycloakAuth:$action", ['instance' => $this->instanceName]);
 	}
 
 	public function getAuthRedirectUri(): string
@@ -227,25 +246,85 @@ class Keycloak
 	}
 
 	/**
-	 * Autentizace uživatele přes password nebo refresh token.
-	 * Pokud $password je NULL, pak se 1. parametr bere jako refreshToken.
+	 * Vytvoří kontext autorizačního requestu a uloží ho do session:
+	 * - state: náhodný CSRF token, callback ho ověří proti session
+	 * - code_verifier: PKCE (RFC 7636), k token requestu ho přiloží až callback
+	 * - backRedirect: návratová URL — do Keycloaku se neposílá, drží se jen v session
+	 *
+	 * @return array{string, string} [state, code_challenge]
 	 */
-	public function authenticate(string $refreshToken, ?string $password = null): ?KeycloakAuthentication
+	private function createAuthState(?string $backRedirect): array
 	{
-		$formParams =  [
-			'grant_type' => 'password',
-			'client_id' => $this->clientId,
-			'client_secret' => $this->clientSecret
-		];
+		$state = bin2hex(random_bytes(16));
+		$codeVerifier = self::base64UrlEncode(random_bytes(32));
 
-		if ($password === null) {
-			$formParams['refresh_token'] = $refreshToken;
-			$formParams['grant_type'] = 'refresh_token';
-		} else {
-			$formParams['username'] = $refreshToken;
-			$formParams['password'] = $password;
-			$formParams['scope'] = 'openid profile email';
+		$section = $this->session->getSection(KeycloakSessionSection::SECTION_NAME);
+		$states = $section->get(KeycloakSessionSection::AUTH_STATES) ?? [];
+
+		// Úklid: expirované requesty pryč, počet rozpracovaných requestů omezen (ochrana proti session bloatu)
+		$states = array_filter($states, fn (array $entry) => $entry['time'] + self::AUTH_STATE_TTL_SECONDS > time());
+		$states = array_slice($states, -(self::AUTH_STATE_MAX_ENTRIES - 1), null, true);
+
+		$states[$state] = [
+			'verifier' => $codeVerifier,
+			'backRedirect' => $backRedirect,
+			'instance' => $this->instanceName,
+			'time' => time(),
+		];
+		$section->set(KeycloakSessionSection::AUTH_STATES, $states);
+
+		return [$state, self::base64UrlEncode(hash('sha256', $codeVerifier, true))];
+	}
+
+	/**
+	 * Vyzvedne kontext autorizačního requestu podle state a zneplatní ho (one-time use).
+	 * Vrací null, pokud state v session není, patří jiné instanci nebo expiroval —
+	 * v tom případě callback nesmí pokračovat (možný CSRF / podvržený request).
+	 *
+	 * @return array{verifier: string, backRedirect: ?string, instance: string, time: int}|null
+	 */
+	public function consumeAuthState(?string $state): ?array
+	{
+		if ($state === null || !$this->session->hasSection(KeycloakSessionSection::SECTION_NAME)) {
+			return null;
 		}
+
+		$section = $this->session->getSection(KeycloakSessionSection::SECTION_NAME);
+		$states = $section->get(KeycloakSessionSection::AUTH_STATES) ?? [];
+
+		$entry = $states[$state] ?? null;
+		if ($entry === null) {
+			return null;
+		}
+
+		unset($states[$state]);
+		$section->set(KeycloakSessionSection::AUTH_STATES, $states);
+
+		if ($entry['instance'] !== $this->instanceName || $entry['time'] + self::AUTH_STATE_TTL_SECONDS <= time()) {
+			return null;
+		}
+
+		return $entry;
+	}
+
+	private static function base64UrlEncode(string $data): string
+	{
+		return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+	}
+
+	/**
+	 * Obnova tokenů přes refresh token.
+	 * Pozn.: dřívější authenticate() s grant_type=password (ROPC) bylo odstraněno —
+	 * OAuth 2.1 tento grant zakazuje, přihlášení jde vždy přes Authorization Code Flow.
+	 */
+	public function refreshToken(string $refreshToken): ?KeycloakAuthentication
+	{
+		$formParams = [
+			'grant_type' => 'refresh_token',
+			'client_id' => $this->clientId,
+			'client_secret' => $this->clientSecret,
+			'refresh_token' => $refreshToken,
+		];
 
 		try {
 			$response = $this->client->post(
@@ -262,9 +341,11 @@ class Keycloak
 	}
 
 	/**
-	 * Výměna authorization code za tokeny (Authorization Code Flow).
+	 * Výměna authorization code za tokeny (Authorization Code Flow s PKCE).
+	 * $codeVerifier musí odpovídat code_challenge z autorizačního requestu
+	 * (viz createAuthState/consumeAuthState).
 	 */
-	public function checkSessionValidity(string $code, ?string $redirectUri = null): ?KeycloakAuthentication
+	public function checkSessionValidity(string $code, ?string $redirectUri = null, ?string $codeVerifier = null): ?KeycloakAuthentication
 	{
 		$redirectUri ??= $this->getAuthRedirectUri();
 
@@ -275,6 +356,10 @@ class Keycloak
 			'redirect_uri' => $redirectUri,
 			'code' => $code,
 		];
+
+		if ($codeVerifier !== null) {
+			$formParams['code_verifier'] = $codeVerifier;
+		}
 
 		try {
 			$response = $this->client->post(
@@ -574,11 +659,118 @@ class Keycloak
 	}
 
 	/**
-	 * Dekóduje backchannel logout token (JWT) a vrátí claims.
+	 * Zvaliduje backchannel logout token podle OIDC Back-Channel Logout 1.0 a vrátí claims.
+	 * Ověřuje: podpis proti JWKS realmu, iss, aud, exp/iat (řeší JWT::decode), events claim,
+	 * absenci nonce, přítomnost sub/sid a jednorázovost jti (replay ochrana).
+	 *
+	 * Vrací null pro nevalidní token — endpoint pak nesmí nic odhlašovat, jinak by šel
+	 * podvrženým POSTem odhlásit libovolný uživatel.
+	 *
+	 * Vyžaduje firebase/php-jwt. Bez něj validace selže (fail closed).
 	 */
-	public function decodeLogoutToken(string $logoutToken): ?array
+	public function validateLogoutToken(string $logoutToken): ?array
 	{
-		return $this->decodeIdToken($logoutToken);
+		if (!class_exists(JWT::class)) {
+			return null;
+		}
+
+		$claims = $this->decodeAndVerifySignature($logoutToken, $typHeader);
+		if ($claims === null) {
+			return null;
+		}
+
+		// typ header: OIDC spec předepisuje logout+jwt; starší KC posílají JWT nebo nic
+		if ($typHeader !== null && !in_array($typHeader, ['logout+jwt', 'JWT'], true)) {
+			return null;
+		}
+
+		// iss — issuer realmu; token může nést public (hostUrl) i interní (baseUrl) variantu
+		$allowedIssuers = [
+			rtrim($this->hostUrl, '/') . "/realms/$this->realm",
+			rtrim($this->baseUrl, '/') . "/realms/$this->realm",
+		];
+		if (!in_array($claims['iss'] ?? null, $allowedIssuers, true)) {
+			return null;
+		}
+
+		// aud — musí obsahovat náš client_id
+		if (!in_array($this->clientId, (array) ($claims['aud'] ?? []), true)) {
+			return null;
+		}
+
+		// events — musí obsahovat backchannel-logout event
+		if (!isset($claims['events']['http://schemas.openid.net/event/backchannel-logout'])) {
+			return null;
+		}
+
+		// logout token nesmí obsahovat nonce (odlišení od id_tokenu) a musí identifikovat session/uživatele
+		if (isset($claims['nonce'])) {
+			return null;
+		}
+		if (empty($claims['sub']) && empty($claims['sid'])) {
+			return null;
+		}
+
+		// replay ochrana — každé jti přijmeme jen jednou
+		if (!empty($claims['jti'])) {
+			$jtiKey = "jti:$this->instanceName:{$claims['jti']}";
+			if ($this->jwksCache->load($jtiKey) !== null) {
+				return null;
+			}
+			$this->jwksCache->save($jtiKey, true, [Cache::Expire => '10 minutes']);
+		}
+
+		return $claims;
+	}
+
+	/**
+	 * Ověří podpis JWT proti JWKS realmu a vrátí claims jako pole.
+	 * Při selhání (např. rotace podpisových klíčů v KC) jednou obnoví JWKS cache a zkusí znovu.
+	 */
+	private function decodeAndVerifySignature(string $jwt, ?string &$typHeader = null): ?array
+	{
+		foreach ([false, true] as $forceRefresh) {
+			try {
+				if ($forceRefresh) {
+					$this->jwksCache->remove("jwks:$this->instanceName");
+				}
+
+				$headers = new \stdClass();
+				$decoded = JWT::decode($jwt, JWK::parseKeySet($this->getJwks()), $headers);
+				$typHeader = $headers->typ ?? null;
+
+				// převod vnořených stdClass (events apod.) na pole
+				return Json::decode(Json::encode($decoded), true);
+			} catch (\Throwable $e) {
+				if ($forceRefresh) {
+					return null;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Vrátí JWKS (podpisové klíče) realmu, cachované na 1 hodinu.
+	 */
+	private function getJwks(): array
+	{
+		return $this->jwksCache->load("jwks:$this->instanceName", function (&$dependencies) {
+			$dependencies[Cache::Expire] = '1 hour';
+
+			$response = $this->client->get($this->getOpenIdRealmUrl('certs'));
+
+			$jwks = Json::decode((string) $response->getBody(), true);
+
+			// jen podpisové klíče — KC vrací i šifrovací (use=enc), které pro validaci nechceme
+			$jwks['keys'] = array_values(array_filter(
+				$jwks['keys'] ?? [],
+				fn (array $key) => ($key['use'] ?? 'sig') === 'sig'
+			));
+
+			return $jwks;
+		});
 	}
 
 	/**

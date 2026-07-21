@@ -56,6 +56,9 @@ export async function keycloakLoginSync() {
 			responseMode: 'query',
 			checkLoginIframe: true,
 			checkLoginIframeInterval: 30,
+			// PKCE explicitně — OAuth 2.1 ho vyžaduje i pro public klienty a nechceme
+			// spoléhat na default konkrétní verze keycloak-js v projektu
+			pkceMethod: 'S256',
 		});
 
 		if (!authenticated) {

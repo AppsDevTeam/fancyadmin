@@ -31,6 +31,7 @@ class KeycloakManager
 		private readonly FancyAdmin $fancyAdmin,
 		private readonly Session $session,
 		private readonly Storage $storage,
+		private readonly bool $verifySsl = true,
 	) {}
 
 	/**
@@ -171,6 +172,7 @@ class KeycloakManager
 			fancyAdmin: $this->fancyAdmin,
 			session: $this->session,
 			storage: $this->storage,
+			verifySsl: $this->verifySsl,
 		);
 		$instance->setInstanceName($sso->getName());
 

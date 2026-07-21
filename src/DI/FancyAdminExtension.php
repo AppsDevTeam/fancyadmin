@@ -61,6 +61,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
 			'keycloakEnabled' => Expect::bool()->default(false),
+			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
+			'keycloakVerifySsl' => Expect::bool()->default(true),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -127,7 +129,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
 		if ($this->config->keycloakEnabled) {
 			$builder->addDefinition($this->prefix('keycloakManager'))
-				->setFactory(KeycloakManager::class);
+				->setFactory(KeycloakManager::class)
+				->setArgument('verifySsl', $this->config->keycloakVerifySsl);
 		}
 
 		//$this->validateTraitInterfaceCompliance();

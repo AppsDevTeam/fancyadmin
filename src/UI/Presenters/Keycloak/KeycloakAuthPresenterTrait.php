@@ -35,6 +35,8 @@ trait KeycloakAuthPresenterTrait
 	/**
 	 * Keycloak callback — zpracuje authorization code po redirectu z Keycloaku.
 	 * Parametr `instance` identifikuje, ze které Keycloak instance callback přišel.
+	 * `state` je CSRF token vydaný při startu flow — ověřuje se proti session,
+	 * návratová URL se čte ze session (do Keycloaku se neposílá).
 	 */
 	#[CrossOrigin]
 	public function actionCallback(?string $state = null, ?string $code = null, ?string $error = null, ?string $instance = null): void
@@ -45,20 +47,23 @@ trait KeycloakAuthPresenterTrait
 		}
 
 		// Úspěšně dokončená Application-Initiated Action (např. změna hesla z Můj profil) —
-		// propíšeme do návratové URL, aby cílová stránka mohla zobrazit success hlášku.
-		if ($state !== null && $this->getHttpRequest()->getQuery('kc_action_status') === 'success') {
-			$state = (string) (new Url($state))->setQueryParameter('kcActionSuccess', '1');
-		}
+		// propíše se do návratové URL, aby cílová stránka mohla zobrazit success hlášku.
+		$kcActionSuccess = $this->getHttpRequest()->getQuery('kc_action_status') === 'success';
 
-		$this->processKeycloakAuthRequest($code, $instance, $state);
+		$this->processKeycloakAuthRequest($code, $instance, $state, kcActionSuccess: $kcActionSuccess);
 	}
 
 	/**
 	 * Silent SSO check — Keycloak přesměruje sem po prompt=none.
 	 */
-	public function actionSilentCheck(?string $code = null, ?string $error = null, ?string $backRedirect = null, ?string $instance = null): void
+	public function actionSilentCheck(?string $state = null, ?string $code = null, ?string $error = null, ?string $instance = null): void
 	{
 		if ($error !== null || $code === null || $instance === null) {
+			// Silent check neprošel (typicky error=login_required) — vrátíme se na URL,
+			// ze které byl flow spuštěn. Čte se ze session přes state, ne z requestu.
+			$keycloak = $instance !== null ? $this->_fancyAdmin->getKeycloakManager()?->getInstance($instance) : null;
+			$backRedirect = ($keycloak?->consumeAuthState($state) ?? [])['backRedirect'] ?? null;
+
 			if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
 				$this->redirectUrl($backRedirect);
 			}
@@ -66,7 +71,7 @@ trait KeycloakAuthPresenterTrait
 			return;
 		}
 
-		$this->processKeycloakAuthRequest($code, $instance, $backRedirect, isSilent: true);
+		$this->processKeycloakAuthRequest($code, $instance, $state, isSilent: true);
 	}
 
 	/**
@@ -74,7 +79,10 @@ trait KeycloakAuthPresenterTrait
 	 */
 	public function actionPostLogOut(?string $state = null): void
 	{
-		if ($state !== null && Validators::isUrl($state)) {
+		// state smí mířit jen na tuto aplikaci — jinak by šel endpoint zneužít jako open redirect
+		if ($state !== null && Validators::isUrl($state)
+			&& (new Url($state))->getHost() === $this->getHttpRequest()->getUrl()->getHost()
+		) {
 			$this->redirectUrl($state);
 		}
 
@@ -103,7 +111,15 @@ trait KeycloakAuthPresenterTrait
 			$this->sendResponse(new TextResponse('Unknown instance'));
 		}
 
-		$claims = $keycloak->decodeLogoutToken($logoutToken);
+		// Plná validace podle OIDC Back-Channel Logout spec (podpis, iss, aud, events, replay).
+		// Bez ní by šlo podvrženým POSTem odhlásit libovolného uživatele.
+		$claims = $keycloak->validateLogoutToken($logoutToken);
+
+		if ($claims === null) {
+			$this->getHttpResponse()->setCode(400);
+			$this->sendResponse(new TextResponse('Invalid logout token'));
+		}
+
 		$sub = $claims['sub'] ?? null;
 
 		if ($sub === null) {
@@ -140,7 +156,7 @@ trait KeycloakAuthPresenterTrait
 		$this->setLayout(false);
 	}
 
-	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $backRedirect = null, bool $isSilent = false): void
+	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $isSilent = false, bool $kcActionSuccess = false): void
 	{
 		$manager = $this->_fancyAdmin->getKeycloakManager();
 		$keycloak = $manager?->getInstance($instanceName);
@@ -148,6 +164,19 @@ trait KeycloakAuthPresenterTrait
 		if ($keycloak === null) {
 			$this->redirect(':Portal:Sign:in');
 			return;
+		}
+
+		// CSRF ochrana: state musí odpovídat autorizačnímu requestu rozpracovanému v této session.
+		// Neznámý/expirovaný state = možný podvržený callback (code injection) — nepokračujeme.
+		$authState = $keycloak->consumeAuthState($state);
+		if ($authState === null) {
+			$this->redirect(':Portal:Sign:in');
+			return;
+		}
+
+		$backRedirect = $authState['backRedirect'];
+		if ($kcActionSuccess && $backRedirect !== null) {
+			$backRedirect = (string) (new Url($backRedirect))->setQueryParameter('kcActionSuccess', '1');
 		}
 
 		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
@@ -176,10 +205,10 @@ trait KeycloakAuthPresenterTrait
 		// redirect_uri musí být totožné s tím, které bylo použito v autorizačním requestu,
 		// jinak Keycloak výměnu code za token odmítne (silent check používá jiné redirect_uri než callback).
 		$redirectUri = $isSilent
-			? $keycloak->getSilentRedirectUri($backRedirect)
+			? $keycloak->getSilentRedirectUri()
 			: $keycloak->getAuthRedirectUri();
 
-		$keycloakAuthentication = $keycloak->checkSessionValidity($code, $redirectUri);
+		$keycloakAuthentication = $keycloak->checkSessionValidity($code, $redirectUri, $authState['verifier']);
 
 		if ($keycloakAuthentication === null) {
 			$this->redirect(':Portal:Sign:in');

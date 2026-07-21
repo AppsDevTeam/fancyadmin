@@ -27,7 +27,8 @@
     "adt/doctrine-loggable": "^3.0"
   },
   "suggest": {
-    "guzzlehttp/guzzle": "Required for Keycloak SSO integration"
+    "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
+    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
   },
   "autoload": {
     "psr-4": {
