@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
@@ -17,12 +18,14 @@ trait AccountTrait
 	use UpdatedAt;
 	use UpdatedBy;
 	#[Column(nullable: false)]
+	#[LoggableProperty]
 	protected string $name;
 
 	#[ORM\OneToMany(targetEntity: 'Account', mappedBy: 'parent')]
 	protected Collection $accounts;
 
 	#[ORM\ManyToOne(targetEntity: 'Account')]
+	#[LoggableProperty]
 	protected ?Account $parent = null;
 	
 	public function getName(): string

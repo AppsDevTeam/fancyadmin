@@ -32,9 +32,11 @@ trait IdentityTrait
 	abstract public function getId();
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?string $firstName = null;
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?string $lastName = null;
 
 	#[ORM\Column(nullable:true)]
@@ -42,12 +44,15 @@ trait IdentityTrait
 	protected ?string $email = null;
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?string $username = null;
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?string $context = null;
 
 	#[ORM\Column(nullable:true)]
+	#[LoggableProperty]
 	protected ?string $phoneNumber = null;
 
 	#[ORM\Column(nullable: true)]
@@ -63,6 +68,7 @@ trait IdentityTrait
 
 	#[ORM\ManyToOne(targetEntity: 'Sso')]
 	#[JoinColumn(nullable: true)]
+	#[LoggableProperty]
 	protected ?Sso $sso = null;
 
 	#[ManyToMany(targetEntity: 'AclRole')]
@@ -72,10 +78,12 @@ trait IdentityTrait
 	protected Collection $roles;
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?DateTimeImmutable $anonymizedAt = null;
 
 	#[ORM\ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
+	#[LoggableProperty]
 	protected ?Identity $anonymizedBy = null;
 
 	protected string $authToken;

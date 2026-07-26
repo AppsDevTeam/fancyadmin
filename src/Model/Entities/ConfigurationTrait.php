@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationType;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
@@ -28,10 +29,12 @@ trait ConfigurationTrait
 	protected ConfigurationTypeEnum $type = ConfigurationTypeEnum::TYPE_PLAINTEXT;
 
 	#[Column(name: '`value`', type: Types::TEXT, nullable: true)]
+	#[LoggableProperty]
 	protected ?string $value = null;
 
 	#[OneToOne(targetEntity: 'File', cascade: ['persist'], orphanRemoval: true)]
 	#[JoinColumn(nullable: true)]
+	#[LoggableProperty]
 	protected ?File $file;
 
 	#[Column(name: '`options`', type: Types::TEXT, nullable: true)]

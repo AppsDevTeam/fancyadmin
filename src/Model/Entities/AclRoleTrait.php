@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
@@ -22,21 +23,27 @@ trait AclRoleTrait
 	use UpdatedBy;
 
 	#[ORM\Column(unique: true, nullable: false)]
+	#[LoggableProperty]
 	protected string $name;
 
 	#[ORM\OneToMany(targetEntity: 'Acl', mappedBy: 'role')]
+	#[LoggableProperty]
 	protected Collection $acls;
 
 	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
 	protected ?string $context = null;
 
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
 	protected AclRoleTypeEnum $type;
 
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
 	protected bool $isAdmin = false;
 
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
 	protected bool $needsSso = false;
 
 	public function __construct()

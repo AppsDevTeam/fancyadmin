@@ -4,33 +4,41 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use Doctrine\ORM\Mapping as ORM;
 
 trait SsoTrait
 {
 	#[ORM\Column(unique: true, nullable: false)]
+	#[LoggableProperty]
 	protected string $name;
 
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
 	protected string $realm;
 
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
 	protected string $baseUrl;
 
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
 	protected string $hostUrl;
 
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
 	protected string $clientId;
 
 	#[ORM\Column(nullable: false)]
 	protected string $clientSecret;
 
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
 	protected string $frontendClientId;
 
 	#[ORM\ManyToOne(targetEntity: 'AclRole')]
 	#[ORM\JoinColumn(nullable: true)]
+	#[LoggableProperty]
 	protected ?AclRole $defaultRole = null;
 
 	public function getName(): string
