@@ -11,6 +11,12 @@ class JsComponents extends \ADT\Utils\JsComponents
 		return $this;
 	}
 
+	public function setFirebaseKnownTokens(array $tokens): static
+	{
+		$this->components['notifications']['knownTokens'] = array_values($tokens);
+		return $this;
+	}
+
 	public function setFirebaseConfig(array $firebaseConfig): void
 	{
 		$this->components['notifications'] = [
