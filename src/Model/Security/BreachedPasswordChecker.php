@@ -50,7 +50,6 @@ class BreachedPasswordChecker
 			CURLOPT_HTTPHEADER => ['User-Agent: FancyAdmin-ASVS-Checker'],
 		]);
 		$response = curl_exec($ch);
-		curl_close($ch);
 
 		if ($response === false) {
 			return false;
