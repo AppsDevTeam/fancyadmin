@@ -1,6 +1,8 @@
 import $ from 'jquery';
 
 const scheduleAutoClose = (root) => {
+	// Zavírají se pouze zprávy s atributem data-close-duration (řídí se v PHP – viz
+	// flashMessageCommon). Zprávy bez něj (warning/danger/info) zůstávají do zavření uživatelem.
 	$(root).find('.alert[data-close-duration]').each(function () {
 		const $alert = $(this);
 		if ($alert.data('auto-close-scheduled')) {

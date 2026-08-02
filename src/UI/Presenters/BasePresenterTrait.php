@@ -122,7 +122,8 @@ trait BasePresenterTrait
 		return $this->flashMessageCommon($message, 'warning', $autoCloseDuration);
 	}
 
-	public function flashMessageSuccess(string $message, ?int $autoCloseDuration = null): stdClass
+	// Success zprávy se defaultně samy zavřou; ostatní typy zůstávají, dokud je uživatel nezavře.
+	public function flashMessageSuccess(string $message, ?int $autoCloseDuration = BasePresenter::DEFAULT_AUTO_CLOSE_DURATION): stdClass
 	{
 		return $this->flashMessageCommon($message, 'success', $autoCloseDuration);
 	}
@@ -137,7 +138,8 @@ trait BasePresenterTrait
 	{
 		//$this->redrawControl('flashes');
 		$flash = parent::flashMessage($this->_translator->translate($message), $type);
-		$flash->closeDuration = $autoCloseDuration ?? BasePresenter::DEFAULT_AUTO_CLOSE_DURATION;
+		// null = zpráva se automaticky nezavírá (zůstává do zavření uživatelem).
+		$flash->closeDuration = $autoCloseDuration;
 		return $flash;
 	}
 
