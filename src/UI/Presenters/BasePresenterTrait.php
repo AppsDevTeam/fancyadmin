@@ -44,6 +44,11 @@ trait BasePresenterTrait
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeAllFirebaseTokensLink', $this->getPresenter()->link('removeAllFirebaseTokens!'));
+		$this->_jsComponents->setFirebaseLink('syncFirebaseTokenLink', $this->getPresenter()->link('syncFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
+		$identity = $this->getUser()->isLoggedIn() ? $this->getUser()->getIdentity() : null;
+		$this->_jsComponents->setFirebaseKnownTokens(
+			$identity !== null && method_exists($identity, 'getFirebaseTokens') ? $identity->getFirebaseTokens() : []
+		);
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 
 		// Keycloak — dynamický frame-src CSP header pro silent SSO iframe
@@ -171,6 +176,14 @@ trait BasePresenterTrait
 		$this->em->flush();
 
 		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.success');
+	}
+
+	public function handleSyncFirebaseToken(string $firebaseToken): void
+	{
+		$this->getUser()->getIdentity()
+			->addFirebaseToken($firebaseToken);
+
+		$this->em->flush();
 	}
 
 	public function handleRemoveFirebaseToken(string $firebaseToken): void
