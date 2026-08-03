@@ -19,6 +19,7 @@ use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
+use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -63,6 +64,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'keycloakEnabled' => Expect::bool()->default(false),
 			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
 			'keycloakVerifySsl' => Expect::bool()->default(true),
+			// WebAuthn Relying Party ID (doména) — když není nastaveno, odvodí se za běhu host z adminHostPath
+			'passkeyRpId' => Expect::string()->nullable()->default(null),
+			// WebAuthn Relying Party name — když není nastaveno, použije se projectName
+			'passkeyRpName' => Expect::string()->nullable()->default(null),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -121,10 +126,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
 				'keycloakEnabled' => $this->config->keycloakEnabled,
+				'passkeyRpId' => $this->config->passkeyRpId,
+				'passkeyRpName' => $this->config->passkeyRpName,
 			]);
 
 		$builder->addDefinition($this->prefix('jsComponents'))
 			->setFactory(JsComponents::class);
+
+		$builder->addDefinition($this->prefix('passkeyService'))
+			->setFactory(PasskeyService::class);
 
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
 		if ($this->config->keycloakEnabled) {

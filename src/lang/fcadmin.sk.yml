@@ -344,6 +344,39 @@ keycloak:
     noEmail: Účet SSO nemá priradený e-mail.
     loopDetected: Bolo detegované opakované presmerovanie. Skúste to prosím znovu.
 
+passkeys:
+  loginButton: Prihlásiť sa prihlasovacím kľúčom
+  account:
+    title: Prihlasovacie kľúče
+    add: Pridať kľúč
+  form:
+    name: Názov kľúča
+    namePlaceholder: Napr. Pracovný notebook
+    register: Vytvoriť prihlasovací kľúč
+    errors:
+      nameRequired: Názov kľúča je povinný
+  grid:
+    name: Názov
+    createdAt: Vytvorené
+    lastUsedAt: Naposledy použité
+    synced: Synchronizovaný
+    delete: Zmazať
+  confirms:
+    delete: Naozaj chcete zmazať tento prihlasovací kľúč?
+  messages:
+    added: Prihlasovací kľúč bol pridaný.
+    deleted: Prihlasovací kľúč bol zmazaný.
+  errors:
+    unsupportedBrowser: Váš prehliadač nepodporuje prihlasovacie kľúče (passkeys).
+    unknownKey: Neplatný alebo neznámy prihlasovací kľúč.
+    invalidKey: Prihlasovací kľúč sa nepodarilo overiť.
+    alreadyRegistered: Tento prihlasovací kľúč je už zaregistrovaný.
+    expiredChallenge: Platnosť výzvy vypršala. Skúste to prosím znovu.
+    ssoAccount: Účet prihlasovaný cez SSO nemôže používať prihlasovacie kľúče.
+    unavailable: Prihlasovacie kľúče nie sú momentálne dostupné.
+    loginFailed: Prihlásenie prihlasovacím kľúčom sa nepodarilo. Skúste to prosím znovu.
+    registrationFailed: Prihlasovací kľúč sa nepodarilo vytvoriť. Skúste to prosím znovu.
+
 modules:
   web:
     navbar:

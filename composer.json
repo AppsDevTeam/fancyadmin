@@ -24,7 +24,8 @@
     "adt/datagrid-components": "^1.0",
     "nettrine/orm": "^0.10",
     "adt/route-port": "^3.0",
-    "adt/doctrine-loggable": "^3.0"
+    "adt/doctrine-loggable": "^3.0",
+    "lbuchs/webauthn": "^2.2"
   },
   "suggest": {
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration",

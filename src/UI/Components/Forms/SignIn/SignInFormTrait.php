@@ -7,12 +7,18 @@ namespace ADT\FancyAdmin\UI\Components\Forms\SignIn;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
+use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Security\Passkey\PasskeyException;
+use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use ADT\Forms\Form;
 use Nette\Security\AuthenticationException;
+use Nette\Utils\Json;
+use Nette\Utils\JsonException;
 
 trait SignInFormTrait
 {
@@ -22,6 +28,8 @@ trait SignInFormTrait
 	use AuthenticatorInject;
 	use SecurityUserInject;
 	use IdentityQueryFactoryInject;
+	use PasskeyServiceInject;
+	use TranslatorInject;
 
 	private Identity $_identity;
 
@@ -33,6 +41,7 @@ trait SignInFormTrait
 			$form->addEmail('email')
 				->setHtmlAttribute('id', 'login-form-input-email')
 				->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.email')
+				->setHtmlAttribute('autocomplete', 'username')
 				->setRequired('fcadmin.forms.signIn.errors.emailRequired');
 
 			$form->addPassword('password')
@@ -45,6 +54,8 @@ trait SignInFormTrait
 
 		$form->addSubmit('submit', 'fcadmin.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';
+
+		$form->addSection(name: 'passkey');
 
 		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
 
@@ -67,6 +78,101 @@ trait SignInFormTrait
 	public function handleCheckKeycloak(string $email): void
 	{
 		$this->getPresenter()->sendJson(['loginUrl' => $this->getKeycloakLoginUrl($email)]);
+	}
+
+	/**
+	 * AJAX signal — vrátí PublicKeyCredentialRequestOptions pro usernameless
+	 * passkey login (binárky base64url). Challenge se drží one-shot v session.
+	 */
+	public function handlePasskeyLoginArgs(): void
+	{
+		try {
+			$args = $this->_passkeyService->getLoginArgs();
+		} catch (PasskeyException $e) {
+			$this->getPresenter()->sendJson(['error' => $e->getMessage()]);
+		}
+
+		$this->getPresenter()->sendJson($args);
+	}
+
+	/**
+	 * AJAX signal — ověří WebAuthn assertion (JSON tělo requestu ve formátu
+	 * PublicKeyCredential.toJSON()), přihlásí identitu a vrátí JSON s redirect URL
+	 * (přes redirectAfterLogin(), který pod AJAXem pošle payload {redirect: ...}).
+	 */
+	public function handlePasskeyLoginVerify(): void
+	{
+		$credential = $this->parsePasskeyCredential();
+
+		try {
+			if ($credential === null) {
+				throw new PasskeyException($this->_translator->translate('fcadmin.passkeys.errors.invalidKey'));
+			}
+
+			$identity = $this->_passkeyService->processLogin(
+				$credential['credentialId'],
+				$credential['clientDataJSON'],
+				$credential['authenticatorData'],
+				$credential['signature'],
+				$credential['userHandle'],
+			);
+
+			// Stejný ACL check jako AuthenticatorTrait::validateIdentity()
+			if (
+				!$identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
+				&&
+				!$identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+			) {
+				throw new PasskeyException($this->_translator->translate('fcadmin.appGeneral.exceptions.noPermission'));
+			}
+
+			$this->_securityUser->login($identity, context: $this->_fancyAdmin->getContext());
+		} catch (PasskeyException $e) {
+			$this->getPresenter()->sendJson(['error' => $e->getMessage()]);
+		}
+
+		$this->redirectAfterLogin();
+	}
+
+	/**
+	 * Načte a dekóduje WebAuthn assertion z JSON těla requestu
+	 * (výstup PublicKeyCredential.toJSON(), binárky base64url).
+	 *
+	 * @return array{credentialId: string, clientDataJSON: string, authenticatorData: string, signature: string, userHandle: ?string}|null
+	 */
+	private function parsePasskeyCredential(): ?array
+	{
+		try {
+			$data = Json::decode((string) $this->getPresenter()->getHttpRequest()->getRawBody(), true);
+		} catch (JsonException) {
+			return null;
+		}
+
+		if (!is_array($data)) {
+			return null;
+		}
+
+		$response = $data['response'] ?? null;
+		if (!is_array($response)) {
+			return null;
+		}
+
+		$credentialId = PasskeyService::base64UrlDecode($data['rawId'] ?? $data['id'] ?? null);
+		$clientDataJSON = PasskeyService::base64UrlDecode($response['clientDataJSON'] ?? null);
+		$authenticatorData = PasskeyService::base64UrlDecode($response['authenticatorData'] ?? null);
+		$signature = PasskeyService::base64UrlDecode($response['signature'] ?? null);
+
+		if ($credentialId === null || $clientDataJSON === null || $authenticatorData === null || $signature === null) {
+			return null;
+		}
+
+		return [
+			'credentialId' => $credentialId,
+			'clientDataJSON' => $clientDataJSON,
+			'authenticatorData' => $authenticatorData,
+			'signature' => $signature,
+			'userHandle' => PasskeyService::base64UrlDecode($response['userHandle'] ?? null),
+		];
 	}
 
 	/**
