@@ -77,6 +77,12 @@ trait IdentityTrait
 	#[LoggableProperty]
 	protected Collection $roles;
 
+	#[ORM\OneToMany(targetEntity: 'Passkey', mappedBy: 'identity')]
+	protected Collection $passkeys;
+
+	#[ORM\Column(type: 'binary', length: 32, nullable: true, options: ['fixed' => true])]
+	protected mixed $passkeyUserHandle = null;
+
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
 	protected ?DateTimeImmutable $anonymizedAt = null;
@@ -92,6 +98,7 @@ trait IdentityTrait
 	{
 		$this->profiles = new ArrayCollection();
 		$this->roles = new ArrayCollection();
+		$this->passkeys = new ArrayCollection();
 	}
 
 	public function getPassword(): ?string
@@ -341,6 +348,32 @@ trait IdentityTrait
 
 	public function getIdentity(): Identity
 	{
+		return $this;
+	}
+
+	/**
+	 * @return Passkey[]
+	 */
+	public function getPasskeys(): array
+	{
+		return $this->passkeys->toArray();
+	}
+
+	public function getPasskeyUserHandle(): ?string
+	{
+		if ($this->passkeyUserHandle === null) {
+			return null;
+		}
+		if (is_resource($this->passkeyUserHandle)) {
+			rewind($this->passkeyUserHandle);
+			return (string) stream_get_contents($this->passkeyUserHandle);
+		}
+		return (string) $this->passkeyUserHandle;
+	}
+
+	public function setPasskeyUserHandle(?string $passkeyUserHandle): static
+	{
+		$this->passkeyUserHandle = $passkeyUserHandle;
 		return $this;
 	}
 }

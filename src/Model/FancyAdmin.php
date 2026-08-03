@@ -29,6 +29,8 @@ class FancyAdmin
 		protected array $jsComponentsConfig = [],
 		protected array $colors = [],
 		protected bool $keycloakEnabled = false,
+		protected ?string $passkeyRpId = null,
+		protected ?string $passkeyRpName = null,
 	) {}
 
 	public function getProject(): string
@@ -170,5 +172,15 @@ class FancyAdmin
 	public function isKeycloakEnabled(): bool
 	{
 		return $this->keycloakEnabled;
+	}
+
+	public function getPasskeyRpId(): ?string
+	{
+		return $this->passkeyRpId;
+	}
+
+	public function getPasskeyRpName(): string
+	{
+		return $this->passkeyRpName ?? $this->projectName;
 	}
 }

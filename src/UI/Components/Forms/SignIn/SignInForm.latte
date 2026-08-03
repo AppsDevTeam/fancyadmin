@@ -3,3 +3,20 @@
 		<span class="d-sm-inline">{_fcadmin.forms.signIn.links.lostPassword}</span>
 	</a>
 {/define}
+
+{define section-passkey}
+	<div
+		class="passkey-login mt-3"
+		data-adt-fancyadmin-passkey-login
+		data-passkey-args-url="{link passkeyLoginArgs!}"
+		data-passkey-verify-url="{link passkeyLoginVerify!}"
+		data-passkey-error-unsupported="{_fcadmin.passkeys.errors.unsupportedBrowser}"
+		data-passkey-error-failed="{_fcadmin.passkeys.errors.loginFailed}"
+	>
+		<button type="button" class="btn btn-primary w-100" data-passkey-login-button>
+			<i class="fa-solid fa-fingerprint" style="margin-right: 20px"></i>
+			{_fcadmin.passkeys.loginButton}
+		</button>
+		<div class="alert alert-danger mt-2 d-none" data-passkey-error></div>
+	</div>
+{/define}

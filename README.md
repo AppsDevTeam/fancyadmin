@@ -1237,6 +1237,227 @@ Pro použití vlastní třídy je potřeba rozšířit `KeycloakManager::createI
 
 ---
 
+## 19. Passkeys (WebAuthn)
+
+Fancyadmin podporuje přihlašování přes passkeys (WebAuthn) postavené na knihovně
+[lbuchs/webauthn](https://github.com/lbuchs/WebAuthn). Passkeys jsou **vždy zapnuté** —
+žádný config flag; passkey je vždy jen alternativa k heslu (žádné passkey-only účty).
+Identity navázané na Keycloak SSO se přes passkey přihlásit ani registrovat klíč nemohou
+(autorita pro SSO účty je Keycloak).
+
+Co uživatel dostane:
+
+- **Login stránka** — tlačítko „Přihlásit se přihlašovacím klíčem" (usernameless login,
+  prohlížeč nabídne uložené discoverable credentials). Tlačítko je jediná cesta —
+  passkey se **nenabízí automaticky** v autofillu email pole (conditional mediation
+  není zapnutá)
+- **Můj účet** — karta „Přihlašovací klíče": přidání klíče (side panel s povinným názvem),
+  smazání, badge pro synchronizované klíče (zálohované u správce passkeys)
+
+### 19.1 Požadavky
+
+- **HTTPS** — WebAuthn funguje jen v secure kontextu (výjimka: `localhost`)
+- **rpId = doména admin hostu** — klíče jsou svázané s doménou; změna domény znamená
+  ztrátu registrovaných klíčů. Default se odvozuje z `adminHostPath`.
+
+### 19.2 NEON konfigurace (volitelné)
+
+```neon
+fancyadmin:
+    # ... ostatní konfigurace ...
+    # Relying Party ID — doména; když není nastaveno, odvodí se host z adminHostPath
+    passkeyRpId: admin.muj-projekt.cz
+    # Relying Party name — zobrazuje se v dialogu autentikátoru; default = projectName
+    passkeyRpName: Můj projekt
+```
+
+### 19.3 Entita Passkey
+
+```php
+// app/Model/Entities/Passkey.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Model\Entities;
+
+use ADT\FancyAdmin\Model\Entities\PasskeyTrait;
+use App\Model\Entities\Abstract\BaseEntity;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+class Passkey extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Passkey
+{
+    use PasskeyTrait;
+}
+```
+
+**PasskeyTrait poskytuje:**
+
+| Sloupec | Typ | Popis |
+|---|---|---|
+| `identity` | Identity (FK, ON DELETE CASCADE) | Vlastník klíče |
+| `name` | VARCHAR(64) | Uživatelský název klíče |
+| `credentialId` | VARBINARY(255), unique | Raw binary credential ID |
+| `publicKey` | TEXT | Veřejný klíč (PEM) |
+| `signCount` | INT UNSIGNED | Signature counter (detekce klonu) |
+| `aaguid` | BINARY(16), nullable | AAGUID autentikátoru |
+| `transports` | JSON, nullable | Transports z prohlížeče |
+| `backupEligible` / `backupState` | BOOL, nullable | Backup flags (synchronizovaný klíč) |
+| `createdAt` | DATETIME | Vytvořeno |
+| `lastUsedAt` | DATETIME, nullable | Poslední přihlášení klíčem |
+
+`IdentityTrait` navíc přidává do tabulky `identity` nullable sloupec `passkey_user_handle`
+(BINARY(32)) — náhodný opaque WebAuthn user handle, generovaný při registraci prvního klíče
+(autentikátoru se nikdy neposílá interní ID identity).
+
+### 19.4 Query + factory
+
+```php
+// app/Model/Queries/PasskeyQuery.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Model\Queries;
+
+use ADT\FancyAdmin\Model\Entities\Account;
+use ADT\FancyAdmin\Model\Queries\PasskeyQueryTrait;
+use App\Model\Entities\Passkey;
+use Doctrine\ORM\QueryBuilder;
+
+/**
+ * @extends Base\BaseQuery<Passkey>
+ */
+class PasskeyQuery extends Base\BaseQuery implements \ADT\FancyAdmin\Model\Queries\PasskeyQuery
+{
+    use PasskeyQueryTrait;
+
+    protected function applySecurityFilter(): void {}
+    protected function applyAccountFilter(QueryBuilder $qb, Account $account): void {}
+}
+```
+
+```php
+// app/Model/Queries/Factories/PasskeyQueryFactory.php
+<?php
+
+namespace App\Model\Queries\Factories;
+
+use App\Model\Queries\PasskeyQuery;
+
+interface PasskeyQueryFactory extends \ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory
+{
+    public function create(): PasskeyQuery;
+}
+```
+
+### 19.5 Form + grid (Account stránka)
+
+```php
+// app/UI/Portal/Components/Forms/Passkey/PasskeyForm.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Forms\Passkey;
+
+use ADT\FancyAdmin\UI\Components\Forms\Passkey\PasskeyFormTrait;
+use App\UI\Portal\Components\Forms\Base\BaseForm;
+
+class PasskeyForm extends BaseForm implements \ADT\FancyAdmin\UI\Components\Forms\Passkey\PasskeyForm
+{
+    use PasskeyFormTrait;
+}
+```
+
+```php
+// app/UI/Portal/Components/Forms/Passkey/PasskeyFormFactory.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Forms\Passkey;
+
+interface PasskeyFormFactory extends \ADT\FancyAdmin\UI\Components\Forms\Passkey\PasskeyFormFactory
+{
+    public function create(): PasskeyForm;
+}
+```
+
+```php
+// app/UI/Portal/Components/Grids/Passkey/PasskeyGrid.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Grids\Passkey;
+
+use ADT\Datagrid\Component\DataGrid;
+use ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGridTrait;
+use App\UI\Portal\Components\Grids\Base\BaseGrid;
+
+class PasskeyGrid extends BaseGrid implements \ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGrid
+{
+    use PasskeyGridTrait {
+        initGrid as initGridTrait;
+    }
+
+    public function initGrid(DataGrid $grid): void
+    {
+        parent::initGrid($grid);
+        $this->initGridTrait($grid);
+    }
+}
+```
+
+```php
+// app/UI/Portal/Components/Grids/Passkey/PasskeyGridFactory.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Grids\Passkey;
+
+interface PasskeyGridFactory extends \ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGridFactory
+{
+    public function create(): PasskeyGrid;
+}
+```
+
+Factory interfaces se registrují automaticky přes stávající `search` sekce v neonu
+(`*Factory.php` v `Model/Queries` a `UI/Portal/Components`).
+
+### 19.6 Migrace
+
+Knihovna **žádnou migraci nedodává** — schéma vlastní projekt:
+
+```bash
+php bin/console migrations:diff
+php bin/console migrations:migrate
+```
+
+Vytvoří tabulku `passkey` a přidá sloupec `identity.passkey_user_handle`.
+
+### 19.7 Jak to funguje (bezpečnostní poznámky)
+
+- Attestation format `none` (standard pro passkeys), `residentKey: required`
+  (discoverable credentials), `userVerification: required`
+- Login je usernameless — prázdné `allowCredentials`, klíč se hledá podle credential ID
+  z assertion (credential-first lookup); `userHandle` se ověřuje proti
+  `identity.passkey_user_handle` přes `hash_equals()`
+- Challenge se drží v Nette session, one-shot (po přečtení se maže), expirace 5 minut,
+  oddělené klíče pro registraci a login
+- Všechny binárky v JSON jsou base64url (`PublicKeyCredential.toJSON()` formát)
+- Signature counter se ověřuje (`lbuchs/webauthn` vyhodí chybu při poklesu — možný klon klíče)
+- Neaktivní identita a SSO identita se klíčem nepřihlásí; po loginu platí stejný ACL check
+  jako u hesla (customer/backoffice resource)
+- Ceremony se spouští jen kliknutím na tlačítko — na server nejde žádný request, dokud
+  uživatel neklikne, takže anonymní návštěvník login stránky nedostane session cookie
+  (challenge se do session zapisuje až v okamžiku ceremony)
+
+---
+
 ## Shrnutí
 
 | Krok | Co | Proč |
@@ -1254,3 +1475,4 @@ Pro použití vlastní třídy je potřeba rozšířit `KeycloakManager::createI
 | Translator | Rozšiřuje Contributte\Translation\Translator | Překlady |
 | RouterFactory | Integruje FancyAdminRouter | Sign routes, portal routes |
 | Portal presentery | BasePresenter + AuthPresenter s fancyadmin traits | Admin layout, auth check, side panel |
+| Passkey glue třídy | Entita Passkey, PasskeyQuery + factory, PasskeyForm + factory, PasskeyGrid + factory | Přihlašování přes passkeys (WebAuthn) — viz sekce 19 |
