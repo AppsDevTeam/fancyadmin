@@ -44,6 +44,19 @@
 					--inputBorder: {$colors['inputBorder']|noescape};
 					--inputFocusBorder: {$colors['inputFocusBorder']|noescape};
 					--inputFocusBackground: {$colors['inputFocusBackground']|noescape};
+					{if !empty($colors['sidePanelItemColor'])}
+						--sidePanelItemColor: {$colors['sidePanelItemColor']|noescape};
+					{/if}
+					{if !empty($colors['textColor'])}
+						--bs-body-color: {$colors['textColor']|noescape};
+						--bs-heading-color: {$colors['textColor']|noescape};
+					{/if}
+					{if !empty($colors['loginPageBackground'])}
+						--loginPageBackground: {$colors['loginPageBackground']|noescape};
+					{/if}
+					{if !empty($colors['loginPageTextColor'])}
+						--loginPageTextColor: {$colors['loginPageTextColor']|noescape};
+					{/if}
 				}
 			</style>
 		{/if}
@@ -52,6 +65,7 @@
 
 <body
 	data-app-body
+	data-project="{$project}"
 	data-adt-js-components="{$jsComponentsConfig}"
 	data-adt-messaging
 	data-adt-translate

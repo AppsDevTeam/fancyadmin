@@ -90,6 +90,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'inputBorder' => Expect::string()->required(),
 				'inputFocusBorder' => Expect::string()->required(),
 				'inputFocusBackground' => Expect::string()->required(),
+				// Nepovinne barvy. Pri null si _sidepanel.scss / _login.scss / layout
+				// drzi puvodni hodnoty, takze existujici projekty se nemeni.
+				'sidePanelItemColor' => Expect::string()->nullable()->default(null),
+				'textColor' => Expect::string()->nullable()->default(null),
+				'loginPageBackground' => Expect::string()->nullable()->default(null),
+				'loginPageTextColor' => Expect::string()->nullable()->default(null),
 			]),
 		]);
 	}
