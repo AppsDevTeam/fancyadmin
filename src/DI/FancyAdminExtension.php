@@ -17,6 +17,7 @@ use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
@@ -64,6 +65,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'keycloakEnabled' => Expect::bool()->default(false),
 			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
 			'keycloakVerifySsl' => Expect::bool()->default(true),
+			'passkeyEnabled' => Expect::bool()->default(false),
 			// WebAuthn Relying Party ID (doména) — když není nastaveno, odvodí se za běhu host z adminHostPath
 			'passkeyRpId' => Expect::string()->nullable()->default(null),
 			// WebAuthn Relying Party name — když není nastaveno, použije se projectName
@@ -126,6 +128,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
 				'keycloakEnabled' => $this->config->keycloakEnabled,
+				'passkeyEnabled' => $this->config->passkeyEnabled,
 				'passkeyRpId' => $this->config->passkeyRpId,
 				'passkeyRpName' => $this->config->passkeyRpName,
 			]);
@@ -178,6 +181,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if ($this->config->keycloakEnabled) {
 			$fancyAdminDef = $builder->getDefinition($this->prefix('administration'));
 			$fancyAdminDef->addSetup('setKeycloakManager', [$this->prefix('@keycloakManager')]);
+		}
+
+		// passkeyEnabled vyžaduje passkey infrastrukturu v projektu — srozumitelná chyba
+		// při kompilaci kontejneru místo kryptické autowiring hlášky za běhu
+		if ($this->config->passkeyEnabled && $builder->getByType(PasskeyQueryFactory::class) === null) {
+			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale v projektu chybí implementace ' . PasskeyQueryFactory::class . '. Vytvořte entitu Passkey, PasskeyQuery, PasskeyQueryFactory, PasskeyForm a PasskeyGrid podle README (sekce 19), nebo passkeys vypněte.');
 		}
 	}
 

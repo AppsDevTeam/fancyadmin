@@ -7,13 +7,13 @@ namespace ADT\FancyAdmin\UI\Presenters\Account;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\ChangePasswordFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
-use ADT\FancyAdmin\DI\Injects\PasskeyFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\DI\Injects\PersonalDataFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyException;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
+use ADT\FancyAdmin\UI\Components\Forms\Passkey\PasskeyFormFactory;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGrid;
@@ -23,6 +23,7 @@ use ADT\FancyAdmin\UI\Components\Grids\Session\SessionGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
+use RuntimeException;
 
 trait AccountPresenterTrait
 {
@@ -32,7 +33,6 @@ trait AccountPresenterTrait
 	use PersonalDataFormFactoryInject;
 	use ChangePasswordFormFactoryInject;
 	use FancyAdminInject;
-	use PasskeyFormFactoryInject;
 	use PasskeyServiceInject;
 	use TranslatorInject;
 
@@ -46,6 +46,7 @@ trait AccountPresenterTrait
 		}
 
 		$this->getTemplate()->identity = $this->_securityUser->getIdentity();
+		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 
@@ -101,15 +102,22 @@ trait AccountPresenterTrait
 		return $factory->create();
 	}
 
-	public function createComponentPasskeyGrid(PasskeyGridFactory $factory): PasskeyGrid
+	// Passkey factories jsou nullable — projekt bez passkey tříd je nemá zaregistrované
+	// a kdyby/autowired validuje parametry všech createComponent* metod už při attachi presenteru
+	public function createComponentPasskeyGrid(?PasskeyGridFactory $factory = null): PasskeyGrid
 	{
+		if ($factory === null) {
+			throw new RuntimeException('V projektu chybí implementace ' . PasskeyGridFactory::class . ' — vytvořte passkey třídy podle README (sekce 19).');
+		}
+
 		return $factory->create();
 	}
 
 	public function handleAddPasskey(): void
 	{
-		// SSO uživatel klíč registrovat nesmí — panel se ani neotevře
+		// Vypnutá featura nebo SSO uživatel — panel se ani neotevře
 		try {
+			$this->_passkeyService->assertEnabled();
 			$this->_passkeyService->assertNotSso($this->_securityUser->getIdentity());
 		} catch (PasskeyException $e) {
 			$this->flashMessageError($e->getMessage());
@@ -171,9 +179,13 @@ trait AccountPresenterTrait
 		$this->getPresenter()->redirect('this');
 	}
 
-	public function createComponentAddPasskeySidePanel(SidePanelControlFactory $factory): SidePanelControl
+	public function createComponentAddPasskeySidePanel(SidePanelControlFactory $factory, ?PasskeyFormFactory $passkeyFormFactory = null): SidePanelControl
 	{
+		if ($passkeyFormFactory === null) {
+			throw new RuntimeException('V projektu chybí implementace ' . PasskeyFormFactory::class . ' — vytvořte passkey třídy podle README (sekce 19).');
+		}
+
 		return $factory->create()
-			->setFormFactory(fn() => $this->_passkeyFormFactory->create());
+			->setFormFactory(fn() => $passkeyFormFactory->create());
 	}
 }

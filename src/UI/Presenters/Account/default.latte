@@ -38,17 +38,19 @@
 	</div>
 </div>
 
-<div class="header mt-4">
-	<h2 class="header-title">
-		{_fcadmin.passkeys.account.title}
-	</h2>
+{if $isPasskeyEnabled}
+	<div class="header mt-4">
+		<h2 class="header-title">
+			{_fcadmin.passkeys.account.title}
+		</h2>
 
-	<div class="header-actions">
-		<a n:href="addPasskey!" class="btn btn-primary ajax">{_fcadmin.passkeys.account.add}</a>
+		<div class="header-actions">
+			<a n:href="addPasskey!" class="btn btn-primary ajax">{_fcadmin.passkeys.account.add}</a>
+		</div>
 	</div>
-</div>
 
-{control passkeyGrid}
+	{control passkeyGrid}
+{/if}
 
 <div class="header mt-4">
 	<h2 class="header-title">
