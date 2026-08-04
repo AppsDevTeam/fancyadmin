@@ -77,9 +77,8 @@ trait IdentityTrait
 	#[LoggableProperty]
 	protected Collection $roles;
 
-	#[ORM\OneToMany(targetEntity: 'Passkey', mappedBy: 'identity')]
-	protected Collection $passkeys;
-
+	// Vazba na passkeys je jen jednosměrná (Passkey ManyToOne identity v PasskeyTrait) —
+	// entita Passkey je v projektu volitelná, Identity na ní nesmí záviset
 	#[ORM\Column(type: 'binary', length: 32, nullable: true, options: ['fixed' => true])]
 	protected mixed $passkeyUserHandle = null;
 
@@ -98,7 +97,6 @@ trait IdentityTrait
 	{
 		$this->profiles = new ArrayCollection();
 		$this->roles = new ArrayCollection();
-		$this->passkeys = new ArrayCollection();
 	}
 
 	public function getPassword(): ?string
@@ -349,14 +347,6 @@ trait IdentityTrait
 	public function getIdentity(): Identity
 	{
 		return $this;
-	}
-
-	/**
-	 * @return Passkey[]
-	 */
-	public function getPasskeys(): array
-	{
-		return $this->passkeys->toArray();
 	}
 
 	public function getPasskeyUserHandle(): ?string

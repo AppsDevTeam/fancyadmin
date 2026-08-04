@@ -1240,10 +1240,18 @@ Pro použití vlastní třídy je potřeba rozšířit `KeycloakManager::createI
 ## 19. Passkeys (WebAuthn)
 
 Fancyadmin podporuje přihlašování přes passkeys (WebAuthn) postavené na knihovně
-[lbuchs/webauthn](https://github.com/lbuchs/WebAuthn). Passkeys jsou **vždy zapnuté** —
-žádný config flag; passkey je vždy jen alternativa k heslu (žádné passkey-only účty).
-Identity navázané na Keycloak SSO se přes passkey přihlásit ani registrovat klíč nemohou
-(autorita pro SSO účty je Keycloak).
+[lbuchs/webauthn](https://github.com/lbuchs/WebAuthn). Passkeys jsou **opt-in** — zapínají
+se configem `passkeyEnabled: true` (default `false`, viz 19.2). Při vypnuté featuře se
+nevykresluje tlačítko na login stránce ani karta v Můj účet a všechny passkey operace
+jsou zablokované i server-side (`PasskeyService::assertEnabled()`). Existující klíče
+v DB při vypnutí zůstávají — po opětovném zapnutí zase fungují. Passkey je vždy jen
+alternativa k heslu (žádné passkey-only účty). Identity navázané na Keycloak SSO se přes
+passkey přihlásit ani registrovat klíč nemohou (autorita pro SSO účty je Keycloak).
+
+Při `passkeyEnabled: false` (default) projekt **nemusí mít žádné passkey třídy** —
+entitu, query, factory, form ani grid (sekce 19.3-19.5). Při `passkeyEnabled: true`
+jsou povinné; extension to zvaliduje při kompilaci DI kontejneru a chybějící
+infrastrukturu ohlásí srozumitelnou chybou.
 
 Co uživatel dostane:
 
@@ -1260,16 +1268,20 @@ Co uživatel dostane:
 - **rpId = doména admin hostu** — klíče jsou svázané s doménou; změna domény znamená
   ztrátu registrovaných klíčů. Default se odvozuje z `adminHostPath`.
 
-### 19.2 NEON konfigurace (volitelné)
+### 19.2 NEON konfigurace
 
 ```neon
 fancyadmin:
     # ... ostatní konfigurace ...
+    # Zapnutí passkeys — bez tohoto flagu je celá featura vypnutá (default: false)
+    passkeyEnabled: true
     # Relying Party ID — doména; když není nastaveno, odvodí se host z adminHostPath
     passkeyRpId: admin.muj-projekt.cz
     # Relying Party name — zobrazuje se v dialogu autentikátoru; default = projectName
     passkeyRpName: Můj projekt
 ```
+
+Povinné je jen `passkeyEnabled` (pro zapnutí), `passkeyRpId` a `passkeyRpName` jsou volitelné.
 
 ### 19.3 Entita Passkey
 

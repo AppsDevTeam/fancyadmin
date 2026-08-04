@@ -16,6 +16,7 @@ use lbuchs\WebAuthn\WebAuthnException;
 use Nette\Http\Session;
 use Nette\Http\SessionSection;
 use Nette\Localization\Translator;
+use RuntimeException;
 use stdClass;
 use Throwable;
 
@@ -39,8 +40,10 @@ class PasskeyService
 		protected EntityManager $em,
 		protected Session $session,
 		protected FancyAdmin $fancyAdmin,
-		protected PasskeyQueryFactory $passkeyQueryFactory,
 		protected Translator $translator,
+		// nullable — passkey infrastruktura (entita, query, factory) je v projektu volitelná,
+		// služba se ale musí dát vytvořit vždy (injectuje se v traitech přes PasskeyServiceInject)
+		protected ?PasskeyQueryFactory $passkeyQueryFactory = null,
 	) {}
 
 	/**
@@ -51,6 +54,7 @@ class PasskeyService
 	 */
 	public function getRegistrationArgs(Identity $identity): stdClass
 	{
+		$this->assertEnabled();
 		$this->assertNotSso($identity);
 
 		// Lazy vygenerování opaque user handle — autentikátoru nikdy neposíláme interní ID identity
@@ -60,7 +64,8 @@ class PasskeyService
 		}
 
 		$excludeCredentialIds = [];
-		foreach ($identity->getPasskeys() as $passkey) {
+		/** @var Passkey $passkey */
+		foreach ($this->getPasskeyQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byIdentity($identity)->fetch() as $passkey) {
 			$excludeCredentialIds[] = $passkey->getCredentialId();
 		}
 
@@ -97,6 +102,7 @@ class PasskeyService
 		?array $transports = null,
 	): Passkey
 	{
+		$this->assertEnabled();
 		$this->assertNotSso($identity);
 
 		$name = $this->normalizeName($name);
@@ -117,7 +123,7 @@ class PasskeyService
 
 		$credentialId = $data->credentialId;
 
-		if ($this->passkeyQueryFactory->create()->disableSecurityFilter()->disableAccountFilter()->byCredentialId($credentialId)->count() > 0) {
+		if ($this->getPasskeyQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byCredentialId($credentialId)->count() > 0) {
 			throw new PasskeyException($this->translator->translate('fcadmin.passkeys.errors.alreadyRegistered'));
 		}
 
@@ -154,6 +160,8 @@ class PasskeyService
 	 */
 	public function getLoginArgs(): stdClass
 	{
+		$this->assertEnabled();
+
 		$webAuthn = $this->createWebAuthn();
 		$args = $webAuthn->getGetArgs(
 			[],
@@ -186,10 +194,12 @@ class PasskeyService
 		?string $userHandle = null,
 	): Identity
 	{
+		$this->assertEnabled();
+
 		$challenge = $this->consumeChallenge(PasskeySessionSection::GET_CHALLENGE);
 
 		/** @var Passkey|null $passkey */
-		$passkey = $this->passkeyQueryFactory->create()
+		$passkey = $this->getPasskeyQueryFactory()->create()
 			->disableSecurityFilter()
 			->disableAccountFilter()
 			->byCredentialId($credentialId)
@@ -237,6 +247,32 @@ class PasskeyService
 		$this->em->flush();
 
 		return $identity;
+	}
+
+	/**
+	 * Server-side vynucení opt-in configu (fancyadmin: passkeyEnabled) —
+	 * musí fungovat i kdyby UI někde zůstalo viditelné.
+	 *
+	 * @throws PasskeyException pokud passkeys nejsou v configu zapnuté
+	 */
+	public function assertEnabled(): void
+	{
+		if (!$this->fancyAdmin->isPasskeyEnabled()) {
+			throw new PasskeyException($this->translator->translate('fcadmin.passkeys.errors.unavailable'));
+		}
+	}
+
+	/**
+	 * @throws RuntimeException pokud projekt nemá zaregistrovanou passkey infrastrukturu —
+	 * chyba konfigurace, ne uživatele (FancyAdminExtension ji při passkeyEnabled hlídá už při kompilaci)
+	 */
+	protected function getPasskeyQueryFactory(): PasskeyQueryFactory
+	{
+		if ($this->passkeyQueryFactory === null) {
+			throw new RuntimeException('V projektu chybí implementace ' . PasskeyQueryFactory::class . ' — vytvořte entitu Passkey, query a factory podle README (sekce 19).');
+		}
+
+		return $this->passkeyQueryFactory;
 	}
 
 	/**

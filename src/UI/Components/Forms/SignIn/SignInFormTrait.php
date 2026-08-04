@@ -55,9 +55,12 @@ trait SignInFormTrait
 		$form->addSubmit('submit', 'fcadmin.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';
 
-		$form->addSection(name: 'passkey');
+		if ($this->_fancyAdmin->isPasskeyEnabled()) {
+			$form->addSection(name: 'passkey');
+		}
 
 		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
+		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
 
 		// Keycloak email check — přidá data atribut pro JS kontrolu
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {

@@ -5,6 +5,7 @@
 {/define}
 
 {define section-passkey}
+	{if $isPasskeyEnabled}
 	<div
 		class="passkey-login mt-3"
 		data-adt-fancyadmin-passkey-login
@@ -19,4 +20,5 @@
 		</button>
 		<div class="alert alert-danger mt-2 d-none" data-passkey-error></div>
 	</div>
+	{/if}
 {/define}
