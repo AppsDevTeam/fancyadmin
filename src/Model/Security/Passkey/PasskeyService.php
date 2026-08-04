@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\Model\Security\Passkey;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Passkey;
+use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use DateTimeImmutable;
@@ -56,6 +57,7 @@ class PasskeyService
 	{
 		$this->assertEnabled();
 		$this->assertNotSso($identity);
+		$identity = $this->assertHasPasskeys($identity);
 
 		// Lazy vygenerování opaque user handle — autentikátoru nikdy neposíláme interní ID identity
 		if ($identity->getPasskeyUserHandle() === null) {
@@ -64,8 +66,7 @@ class PasskeyService
 		}
 
 		$excludeCredentialIds = [];
-		/** @var Passkey $passkey */
-		foreach ($this->getPasskeyQueryFactory()->create()->disableSecurityFilter()->disableAccountFilter()->byIdentity($identity)->fetch() as $passkey) {
+		foreach ($identity->getPasskeys() as $passkey) {
 			$excludeCredentialIds[] = $passkey->getCredentialId();
 		}
 
@@ -209,7 +210,7 @@ class PasskeyService
 			throw new PasskeyException($this->translator->translate('fcadmin.passkeys.errors.unknownKey'));
 		}
 
-		$identity = $passkey->getIdentity();
+		$identity = $this->assertHasPasskeys($passkey->getIdentity());
 
 		if ($userHandle !== null && $userHandle !== '') {
 			$storedHandle = $identity->getPasskeyUserHandle();
@@ -260,6 +261,19 @@ class PasskeyService
 		if (!$this->fancyAdmin->isPasskeyEnabled()) {
 			throw new PasskeyException($this->translator->translate('fcadmin.passkeys.errors.unavailable'));
 		}
+	}
+
+	/**
+	 * @throws RuntimeException pokud entita Identity nepodporuje passkeys —
+	 * chyba konfigurace, ne uživatele
+	 */
+	protected function assertHasPasskeys(Identity $identity): Identity&HasPasskeys
+	{
+		if (!$identity instanceof HasPasskeys) {
+			throw new RuntimeException('Entita ' . $identity::class . ' neimplementuje ' . HasPasskeys::class . ' — přidejte `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19).');
+		}
+
+		return $identity;
 	}
 
 	/**

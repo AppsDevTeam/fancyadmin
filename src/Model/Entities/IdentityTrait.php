@@ -77,11 +77,6 @@ trait IdentityTrait
 	#[LoggableProperty]
 	protected Collection $roles;
 
-	// Vazba na passkeys je jen jednosměrná (Passkey ManyToOne identity v PasskeyTrait) —
-	// entita Passkey je v projektu volitelná, Identity na ní nesmí záviset
-	#[ORM\Column(type: 'binary', length: 32, nullable: true, options: ['fixed' => true])]
-	protected mixed $passkeyUserHandle = null;
-
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
 	protected ?DateTimeImmutable $anonymizedAt = null;
@@ -349,21 +344,4 @@ trait IdentityTrait
 		return $this;
 	}
 
-	public function getPasskeyUserHandle(): ?string
-	{
-		if ($this->passkeyUserHandle === null) {
-			return null;
-		}
-		if (is_resource($this->passkeyUserHandle)) {
-			rewind($this->passkeyUserHandle);
-			return (string) stream_get_contents($this->passkeyUserHandle);
-		}
-		return (string) $this->passkeyUserHandle;
-	}
-
-	public function setPasskeyUserHandle(?string $passkeyUserHandle): static
-	{
-		$this->passkeyUserHandle = $passkeyUserHandle;
-		return $this;
-	}
 }
