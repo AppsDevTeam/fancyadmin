@@ -13,7 +13,9 @@ use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\AclRoleTrait;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Entities\IdentityPasskeysTrait;
 use ADT\FancyAdmin\Model\Entities\IdentityTrait;
+use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
@@ -196,6 +198,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			AclResourceTrait::class => AclResource::class,
 			AclRoleTrait::class => AclRole::class,
 			IdentityTrait::class => Identity::class,
+			IdentityPasskeysTrait::class => HasPasskeys::class,
 			ProfileTrait::class => Profile::class,
 		];
 

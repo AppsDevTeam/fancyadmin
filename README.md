@@ -1249,7 +1249,8 @@ alternativa k heslu (žádné passkey-only účty). Identity navázané na Keycl
 passkey přihlásit ani registrovat klíč nemohou (autorita pro SSO účty je Keycloak).
 
 Při `passkeyEnabled: false` (default) projekt **nemusí mít žádné passkey třídy** —
-entitu, query, factory, form ani grid (sekce 19.3-19.5). Při `passkeyEnabled: true`
+entitu, query, factory, form, grid ani passkey trait v Identity (sekce 19.3-19.5);
+v tabulce `identity` pak není žádný passkey sloupec. Při `passkeyEnabled: true`
 jsou povinné; extension to zvaliduje při kompilaci DI kontejneru a chybějící
 infrastrukturu ohlásí srozumitelnou chybou.
 
@@ -1283,7 +1284,23 @@ fancyadmin:
 
 Povinné je jen `passkeyEnabled` (pro zapnutí), `passkeyRpId` a `passkeyRpName` jsou volitelné.
 
-### 19.3 Entita Passkey
+### 19.3 Entity — Passkey + rozšíření Identity
+
+Entita Identity musí použít `IdentityPasskeysTrait` a implementovat `HasPasskeys`
+(PasskeyService na ten interface spoléhá):
+
+```php
+// app/Model/Entities/Identity.php — přidat k existující entitě
+use ADT\FancyAdmin\Model\Entities\IdentityPasskeysTrait;
+use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
+
+#[ORM\Entity]
+class Identity extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Identity, HasPasskeys /* , ... */
+{
+    use IdentityTrait;
+    use IdentityPasskeysTrait;
+}
+```
 
 ```php
 // app/Model/Entities/Passkey.php
@@ -1319,9 +1336,9 @@ class Passkey extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Passk
 | `createdAt` | DATETIME | Vytvořeno |
 | `lastUsedAt` | DATETIME, nullable | Poslední přihlášení klíčem |
 
-`IdentityTrait` navíc přidává do tabulky `identity` nullable sloupec `passkey_user_handle`
+`IdentityPasskeysTrait` přidává do tabulky `identity` nullable sloupec `passkey_user_handle`
 (BINARY(32)) — náhodný opaque WebAuthn user handle, generovaný při registraci prvního klíče
-(autentikátoru se nikdy neposílá interní ID identity).
+(autentikátoru se nikdy neposílá interní ID identity) — a inverzní vazbu `getPasskeys()`.
 
 ### 19.4 Query + factory
 
