@@ -41,7 +41,7 @@
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			color: $black;
+			color: var(--sidePanelItemColor, #{$black});
 			transition: width .5s ease;
 			text-decoration: none;
 
@@ -124,7 +124,7 @@
 				justify-content: flex-start;
 				flex-direction: row;
 				text-decoration: none;
-				color: $black;
+				color: var(--sidePanelItemColor, #{$black});
 				align-items: center;
 				text-align: left;
 				gap: 10px;
