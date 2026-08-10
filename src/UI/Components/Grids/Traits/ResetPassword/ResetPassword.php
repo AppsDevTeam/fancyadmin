@@ -27,8 +27,14 @@ trait ResetPassword
 			$this['grid']->addAction('newPasswordAgain', 'Nové heslo', 'newPasswordAgain!')
 				->setIcon('lock')
 				->setConfirmation(new StringConfirmation('fcadmin.grids.user.confirms.newPassword'))
+				->setRenderCondition(fn(HasIdentity $hasIdentity) => $this->getCanResetPassword($hasIdentity))
 				->setClass('');	//je potreba, protoze se jinak aplikuje classa btn btn-primary atd. a prida pozadi -> skareda iknka
 		};
+	}
+
+	public function getCanResetPassword(HasIdentity $hasIdentity): bool
+	{
+		return (bool) $hasIdentity->getIdentity()->getEmail();
 	}
 
 	/**
@@ -43,6 +49,11 @@ trait ResetPassword
 		/** @var HasIdentity $hasIdentity */
 		if (!$hasIdentity = $this->createQueryObject()->byId($id)->fetchOneOrNull()) {
 			$this->error();
+		}
+
+		if (!$this->getCanResetPassword($hasIdentity)) {
+			$this->getPresenter()->flashMessageError('fcadmin.grids.user.messages.mailErrorNoEmail');
+			$this->getPresenter()->redirect('this');
 		}
 
 		$identity = $hasIdentity->getIdentity();
