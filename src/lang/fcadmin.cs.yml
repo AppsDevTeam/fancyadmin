@@ -303,6 +303,7 @@ grids:
     messages:
       mailSuccess: E-mail pro nastavení hesla byl odeslán
       mailError: E-mail pro nastavení hesla se nepodařilo odeslat
+      mailErrorNoEmail: Uživatel nemá vyplněný e-mail, výzvu pro nastavení hesla nelze odeslat.
   global:
     isActive:
       label: Aktivní
