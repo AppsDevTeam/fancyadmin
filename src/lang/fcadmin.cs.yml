@@ -88,6 +88,22 @@ presenters:
       requireSpecialChar: Vyžadovat speciální znak
       sessionExpirationMinutes: Expirace session (minuty)
 
+  apiKeys:
+    title: API klíče
+    pageTitle: API klíče
+    header: API klíče
+    messages:
+      created: 'API klíč byl vytvořen, uložte si ho - už ho znovu nezobrazíme:<br><code>%key%</code>'
+    grid:
+      name: Název
+      fingerprint: Otisk klíče
+      account: Účet
+    form:
+      name: Název
+      submit: Uložit
+      errors:
+        nameRequired: Název je povinný
+
   sso:
     title: SSO instance
     pageTitle: SSO instance
