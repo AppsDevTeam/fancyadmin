@@ -1487,6 +1487,234 @@ Vytvoří tabulku `passkey` a přidá sloupec `identity.passkey_user_handle`.
 
 ---
 
+## 20. API klíče (volitelné)
+
+Správa API klíčů pro server-to-server přístup do aplikace. Featura je **opt-in** — pokud
+projekt glue třídy nevytvoří, nic se nikde nezobrazuje a v databázi žádná tabulka nevzniká;
+fancyadmin sám na `ApiKey` nikde nespoléhá.
+
+Co uživatel dostane: stránku s gridem klíčů (název, otisk klíče, účet) a side panelem pro
+vytvoření a editaci. Klíč se generuje při vytvoření záznamu (32 alfanumerických znaků) a
+zobrazí se **jednou** ve flash zprávě — v databázi je uložený jen jeho SHA-256 otisk
+(sloupec `key`), takže z databáze klíč zpětně nezískáte. Editací názvu se klíč nemění,
+kompromitovaný klíč se řeší smazáním a vytvořením nového.
+
+### 20.1 Entita
+
+```php
+// app/Model/Entities/ApiKey.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Model\Entities;
+
+use ADT\FancyAdmin\Model\Entities\ApiKeyTrait;
+use App\Model\Entities\Abstract\BaseEntity;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+class ApiKey extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\ApiKey
+{
+    use ApiKeyTrait;
+}
+```
+
+**ApiKeyTrait poskytuje:**
+
+| Sloupec | Typ | Popis |
+|---|---|---|
+| `name` | VARCHAR(255) | Název klíče |
+| `key` | VARCHAR(255), unique, nullable | SHA-256 otisk klíče |
+| `account` | Account (FK, nullable) | Účet, kterému klíč patří (null = globální klíč) |
+
+Projekt si může přidat vlastní sloupce a traity (`IsActive`, `CreatedAt`, `CreatedBy`, …)
+— trait mapuje jen ta tři pole. Díky poli `account` platí obvyklá pravidla fancyadminu:
+`AccountFieldListener` doplní při persistu vybraný účet a `applySecurityFilter` /
+`applyAccountFilter` omezí grid na účty přihlášené identity.
+
+### 20.2 Query + factory
+
+```php
+// app/Model/Queries/ApiKeyQuery.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Model\Queries;
+
+use ADT\FancyAdmin\Model\Queries\ApiKeyQueryTrait;
+use App\Model\Entities\ApiKey;
+use App\Model\Queries\Filters\DefaultFilters;
+
+/**
+ * @extends Abstract\BaseQuery<ApiKey>
+ */
+class ApiKeyQuery extends Abstract\BaseQuery implements \ADT\FancyAdmin\Model\Queries\ApiKeyQuery
+{
+    use DefaultFilters;
+    use ApiKeyQueryTrait;
+
+    protected function getPrimaryEntityAlias(): ?string
+    {
+        return 'e';
+    }
+}
+```
+
+```php
+// app/Model/Queries/Factories/ApiKeyQueryFactory.php
+<?php
+
+namespace App\Model\Queries\Factories;
+
+use App\Model\Queries\ApiKeyQuery;
+
+interface ApiKeyQueryFactory extends \ADT\FancyAdmin\Model\Queries\Factories\ApiKeyQueryFactory
+{
+    public function create(): ApiKeyQuery;
+}
+```
+
+### 20.3 Form + grid
+
+```php
+// app/UI/Portal/Components/Forms/ApiKey/ApiKeyForm.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Forms\ApiKey;
+
+use ADT\FancyAdmin\UI\Components\Forms\ApiKey\ApiKeyFormTrait;
+use App\UI\Portal\Components\Forms\Base\BaseForm;
+
+class ApiKeyForm extends BaseForm implements \ADT\FancyAdmin\UI\Components\Forms\ApiKey\ApiKeyForm
+{
+    use ApiKeyFormTrait;
+}
+```
+
+```php
+// app/UI/Portal/Components/Forms/ApiKey/ApiKeyFormFactory.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Forms\ApiKey;
+
+interface ApiKeyFormFactory extends \ADT\FancyAdmin\UI\Components\Forms\ApiKey\ApiKeyFormFactory
+{
+    public function create(): ApiKeyForm;
+}
+```
+
+```php
+// app/UI/Portal/Components/Grids/ApiKey/ApiKeyGrid.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Grids\ApiKey;
+
+use ADT\FancyAdmin\UI\Components\Grids\ApiKey\ApiKeyGridTrait;
+use App\UI\Portal\Components\Grids\Base\BaseGrid;
+
+class ApiKeyGrid extends BaseGrid implements \ADT\FancyAdmin\UI\Components\Grids\ApiKey\ApiKeyGrid
+{
+    use ApiKeyGridTrait;
+}
+```
+
+```php
+// app/UI/Portal/Components/Grids/ApiKey/ApiKeyGridFactory.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Grids\ApiKey;
+
+interface ApiKeyGridFactory extends \ADT\FancyAdmin\UI\Components\Grids\ApiKey\ApiKeyGridFactory
+{
+    public function create(): ApiKeyGrid;
+}
+```
+
+Sloupec s účtem se v gridu zobrazuje jen identitám s právem na `fullData` resource,
+ostatní vidí jen klíče svého účtu.
+
+Když má projekt na entitě vlastní sloupce, přepíše `initForm()` a zavolá
+`addApiKeyFields()` (pole klíče bez submitu), aby submit zůstal poslední:
+
+```php
+public function initForm(Form $form): void
+{
+    $this->addApiKeyFields($form);
+
+    $form->addCheckbox('isAdmin', 'app.forms.apiKey.labels.isAdmin');
+
+    $form->addSubmit('submit', 'app.forms.apiKey.labels.submit');
+}
+```
+
+Grid se rozšiřuje obvyklým aliasem traitu (`ApiKeyGridTrait::initGrid as traitInitGrid`).
+
+### 20.4 Presenter
+
+```php
+// app/UI/Portal/Backoffice/Presenters/ApiKeys/ApiKeysPresenter.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Backoffice\Presenters\ApiKeys;
+
+use ADT\FancyAdmin\UI\Presenters\ApiKeys\ApiKeysPresenterTrait;
+use App\UI\Portal\Presenters\AuthPresenter;
+
+class ApiKeysPresenter extends AuthPresenter
+{
+    use ApiKeysPresenterTrait;
+}
+```
+
+Stejný presenter lze vytvořit i v zákaznické části (`Customer`), pak si každý účet spravuje
+vlastní klíče. Nezapomeňte na ACL resource (`portalBackoffice.apiKeys`, resp.
+`portalCustomer.apiKeys`) a položku v `NavbarMenuFactory`.
+
+### 20.5 Migrace
+
+Knihovna žádnou migraci nedodává — schéma vlastní projekt:
+
+```bash
+php bin/console migrations:diff
+php bin/console migrations:migrate
+```
+
+Vytvoří tabulku `api_key`.
+
+### 20.6 Ověření klíče
+
+Klíč přijatý v požadavku se ověřuje přes query object, hashování řeší `ApiKeyQueryTrait`:
+
+```php
+$apiKey = $this->apiKeyQueryFactory->create()
+    ->disableSecurityFilter()
+    ->disableAccountFilter()
+    ->byRawKey($rawKeyZHlavicky)
+    ->fetchOneOrNull();
+```
+
+Hash se dá spočítat i přímo — `ADT\FancyAdmin\Model\Security\ApiKeyHasher::hash($rawKey)`,
+generování nového klíče `ApiKeyHasher::generateRawKey()`.
+
+Pokud projekt migruje ze starších klíčů uložených jiným způsobem (např. `password_hash`
+ve vlastním sloupci `hash`), může si sloupec `hash` v entitě nechat a při prvním úspěšném
+ověření dopsat do `key` hodnotu `ApiKeyHasher::hash($rawKey)` — od té chvíle stačí
+`byRawKey()` a starý sloupec lze časem zrušit.
+
+---
+
 ## Shrnutí
 
 | Krok | Co | Proč |
@@ -1505,3 +1733,4 @@ Vytvoří tabulku `passkey` a přidá sloupec `identity.passkey_user_handle`.
 | RouterFactory | Integruje FancyAdminRouter | Sign routes, portal routes |
 | Portal presentery | BasePresenter + AuthPresenter s fancyadmin traits | Admin layout, auth check, side panel |
 | Passkey glue třídy | Entita Passkey, PasskeyQuery + factory, PasskeyForm + factory, PasskeyGrid + factory | Přihlašování přes passkeys (WebAuthn) — viz sekce 19 |
+| ApiKey glue třídy | Entita ApiKey, ApiKeyQuery + factory, ApiKeyForm + factory, ApiKeyGrid + factory, ApiKeysPresenter | Správa API klíčů pro server-to-server přístup — viz sekce 20 |

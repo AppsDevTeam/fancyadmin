@@ -1,0 +1,12 @@
+{define title}{_fcadmin.presenters.apiKeys.title}{/define}
+
+{block content}
+
+<div class="header">
+	<h1 class="header-title">{_fcadmin.presenters.apiKeys.pageTitle}</h1>
+	<div class="header-actions">
+		<a class="btn btn-primary ajax" n:href="new!">{_fcadmin.global.buttons.new}</a>
+	</div>
+</div>
+
+{control apiKeyGrid}
