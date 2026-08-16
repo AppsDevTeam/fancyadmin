@@ -23,6 +23,7 @@ use Nette\Security\AuthenticationException;
 use App\Model\Entities\Enums\AclResourceNameEnum;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
 
 trait AuthPresenterTrait
 {
@@ -33,6 +34,8 @@ trait AuthPresenterTrait
 	use FancyAdminInject;
 	use AuthenticatorInject;
 	use SecurityUserInject;
+
+	const string SIGNAL_METHOD_PREFIX = 'handle';
 
 	#[Persistent]
 	public ?int $selectedAccount = null;
@@ -113,32 +116,43 @@ trait AuthPresenterTrait
 				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
 			}
 
-			if (!$this->validateSecurityAttributes()) {
+			if (!$this->validateSecurityAttributes($element)) {
 				$this->validatePresenterPermission();
 			}
 		}
 	}
 
 	/**
+	 *
+	 * @param ReflectionClass|ReflectionMethod $element
 	 * @throws ReflectionException
+	 * @throws ForbiddenRequestException
+	 * @return bool Whether a SecurityCheckAttribute was found and processed on the action method
+	 */
+	private function validateSecurityAttributes(ReflectionClass|ReflectionMethod $element): bool
+	{
+		$reflection = new ReflectionClass($this->getPresenter()::class);
+		$found = $this->validateSecurityAttributesOfMethod($reflection->getMethod(static::ActionKey . ucfirst($this->getAction())));
+
+		if ($element instanceof ReflectionMethod && str_starts_with($element->getName(), self::SIGNAL_METHOD_PREFIX)) {
+			$this->validateSecurityAttributesOfMethod($element);
+		}
+
+		return $found;
+	}
+
+	/**
 	 * @throws ForbiddenRequestException
 	 * @return bool Whether a SecurityCheckAttribute was found and processed
 	 */
-	private function validateSecurityAttributes(): bool
+	private function validateSecurityAttributesOfMethod(ReflectionMethod $reflectionMethod): bool
 	{
-		$reflection = new ReflectionClass($this->getPresenter()::class);
-		$reflectionMethod = $reflection->getMethod(static::ActionKey . ucfirst($this->getAction()));
-
 		$found = false;
-		foreach ($reflectionMethod->getAttributes() as $attribute) {
-			if ($attribute->getName() === SecurityCheckAttribute::class) {
-				$found = true;
-				$attributeInstance = $attribute->newInstance();
-				$aclResourceName = $attributeInstance->getResourceName();
+		foreach ($reflectionMethod->getAttributes(SecurityCheckAttribute::class) as $attribute) {
+			$found = true;
 
-				if (!$this->getUser()->isAllowed($aclResourceName)) {
-					throw new ForbiddenRequestException();
-				}
+			if (!$this->getUser()->isAllowed($attribute->newInstance()->getResourceName())) {
+				throw new ForbiddenRequestException();
 			}
 		}
 
