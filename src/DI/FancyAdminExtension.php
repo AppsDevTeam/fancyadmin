@@ -27,11 +27,13 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
+use ADT\Forms\Controls\PasswordRevealInput;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Config\Loader;
 use Nette\DI\Definitions\Statement;
 use Nette\Loaders\RobotLoader;
+use Nette\PhpGenerator\ClassType;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
 use Nette\Schema\Schema;
@@ -196,6 +198,14 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if ($this->config->passkeyEnabled && $builder->getByType(PasskeyQueryFactory::class) === null) {
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale v projektu chybí implementace ' . PasskeyQueryFactory::class . '. Vytvořte entitu Passkey, PasskeyQuery, PasskeyQueryFactory, PasskeyForm a PasskeyGrid podle README (sekce 19), nebo passkeys vypněte.');
 		}
+	}
+
+	public function afterCompile(ClassType $class): void
+	{
+		// Formuláře fancyadminu používají $form->addPasswordReveal(), což je extension
+		// method - musí se zaregistrovat za běhu, jinak by ji každý projekt musel
+		// registrovat sám ve svém Bootstrapu.
+		$this->getInitialization()->addBody(PasswordRevealInput::class . '::register();');
 	}
 
 	private function validateTraitInterfaceCompliance(): void

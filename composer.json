@@ -9,6 +9,7 @@
     "adt/ajax-select": "^4.0",
     "contributte/translation": "^2.0",
     "adt/doctrine-forms": "^2.0",
+    "adt/nette-forms-components": "^2.5",
     "adt/doctrine-authenticator": "^2.5",
     "nettrine/extensions-atlantic18": "^0.7.1",
     "adt/utils": "^2.0",

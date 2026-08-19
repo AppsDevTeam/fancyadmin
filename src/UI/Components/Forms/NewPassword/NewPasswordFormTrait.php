@@ -50,12 +50,14 @@ trait NewPasswordFormTrait
 //				->setHtmlAttribute('placeholder', 'Telefon') // TODO translate
 //				->setRequired();
 
-			$form->addPassword('password')
+			// renderValue: false - formular je navazany na Identity, jinak by se do HTML
+			// vypsala hodnota sloupce s heslem, tedy jeho hash
+			$form->addPasswordReveal('password', false)
 				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.password')
 				->setRequired('fcadmin.forms.newPassword.errors.required')
 				->addRule($form::MinLength, 'fcadmin.forms.newPassword.errors.minLength', 8);
 
-			$form->addPassword('passwordRepeat')
+			$form->addPasswordReveal('passwordRepeat', false)
 				->setHtmlAttribute('placeholder', 'fcadmin.forms.newPassword.labels.passwordAgain')
 				->setRequired('fcadmin.forms.newPassword.errors.required');
 		}, 'inputsWrap');

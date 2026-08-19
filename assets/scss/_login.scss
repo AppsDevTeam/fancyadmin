@@ -136,6 +136,46 @@
 		}
 	}
 
+	// Odkrytí hesla (PasswordRevealInput): tlačítko sedí uvnitř inputu, aby si
+	// pilulkový login input udržel tvar. Pozicuje se od vršku inputu, ne od spodku
+	// .input-group - ta roste o chybovou hlášku a ikona by se posunula dolů.
+	.input-group:has(> .toggle-password-input) {
+		position: relative;
+
+		> .toggle-password-input {
+			padding-right: calc(2 * #{$padding-input} + 20px);
+			border-radius: $br-container !important;
+
+			// posunutí bootstrapové ikony validace před ikonu odkrytí
+			&.is-invalid {
+				padding-right: calc(3 * #{$padding-input} + 20px + 1.5em);
+				background-position: right calc(2 * #{$padding-input} + 20px) center;
+			}
+		}
+
+		> .toggle-password-reveal {
+			position: absolute;
+			top: $padding-input;
+			right: $padding-input;
+			z-index: 5;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 20px;
+			height: 1.5em;
+			padding: 0;
+			background: none;
+			border: none;
+			color: var(--loginInputTextColor);
+			opacity: .5;
+
+			&:hover,
+			&:focus-visible {
+				opacity: 1;
+			}
+		}
+	}
+
 	.linkInForm {
 		color: var(--loginPageTextColor, #{$tertiary-text});
 	}
