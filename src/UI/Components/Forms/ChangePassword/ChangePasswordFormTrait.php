@@ -24,14 +24,16 @@ trait ChangePasswordFormTrait
 
 	public function initForm(Form $form): void
 	{
-		$form->addPassword('currentPassword', 'fcadmin.forms.changePassword.labels.currentPassword')
+		// renderValue: false - formular je navazany na Identity, jinak by se do HTML
+		// vypsala hodnota sloupce s heslem, tedy jeho hash
+		$form->addPasswordReveal('currentPassword', false, 'fcadmin.forms.changePassword.labels.currentPassword')
 			->setRequired('fcadmin.forms.changePassword.errors.required');
 
-		$form->addPassword('password', 'fcadmin.forms.changePassword.labels.password')
+		$form->addPasswordReveal('password', false, 'fcadmin.forms.changePassword.labels.password')
 			->setRequired('fcadmin.forms.changePassword.errors.required')
 			->addRule($form::MinLength, 'fcadmin.forms.newPassword.errors.minLength', 8);
 
-		$form->addPassword('passwordRepeat', 'fcadmin.forms.changePassword.labels.passwordRepeat')
+		$form->addPasswordReveal('passwordRepeat', false, 'fcadmin.forms.changePassword.labels.passwordRepeat')
 			->setRequired('fcadmin.forms.changePassword.errors.required');
 
 		$form->addSubmit('submit', 'fcadmin.forms.changePassword.labels.submit');
