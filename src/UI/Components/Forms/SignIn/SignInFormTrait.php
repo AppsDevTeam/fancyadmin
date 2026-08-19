@@ -44,7 +44,8 @@ trait SignInFormTrait
 				->setHtmlAttribute('autocomplete', 'username')
 				->setRequired('fcadmin.forms.signIn.errors.emailRequired');
 
-			$form->addPassword('password')
+			// renderValue: false - heslo se tu jen zadava, do HTML nema co vypisovat
+			$form->addPasswordReveal('password', false)
 				->setHtmlAttribute('id', 'login-form-input-password')
 				->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.password')
 				->setRequired('fcadmin.forms.signIn.errors.passwordRequired');
