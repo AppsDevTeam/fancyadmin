@@ -14,10 +14,11 @@ Návod na integraci na straně projektu je v [README.md](../README.md), sekce **
 4. [Flow: Přihlášení](#4-flow-přihlášení)
 5. [Flow: Odhlášení](#5-flow-odhlášení)
 6. [Flow: Backchannel logout](#6-flow-backchannel-logout)
-7. [Flow: Změna hesla](#7-flow-změna-hesla)
+7. [Flow: Application-Initiated Actions (změna hesla, správa 2FA klíčů)](#7-flow-application-initiated-actions-změna-hesla-správa-2fa-klíčů)
 8. [Frontend — správa session v prohlížeči](#8-frontend--správa-session-v-prohlížeči)
 9. [Admin API — správa uživatelů](#9-admin-api--správa-uživatelů)
 10. [Bezpečnostní mechanismy](#10-bezpečnostní-mechanismy)
+11. [Dvoufázové ověření WebAuthn klíčem](#11-dvoufázové-ověření-webauthn-klíčem)
 
 ---
 
@@ -29,7 +30,7 @@ Návod na integraci na straně projektu je v [README.md](../README.md), sekce **
 | **Authorization Code Flow s PKCE a `prompt=none`** | Silent SSO check (ověření existující KC session bez interakce) | confidential |
 | **Client Credentials Grant** | Získání admin tokenu pro Admin API | confidential (service account) |
 | **OIDC Backchannel Logout** | Invalidace aplikační session při odhlášení v KC | confidential |
-| **Application-Initiated Action (`kc_action=UPDATE_PASSWORD`)** | Změna hesla uživatele v KC z aplikace | confidential |
+| **Application-Initiated Action (`kc_action`)** | Změna hesla (`UPDATE_PASSWORD`), registrace WebAuthn klíče (`webauthn-register`), odebrání credentialu (`delete_credential:{id}`) | confidential |
 | **check-sso + silent iframe (keycloak-js, PKCE S256)** | Frontend monitoring KC session, token refresh | public |
 
 Aplikace **nepoužívá**: Implicit Flow, Direct Access Grants (ROPC), offline tokeny. Implementace odpovídá požadavkům OAuth 2.1 (PKCE u všech autorizačních requestů, `state` jako CSRF ochrana, exact redirect URI matching, žádný ROPC).
@@ -51,6 +52,8 @@ Aplikace **nepoužívá**: Implicit Flow, Direct Access Grants (ROPC), offline t
 | `/admin/realms/{realm}/users/{id}` | PUT | Aktualizace údajů / enable / disable |
 | `/admin/realms/{realm}/users/{id}/reset-password` | PUT | Nastavení hesla |
 | `/admin/realms/{realm}/users/{id}/execute-actions-email` | PUT | Odeslání emailu pro reset hesla (`UPDATE_PASSWORD`) |
+| `/admin/realms/{realm}/users/{id}/credentials` | GET | Metadata credentialů uživatele (typ, label, datum vytvoření) — pro zobrazení stavu 2FA |
+| `/admin/realms/{realm}/users/{id}/credentials/{credentialId}` | DELETE | Odebrání credentialu administrátorem (uživatel si klíč odebírá přes AIA, ne tudy) |
 
 Všechna Admin API volání jsou autentizována Bearer tokenem získaným přes client_credentials grant. Timeout HTTP klienta je 5 s.
 
@@ -162,14 +165,24 @@ Při ukončení KC session z jakéhokoli důvodu (odhlášení z jiné aplikace,
 5. Najde lokální identitu podle emailu a **invaliduje všechny její aplikační sessions**
 6. Odpoví `200 OK` (chybové stavy: `400` při chybějícím/nevalidním tokenu nebo neznámé instanci)
 
-## 7. Flow: Změna hesla
+## 7. Flow: Application-Initiated Actions (změna hesla, správa 2FA klíčů)
 
-Aplikace nikdy nezpracovává staré ani nové heslo — vše probíhá v KC:
+Aplikace nikdy nezpracovává hesla ani WebAuthn credentials — vše probíhá v KC. Použité akce:
 
-1. Aplikace přesměruje uživatele na autorizační endpoint s `kc_action=UPDATE_PASSWORD`
-2. KC si vyžádá re-autentizaci současným heslem, ohlídá password policy a 2FA
-3. Po změně KC přesměruje zpět na `/keycloak-auth/callback` s `kc_action_status=success`
-4. Aplikace propíše success stav do návratové URL (parametr `kcActionSuccess=1`)
+| `kc_action` | Účel |
+|---|---|
+| `UPDATE_PASSWORD` | Změna hesla |
+| `webauthn-register` | Registrace WebAuthn klíče jako druhého faktoru |
+| `delete_credential:{credentialId}` | Odebrání credentialu uživatelem |
+
+Průběh je u všech stejný:
+
+1. Aplikace přesměruje uživatele na autorizační endpoint s příslušným `kc_action`
+2. KC si vyžádá re-autentizaci a akci provede — u změny hesla ohlídá password policy, u registrace klíče WebAuthn policy, u odebrání credentialu zobrazí potvrzení a ověří úroveň autentizace (LoA)
+3. Po dokončení KC přesměruje zpět na `/keycloak-auth/callback` s `kc_action_status` (`success`, `cancelled` nebo `error`)
+4. Aplikace uloží výsledek do serverové session a cílová stránka si ho vyzvedne jednorázově (`Keycloak::consumeActionResult()`). Název akce se drží v session u autorizačního `state` — `kc_action_status` od KC totiž neříká, o kterou akci šlo. **Výsledek se do URL nepropisuje záměrně:** jinak by šlo podvrženým odkazem zobrazit uživateli cizí bezpečnostní hlášku typu „klíč byl odebrán"
+
+Odebrání credentialu se **záměrně neřeší přes Admin API** (`DELETE /users/{id}/credentials/{id}`) — tudy by druhý faktor zmizel bez jakéhokoli ověření uživatele a při zapnuté step-up autentizaci volání navíc končí na `403 No LoA on the token`. Admin API cesta je vyhrazená pro administrátora, když uživatel klíč ztratil a nemůže se přihlásit.
 
 Alternativně reset hesla emailem: aplikace zavolá Admin API `execute-actions-email` s akcí `UPDATE_PASSWORD` — email s odkazem posílá **Keycloak** (vyžaduje nakonfigurované SMTP v realmu).
 
@@ -194,8 +207,12 @@ Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle 
 - enable/disable uživatele
 - nastavení hesla
 - odeslání reset-password emailu
+- čtení metadat credentialů (typ, label, datum vytvoření) — pro zobrazení stavu 2FA
+- odebrání credentialu administrátorem
 
 **Vyžadovaná oprávnění service accountu: pouze `manage-users`** z klienta `realm-management`. Aplikace nepotřebuje žádná realm-admin ani jiná oprávnění.
+
+Z credentialů se čtou pouze metadata — `credentialData` ani `secretData` aplikace nikdy nezpracovává.
 
 ## 10. Bezpečnostní mechanismy
 
@@ -208,3 +225,39 @@ Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle 
 - **Ochrana proti open redirectu** — návratové URL pochází výhradně ze serverové session (generované aplikací); post-logout `state` se navíc validuje na shodu hostu s aplikací
 - **Backchannel logout** — `logout_token` se plně validuje podle OIDC spec (podpis proti JWKS, iss, aud, events, replay ochrana přes jti); identita uživatele se navíc ověřuje zpětným dotazem na KC Admin API (`sub` → uživatel → email)
 - **Žádné ukládání tokenů v DB** — `id_token` je pouze v serverové session (pro logout), access/refresh tokeny backend nedrží
+- **Druhý faktor plně v KC** — WebAuthn ceremonie i credentials jsou na straně Keycloaku; aplikace klíče nevidí, neukládá a nemaže je přes Admin API bez ověření uživatele (viz sekce 7 a 11)
+
+---
+
+## 11. Dvoufázové ověření WebAuthn klíčem
+
+Volitelný druhý faktor pro SSO uživatele. Kdo si klíč nezaregistruje, přihlašuje se dál jen heslem — o volitelnost se stará conditional subflow v KC, ne aplikace.
+
+### Konfigurace realmu
+
+| Kde | Nastavení |
+|---|---|
+| Authentication → Policies → **WebAuthn Policy** | `Relying Party ID` = doména KC serveru (bez schématu a portu), `Require Resident Key` = `No`, `User Verification` = `preferred`, `Signature Algorithms` = `ES256` (+`RS256`) |
+| Authentication → Flows | kopie `browser` flow, do subflow `browser forms` za `Username Password Form` přidat **conditional subflow** s `Condition - user configured` + `WebAuthn Authenticator` (Required) |
+| Clients → confidential client → Advanced | `Authentication flow overrides → Browser Flow` = nový flow (omezí 2FA jen na tuto aplikaci) |
+| Authentication → Required Actions | `Webauthn Register`: `Enabled` = On, `Set as default action` = **Off** (jinak 2FA přestane být volitelná); `Delete Credential`: `Enabled` = On |
+
+Provozní poznámky:
+
+- **`Relying Party ID` nelze později změnit** bez zneplatnění všech registrovaných klíčů. KC musí běžet na HTTPS (nebo `localhost`) — WebAuthn v nezabezpečeném kontextu nefunguje.
+- **Ztráta klíče = zablokovaný účet.** Doporučuje se povolit `Recovery Authentication Codes`, nebo dát `OTP Form` do conditional subflow jako *Alternative*. Bez záložního faktoru musí klíč odebrat administrátor (`Keycloak::deleteUserCredential()`).
+- Silent SSO (`prompt=none`) i backchannel logout fungují bez změny — druhý faktor se řeší jen při vytváření KC session.
+- CSP aplikace se nemění: WebAuthn ceremonie běží na doméně KC, ne na doméně aplikace.
+
+### Co dělá aplikace
+
+Aplikace jen skládá AIA URL a zobrazuje metadata z Admin API:
+
+| Metoda | Účel |
+|---|---|
+| `getRegisterWebAuthnUrl()` | Redirect na registraci klíče (`kc_action=webauthn-register`) |
+| `getWebAuthnCredentials()` / `getUserCredentials()` | Metadata klíčů pro zobrazení stavu 2FA (`GET /users/{id}/credentials`) |
+| `getDeleteCredentialUrl()` | Redirect na odebrání klíče uživatelem (`kc_action=delete_credential:{id}`) |
+| `deleteUserCredential()` | Odebrání klíče administrátorem přes Admin API (ztracený klíč) |
+
+UI pro uživatele je v `AccountPresenterTrait` (sekce „Dvoufázové ověření" na stránce Můj profil). Projekt nepotřebuje žádnou migraci, entitu ani další glue třídy — v databázi aplikace se o klíčích neukládá nic.

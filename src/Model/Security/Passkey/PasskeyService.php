@@ -319,9 +319,21 @@ class PasskeyService
 			return $rpId;
 		}
 
-		$host = (string) preg_replace('~^https?://~', '', $this->fancyAdmin->getAdminHostPath());
-		$host = explode('/', $host)[0];
-		return explode(':', $host)[0];
+		return self::deriveRpId($this->fancyAdmin->getAdminHostPath());
+	}
+
+	/**
+	 * Odvodí rpId z admin host path — zahodí schéma, cestu i port.
+	 * Vrací prázdný string, když se odvodit nedá.
+	 *
+	 * Statické, aby stejnou logiku mohla použít i kontrola konfigurace při kompilaci
+	 * kontejneru (FancyAdminExtension) — chybějící rpId se tak pozná dřív než za běhu.
+	 */
+	public static function deriveRpId(?string $adminHostPath): string
+	{
+		$host = (string) preg_replace('~^https?://~', '', (string) $adminHostPath);
+
+		return explode(':', explode('/', $host)[0])[0];
 	}
 
 	public function getRpName(): string

@@ -394,6 +394,28 @@ passkeys:
     loginFailed: Prihlásenie prihlasovacím kľúčom sa nepodarilo. Skúste to prosím znovu.
     registrationFailed: Prihlasovací kľúč sa nepodarilo vytvoriť. Skúste to prosím znovu.
 
+twoFactor:
+  account:
+    title: Dvojfázové overenie
+    enable: Zapnúť dvojfázové overenie
+    addKey: Pridať bezpečnostný kľúč
+    disabledInfo: Dvojfázové overenie nie je zapnuté. Po jeho zapnutí budete okrem hesla pri prihlásení potvrdzovať identitu bezpečnostným kľúčom.
+    stateUnknownInfo: Stav dvojfázového overenia sa nepodarilo zistiť. Skúste stránku načítať znovu neskôr.
+  grid:
+    name: Názov kľúča
+    createdAt: Zaregistrované
+    unnamedKey: Bezpečnostný kľúč
+    delete: Odobrať
+  messages:
+    keyAdded: Bezpečnostný kľúč bol zaregistrovaný.
+    keyRemoved: Bezpečnostný kľúč bol odobraný.
+    actionCompleted: Akcia bola dokončená.
+  errors:
+    unavailable: Dvojfázové overenie nie je pre tento účet dostupné.
+    unknownKey: Neplatný alebo neznámy bezpečnostný kľúč.
+    stateUnknown: Stav dvojfázového overenia sa nepodarilo zistiť. Skúste to prosím znovu neskôr.
+    actionFailed: Akciu sa nepodarilo dokončiť. Skúste to prosím znovu.
+
 modules:
   web:
     navbar:

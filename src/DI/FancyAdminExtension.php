@@ -198,6 +198,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if ($this->config->passkeyEnabled && $builder->getByType(PasskeyQueryFactory::class) === null) {
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale v projektu chybí implementace ' . PasskeyQueryFactory::class . '. Vytvořte entitu Passkey, PasskeyQuery, PasskeyQueryFactory, PasskeyForm a PasskeyGrid podle README (sekce 19), nebo passkeys vypněte.');
 		}
+
+		// Bez známého rpId by WebAuthn ceremonie selhala až za běhu obecnou hláškou
+		// "přihlašovací klíče nejsou dostupné". Pozdější změna rpId navíc zneplatní všechny
+		// už registrované klíče, takže se vyplatí ho mít explicitně v konfiguraci.
+		if ($this->config->passkeyEnabled
+			&& ($this->config->passkeyRpId ?: PasskeyService::deriveRpId($this->config->adminHostPath)) === ''
+		) {
+			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale WebAuthn Relying Party ID není známé. Nastavte passkeyRpId na doménu adminu (bez schématu, cesty a portu), nebo doplňte adminHostPath. Pozor: pozdější změna rpId zneplatní všechny už registrované klíče.');
+		}
 	}
 
 	public function afterCompile(ClassType $class): void

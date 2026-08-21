@@ -20,9 +20,13 @@ class KeycloakSessionSection
 	// Po explicitním odhlášení potlačí jeden následující automatický silent SSO pokus,
 	// aby uživatele hned znovu nepřihlásilo (a nešlo se odhlásit)
 	const string SSO_SUPPRESS_SILENT       = 'ssoSuppressSilent';
-	// Rozpracované autorizační requesty: state (CSRF token) => [verifier, backRedirect, instance, time].
+	// Rozpracované autorizační requesty: state (CSRF token) => [verifier, backRedirect, instance, action, time].
 	// State se v callbacku ověřuje proti session (one-time use), verifier je PKCE code_verifier.
 	const string AUTH_STATES               = 'authStates';
+	// Výsledek dokončené Application-Initiated Action: [action, status].
+	// Drží se v session (ne v URL), aby nešlo podvrženým odkazem zobrazit cizí bezpečnostní
+	// hlášku typu "klíč byl odebrán". Čte se jednorázově přes Keycloak::consumeActionResult().
+	const string ACTION_RESULT             = 'actionResult';
 
 
 	public function getSessionKeys(): array
@@ -37,6 +41,7 @@ class KeycloakSessionSection
 			self::SSO_SILENT_TRIED,
 			self::SSO_SUPPRESS_SILENT,
 			self::AUTH_STATES,
+			self::ACTION_RESULT,
 		];
 	}
 

@@ -396,6 +396,28 @@ passkeys:
     loginFailed: Přihlášení přihlašovacím klíčem se nezdařilo. Zkuste to prosím znovu.
     registrationFailed: Přihlašovací klíč se nepodařilo vytvořit. Zkuste to prosím znovu.
 
+twoFactor:
+  account:
+    title: Dvoufázové ověření
+    enable: Zapnout dvoufázové ověření
+    addKey: Přidat bezpečnostní klíč
+    disabledInfo: Dvoufázové ověření není zapnuté. Po jeho zapnutí budete kromě hesla při přihlášení potvrzovat identitu bezpečnostním klíčem.
+    stateUnknownInfo: Stav dvoufázového ověření se nepodařilo zjistit. Zkuste stránku načíst znovu později.
+  grid:
+    name: Název klíče
+    createdAt: Zaregistrováno
+    unnamedKey: Bezpečnostní klíč
+    delete: Odebrat
+  messages:
+    keyAdded: Bezpečnostní klíč byl zaregistrován.
+    keyRemoved: Bezpečnostní klíč byl odebrán.
+    actionCompleted: Akce byla dokončena.
+  errors:
+    unavailable: Dvoufázové ověření není pro tento účet dostupné.
+    unknownKey: Neplatný nebo neznámý bezpečnostní klíč.
+    stateUnknown: Stav dvoufázového ověření se nepodařilo zjistit. Zkuste to prosím znovu později.
+    actionFailed: Akci se nepodařilo dokončit. Zkuste to prosím znovu.
+
 modules:
   web:
     navbar:
