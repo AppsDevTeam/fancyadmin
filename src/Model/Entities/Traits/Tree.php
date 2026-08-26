@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities\Traits;
 
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -11,6 +12,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
 
 trait Tree
 {
+	#[LoggableProperty]
 	#[Gedmo\SortableGroup]
 	#[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'children')]
 	#[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
