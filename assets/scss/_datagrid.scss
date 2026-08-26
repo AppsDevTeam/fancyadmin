@@ -426,3 +426,156 @@ form:has(> .table-responsive-wrapper) {
 .datagrid table tbody tr:has(+ tr.row-item-detail) {
 	cursor: pointer;
 }
+
+.datagrid .hidden {
+	display: none !important;
+}
+
+.datagrid .datagrid-tree > .datagrid-tree-header .datagrid-tree-item-right-actions-action {
+	opacity: 0;
+}
+
+.datagrid .datagrid-tree {
+	padding-left: 12px;
+}
+
+.datagrid .datagrid-tree > .datagrid-tree-item {
+	margin-left: 20px;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item {
+	position: relative;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item.ui-sortable-placeholder {
+	visibility: visible !important;
+	background-color: rgba(70, 83, 93, 0.1);
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	box-sizing: border-box;
+	height: 37px;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-left,
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-left {
+	order: 1;
+	justify-content: flex-start;
+	white-space: nowrap;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-left > .chevron {
+	width: 22px;
+	height: 22px;
+	line-height: 20px;
+	vertical-align: middle;
+	display: inline-block;
+	text-align: center;
+	position: relative;
+	margin: 0 5px 0 -27px;
+	transition: transform 0.2s ease-in-out;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-left > .chevron.toggle-rotate {
+	transform: rotate(90deg);
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-left > .chevron .fa {
+	font-size: 10px;
+	transform: translate(1px, 0);
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right {
+	position: relative;
+	order: 2;
+	flex-basis: 75%;
+	display: flex;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	flex-direction: row;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .btn {
+	margin-top: -3px;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .datagrid-tree-item-right-columns {
+	white-space: nowrap;
+	display: flex;
+	flex: 0 0 auto;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column {
+	padding: 0 7px;
+	flex: 0 0 15rem;
+	text-align: left;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column:last-child {
+	margin-right: 0;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .datagrid-tree-item-right-actions {
+	flex: 0 0 auto;
+	margin-left: 7px;
+	padding-right: 14px;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-end;
+	align-items: center;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item-right-actions .btn {
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+	padding: 0;
+	margin: 0;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .datagrid-tree-item-right-actions .datagrid-tree-item-right-actions-action {
+	margin-right: 4px;
+	margin-left: auto;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-end;
+	align-items: center;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item .datagrid-tree-item-content .datagrid-tree-item-right .datagrid-tree-item-right-actions .datagrid-tree-item-right-actions-action:last-child {
+	margin-right: 0;
+}
+
+.datagrid .datagrid-tree-item-children:not(.datagrid-tree) .datagrid-tree-item-content .datagrid-tree-item-left {
+	padding-left: 28px;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item:not(.has-children) > .datagrid-tree-item-children {
+	box-sizing: border-box;
+	position: relative;
+	width: 100%;
+	min-height: 9px;
+	margin-top: -9px;
+}
+
+.datagrid .datagrid-tree .datagrid-tree-item.has-children > .datagrid-tree-item-children {
+	display: none;
+}
