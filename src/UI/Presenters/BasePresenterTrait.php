@@ -64,13 +64,17 @@ trait BasePresenterTrait
 				$urls = implode(' ', $ssoUrls);
 				$currentCsp = $this->getHttpResponse()->getHeader('Content-Security-Policy') ?? '';
 
-				// Přidáme SSO URL k existujícím connect-src a přidáme frame-src
-				if (preg_match('/connect-src\s+([^;]+)/', $currentCsp, $m)) {
-					$currentCsp = str_replace($m[0], $m[0] . ' ' . $urls, $currentCsp);
-				} else {
-					$currentCsp .= '; connect-src \'self\' ' . $urls;
+				// SSO URL se doplní do connect-src (obnova tokenu XHR) i frame-src (silent
+				// SSO iframe). Obojí musí rozšířit direktivu, pokud už v hlavičce je -
+				// z opakované direktivy prohlížeč respektuje jen první výskyt, takže
+				// přilepení druhé na konec by se tiše ignorovalo a iframe by se zablokoval.
+				foreach (['connect-src', 'frame-src'] as $directive) {
+					if (preg_match('/' . $directive . '\s+([^;]+)/', $currentCsp, $m)) {
+						$currentCsp = str_replace($m[0], $m[0] . ' ' . $urls, $currentCsp);
+					} else {
+						$currentCsp .= '; ' . $directive . ' \'self\' ' . $urls;
+					}
 				}
-				$currentCsp .= '; frame-src \'self\' ' . $urls;
 
 				$this->getHttpResponse()->setHeader('Content-Security-Policy', $currentCsp);
 			}
