@@ -197,6 +197,8 @@ Po přihlášení přes SSO běží v prohlížeči adapter `keycloak-js` (ofici
 
 Frontend tak zajišťuje, že platnost aplikační session je fakticky svázána s platností KC SSO session.
 
+**Prohlížeče blokující 3rd-party cookies (Safari, iOS včetně PWA na ploše):** oba iframy (silent check i session status) tam z principu nefungují a adapter je sám vypne. Ve výchozím nastavení by se `check-sso` degradoval na **plný redirect celého okna** na Keycloak s `redirect_uri` = aktuální URL stránky — a protože klient používá exact redirect URI matching, Keycloak takový request odmítne chybovou stránkou `Invalid parameter: redirect_uri`. Adapter se proto inicializuje s `silentCheckSsoFallback: false`, aby se `check-sso` v takovém prohlížeči jen tiše vzdal. Frontend monitoring session tam tedy neběží; ukončení KC session se do aplikace propíše přes backchannel logout (viz kapitola 6).
+
 ## 9. Admin API — správa uživatelů
 
 Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle využití v konkrétním projektu):
