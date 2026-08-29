@@ -53,6 +53,14 @@ export async function keycloakLoginSync() {
 		const authenticated = await keycloak.init({
 			onLoad: 'check-sso',
 			silentCheckSsoRedirectUri: settings.silentCheckSsoUrl,
+			// Safari (a tedy i PWA na iOS) blokuje 3rd-party cookies, takže silent check
+			// v iframe neprojde. Ve výchozím nastavení by adapter zahodil
+			// silentCheckSsoRedirectUri a check-sso by udělal plný redirect celého okna
+			// na Keycloak s redirect_uri = aktuální URL stránky. Klient má ale
+			// exact redirect URI matching (viz docs/keycloak.md), takže Keycloak takový
+			// request odmítne hláškou "Invalid parameter: redirect_uri".
+			// S vypnutým fallbackem se check-sso v Safari jen tiše vzdá.
+			silentCheckSsoFallback: false,
 			responseMode: 'query',
 			checkLoginIframe: true,
 			checkLoginIframeInterval: 30,
