@@ -11,11 +11,9 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\AclRoleQueryFactory;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
-use DateTimeImmutable;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Nette\Application\LinkGenerator;
 use Nette\Caching\Cache;
@@ -23,7 +21,6 @@ use Nette\Caching\Storage;
 use Nette\Http\Session;
 use Nette\Http\Url;
 use Nette\Utils\Json;
-use Nette\Utils\JsonException;
 use Psr\Http\Message\ResponseInterface;
 
 class Keycloak
@@ -32,16 +29,6 @@ class Keycloak
 	private const int AUTH_STATE_TTL_SECONDS = 600;
 	/** Max počet souběžně rozpracovaných autorizačních requestů v jedné session */
 	private const int AUTH_STATE_MAX_ENTRIES = 10;
-
-	/** Application-Initiated Actions, které aplikace umí spustit (parametr kc_action) */
-	public const string ACTION_UPDATE_PASSWORD = 'UPDATE_PASSWORD';
-	public const string ACTION_REGISTER_WEBAUTHN = 'webauthn-register';
-	public const string ACTION_DELETE_CREDENTIAL = 'delete_credential';
-
-	/** Typ credentialu pro WebAuthn klíč použitý jako druhý faktor (po heslu) */
-	public const string CREDENTIAL_TYPE_WEBAUTHN = 'webauthn';
-	/** Typ credentialu pro WebAuthn klíč použitý místo hesla (passwordless) */
-	public const string CREDENTIAL_TYPE_WEBAUTHN_PASSWORDLESS = 'webauthn-passwordless';
 
 	private string $realm;
 	private string $baseUrl;
@@ -133,11 +120,11 @@ class Keycloak
 	 * Návratová URL ($backRedirect) se neposílá do Keycloaku — uloží se do session
 	 * pod náhodný state (CSRF token) a callback si ji vyzvedne po ověření state.
 	 */
-	public function getLoginUrl(?string $backRedirect = null, ?string $loginHint = null, bool $autoFocusPassword = false, ?string $action = null): string
+	public function getLoginUrl(?string $backRedirect = null, ?string $loginHint = null, bool $autoFocusPassword = false): string
 	{
 		$redirectUri = $this->getAuthRedirectUri();
 
-		[$state, $codeChallenge] = $this->createAuthState($backRedirect, $action);
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
 
 		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
 
@@ -167,61 +154,8 @@ class Keycloak
 	 */
 	public function getUpdatePasswordUrl(?string $backRedirect = null, ?string $loginHint = null): string
 	{
-		return $this->getActionUrl(self::ACTION_UPDATE_PASSWORD, $backRedirect, $loginHint);
-	}
-
-	/**
-	 * Sestaví URL pro registraci WebAuthn klíče jako druhého faktoru
-	 * (Application-Initiated Action kc_action=webauthn-register).
-	 *
-	 * Celá WebAuthn ceremonie běží na doméně Keycloaku — ten drží výzvu, ověří odpověď
-	 * autentikátoru a uloží credential. Aplikace klíč nikdy nevidí a nic o něm neukládá.
-	 *
-	 * Předpokládá, že v realmu je required action "Webauthn Register" povolená (Enabled).
-	 * Pro opt-in 2FA nesmí být zapnutá jako default action, jinak si klíč musí zaregistrovat
-	 * každý nový uživatel — viz docs/keycloak.md, sekce 11.
-	 */
-	public function getRegisterWebAuthnUrl(?string $backRedirect = null, ?string $loginHint = null): string
-	{
-		return $this->getActionUrl(self::ACTION_REGISTER_WEBAUTHN, $backRedirect, $loginHint);
-	}
-
-	/**
-	 * Sestaví URL pro odebrání credentialu přes Application-Initiated Action
-	 * (kc_action=delete_credential:{id}). Keycloak zobrazí potvrzovací obrazovku a sám ověří,
-	 * že credential patří přihlášenému uživateli a že má na jeho odebrání dostatečnou
-	 * úroveň autentizace (LoA).
-	 *
-	 * Proč ne Admin API: DELETE /users/{id}/credentials/{credentialId} se službním účtem
-	 * při zapnuté step-up autentizaci končí na 403 "No LoA on the token" a navíc by odebrání
-	 * druhého faktoru proběhlo bez jakéhokoli ověření uživatele. Admin API cesta
-	 * (deleteUserCredential) je proto vyhrazená pro administrátora/helpdesk.
-	 */
-	public function getDeleteCredentialUrl(string $credentialId, ?string $backRedirect = null, ?string $loginHint = null): string
-	{
-		return $this->getActionUrl(
-			self::ACTION_DELETE_CREDENTIAL . ':' . $credentialId,
-			$backRedirect,
-			$loginHint,
-			self::ACTION_DELETE_CREDENTIAL,
-		);
-	}
-
-	/**
-	 * Společné sestavení URL pro Application-Initiated Action.
-	 *
-	 * Název akce se ukládá do session k autorizačnímu state — samotný kc_action_status,
-	 * který Keycloak vrací do callbacku, totiž neříká, o kterou akci šlo, takže cílová stránka
-	 * by jinak nepoznala změnu hesla od registrace klíče. Přes URL se název akce nepřenáší
-	 * záměrně, aby nešlo podvrženým odkazem zobrazit cizí bezpečnostní hlášku.
-	 *
-	 * @param string $kcAction Hodnota parametru kc_action (u delete_credential včetně ":{id}")
-	 * @param string|null $actionName Název akce do session, když se liší od $kcAction
-	 */
-	private function getActionUrl(string $kcAction, ?string $backRedirect, ?string $loginHint, ?string $actionName = null): string
-	{
-		$url = new Url($this->getLoginUrl($backRedirect, $loginHint, action: $actionName ?? $kcAction));
-		$url->setQueryParameter('kc_action', $kcAction);
+		$url = new Url($this->getLoginUrl($backRedirect, $loginHint));
+		$url->setQueryParameter('kc_action', 'UPDATE_PASSWORD');
 
 		return (string) $url;
 	}
@@ -316,11 +250,10 @@ class Keycloak
 	 * - state: náhodný CSRF token, callback ho ověří proti session
 	 * - code_verifier: PKCE (RFC 7636), k token requestu ho přiloží až callback
 	 * - backRedirect: návratová URL — do Keycloaku se neposílá, drží se jen v session
-	 * - action: název Application-Initiated Action, aby callback poznal, co se dokončilo
 	 *
 	 * @return array{string, string} [state, code_challenge]
 	 */
-	private function createAuthState(?string $backRedirect, ?string $action = null): array
+	private function createAuthState(?string $backRedirect): array
 	{
 		$state = bin2hex(random_bytes(16));
 		$codeVerifier = self::base64UrlEncode(random_bytes(32));
@@ -336,7 +269,6 @@ class Keycloak
 			'verifier' => $codeVerifier,
 			'backRedirect' => $backRedirect,
 			'instance' => $this->instanceName,
-			'action' => $action,
 			'time' => time(),
 		];
 		$section->set(KeycloakSessionSection::AUTH_STATES, $states);
@@ -349,7 +281,7 @@ class Keycloak
 	 * Vrací null, pokud state v session není, patří jiné instanci nebo expiroval —
 	 * v tom případě callback nesmí pokračovat (možný CSRF / podvržený request).
 	 *
-	 * @return array{verifier: string, backRedirect: ?string, instance: string, action: ?string, time: int}|null
+	 * @return array{verifier: string, backRedirect: ?string, instance: string, time: int}|null
 	 */
 	public function consumeAuthState(?string $state): ?array
 	{
@@ -372,43 +304,7 @@ class Keycloak
 			return null;
 		}
 
-		// Záznamy rozpracované ještě před nasazením AIA akcí klíč 'action' nemají
-		$entry['action'] ??= null;
-
 		return $entry;
-	}
-
-	/**
-	 * Uloží výsledek dokončené Application-Initiated Action do session.
-	 * Do návratové URL se výsledek nepropisuje záměrně — podvrženým odkazem
-	 * by šlo uživateli zobrazit cizí bezpečnostní hlášku (např. "klíč byl odebrán").
-	 */
-	public function storeActionResult(string $action, string $status): void
-	{
-		$this->session->getSection(KeycloakSessionSection::SECTION_NAME)
-			->set(KeycloakSessionSection::ACTION_RESULT, ['action' => $action, 'status' => $status]);
-	}
-
-	/**
-	 * Jednorázově vyzvedne výsledek poslední dokončené Application-Initiated Action.
-	 *
-	 * @return array{action: string, status: string}|null
-	 */
-	public function consumeActionResult(): ?array
-	{
-		if (!$this->session->hasSection(KeycloakSessionSection::SECTION_NAME)) {
-			return null;
-		}
-
-		$section = $this->session->getSection(KeycloakSessionSection::SECTION_NAME);
-		$result = $section->get(KeycloakSessionSection::ACTION_RESULT);
-		$section->remove(KeycloakSessionSection::ACTION_RESULT);
-
-		if (!is_array($result) || !isset($result['action'], $result['status'])) {
-			return null;
-		}
-
-		return ['action' => (string) $result['action'], 'status' => (string) $result['status']];
 	}
 
 	private static function base64UrlEncode(string $data): string
@@ -1177,160 +1073,6 @@ class Keycloak
 
 			return true;
 		} catch (RequestException $e) {
-			return false;
-		}
-	}
-
-	/**
-	 * Vrátí credentials uživatele z Keycloaku (Admin API GET /users/{id}/credentials).
-	 * Slouží ke zjištění, jestli má uživatel zapnutý druhý faktor a jaké klíče má registrované.
-	 *
-	 * Vrací **null**, když se stav nepodařilo zjistit (nedostupné Admin API, chybějící
-	 * oprávnění service accountu, uživatel bez emailu, neznámý uživatel v KC) — prázdné pole
-	 * znamená "uživatel žádné credentials nemá". Volající to musí rozlišit, jinak by při
-	 * potížích s Keycloakem tvrdil uživateli s klíčem, že žádný nemá.
-	 *
-	 * Výsledek se necachuje — uživatel klíče přidává a odebírá v Keycloaku, takže by
-	 * cache okamžitě lhala.
-	 *
-	 * @param Identity $identity Lokální identita
-	 * @param string[]|null $types Filtr na typy credentialů (např. ['webauthn']), null = všechny
-	 * @return KeycloakCredential[]|null
-	 */
-	public function getUserCredentials(Identity $identity, ?array $types = null): ?array
-	{
-		$email = $identity->getEmail();
-		if (empty($email)) {
-			return null;
-		}
-
-		$adminAccessToken = $this->getAdminAccessToken();
-		if ($adminAccessToken === null) {
-			return null;
-		}
-
-		// findUser() sám výjimky neodchytává, proto je uvnitř try — tato metoda se volá
-		// při renderu profilu, takže nedostupný Keycloak nesmí shodit stránku.
-		// GuzzleException místo RequestException kvůli ConnectException (DNS, connect timeout),
-		// který v Guzzle 7 dědí z TransferException, ne z RequestException.
-		try {
-			$existingUser = $this->findUser($email);
-			if ($existingUser === null) {
-				return null;
-			}
-
-			$response = $this->client->get(
-				$this->getAdminRealmUrl("users/{$existingUser->getId()}/credentials"),
-				[
-					'headers' => ['Authorization' => 'Bearer ' . $adminAccessToken->getToken()],
-				]
-			);
-
-			$data = Json::decode((string) $response->getBody(), true);
-		} catch (GuzzleException | JsonException $e) {
-			return null;
-		}
-
-		if (!is_array($data)) {
-			return null;
-		}
-
-		$credentials = [];
-		foreach ($data as $credential) {
-			if (!is_array($credential) || !isset($credential['id'], $credential['type'])) {
-				continue;
-			}
-
-			if ($types !== null && !in_array($credential['type'], $types, true)) {
-				continue;
-			}
-
-			// createdDate je unix timestamp v milisekundách
-			$createdAt = null;
-			if (isset($credential['createdDate'])) {
-				$createdAt = (new DateTimeImmutable())
-					->setTimestamp(intdiv((int) $credential['createdDate'], 1000));
-			}
-
-			$credentials[] = new KeycloakCredential(
-				(string) $credential['id'],
-				(string) $credential['type'],
-				isset($credential['userLabel']) && $credential['userLabel'] !== '' ? (string) $credential['userLabel'] : null,
-				$createdAt,
-			);
-		}
-
-		return $credentials;
-	}
-
-	/**
-	 * Vrátí WebAuthn klíče uživatele registrované jako druhý faktor,
-	 * nebo null když se stav nepodařilo zjistit (viz getUserCredentials).
-	 *
-	 * @return KeycloakCredential[]|null
-	 */
-	public function getWebAuthnCredentials(Identity $identity): ?array
-	{
-		return $this->getUserCredentials($identity, [self::CREDENTIAL_TYPE_WEBAUTHN]);
-	}
-
-	/**
-	 * Odebere credential uživatele přes Admin API (DELETE /users/{id}/credentials/{credentialId}).
-	 *
-	 * Určeno pro administrátora/helpdesk — typicky když uživatel ztratil klíč a nemůže se
-	 * přihlásit, takže si ho nemůže odebrat sám. Uživatel si své klíče odebírá přes
-	 * getDeleteCredentialUrl(), kde Keycloak ověří jeho identitu.
-	 *
-	 * @param Identity $identity Lokální identita, jejíž credential se odebírá
-	 * @param string $credentialId ID credentialu z getUserCredentials()
-	 * @return bool True pokud byl credential odebrán
-	 */
-	public function deleteUserCredential(Identity $identity, string $credentialId): bool
-	{
-		$email = $identity->getEmail();
-		if (empty($email)) {
-			return false;
-		}
-
-		$adminAccessToken = $this->getAdminAccessToken();
-		if ($adminAccessToken === null) {
-			return false;
-		}
-
-		// Credential musí patřit této identitě — jinak by šlo cizím ID odebrat klíč jiného
-		// uživatele. Zároveň to funguje jako allowlist proti path injection do Admin API URL.
-		$credentials = $this->getUserCredentials($identity);
-		if ($credentials === null) {
-			return false;
-		}
-
-		$isOwnCredential = false;
-		foreach ($credentials as $credential) {
-			if ($credential->getId() === $credentialId) {
-				$isOwnCredential = true;
-				break;
-			}
-		}
-
-		if (!$isOwnCredential) {
-			return false;
-		}
-
-		try {
-			$existingUser = $this->findUser($email);
-			if ($existingUser === null) {
-				return false;
-			}
-
-			$this->client->delete(
-				$this->getAdminRealmUrl("users/{$existingUser->getId()}/credentials/" . rawurlencode($credentialId)),
-				[
-					'headers' => ['Authorization' => 'Bearer ' . $adminAccessToken->getToken()],
-				]
-			);
-
-			return true;
-		} catch (GuzzleException $e) {
 			return false;
 		}
 	}

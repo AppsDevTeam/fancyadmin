@@ -24,9 +24,6 @@ trait KeycloakAuthPresenterTrait
 	private const int MAX_AUTH_ATTEMPTS = 3;
 	private const int AUTH_ATTEMPT_WINDOW_SECONDS = 120;
 
-	/** Hodnoty kc_action_status, které Keycloak vrací po dokončení Application-Initiated Action */
-	private const array KC_ACTION_STATUSES = ['success', 'cancelled', 'error'];
-
 	protected function startup(): void
 	{
 		parent::startup();
@@ -49,15 +46,11 @@ trait KeycloakAuthPresenterTrait
 			return;
 		}
 
-		// Výsledek Application-Initiated Action (změna hesla, registrace nebo odebrání
-		// WebAuthn klíče). Kterou akci Keycloak dokončil, se pozná z názvu uloženého
-		// v session u autorizačního state — kc_action_status sám akci neidentifikuje.
-		$kcActionStatus = $this->getHttpRequest()->getQuery('kc_action_status');
-		if (!in_array($kcActionStatus, self::KC_ACTION_STATUSES, true)) {
-			$kcActionStatus = null;
-		}
+		// Úspěšně dokončená Application-Initiated Action (např. změna hesla z Můj profil) —
+		// propíše se do návratové URL, aby cílová stránka mohla zobrazit success hlášku.
+		$kcActionSuccess = $this->getHttpRequest()->getQuery('kc_action_status') === 'success';
 
-		$this->processKeycloakAuthRequest($code, $instance, $state, kcActionStatus: $kcActionStatus);
+		$this->processKeycloakAuthRequest($code, $instance, $state, kcActionSuccess: $kcActionSuccess);
 	}
 
 	/**
@@ -163,7 +156,7 @@ trait KeycloakAuthPresenterTrait
 		$this->setLayout(false);
 	}
 
-	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $isSilent = false, ?string $kcActionStatus = null): void
+	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $isSilent = false, bool $kcActionSuccess = false): void
 	{
 		$manager = $this->_fancyAdmin->getKeycloakManager();
 		$keycloak = $manager?->getInstance($instanceName);
@@ -182,6 +175,9 @@ trait KeycloakAuthPresenterTrait
 		}
 
 		$backRedirect = $authState['backRedirect'];
+		if ($kcActionSuccess && $backRedirect !== null) {
+			$backRedirect = (string) (new Url($backRedirect))->setQueryParameter('kcActionSuccess', '1');
+		}
 
 		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
 
@@ -240,13 +236,6 @@ trait KeycloakAuthPresenterTrait
 		// Reset auth attempt counteru a příznaku silent SSO pokusů
 		$keycloakSession->set(KeycloakSessionSection::AUTH_ATTEMPT_COUNT, 0);
 		$keycloakSession->remove(KeycloakSessionSection::SSO_SILENT_TRIED);
-
-		// Výsledek AIA jde do session, ne do návratové URL — jinak by šlo podvrženým odkazem
-		// zobrazit uživateli cizí hlášku (např. "bezpečnostní klíč byl odebrán"). Ukládá se
-		// teprve tady, aby se hláška neobjevila, když celý flow skončil chybou.
-		if ($kcActionStatus !== null && $authState['action'] !== null) {
-			$keycloak->storeActionResult($authState['action'], $kcActionStatus);
-		}
 
 		// Přihlášení proběhlo úspěšně — přesměrujeme zpět tam, odkud uživatel přišel.
 		if ($backRedirect !== null && Validators::isUrl($backRedirect)) {

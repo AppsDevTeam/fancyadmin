@@ -1122,7 +1122,7 @@ Po zapnutí Keycloak konfigurace fancyadmin automaticky:
 - **Login formulář** — přidá `data-keycloak-check-url` atribut na email input; po zadání emailu JS zjistí SSO instanci z identity/role a přesměruje na odpovídající Keycloak
 - **Logout** — `Sign:out` automaticky odhlásí i z Keycloaku (pokud se uživatel přihlásil přes SSO)
 - **Frontend** — do layoutu injektuje `window.__keycloakSettings` pro keycloak-js adapter (silent SSO check, token refresh)
-- **Registrace při SSO** — pokud se přes Keycloak přihlásí uživatel, který v aplikaci neexistuje, automaticky se mu vytvoří identita s vazbou na SSO instanci a `defaultRole` (pokud je nakonfigurovaná). Toto chování zajišťuje `autoRegister: true` v interním volání `loginUser()` — lze přepsat rozšířením třídy `Keycloak` (viz 18.12)
+- **Registrace při SSO** — pokud se přes Keycloak přihlásí uživatel, který v aplikaci neexistuje, automaticky se mu vytvoří identita s vazbou na SSO instanci a `defaultRole` (pokud je nakonfigurovaná). Toto chování zajišťuje `autoRegister: true` v interním volání `loginUser()` — lze přepsat rozšířením třídy `Keycloak` (viz 18.11)
 
 ### 18.8 Keycloak služba — správa uživatelů
 
@@ -1207,88 +1207,7 @@ Tím je zajištěno, že:
 - Uživatel odhlášený z Keycloaku je automaticky odhlášen i z aplikace
 - Uživatel deaktivovaný v Keycloaku ztrácí přístup okamžitě (session je ukončena a nové SSO přihlášení selže)
 
-### 18.10 Dvoufázové ověření WebAuthn klíčem (volitelné)
-
-SSO uživatel si může k heslu dobrovolně přidat WebAuthn klíč (hardware klíč, Touch ID, Windows Hello) jako druhý faktor. Kdo si klíč nezaregistruje, přihlašuje se dál jen heslem.
-
-Celá WebAuthn ceremonie i credentials běží **v Keycloaku** — aplikace klíč nikdy nevidí, nic neukládá do své databáze a nepotřebuje žádnou migraci ani glue třídy. Nesouvisí to s passkeys ze sekce 19; ty jsou pro lokální (ne-SSO) účty a slouží jako alternativa k heslu, ne jako druhý faktor.
-
-#### Nastavení v Keycloaku
-
-**1. Authentication → Policies → WebAuthn Policy** (ta *bez* „Passwordless"):
-
-| Položka | Hodnota |
-|---|---|
-| Relying Party Entity Name | název, který uvidí uživatel v dialogu prohlížeče |
-| Relying Party ID | **doména Keycloak serveru** bez schématu a portu (ceremonie běží na jeho stránce) |
-| Signature Algorithms | `ES256` (+ `RS256` pro starší klíče) |
-| Require Resident Key | `No` — u druhého faktoru není discoverable credential potřeba |
-| User Verification Requirement | `preferred` (`required` vynutí PIN/biometriku i u druhého faktoru) |
-| Attestation Conveyance | `none`, pokud nechcete whitelistovat modely přes Acceptable AAGUIDs |
-| Avoid Same Authenticator Registration | `On` |
-| Timeout | `60`–`120` s |
-
-> **Relying Party ID je jednosměrka** — jeho změna zneplatní všechny už registrované klíče. Rozhodněte ho dřív, než si lidi začnou klíče registrovat. Keycloak musí běžet na HTTPS (nebo `localhost`), WebAuthn v nezabezpečeném kontextu nefunguje.
-
-**2. Authentication → Flows** — opt-in podmíněný druhý faktor:
-
-1. Duplikujte flow `browser` (např. na `browser-webauthn-2fa`)
-2. V subflow `browser forms` (za `Username Password Form`) přidejte **conditional subflow**:
-   - `Condition - user configured`
-   - `WebAuthn Authenticator` → **Required**
-3. Bind: **Clients → váš confidential client → Advanced → Authentication flow overrides → Browser Flow**
-
-`Condition - user configured` je to, co dělá 2FA volitelnou: subflow se spustí jen uživatelům, kteří klíč registrovaný mají. Bind přes flow override na klientovi (místo realm-wide Bind flow) omezí 2FA jen na vaši aplikaci.
-
-**3. Authentication → Required Actions** → `Webauthn Register`:
-
-- `Enabled` = **On** (bez toho AIA `webauthn-register` nefunguje)
-- `Set as default action` = **Off** — jinak si klíč musí zaregistrovat každý nový uživatel a 2FA přestane být volitelná
-
-Pro odebírání klíčů musí být povolená i required action `Delete Credential`.
-
-> **Zvažte záložní faktor.** Při ztrátě klíče se uživatel s aktivní 2FA nedostane dovnitř a klíč mu musí odebrat administrátor. Doporučujeme povolit `Recovery Authentication Codes`, nebo dát do conditional subflow `OTP Form` jako *Alternative*.
-
-#### Co dostane uživatel
-
-Na stránce **Můj profil** se SSO uživateli zobrazí sekce „Dvoufázové ověření" — stav, tlačítko pro zapnutí/přidání dalšího klíče a odebrání existujícího. Vše se odehraje v Keycloaku a uživatel se vrátí zpět na profil s hláškou. V projektu není potřeba nic doprogramovat.
-
-#### API
-
-```php
-// URL pro registraci WebAuthn klíče (AIA kc_action=webauthn-register)
-$url = $keycloak->getRegisterWebAuthnUrl(
-    backRedirect: 'https://admin.muj-projekt.cz/profil',
-    loginHint: $identity->getEmail(),
-);
-
-// WebAuthn klíče uživatele registrované jako druhý faktor.
-// POZOR: null znamená "stav se nepodařilo zjistit" (nedostupné Admin API, chybějící
-// oprávnění service accountu), prázdné pole znamená "uživatel žádný klíč nemá".
-// Bez rozlišení byste uživateli s klíčem tvrdili, že 2FA nemá zapnutou.
-$credentials = $keycloak->getWebAuthnCredentials($identity); // KeycloakCredential[]|null
-
-// Všechny credentials, volitelně filtrované na typy
-$credentials = $keycloak->getUserCredentials($identity, [Keycloak::CREDENTIAL_TYPE_WEBAUTHN]);
-
-// URL pro odebrání klíče uživatelem (AIA kc_action=delete_credential:{id})
-// Keycloak zobrazí potvrzení a sám ověří vlastnictví klíče i úroveň autentizace
-$url = $keycloak->getDeleteCredentialUrl($credentialId, backRedirect: '…');
-
-// Odebrání klíče administrátorem/helpdeskem přes Admin API — když uživatel klíč ztratil
-// a nemůže se přihlásit, takže si ho nemůže odebrat sám
-$keycloak->deleteUserCredential($identity, $credentialId);
-```
-
-Po dokončení kterékoli Application-Initiated Action se uživatel vrátí na `backRedirect` a výsledek si cílová stránka vyzvedne jednorázově ze session:
-
-```php
-$result = $keycloak->consumeActionResult(); // ['action' => 'webauthn-register', 'status' => 'success'] nebo null
-```
-
-`status` je `success`, `cancelled` (uživatel akci zrušil) nebo `error`. `AccountPresenterTrait` to zpracovává sám. Přes URL se výsledek nepřenáší záměrně — jinak by šlo podvrženým odkazem zobrazit uživateli cizí bezpečnostní hlášku.
-
-### 18.11 Přidání nové Keycloak instance
+### 18.10 Přidání nové Keycloak instance
 
 Postup pro přidání další SSO instance do existujícího projektu:
 
@@ -1298,7 +1217,7 @@ Postup pro přidání další SSO instance do existujícího projektu:
 
 Žádná změna PHP kódu, `.env` ani neon konfigurace není potřeba. Instance se vytváří dynamicky z databáze.
 
-### 18.12 Rozšíření chování
+### 18.11 Rozšíření chování
 
 Keycloak službu lze rozšířit v projektu — např. pro úpravu logiky vytváření identity při SSO loginu:
 

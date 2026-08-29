@@ -251,6 +251,23 @@ class PasskeyService
 	}
 
 	/**
+	 * Najde identitu podle credentialId passkey klíče, bez ověření WebAuthn assertion.
+	 * Slouží ke kontrolám před přihlášením (např. jestli se uživatel nemá místo passkey
+	 * přihlašovat přes Keycloak). Výsledek nesmí sloužit jako důkaz vlastnictví klíče.
+	 */
+	public function findIdentityByCredentialId(string $credentialId): ?Identity
+	{
+		/** @var Passkey|null $passkey */
+		$passkey = $this->getPasskeyQueryFactory()->create()
+			->disableSecurityFilter()
+			->disableAccountFilter()
+			->byCredentialId($credentialId)
+			->fetchOneOrNull();
+
+		return $passkey?->getIdentity();
+	}
+
+	/**
 	 * Server-side vynucení opt-in configu (fancyadmin: passkeyEnabled) —
 	 * musí fungovat i kdyby UI někde zůstalo viditelné.
 	 *

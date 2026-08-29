@@ -113,6 +113,15 @@ trait SignInFormTrait
 				throw new PasskeyException($this->_translator->translate('fcadmin.passkeys.errors.invalidKey'));
 			}
 
+			// Uživatel, který se přihlašuje přes Keycloak (SSO instance + role s needsSso),
+			// se přes passkey přihlásit nesmí: Keycloak login má přednost, přesměrujeme ho
+			// na něj natvrdo. Kontrola musí být před processLogin(), protože ten SSO identity
+			// odmítá výjimkou dřív, než identitu vrátí.
+			$ssoIdentity = $this->_passkeyService->findIdentityByCredentialId($credential['credentialId']);
+			if ($ssoIdentity !== null && ($keycloakLoginUrl = $this->getKeycloakLoginUrl((string) $ssoIdentity->getEmail())) !== null) {
+				$this->getPresenter()->sendJson(['redirect' => $keycloakLoginUrl]);
+			}
+
 			$identity = $this->_passkeyService->processLogin(
 				$credential['credentialId'],
 				$credential['clientDataJSON'],

@@ -11,7 +11,6 @@ use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\DI\Injects\PersonalDataFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
-use ADT\FancyAdmin\Model\Security\Keycloak\Keycloak;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyException;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\UI\Components\Forms\Passkey\PasskeyFormFactory;
@@ -39,64 +38,16 @@ trait AccountPresenterTrait
 
 	public function actionDefault(): void
 	{
-		$identity = $this->_securityUser->getIdentity();
-		$keycloak = $this->getKeycloakForIdentity();
-
-		// Návrat z Keycloaku po dokončení Application-Initiated Action (změna hesla,
-		// registrace nebo odebrání WebAuthn klíče). Výsledek se čte jednorázově ze session,
-		// ne z URL — jinak by šlo podvrženým odkazem zobrazit cizí bezpečnostní hlášku.
-		$actionResult = $keycloak?->consumeActionResult();
-		if ($actionResult !== null) {
-			$this->flashKeycloakActionResult($actionResult['action'], $actionResult['status']);
+		// Návrat z Keycloaku po úspěšné změně hesla (kc_action=UPDATE_PASSWORD) —
+		// redirect zároveň vyčistí parametr z URL, aby se hláška neopakovala při refreshi.
+		if ($this->getParameter('kcActionSuccess')) {
+			$this->flashMessageSuccess('fcadmin.presenters.account.passwordChanged');
+			$this->redirect('default');
 		}
 
-		// Druhý faktor SSO uživatele spravuje Keycloak — aplikace jen zobrazí, co v něm je.
-		// null znamená, že se stav nepodařilo zjistit (nedostupné Admin API) — pak nesmíme
-		// tvrdit, že uživatel žádný klíč nemá.
-		$credentials = $keycloak?->getWebAuthnCredentials($identity);
-
-		$this->getTemplate()->identity = $identity;
+		$this->getTemplate()->identity = $this->_securityUser->getIdentity();
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
-		$this->getTemplate()->isKeycloak2faAvailable = $keycloak !== null;
-		$this->getTemplate()->isKeycloak2faStateKnown = $credentials !== null;
-		$this->getTemplate()->keycloak2faCredentials = $credentials ?? [];
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
-	}
-
-	/**
-	 * Zobrazí hlášku podle výsledku Application-Initiated Action v Keycloaku.
-	 * Stav `cancelled` (uživatel akci sám zrušil) hlášku nezobrazuje.
-	 */
-	private function flashKeycloakActionResult(string $kcAction, string $kcActionStatus): void
-	{
-		if ($kcActionStatus === 'success') {
-			$this->flashMessageSuccess(match ($kcAction) {
-				Keycloak::ACTION_UPDATE_PASSWORD => 'fcadmin.presenters.account.passwordChanged',
-				Keycloak::ACTION_REGISTER_WEBAUTHN => 'fcadmin.twoFactor.messages.keyAdded',
-				Keycloak::ACTION_DELETE_CREDENTIAL => 'fcadmin.twoFactor.messages.keyRemoved',
-				default => 'fcadmin.twoFactor.messages.actionCompleted',
-			});
-
-			return;
-		}
-
-		if ($kcActionStatus === 'error') {
-			$this->flashMessageError('fcadmin.twoFactor.errors.actionFailed');
-		}
-	}
-
-	/**
-	 * Vrátí Keycloak instanci přihlášené identity, nebo null, když identita není SSO
-	 * (nebo je Keycloak vypnutý).
-	 */
-	private function getKeycloakForIdentity(): ?Keycloak
-	{
-		if (!$this->_fancyAdmin->isKeycloakEnabled()) {
-			return null;
-		}
-
-		return $this->_fancyAdmin->getKeycloakManager()
-			?->getInstanceForIdentity($this->_securityUser->getIdentity());
 	}
 
 	public function handleEditPersonalData(): void
@@ -109,85 +60,18 @@ trait AccountPresenterTrait
 		// SSO (Keycloak) uživatel si heslo spravuje v Keycloaku - místo formuláře pro změnu
 		// lokálního hesla ho přesměrujeme na Keycloak (kc_action=UPDATE_PASSWORD), kde si
 		// heslo změní rovnou (včetně ověření současného hesla) a vrátí se zpět na tuto stránku.
-		$keycloak = $this->getKeycloakForIdentity();
-		if ($keycloak !== null) {
-			$this->getPresenter()->redirectUrl(
-				$keycloak->getUpdatePasswordUrl(
-					$this->getPresenter()->link('//default'),
-					$this->_securityUser->getIdentity()->getEmail(),
-				)
-			);
-		}
-
-		$this->redrawSidePanel('changePassword');
-	}
-
-	/**
-	 * Zapnutí druhého faktoru / přidání dalšího WebAuthn klíče.
-	 * Registrace probíhá celá v Keycloaku (kc_action=webauthn-register) — aplikace klíč nevidí.
-	 */
-	public function handleAddTwoFactorKey(): void
-	{
-		$keycloak = $this->getKeycloakForIdentity();
-		if ($keycloak === null) {
-			$this->flashMessageError('fcadmin.twoFactor.errors.unavailable');
-			$this->getPresenter()->redirect('default');
-		}
-
-		$this->getPresenter()->redirectUrl(
-			$keycloak->getRegisterWebAuthnUrl(
-				$this->getPresenter()->link('//default'),
-				$this->_securityUser->getIdentity()->getEmail(),
-			)
-		);
-	}
-
-	/**
-	 * Odebrání WebAuthn klíče. Keycloak zobrazí potvrzovací obrazovku a sám ověří,
-	 * že klíč patří přihlášenému uživateli a že má na odebrání dostatečnou úroveň
-	 * autentizace — aplikace klíč nemaže přes Admin API.
-	 */
-	public function handleDeleteTwoFactorKey(?string $credentialId = null): void
-	{
-		$keycloak = $this->getKeycloakForIdentity();
-		if ($keycloak === null) {
-			$this->flashMessageError('fcadmin.twoFactor.errors.unavailable');
-			$this->getPresenter()->redirect('default');
-		}
-
-		if ($credentialId === null) {
-			$this->flashMessageError('fcadmin.twoFactor.errors.unknownKey');
-			$this->getPresenter()->redirect('default');
-		}
-
-		// Obrana do hloubky: ověříme vlastnictví klíče ještě před redirectem, ať uživateli
-		// neposíláme cizí ID do Keycloaku (ten ho odmítne, ale zbytečně přes potvrzovací obrazovku)
-		$credentials = $keycloak->getWebAuthnCredentials($this->_securityUser->getIdentity());
-		if ($credentials === null) {
-			$this->flashMessageError('fcadmin.twoFactor.errors.stateUnknown');
-			$this->getPresenter()->redirect('default');
-		}
-
-		$isOwnCredential = false;
-		foreach ($credentials as $credential) {
-			if ($credential->getId() === $credentialId) {
-				$isOwnCredential = true;
-				break;
+		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			$identity = $this->_securityUser->getIdentity();
+			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
+			if ($keycloak !== null) {
+				$backRedirect = $this->getPresenter()->link('//this');
+				$this->getPresenter()->redirectUrl(
+					$keycloak->getUpdatePasswordUrl($backRedirect, $identity->getEmail())
+				);
 			}
 		}
 
-		if (!$isOwnCredential) {
-			$this->flashMessageError('fcadmin.twoFactor.errors.unknownKey');
-			$this->getPresenter()->redirect('default');
-		}
-
-		$this->getPresenter()->redirectUrl(
-			$keycloak->getDeleteCredentialUrl(
-				$credentialId,
-				$this->getPresenter()->link('//default'),
-				$this->_securityUser->getIdentity()->getEmail(),
-			)
-		);
+		$this->redrawSidePanel('changePassword');
 	}
 
 	public function handleLogoutAll(): never

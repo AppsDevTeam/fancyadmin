@@ -52,61 +52,6 @@
 	{control passkeyGrid}
 {/if}
 
-{if $isKeycloak2faAvailable}
-	<div class="header mt-4">
-		<h2 class="header-title">
-			{_fcadmin.twoFactor.account.title}
-		</h2>
-
-		<div class="header-actions">
-			<a n:href="addTwoFactorKey!" class="btn btn-primary">
-				{if $keycloak2faCredentials}
-					{_fcadmin.twoFactor.account.addKey}
-				{else}
-					{_fcadmin.twoFactor.account.enable}
-				{/if}
-			</a>
-		</div>
-	</div>
-
-	<div class="card">
-		<div class="card-body">
-			{if !$isKeycloak2faStateKnown}
-				<p class="mb-0 text-muted">{_fcadmin.twoFactor.account.stateUnknownInfo}</p>
-			{elseif !$keycloak2faCredentials}
-				<p class="mb-0 text-muted">{_fcadmin.twoFactor.account.disabledInfo}</p>
-			{else}
-				<table class="table table-borderless mb-0">
-					<thead>
-						<tr>
-							<th>{_fcadmin.twoFactor.grid.name}</th>
-							<th>{_fcadmin.twoFactor.grid.createdAt}</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr n:foreach="$keycloak2faCredentials as $credential">
-							<td>
-								{if $credential->getUserLabel()}
-									{$credential->getUserLabel()}
-								{else}
-									{_fcadmin.twoFactor.grid.unnamedKey}
-								{/if}
-							</td>
-							<td>{$credential->getCreatedAt()?->format('d.m.Y H:i')}</td>
-							<td class="text-end">
-								<a n:href="deleteTwoFactorKey! credentialId => $credential->getId()" class="text-danger">
-									{_fcadmin.twoFactor.grid.delete}
-								</a>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			{/if}
-		</div>
-	</div>
-{/if}
-
 <div class="header mt-4">
 	<h2 class="header-title">
 		{_fcadmin.presenters.account.sessions}
