@@ -115,10 +115,9 @@ trait AccountPresenterTrait
 
 	public function handleAddPasskey(): void
 	{
-		// Vypnutá featura nebo SSO uživatel — panel se ani neotevře
+		// Vypnutá featura — panel se ani neotevře
 		try {
 			$this->_passkeyService->assertEnabled();
-			$this->_passkeyService->assertNotSso($this->_securityUser->getIdentity());
 		} catch (PasskeyException $e) {
 			$this->flashMessageError($e->getMessage());
 			$this->getPresenter()->redirect('this');

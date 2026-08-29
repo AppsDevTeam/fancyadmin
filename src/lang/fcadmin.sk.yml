@@ -389,7 +389,6 @@ passkeys:
     invalidKey: Prihlasovací kľúč sa nepodarilo overiť.
     alreadyRegistered: Tento prihlasovací kľúč je už zaregistrovaný.
     expiredChallenge: Platnosť výzvy vypršala. Skúste to prosím znovu.
-    ssoAccount: Účet prihlasovaný cez SSO nemôže používať prihlasovacie kľúče.
     unavailable: Prihlasovacie kľúče nie sú momentálne dostupné.
     loginFailed: Prihlásenie prihlasovacím kľúčom sa nepodarilo. Skúste to prosím znovu.
     registrationFailed: Prihlasovací kľúč sa nepodarilo vytvoriť. Skúste to prosím znovu.

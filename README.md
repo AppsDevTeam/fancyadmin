@@ -1245,8 +1245,10 @@ se configem `passkeyEnabled: true` (default `false`, viz 19.2). Při vypnuté fe
 nevykresluje tlačítko na login stránce ani karta v Můj účet a všechny passkey operace
 jsou zablokované i server-side (`PasskeyService::assertEnabled()`). Existující klíče
 v DB při vypnutí zůstávají — po opětovném zapnutí zase fungují. Passkey je vždy jen
-alternativa k heslu (žádné passkey-only účty). Identity navázané na Keycloak SSO se přes
-passkey přihlásit ani registrovat klíč nemohou (autorita pro SSO účty je Keycloak).
+alternativa k heslu (žádné passkey-only účty). Klíč si může zaregistrovat i identita
+navázaná na Keycloak SSO, aby měla 2FA připravené na dobu, kdy jí SSO bude zrušeno.
+Uživatel s povinným Keycloak loginem (SSO instance + role s `needsSso`) se ale přes
+passkey nepřihlásí: místo přihlášení ho login formulář natvrdo přesměruje na Keycloak.
 
 Při `passkeyEnabled: false` (default) projekt **nemusí mít žádné passkey třídy** —
 entitu, query, factory, form, grid ani passkey trait v Identity (sekce 19.3-19.5);

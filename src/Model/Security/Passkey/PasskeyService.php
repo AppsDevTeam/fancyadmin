@@ -28,7 +28,9 @@ use Throwable;
  *   oddělené klíče pro create (registrace) a get (login) ceremony
  * - attestation format `none`, resident key required, user verification required
  * - login je usernameless (prázdné allowCredentials) — credential-first lookup
- * - identity navázané na Keycloak SSO se přes passkey přihlásit ani registrovat nesmí
+ * - klíč si může registrovat i identita navázaná na Keycloak SSO (aby měla 2FA připravené
+ *   ještě před zrušením SSO); uživatele s povinným Keycloak loginem přesměruje na Keycloak
+ *   místo passkey loginu SignInFormTrait
  * - všechny binárky v JSON args jsou base64url (ByteBuffer::$useBase64UrlEncoding)
  */
 class PasskeyService
@@ -51,12 +53,11 @@ class PasskeyService
 	 * Vygeneruje PublicKeyCredentialCreationOptions pro registraci nového klíče.
 	 * Challenge se uloží do session (one-shot, expirace 5 minut).
 	 *
-	 * @throws PasskeyException pro identitu navázanou na SSO
+	 * @throws PasskeyException
 	 */
 	public function getRegistrationArgs(Identity $identity): stdClass
 	{
 		$this->assertEnabled();
-		$this->assertNotSso($identity);
 		$identity = $this->assertHasPasskeys($identity);
 
 		// Lazy vygenerování opaque user handle — autentikátoru nikdy neposíláme interní ID identity
@@ -104,7 +105,6 @@ class PasskeyService
 	): Passkey
 	{
 		$this->assertEnabled();
-		$this->assertNotSso($identity);
 
 		$name = $this->normalizeName($name);
 
@@ -178,7 +178,7 @@ class PasskeyService
 	/**
 	 * Ověří assertion z get ceremony a vrátí identitu klíče.
 	 * Credential-first lookup podle credentialId, kontrola userHandle přes hash_equals,
-	 * odmítá SSO identity a neaktivní identity. Po úspěchu bumpne signCount a lastUsedAt.
+	 * odmítá neaktivní identity. Po úspěchu bumpne signCount a lastUsedAt.
 	 *
 	 * @param string $credentialId raw binary
 	 * @param string $clientDataJSON raw binary
@@ -219,8 +219,6 @@ class PasskeyService
 			}
 		}
 
-		$this->assertNotSso($identity);
-
 		if (!$identity->getIsActive()) {
 			throw new PasskeyException($this->translator->translate('fcadmin.appGeneral.exceptions.inactiveUser'));
 		}
@@ -248,23 +246,6 @@ class PasskeyService
 		$this->em->flush();
 
 		return $identity;
-	}
-
-	/**
-	 * Najde identitu podle credentialId passkey klíče, bez ověření WebAuthn assertion.
-	 * Slouží ke kontrolám před přihlášením (např. jestli se uživatel nemá místo passkey
-	 * přihlašovat přes Keycloak). Výsledek nesmí sloužit jako důkaz vlastnictví klíče.
-	 */
-	public function findIdentityByCredentialId(string $credentialId): ?Identity
-	{
-		/** @var Passkey|null $passkey */
-		$passkey = $this->getPasskeyQueryFactory()->create()
-			->disableSecurityFilter()
-			->disableAccountFilter()
-			->byCredentialId($credentialId)
-			->fetchOneOrNull();
-
-		return $passkey?->getIdentity();
 	}
 
 	/**
@@ -304,16 +285,6 @@ class PasskeyService
 		}
 
 		return $this->passkeyQueryFactory;
-	}
-
-	/**
-	 * @throws PasskeyException pokud je identita navázaná na Keycloak SSO
-	 */
-	public function assertNotSso(Identity $identity): void
-	{
-		if ($identity->getSso() !== null) {
-			throw new PasskeyException($this->translator->translate('fcadmin.passkeys.errors.ssoAccount'));
-		}
 	}
 
 	protected function createWebAuthn(): WebAuthn

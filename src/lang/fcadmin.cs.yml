@@ -391,7 +391,6 @@ passkeys:
     invalidKey: Přihlašovací klíč se nepodařilo ověřit.
     alreadyRegistered: Tento přihlašovací klíč je již zaregistrován.
     expiredChallenge: Platnost výzvy vypršela. Zkuste to prosím znovu.
-    ssoAccount: Účet přihlašovaný přes SSO nemůže používat přihlašovací klíče.
     unavailable: Přihlašovací klíče nejsou momentálně dostupné.
     loginFailed: Přihlášení přihlašovacím klíčem se nezdařilo. Zkuste to prosím znovu.
     registrationFailed: Přihlašovací klíč se nepodařilo vytvořit. Zkuste to prosím znovu.
