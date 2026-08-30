@@ -10,7 +10,7 @@ trait CreatedBy
 {
 	#[ManyToOne(targetEntity: Identity::class)]
 	#[JoinColumn(nullable: false)]
-	protected Identity $createdBy;
+	final protected Identity $createdBy;
 
 	public function setCreatedBy(Identity $createdBy): static
 	{

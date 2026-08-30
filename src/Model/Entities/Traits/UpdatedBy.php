@@ -10,7 +10,7 @@ trait UpdatedBy
 {
 	#[ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
-	protected ?Identity $updatedBy = null;
+	final protected ?Identity $updatedBy = null;
 
 	public function setUpdatedBy(?Identity $updatedBy): static
 	{

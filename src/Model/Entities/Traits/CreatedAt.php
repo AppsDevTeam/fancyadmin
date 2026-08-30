@@ -12,7 +12,7 @@ trait CreatedAt
 {
 	#[Gedmo\Timestampable(on: 'create')]
 	#[ORM\Column]
-	protected DateTimeImmutable $createdAt;
+	final protected DateTimeImmutable $createdAt;
 
 	public function getCreatedAt(): DateTimeImmutable
 	{
