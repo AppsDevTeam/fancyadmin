@@ -44,6 +44,19 @@ trait AuditLogTrait
 	protected string $action;
 
 	/**
+	 * Jak akce dopadla: 'success' | 'failure'. Plochy sloupec, protoze je to
+	 * dimenze napric typy udalosti (PCI DSS 10.2.2 chce indikaci uspechu/
+	 * selhani jako prvek zaznamu) - "vypis vsechna selhani" je pak jeden
+	 * WHERE bez vyctu nazvu akci. PROC akce selhala, patri do payload.reason.
+	 *
+	 * Pozor pro detekcni pravidla: outcome popisuje, jak dopadla TA AKCE,
+	 * ne jak se citi uzivatel - napr. zabiti podezrele session je 'success'
+	 * (ochrana zafungovala). Pravidla klicujte na action, ne na outcome.
+	 */
+	#[Column]
+	protected string $outcome;
+
+	/**
 	 * VZDY V UTC, aby sel zaznam korelovat s logy jinych systemu a nebyl pri
 	 * prechodu na zimni cas nejednoznacny (2:30 nastane dvakrat).
 	 *
@@ -89,6 +102,11 @@ trait AuditLogTrait
 	public function getAction(): string
 	{
 		return $this->action;
+	}
+
+	public function getOutcome(): string
+	{
+		return $this->outcome;
 	}
 
 	public function getCreatedAtUtc(): DateTimeImmutable

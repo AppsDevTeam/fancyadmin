@@ -17,6 +17,7 @@ use DateTimeImmutable;
 interface AuditLog extends Entity
 {
 	public function getAction(): string;
+	public function getOutcome(): string;
 	public function getCreatedById(): ?string;
 	public function getCreatedByLabel(): ?string;
 	public function getCreatedBy(): ?array;

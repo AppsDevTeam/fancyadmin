@@ -22,6 +22,9 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class AuditLogger
 {
+	public const string OUTCOME_SUCCESS = 'success';
+	public const string OUTCOME_FAILURE = 'failure';
+
 	public function __construct(
 		private readonly EntityManagerInterface $em,
 	) {
@@ -36,6 +39,7 @@ final class AuditLogger
 	 */
 	public function log(
 		string $action,
+		string $outcome,
 		DateTimeImmutable $createdAt,
 		?string $correlationId,
 		array $actor,
@@ -52,6 +56,7 @@ final class AuditLogger
 
 		$connection->insert($meta->getTableName(), [
 			$meta->getColumnName('action') => $action,
+			$meta->getColumnName('outcome') => $outcome,
 			// cas jde do DB v UTC - format() bere zonu z objektu
 			$meta->getColumnName('createdAt') => $createdAt,
 			$meta->getColumnName('correlationId') => $correlationId,
