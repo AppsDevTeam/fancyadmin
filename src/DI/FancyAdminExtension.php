@@ -8,7 +8,6 @@ use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
-use ADT\FancyAdmin\Model\Audit\AuthAuditLoggerAdapter;
 use ADT\FancyAdmin\Model\Audit\ExportAuditLoggerAdapter;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
@@ -156,9 +155,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// vlastni rozhrani a nezavisi na fancyadminu - naplni ho adaptery.
 		$builder->addDefinition($this->prefix('auditLogger'))
 			->setFactory(AuditLogger::class);
-
-		$builder->addDefinition($this->prefix('authAuditLogger'))
-			->setFactory(AuthAuditLoggerAdapter::class);
 
 		// adt/exporter je volitelna zavislost - adapter registrujeme jen
 		// tehdy, kdyz je jeho rozhrani k dispozici
