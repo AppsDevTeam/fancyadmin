@@ -33,8 +33,7 @@
   },
   "suggest": {
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
-    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)",
-    "adt/exporter": "Zapojeni auditni stopy exportu do jednotne tabulky audit_log"
+    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
   },
   "autoload": {
     "psr-4": {

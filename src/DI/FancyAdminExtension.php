@@ -8,7 +8,6 @@ use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
-use ADT\FancyAdmin\Model\Audit\ExportAuditLoggerAdapter;
 use ADT\FancyAdmin\Model\Entities\AclResource;
 use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
@@ -151,17 +150,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('passkeyService'))
 			->setFactory(PasskeyService::class);
 
-		// Jednotny auditni stream (tabulka audit_log). Knihovny si deklaruji
-		// vlastni rozhrani a nezavisi na fancyadminu - naplni ho adaptery.
+		// Jednotny auditni stream (tabulka audit_log). Knihovny na fancyadminu
+		// nezavisi ani o nem nevedi - v neonu se na jeho log() jen odkazou
+		// callbackem, napr.:  exporter: auditLogger: [@fancyAdmin.auditLogger, log]
 		$builder->addDefinition($this->prefix('auditLogger'))
 			->setFactory(AuditLogger::class);
 
-		// adt/exporter je volitelna zavislost - adapter registrujeme jen
-		// tehdy, kdyz je jeho rozhrani k dispozici
-		if (interface_exists(\ADT\Exporter\Model\Service\ExportAuditLogger::class)) {
-			$builder->addDefinition($this->prefix('exportAuditLogger'))
-				->setFactory(ExportAuditLoggerAdapter::class);
-		}
 
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
 		if ($this->config->keycloakEnabled) {
