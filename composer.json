@@ -3,7 +3,9 @@
   "type": "library",
   "description": "",
   "homepage": "https://www.appsdevteam.com",
-  "license": ["MIT"],
+  "license": [
+    "MIT"
+  ],
   "require": {
     "php": ">=8.4",
     "adt/ajax-select": "^4.0",
@@ -31,7 +33,8 @@
   },
   "suggest": {
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
-    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
+    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)",
+    "adt/exporter": "Zapojeni auditni stopy exportu do jednotne tabulky audit_log"
   },
   "autoload": {
     "psr-4": {
