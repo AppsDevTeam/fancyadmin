@@ -10,7 +10,12 @@ use Doctrine\ORM\Mapping\Column;
 
 trait RequestLogTrait
 {
-	#[ORM\Column]
+	/**
+	 * UTC, s milisekundami. Sub-sekundy jsou potreba k serazeni requestu
+	 * v ramci jedne sekundy - bez nich se pri dohledavani incidentu neda
+	 * rict, co probehlo driv. Plain DATETIME by je tise zahodil.
+	 */
+	#[ORM\Column(columnDefinition: 'DATETIME(3) NOT NULL')]
 	protected DateTimeImmutable $createdAt;
 
 	#[ORM\Column(type: 'integer', nullable: true)]
@@ -28,11 +33,30 @@ trait RequestLogTrait
 	#[ORM\Column]
 	protected int $code;
 
-	#[ORM\Column(length: 15)]
+	// 45 = maximum pro IPv6 (vcetne IPv4-mapped tvaru). 15 by staclo jen na
+	// IPv4 a prvni IPv6 klient by shodil insert.
+	#[ORM\Column(length: 45)]
 	protected string $ip;
 
-	#[Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
+	// scale 4 = rozliseni 0.1 ms; se scale 2 byly vsechny requesty pod 10 ms
+	// nerozlisitelne (0.00 vs 0.01)
+	#[Column(type: 'decimal', precision: 12, scale: 4, nullable: true)]
 	protected ?string $responseTime = null;
+
+	/**
+	 * Identifikator operace, kterou request nesl - stejna hodnota, jakou ma
+	 * audit_log.correlation_id. Mustek mezi auditni a provozni vrstvou:
+	 * z auditni udalosti se jednim dotazem dohleda request vcetne payloadu.
+	 *
+	 * Netypovany zamerne: request_log je genericky a nevi dopredu, jake typy
+	 * operaci ponese. Plni se pres RequestLogger::addValue('correlation_id', ...)
+	 * jen tam, kde request operaci nese; jinak zustava NULL.
+	 *
+	 * POZOR: index si musi deklarovat konzumujici entita - Doctrine atributy
+	 * #[Index] na traitech ignoruje.
+	 */
+	#[ORM\Column(nullable: true)]
+	protected ?string $correlationId = null;
 
 	public function getCreatedAt(): DateTimeImmutable
 	{
@@ -113,12 +137,23 @@ trait RequestLogTrait
 
 	public function getResponseTime(): ?float
 	{
-		return $this->responseTime !== null ? round((float) $this->responseTime, 2) : null;
+		return $this->responseTime !== null ? round((float) $this->responseTime, 4) : null;
 	}
 
 	public function setResponseTime(?float $responseTime): static
 	{
-		$this->responseTime = $responseTime !== null ? (string) round($responseTime, 2) : null;
+		$this->responseTime = $responseTime !== null ? (string) round($responseTime, 4) : null;
+		return $this;
+	}
+
+	public function getCorrelationId(): ?string
+	{
+		return $this->correlationId;
+	}
+
+	public function setCorrelationId(?string $correlationId): static
+	{
+		$this->correlationId = $correlationId;
 		return $this;
 	}
 }

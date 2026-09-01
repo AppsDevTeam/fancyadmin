@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\Model;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
 use DateTimeImmutable;
+use DateTimeZone;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception;
 use Nette\Application\Response;
@@ -105,10 +106,13 @@ final class RequestLogger
 		// Systémové sloupce mají díky `+` vždy přednost – extra data (viz addValue())
 		// mohou pouze PŘIDÁVAT vlastní sloupce, ne přepsat defaultní logování.
 		$connection->insert('request_log', [
-			'created_at' => new DateTimeImmutable()->format('Y-m-d H:i:s.u'),
+			// UTC - stejne jako audit_log, kvuli korelaci a jednoznacnosti pri
+			// prechodu na zimni cas (2:30 nastane dvakrat)
+			'created_at' => new DateTimeImmutable('now', new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u'),
 			'method' => $presenter->getHttpRequest()->getMethod(),
 			'url' => $presenter->getHttpRequest()->getUrl()->getBaseUrl() . ltrim($presenter->getHttpRequest()->getUrl()->getPath(), '/'),
-			'ip' => $presenter->getHttpRequest()->getRemoteAddress(),
+			// delku IP ovlada klient (X-Forwarded-For) - nesmi rozbit insert
+			'ip' => mb_substr((string) $presenter->getHttpRequest()->getRemoteAddress(), 0, 45),
 			'code' => $presenter->getHttpResponse()->getCode(),
 			'response_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']),
 			'identity_id' => $this->securityUser->isLoggedIn() ? $this->securityUser->getId() : null,
