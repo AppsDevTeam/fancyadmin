@@ -718,6 +718,52 @@ abstract class AuthPresenter extends BasePresenter
 }
 ```
 
+### Kam se uživatel vrátí po přihlášení
+
+Nepřihlášený požadavek na AuthPresenter skončí na přihlašovací stránce a cíl se zapamatuje
+do cookie `returnPath` (host-only, HttpOnly, SameSite=Lax, 10 minut) — **bez ohledu na
+HTTP metodu**.
+
+Platí tedy invariant, že **nepřihlášený požadavek nikdy nesáhne na session**. Nette
+backlink (`Presenter::storeRequest()`) by ji naopak založil, takže by šlo `session_storage`
+nafouknout requesty zvenčí: nejde ani o POST, na obejití by stačil GET s hlavičkou
+`X-Requested-With: XMLHttpRequest`.
+
+Cenou je, že se **POST po přihlášení nezopakuje** — uživatel skončí na cílové stránce
+a formulář odešle znovu. Zopakování POSTu ale stejně z velké části nefungovalo: CSRF token
+je `token ^ session ID`, takže když je uživatel nepřihlášený kvůli vypršelé session, po
+loginu dostane jiné session ID a replay na CSRF spadne.
+
+`RedirectAfterLoginTrait::redirectAfterLogin()` po přihlášení zkusí nejdřív session
+backlink, pak cookie, a nakonec spadne na výchozí route. Backlink fancyadmin sám nezakládá,
+ale zpracovat ho umí — aplikace si `storeRequest()` může zavolat sama tam, kde opravdu
+potřebuje zopakovat POST, a vzít si za to tu expozici na sebe.
+
+Presenter, který z AuthPresenteru nedědí (typicky výdej souboru z odkazu v e-mailu),
+si cíl uloží sám:
+
+```php
+use ADT\FancyAdmin\DI\Injects\ReturnPathInject;
+
+class DownloadPresenter extends BasePresenter
+{
+	use ReturnPathInject;
+
+	protected function startup(): void
+	{
+		parent::startup();
+
+		if (!$this->getUser()->isLoggedIn()) {
+			$this->_returnPath->store($this->getHttpRequest()->getUrl());
+			$this->redirect(':Portal:Sign:in');
+		}
+	}
+}
+```
+
+Cíl v cookie **není svázaný s identitou** (na rozdíl od session backlinku), takže se na
+něm nesmí stavět autorizace — cílová akce si musí právo přihlášeného uživatele ověřit sama.
+
 ---
 
 ## 15. NEON konfigurace

@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
+use ADT\FancyAdmin\DI\Injects\ReturnPathInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\File;
 use ADT\FancyAdmin\Model\FileUploadRules;
@@ -34,6 +35,7 @@ trait AuthPresenterTrait
 	use FancyAdminInject;
 	use AuthenticatorInject;
 	use SecurityUserInject;
+	use ReturnPathInject;
 
 	const string SIGNAL_METHOD_PREFIX = 'handle';
 
@@ -65,7 +67,18 @@ trait AuthPresenterTrait
 			unset($parameters['token']);
 
 			$this->getRequest()->setParameters(array_merge($this->getRequest()->getParameters()));
-			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);
+
+			// Kam se po přihlášení vrátit - vždycky do cookie, nikdy přes storeRequest().
+			// Nepřihlášený požadavek tím pádem na session nesáhne bez ohledu na metodu,
+			// takže session_storage nejde nafouknout requesty zvenčí.
+			//
+			// Cenou je, že se POST po přihlášení nezopakuje - uživatel skončí na cílové
+			// stránce a formulář odešle znovu. Zopakování POSTu stejně z velké části
+			// nefungovalo: CSRF token je `token ^ session ID`, takže když je uživatel
+			// nepřihlášený kvůli vypršelé session, po loginu dostane jiné session ID
+			// a replay na CSRF spadne.
+			$this->_returnPath->store($this->getHttpRequest()->getUrl());
+			$this->redirect(':Portal:Sign:in');
 		}
 
 		if ($this->getParameter('selectedAccount')) {

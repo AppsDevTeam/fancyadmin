@@ -24,6 +24,7 @@ use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
+use ADT\FancyAdmin\Model\Security\ReturnPath;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -149,6 +150,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('passkeyService'))
 			->setFactory(PasskeyService::class);
+
+		// Cíl "kam po přihlášení" v cookie, aby nepřihlášenému nevznikala session
+		$builder->addDefinition($this->prefix('returnPath'))
+			->setFactory(ReturnPath::class);
 
 		// Jednotny auditni stream (tabulka audit_log). Knihovny na fancyadminu
 		// nezavisi ani o nem nevedi - v neonu se na jeho log() jen odkazou
