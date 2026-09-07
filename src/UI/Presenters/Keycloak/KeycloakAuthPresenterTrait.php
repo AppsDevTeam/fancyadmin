@@ -7,6 +7,8 @@ namespace ADT\FancyAdmin\UI\Presenters\Keycloak;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Security\Keycloak\Keycloak;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use Nette\Application\Attributes\CrossOrigin;
@@ -20,6 +22,7 @@ trait KeycloakAuthPresenterTrait
 	use FancyAdminInject;
 	use AuthenticatorInject;
 	use IdentityQueryFactoryInject;
+	use TranslatorInject;
 
 	private const int MAX_AUTH_ATTEMPTS = 3;
 	private const int AUTH_ATTEMPT_WINDOW_SECONDS = 120;
@@ -58,6 +61,16 @@ trait KeycloakAuthPresenterTrait
 	 */
 	public function actionSilentCheck(?string $state = null, ?string $code = null, ?string $error = null, ?string $instance = null): void
 	{
+		// Zkušební průchod z administrace (SSO grid) - jen ohlásíme, jak Keycloak odpověděl,
+		// a nikoho nepřihlašujeme. Musí se to rozhodnout tady, protože obě větve níž už
+		// vedou k autentizaci; kdyby test propadl do nich, admin by se přihlásil cizí
+		// identitou nebo by se přes defaultRole provisionovala nová.
+		$testKeycloak = $instance !== null ? $this->_fancyAdmin->getKeycloakManager()?->getInstance($instance) : null;
+		if ($testKeycloak?->isTestAuthState($state)) {
+			$this->finishSsoTest($testKeycloak, $state, $error, $code);
+			return;
+		}
+
 		if ($error !== null || $code === null || $instance === null) {
 			// Silent check neprošel (typicky error=login_required) — vrátíme se na URL,
 			// ze které byl flow spuštěn. Čte se ze session přes state, ne z requestu.
@@ -154,6 +167,40 @@ trait KeycloakAuthPresenterTrait
 	public function actionSilentCheckSso(): void
 	{
 		$this->setLayout(false);
+	}
+
+	/**
+	 * Vyhodnotí zkušební průchod a vrátí admina zpět do administrace s výsledkem.
+	 *
+	 * Co to ověřuje: že prohlížeč na hostUrl dosáhne, že realm existuje, že Keycloak zná
+	 * client_id a má zaregistrované redirect_uri. Tedy přesně tu třídu chyb, na kterou
+	 * serverová sonda nedosáhne - a která po aktivaci rozbije přihlašování všem.
+	 *
+	 * error=login_required je také ÚSPĚCH: znamená, že Keycloak request přijal a zpracoval,
+	 * jen zrovna neběží žádná SSO session. To je u admina, který v Keycloaku přihlášený
+	 * není, ten očekávaný výsledek.
+	 */
+	private function finishSsoTest(Keycloak $keycloak, ?string $state, ?string $error, ?string $code): void
+	{
+		$authState = $keycloak->consumeAuthState($state);
+
+		if ($code !== null || in_array($error, ['login_required', 'interaction_required'], true)) {
+			$this->flashMessageSuccess('fcadmin.presenters.sso.messages.testOk');
+		} else {
+			$this->flashMessageError($this->_translator->translate(
+				'fcadmin.presenters.sso.errors.testFailed',
+				['error' => $error ?? 'unknown']
+			));
+		}
+
+		$backRedirect = $authState['backRedirect'] ?? null;
+		if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
+			$this->redirectUrl($backRedirect);
+		}
+
+		// Sem se to dostane jen při ztraceném/neplatném backRedirectu. Konfigurovaná route,
+		// ne natvrdo :PortalBackoffice:Sso: - tu si aplikace může namapovat jinam.
+		$this->redirect($this->_fancyAdmin->getDefaultBackofficeRoute());
 	}
 
 	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $isSilent = false, bool $kcActionSuccess = false): void

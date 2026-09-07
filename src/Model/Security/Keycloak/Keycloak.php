@@ -202,11 +202,11 @@ class Keycloak
 	 * Sestaví URL pro silent login (prompt=none) — pro kontrolu, zda je uživatel v Keycloaku přihlášen.
 	 * Návratová URL putuje přes session (viz getLoginUrl), redirect_uri je statické.
 	 */
-	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null): string
+	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null, bool $isTest = false): string
 	{
 		$redirectUrl = $this->getSilentRedirectUri($action);
 
-		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect, $isTest);
 
 		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
 
@@ -253,7 +253,7 @@ class Keycloak
 	 *
 	 * @return array{string, string} [state, code_challenge]
 	 */
-	private function createAuthState(?string $backRedirect): array
+	private function createAuthState(?string $backRedirect, bool $isTest = false): array
 	{
 		$state = bin2hex(random_bytes(16));
 		$codeVerifier = self::base64UrlEncode(random_bytes(32));
@@ -270,6 +270,9 @@ class Keycloak
 			'backRedirect' => $backRedirect,
 			'instance' => $this->instanceName,
 			'time' => time(),
+			// Zkušební průchod z administrace - callback smí jen ohlásit výsledek, ne přihlásit.
+			// Drží se v session u state, ne v URL, aby to nešlo podvrhnout z venku.
+			'isTest' => $isTest,
 		];
 		$section->set(KeycloakSessionSection::AUTH_STATES, $states);
 
@@ -305,6 +308,28 @@ class Keycloak
 		}
 
 		return $entry;
+	}
+
+	/**
+	 * Jde o zkušební průchod spuštěný z administrace?
+	 *
+	 * Stav se ZÁMĚRNĚ nekonzumuje - rozhoduje se podle něj jen větev zpracování callbacku
+	 * a spotřebovat ho musí až ta zvolená větev (consumeAuthState), aby zůstalo zachované
+	 * jednorázové použití state jako CSRF ochrany.
+	 */
+	public function isTestAuthState(?string $state): bool
+	{
+		if ($state === null || !$this->session->hasSection(KeycloakSessionSection::SECTION_NAME)) {
+			return false;
+		}
+
+		$section = $this->session->getSection(KeycloakSessionSection::SECTION_NAME);
+		$entry = ($section->get(KeycloakSessionSection::AUTH_STATES) ?? [])[$state] ?? null;
+
+		return $entry !== null
+			&& $entry['instance'] === $this->instanceName
+			&& $entry['time'] + self::AUTH_STATE_TTL_SECONDS > time()
+			&& ($entry['isTest'] ?? false) === true;
 	}
 
 	private static function base64UrlEncode(string $data): string

@@ -1082,6 +1082,28 @@ Deaktivace ovlivní jen **zahájení** přihlášení (silent SSO a login identi
 instanci). Callback rozpracovaného requestu, odhlášení a backchannel logout fungují dál —
 jinak by deaktivace uvěznila už přihlášené uživatele.
 
+#### Vyzkoušení instance před aktivací
+
+Akce **Vyzkoušet** v SSO gridu ověří konfiguraci, aniž by se instance musela aktivovat.
+Běží ve dvou vrstvách, protože každá chytá jinou třídu chyb:
+
+1. **Serverová sonda** — `client_credentials` grant na `baseUrl`. Ověří interní URL, realm,
+   Client ID i Client Secret. Nepotřebuje prohlížeč, takže když selže, končí se hned.
+2. **Zkušební průchod** — admin projde reálným silent checkem na `hostUrl`. Jen tohle ověří
+   veřejnou URL, registrovaná redirect URI a to, že se tam prohlížeč vůbec dostane — tedy
+   přesně tu chybu, která by po aktivaci rozbila přihlašování všem.
+
+Průchod **nikoho nepřihlásí**: příznak `isTest` se drží v session u jednorázového `state`
+(ne v URL, aby nešel podvrhnout) a `actionSilentCheck` podle něj místo autentizace jen
+ohlásí výsledek. Bez toho by se admin mohl přihlásit cizí identitou, případně by se přes
+`defaultRole` provisionovala nová.
+
+Používá se existující `silent-check` redirect URI, takže se v Keycloaku **nic nepřidává**.
+
+`error=login_required` je také úspěch — znamená, že Keycloak request přijal a zpracoval, jen
+zrovna neběží žádná SSO session. U admina, který v Keycloaku přihlášený není, je to očekávaný
+výsledek.
+
 ### 18.3 NEON konfigurace
 
 V neonu se Keycloak pouze zapíná/vypíná. Veškerá konfigurace instancí je v tabulce `sso`:

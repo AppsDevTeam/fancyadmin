@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Grids\Sso;
 
 use ADT\Datagrid\Component\DataGrid;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\FancyAdmin\Model\Queries\Factories\SsoQueryFactory;
@@ -15,6 +16,7 @@ trait SsoGridTrait
 {
 	use Editable;
 	use IdentityQueryFactoryInject;
+	use FancyAdminInject;
 
 	public function initGrid(DataGrid $grid): void
 	{
@@ -36,10 +38,48 @@ trait SsoGridTrait
 					: 'fcadmin.appGeneral.model.filters.no'
 			));
 
+		$grid->addAction('testSso', 'fcadmin.presenters.sso.grid.test', 'testSso!')
+			->setIcon('plug');
+
 		$grid->addAction('removeSso', 'fcadmin.presenters.sso.grid.delete', 'removeSso!')
 			->setIcon('trash')
 			->setClass('ajax datagrid-delete')
 			->setConfirmation(new StringConfirmation('fcadmin.presenters.sso.confirms.delete'));
+	}
+
+	/**
+	 * Vyzkouší instanci, aniž by se musela aktivovat.
+	 *
+	 * Dvě vrstvy, protože každá chytá jinou třídu chyb:
+	 *  1. serverová sonda - client_credentials grant na baseUrl ověří interní URL, realm,
+	 *     clientId i clientSecret. Nepotřebuje prohlížeč, takže když spadne, končíme tady.
+	 *  2. zkušební průchod - admina pošleme reálným silent checkem na hostUrl. Jen tohle
+	 *     ověří veřejnou URL, registrované redirect_uri a to, že se tam prohlížeč dostane,
+	 *     tedy přesně tu chybu, která po aktivaci rozbije přihlašování všem.
+	 *
+	 * Průchod se vyhodnotí v KeycloakAuthPresenterTrait::finishSsoTest() a nikoho nepřihlásí.
+	 */
+	public function handleTestSso(int $id): void
+	{
+		$sso = $this->getEntityManager()->find(
+			$this->getEntityManager()->findEntityClassByInterface(Sso::class),
+			$id
+		);
+
+		if ($sso === null) {
+			$this->getPresenter()->flashMessageError('fcadmin.presenters.sso.errors.testNotFound');
+			$this->getPresenter()->redirect('this');
+		}
+
+		$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForSso($sso);
+
+		if ($keycloak === null || $keycloak->getAdminAccessToken() === null) {
+			$this->getPresenter()->flashMessageError('fcadmin.presenters.sso.errors.testServerFailed');
+			$this->getPresenter()->redirect('this');
+		}
+
+		$backRedirect = $this->getPresenter()->link('//this');
+		$this->getPresenter()->redirectUrl($keycloak->getSilentLoginUrl($backRedirect, isTest: true));
 	}
 
 	public function handleRemoveSso(int $id): void

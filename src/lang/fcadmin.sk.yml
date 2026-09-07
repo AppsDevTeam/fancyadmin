@@ -112,14 +112,19 @@ presenters:
       delete: Naozaj chcete zmazať túto SSO inštanciu?
     errors:
       cannotDeleteHasIdentities: Nie je možné zmazať — existujú používatelia naviazaní na túto SSO inštanciu.
+      testNotFound: SSO inštancia nebola nájdená.
+      testServerFailed: "Server sa na Keycloak nedovolal. Skontrolujte internú URL, realm, Client ID a Client Secret."
+      testFailed: "Skúšobné prihlásenie neprešlo, Keycloak vrátil chybu %error%. Skontrolujte verejnú URL a registrované redirect URI."
     messages:
       deleted: SSO inštancia bola zmazaná.
+      testOk: Skúška prešla — Keycloak je dostupný a konfigurácia inštancie je v poriadku.
     grid:
       name: Názov
       realm: Realm
       hostUrl: URL
       clientId: Client ID
       defaultRole: Predvolená rola
+      test: Vyskúšať
       isActive: Aktívna
       delete: Zmazať
     form:
