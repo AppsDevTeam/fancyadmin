@@ -1066,6 +1066,21 @@ Po vytvoření entity spusťte migraci.
 | `clientSecret` | string | Client secret |
 | `frontendClientId` | string | Public client ID pro keycloak-js adapter |
 | `defaultRole` | AclRole (nullable) | Role, která se přiřadí novému uživateli při SSO registraci — relace na entitu `AclRole` (v DB sloupec `default_role_id`) |
+| `isActive` | bool | Zapojuje se instance do přihlašování? Default `true` (v DB sloupec `is_active`) |
+
+`baseUrl` i `hostUrl` musí být absolutní http(s) URL — formulář odmítne hodnotu bez schématu.
+Kam smí mířit se needituje, to je věc administrátora.
+
+#### Proč `isActive`
+
+Silent SSO na přihlašovací stránce projde **všechny aktivní** instance a na každou udělá
+jeden `prompt=none` check. Vadná konfigurace tedy ovlivní login celé platformy — deaktivace
+je způsob, jak takovou instanci odstavit, aniž by se musela smazat: konfigurace i identity
+na ni navázané zůstanou zachované. Smazat ji ostatně nejde, dokud na ní visí identity.
+
+Deaktivace ovlivní jen **zahájení** přihlášení (silent SSO a login identity navázané na tuto
+instanci). Callback rozpracovaného requestu, odhlášení a backchannel logout fungují dál —
+jinak by deaktivace uvěznila už přihlášené uživatele.
 
 ### 18.3 NEON konfigurace
 

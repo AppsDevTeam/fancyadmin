@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineComponents\Entities\Entity;
+use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 
-interface Sso extends Entity
+interface Sso extends Entity, IsActiveInterface
 {
 	public function getName(): string;
 	public function setName(string $name): static;

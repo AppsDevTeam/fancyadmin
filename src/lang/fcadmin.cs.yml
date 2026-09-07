@@ -120,6 +120,7 @@ presenters:
       hostUrl: URL
       clientId: Client ID
       defaultRole: Výchozí role
+      isActive: Aktivní
       delete: Smazat
     form:
       name: Název
@@ -139,6 +140,8 @@ presenters:
         clientIdRequired: Client ID je povinný
         clientSecretRequired: Client Secret je povinný
         frontendClientIdRequired: Frontend Client ID je povinný
+        baseUrlInvalid: Interní URL musí být platná absolutní URL
+        hostUrlInvalid: Veřejná URL musí být platná absolutní URL
 
   profiles:
     title: Uživatelé

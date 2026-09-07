@@ -59,7 +59,7 @@ class KeycloakManager
 	public function getInstanceForIdentity(Identity $identity): ?Keycloak
 	{
 		$sso = $identity->getSso();
-		if ($sso === null) {
+		if ($sso === null || !$sso->getIsActive()) {
 			return null;
 		}
 
@@ -135,11 +135,21 @@ class KeycloakManager
 	}
 
 	/**
+	 * Instance, které se zapojují do přihlašování.
+	 *
+	 * Neaktivní se vynechávají. Silent SSO na přihlašovací stránce prochází tenhle seznam,
+	 * takže jeden vadný záznam přesměruje login celé platformy - deaktivace je způsob, jak
+	 * ho odstavit, aniž by se musel smazat (což u instance s navázanými identitami nejde).
+	 *
+	 * Pozor: filtr je záměrně JEN tady, ne v getInstance(). Podle názvu se instance
+	 * dohledává i pro callback rozpracovaného requestu, odhlášení a backchannel logout -
+	 * kdyby filtrovala i ta, deaktivace by uvěznila už přihlášené uživatele.
+	 *
 	 * @return Sso[]
 	 */
 	private function getAllSsoRecords(): array
 	{
-		return $this->em->getRepository($this->getSsoClass())->findAll();
+		return $this->em->getRepository($this->getSsoClass())->findBy(['isActive' => true]);
 	}
 
 	private function findSso(string $name): ?Sso

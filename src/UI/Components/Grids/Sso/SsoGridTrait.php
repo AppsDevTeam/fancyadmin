@@ -29,6 +29,12 @@ trait SsoGridTrait
 		$grid->addColumnText('clientId', 'fcadmin.presenters.sso.grid.clientId');
 		$grid->addColumnText('defaultRole', 'fcadmin.presenters.sso.grid.defaultRole')
 			->setRenderer(fn(Sso $sso) => $sso->getDefaultRole()?->getName());
+		$grid->addColumnText('isActive', 'fcadmin.presenters.sso.grid.isActive')
+			->setRenderer(fn(Sso $sso) => $this->getTranslator()->translate(
+				$sso->getIsActive()
+					? 'fcadmin.appGeneral.model.filters.yes'
+					: 'fcadmin.appGeneral.model.filters.no'
+			));
 
 		$grid->addAction('removeSso', 'fcadmin.presenters.sso.grid.delete', 'removeSso!')
 			->setIcon('trash')
