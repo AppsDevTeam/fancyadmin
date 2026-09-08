@@ -1078,31 +1078,62 @@ jeden `prompt=none` check. Vadná konfigurace tedy ovlivní login celé platform
 je způsob, jak takovou instanci odstavit, aniž by se musela smazat: konfigurace i identity
 na ni navázané zůstanou zachované. Smazat ji ostatně nejde, dokud na ní visí identity.
 
-Deaktivace ovlivní jen **zahájení** přihlášení (silent SSO a login identity navázané na tuto
-instanci). Callback rozpracovaného requestu, odhlášení a backchannel logout fungují dál —
-jinak by deaktivace uvěznila už přihlášené uživatele.
+Co deaktivace ovlivní:
+
+- **Silent SSO** instanci vynechá, `prompt=none` check se na ni neposílá.
+- **SSO uživatelé navázaní na instanci** (identita se `sso_id` a alespoň jednou rolí
+  s `needs_sso`) se chovají jako **běžní uživatelé s heslem**: přihlásí se lokálním heslem,
+  lost password i reset hesla z gridu uživatelů pošlou lokální recovery mail a v Můj účet
+  si mění lokální heslo. `KeycloakManager::getInstanceForIdentity()` pro ně vrátí `null`
+  a všechny tyhle cesty propadnou na stejnou větev, kterou používají uživatelé bez SSO.
+- **Callback rozpracovaného requestu, odhlášení a backchannel logout fungují dál.** Odhlášení
+  si instanci bere přes `getInstanceForIdentity($identity, activeOnly: false)`, takže uživatel
+  přihlášený před deaktivací se odhlásí i z Keycloaku a deaktivace ho neuvězní.
+
+Fallback na heslo je záměr: deaktivace je zároveň nouzový režim, kdy se SSO uživatelé
+dostanou do aplikace i při výpadku nebo špatné konfiguraci Keycloaku. Kdo lokální heslo
+nemá, nastaví si ho přes lost password. Po reaktivaci instance se přihlašování zase řídí
+Keycloakem a lokální heslo se ignoruje.
 
 #### Vyzkoušení instance před aktivací
 
 Akce **Vyzkoušet** v SSO gridu ověří konfiguraci, aniž by se instance musela aktivovat.
 Běží ve dvou vrstvách, protože každá chytá jinou třídu chyb:
 
-1. **Serverová sonda** — `client_credentials` grant na `baseUrl`. Ověří interní URL, realm,
-   Client ID i Client Secret. Nepotřebuje prohlížeč, takže když selže, končí se hned.
-2. **Zkušební průchod** — admin projde reálným silent checkem na `hostUrl`. Jen tohle ověří
-   veřejnou URL, registrovaná redirect URI a to, že se tam prohlížeč vůbec dostane — tedy
-   přesně tu chybu, která by po aktivaci rozbila přihlašování všem.
+1. **Serverová sonda**: `client_credentials` grant na `baseUrl`. Ověří interní URL, realm,
+   Client ID i Client Secret. Nepotřebuje prohlížeč, takže když selže, končí se hned a do
+   gridu se rovnou zapíše chyba.
+2. **Zkušební průchod**: admin projde reálným silent checkem (`prompt=none`) na `hostUrl`
+   přes existující `silent-check` redirect URI. Tenhle krok ověří jen ty případy, kdy
+   Keycloak **přesměruje zpět** do aplikace:
+   - `code` v odpovědi (admin má v Keycloaku session) i `error=login_required`
+     (resp. `interaction_required`) jsou **úspěch**: Keycloak request přijal a zpracoval,
+     jen zrovna neběží žádná SSO session. U admina, který v Keycloaku přihlášený není, je to
+     očekávaný výsledek.
+   - Jiná OAuth chyba (např. `unauthorized_client`, `invalid_scope`) se zobrazí jako
+     chybová hláška s kódem chyby. Kód se před zobrazením sanitizuje na `[a-z0-9_.-]`,
+     max 64 znaků, aby se do hlášky nedostalo nic, co do parametru vloží Keycloak nebo někdo
+     za něj.
+
+Co zkušební průchod **neověří** hláškou: když Keycloak `client_id` nezná, `redirect_uri`
+nemá registrované, nebo `hostUrl` není z prohlížeče dosažitelná, Keycloak zpět nepřesměruje.
+Admin skončí na chybové stránce Keycloaku (typicky `Invalid parameter: redirect_uri`,
+`Client not found`), resp. na síťové chybě prohlížeče, a do aplikace se nevrátí. Právě to,
+že se nevrátil do gridu, je v těchto případech výsledek testu.
+
+Výsledek se do gridu dostane přes návratovou URL: `actionSilentCheck` k `backRedirect` ze
+session přidá query parametr `ssoTest` (konstanty `Keycloak::SSO_TEST_PARAM`,
+`Keycloak::SSO_TEST_OK`, hodnota `ok` nebo kód chyby) a `SsoPresenterTrait::actionDefault`
+z něj udělá flash zprávu a URL redirectem vyčistí, aby se hláška při refreshi neopakovala.
+Flash zpráva se nepoužívá přímo, protože redirect na absolutní URL by ji do cílové stránky
+nepřenesl.
 
 Průchod **nikoho nepřihlásí**: příznak `isTest` se drží v session u jednorázového `state`
 (ne v URL, aby nešel podvrhnout) a `actionSilentCheck` podle něj místo autentizace jen
-ohlásí výsledek. Bez toho by se admin mohl přihlásit cizí identitou, případně by se přes
-`defaultRole` provisionovala nová.
+ohlásí výsledek. Přijatý `code` se za token nevymění. Bez toho by se admin mohl přihlásit
+cizí identitou, případně by se přes `defaultRole` provisionovala nová.
 
 Používá se existující `silent-check` redirect URI, takže se v Keycloaku **nic nepřidává**.
-
-`error=login_required` je také úspěch — znamená, že Keycloak request přijal a zpracoval, jen
-zrovna neběží žádná SSO session. U admina, který v Keycloaku přihlášený není, je to očekávaný
-výsledek.
 
 ### 18.3 NEON konfigurace
 
@@ -1122,17 +1153,25 @@ Pro lokální vývoj se self-signed certifikátem lze vypnout validaci TLS certi
 
 1. **Vytvořte záznamy v tabulce `sso`** s kompletní konfigurací Keycloak instance:
 
-   | id | name | realm | baseUrl | hostUrl | clientId | clientSecret | frontendClientId | default_role_id |
-   |---|---|---|---|---|---|---|---|---|
-   | 1 | hlavni | muj-realm | http://keycloak:8080 | https://auth.example.cz | app-client | secret123 | app-public | 5 |
+   | id | name | realm | baseUrl | hostUrl | clientId | clientSecret | frontendClientId | default_role_id | is_active |
+   |---|---|---|---|---|---|---|---|---|---|
+   | 1 | hlavni | muj-realm | http://keycloak:8080 | https://auth.example.cz | app-client | secret123 | app-public | 5 | 1 |
 
    Kde `default_role_id` je cizí klíč na `acl_role.id` — ID role, která se automaticky přiřadí novému uživateli při prvním SSO přihlášení. Pokud nechcete automatické přiřazení role, nechte `NULL`.
 
-2. **Navažte role na SSO instance** — v tabulce `acl_role` nastavte `sso_id` u rolí, které se mají přihlašovat přes SSO
+   `is_active` (`TINYINT(1) NOT NULL DEFAULT 1`) říká, zda se instance zapojuje do přihlašování (viz 18.2, „Proč `isActive`"). Novou instanci lze založit s `0`, vyzkoušet ji akcí **Vyzkoušet** a aktivovat až potom.
 
-3. **Volitelně navažte identity** — v tabulce `identity` lze nastavit `sso_id` přímo (má přednost před rolí)
+   **Migrace:** knihovna migraci pro tabulku `sso` nepřináší (v `src/Migrations/` je jen nesouvisející migrace), sloupce vznikají z `SsoTrait` v entitě projektu. Sloupec `is_active` si proto projekt musí do existující tabulky přidat sám, buď vygenerováním migrace z entity, nebo ručně:
 
-Při zadání emailu na login stránce fancyadmin zjistí SSO instanci z identity (přímo, nebo přes její roli) a přesměruje na odpovídající Keycloak. Pokud identita nemá SSO vazbu, zobrazí se standardní přihlášení heslem.
+   ```sql
+   ALTER TABLE sso ADD is_active TINYINT(1) DEFAULT 1 NOT NULL;
+   ```
+
+2. **Označte role, které vyžadují SSO**: v tabulce `acl_role` nastavte `needs_sso = 1` u rolí, jejichž uživatelé se mají přihlašovat výhradně přes Keycloak. Sloupec `acl_role.sso_id` neexistuje, role sama na konkrétní instanci navázaná není.
+
+3. **Navažte identity na instanci**: v tabulce `identity` nastavte `sso_id` na `sso.id`. Identita se přihlašuje přes SSO, když má `identity.sso_id` **a zároveň** alespoň jednu roli s `needs_sso = 1` Samotná vazba `sso_id` bez takové role SSO nevynutí a samotná role bez `sso_id` neříká, přes kterou instanci se přihlašovat.
+
+Při zadání emailu na login stránce fancyadmin zjistí SSO instanci z identity (`identity.sso_id` + role s `needs_sso`) a přesměruje na odpovídající Keycloak. Pokud identita takovou vazbu nemá, zobrazí se standardní přihlášení heslem. Pokud vazbu má, ale instance je deaktivovaná, heslem se nepřihlásí a dostane hlášku o dočasné nedostupnosti SSO (viz 18.2).
 
 ### 18.5 Presentery
 
@@ -1217,7 +1256,7 @@ $manager = $this->_fancyAdmin->getKeycloakManager(); // null pokud je Keycloak v
 // Získat konkrétní instanci podle názvu
 $keycloak = $manager->getInstance('hlavni');
 
-// Získat instanci podle identity (z identity.sso nebo role.sso)
+// Získat instanci podle identity (identity.sso_id + role s needs_sso; deaktivovaná instance vrátí null)
 $keycloak = $manager->getInstanceForIdentity($identity);
 
 // Získat instanci, přes kterou je přihlášen aktuální uživatel (ze session)
@@ -1295,7 +1334,7 @@ Tím je zajištěno, že:
 Postup pro přidání další SSO instance do existujícího projektu:
 
 1. **DB** — vytvořte nový záznam v tabulce `sso` s kompletní konfigurací (realm, URL, credentials)
-2. **DB** — u příslušných rolí/identit nastavte vazbu na nové SSO
+2. **DB** — u identit nastavte `identity.sso_id` na novou instanci a u jejich rolí `acl_role.needs_sso = 1`
 3. **Keycloak** — v novém clientu nastavte backchannel logout URL (viz 18.9)
 
 Žádná změna PHP kódu, `.env` ani neon konfigurace není potřeba. Instance se vytváří dynamicky z databáze.

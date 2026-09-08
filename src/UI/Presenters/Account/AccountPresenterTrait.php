@@ -62,6 +62,7 @@ trait AccountPresenterTrait
 		// heslo změní rovnou (včetně ověření současného hesla) a vrátí se zpět na tuto stránku.
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
 			$identity = $this->_securityUser->getIdentity();
+			// Deaktivovaná instance vrátí null a uživatel si mění lokální heslo jako každý jiný.
 			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
 			if ($keycloak !== null) {
 				$backRedirect = $this->getPresenter()->link('//this');

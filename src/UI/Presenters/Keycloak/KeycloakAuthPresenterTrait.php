@@ -7,7 +7,6 @@ namespace ADT\FancyAdmin\UI\Presenters\Keycloak;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
-use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Security\Keycloak\Keycloak;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
@@ -22,7 +21,6 @@ trait KeycloakAuthPresenterTrait
 	use FancyAdminInject;
 	use AuthenticatorInject;
 	use IdentityQueryFactoryInject;
-	use TranslatorInject;
 
 	private const int MAX_AUTH_ATTEMPTS = 3;
 	private const int AUTH_ATTEMPT_WINDOW_SECONDS = 120;
@@ -65,16 +63,15 @@ trait KeycloakAuthPresenterTrait
 		// a nikoho nepřihlašujeme. Musí se to rozhodnout tady, protože obě větve níž už
 		// vedou k autentizaci; kdyby test propadl do nich, admin by se přihlásil cizí
 		// identitou nebo by se přes defaultRole provisionovala nová.
-		$testKeycloak = $instance !== null ? $this->_fancyAdmin->getKeycloakManager()?->getInstance($instance) : null;
-		if ($testKeycloak?->isTestAuthState($state)) {
-			$this->finishSsoTest($testKeycloak, $state, $error, $code);
+		$keycloak = $instance !== null ? $this->_fancyAdmin->getKeycloakManager()?->getInstance($instance) : null;
+		if ($keycloak?->isTestAuthState($state)) {
+			$this->finishSsoTest($keycloak, $state, $error, $code);
 			return;
 		}
 
 		if ($error !== null || $code === null || $instance === null) {
 			// Silent check neprošel (typicky error=login_required) — vrátíme se na URL,
 			// ze které byl flow spuštěn. Čte se ze session přes state, ne z requestu.
-			$keycloak = $instance !== null ? $this->_fancyAdmin->getKeycloakManager()?->getInstance($instance) : null;
 			$backRedirect = ($keycloak?->consumeAuthState($state) ?? [])['backRedirect'] ?? null;
 
 			if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
@@ -172,35 +169,54 @@ trait KeycloakAuthPresenterTrait
 	/**
 	 * Vyhodnotí zkušební průchod a vrátí admina zpět do administrace s výsledkem.
 	 *
-	 * Co to ověřuje: že prohlížeč na hostUrl dosáhne, že realm existuje, že Keycloak zná
-	 * client_id a má zaregistrované redirect_uri. Tedy přesně tu třídu chyb, na kterou
-	 * serverová sonda nedosáhne - a která po aktivaci rozbije přihlašování všem.
+	 * Sem se dostane jen průchod, který Keycloak přesměroval zpět: hostUrl je dosažitelná,
+	 * realm existuje a Keycloak client_id i redirect_uri přijal. Když Keycloak client_id
+	 * nezná nebo redirect_uri nemá registrované, zpět nepřesměruje a admin zůstane na jeho
+	 * chybové stránce - tenhle kód se pak nezavolá vůbec (viz README 18.2).
 	 *
 	 * error=login_required je také ÚSPĚCH: znamená, že Keycloak request přijal a zpracoval,
 	 * jen zrovna neběží žádná SSO session. To je u admina, který v Keycloaku přihlášený
 	 * není, ten očekávaný výsledek.
+	 *
+	 * Výsledek se předává v návratové URL parametrem `ssoTest`, ne flash zprávou: backRedirect
+	 * vznikl v gridu před jakoukoli flash zprávou, takže nenese `_fid`, a redirectUrl() na
+	 * absolutní URL ho nedoplní - flash by se na cílové stránce nenašla. Cílový presenter
+	 * (SsoPresenterTrait::actionDefault) z parametru udělá flash a URL vyčistí.
 	 */
 	private function finishSsoTest(Keycloak $keycloak, ?string $state, ?string $error, ?string $code): void
 	{
 		$authState = $keycloak->consumeAuthState($state);
 
-		if ($code !== null || in_array($error, ['login_required', 'interaction_required'], true)) {
-			$this->flashMessageSuccess('fcadmin.presenters.sso.messages.testOk');
-		} else {
-			$this->flashMessageError($this->_translator->translate(
-				'fcadmin.presenters.sso.errors.testFailed',
-				['error' => $error ?? 'unknown']
-			));
-		}
+		$result = ($code !== null || in_array($error, ['login_required', 'interaction_required'], true))
+			? Keycloak::SSO_TEST_OK
+			: $this->sanitizeSsoTestError($error);
 
 		$backRedirect = $authState['backRedirect'] ?? null;
 		if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
-			$this->redirectUrl($backRedirect);
+			$this->redirectUrl((string) (new Url($backRedirect))->setQueryParameter(Keycloak::SSO_TEST_PARAM, $result));
 		}
 
 		// Sem se to dostane jen při ztraceném/neplatném backRedirectu. Konfigurovaná route,
 		// ne natvrdo :PortalBackoffice:Sso: - tu si aplikace může namapovat jinam.
+		// Interní redirect `_fid` doplní, flash tady projde.
+		if ($result === Keycloak::SSO_TEST_OK) {
+			$this->flashMessageSuccess('fcadmin.presenters.sso.messages.testOk');
+		} else {
+			$this->flashMessageError('fcadmin.presenters.sso.errors.testFailed', parameters: ['error' => $result]);
+		}
 		$this->redirect($this->_fancyAdmin->getDefaultBackofficeRoute());
+	}
+
+	/**
+	 * Kód chyby od Keycloaku (OAuth `error`, např. `unauthorized_client`, `invalid_scope`) se
+	 * propisuje do URL a odtud do hlášky. Necháme jen bezpečnou podmnožinu znaků, ať se do
+	 * hlášky nedostane nic, co Keycloak (nebo někdo za něj) do parametru vloží.
+	 */
+	private function sanitizeSsoTestError(?string $error): string
+	{
+		$error = $error !== null ? preg_replace('/[^a-z0-9_.-]/i', '', $error) : '';
+
+		return $error !== '' && $error !== Keycloak::SSO_TEST_OK ? substr($error, 0, 64) : 'unknown';
 	}
 
 	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $isSilent = false, bool $kcActionSuccess = false): void

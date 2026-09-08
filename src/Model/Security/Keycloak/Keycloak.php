@@ -311,6 +311,13 @@ class Keycloak
 	}
 
 	/**
+	 * Query parametr, kterým KeycloakAuthPresenterTrait::finishSsoTest() předává výsledek
+	 * zkušebního průchodu zpět do SSO gridu (hodnota SSO_TEST_OK, nebo kód chyby od Keycloaku).
+	 */
+	public const string SSO_TEST_PARAM = 'ssoTest';
+	public const string SSO_TEST_OK = 'ok';
+
+	/**
 	 * Jde o zkušební průchod spuštěný z administrace?
 	 *
 	 * Stav se ZÁMĚRNĚ nekonzumuje - rozhoduje se podle něj jen větev zpracování callbacku

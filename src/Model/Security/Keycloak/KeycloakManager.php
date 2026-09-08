@@ -55,28 +55,46 @@ class KeycloakManager
 	 * Vrátí Keycloak instanci přiřazenou k dané identitě.
 	 * Identita musí mít nastavenou SSO vazbu (identity.sso) a zároveň
 	 * alespoň jedna její role musí mít needsSso = true.
+	 *
+	 * Neaktivní instance se s výchozím $activeOnly = true nevrací. Volající pak identitu
+	 * ZÁMĚRNĚ obslouží jako běžného uživatele s heslem: přihlášení heslem, lokální obnova
+	 * i změna hesla. Deaktivace instance je tedy zároveň nouzový režim, kdy se SSO
+	 * uživatelé dostanou do aplikace i bez Keycloaku (viz README 18.2 "Proč isActive").
+	 *
+	 * $activeOnly = false je pro ukončení něčeho, co už běží (odhlášení uživatele
+	 * přihlášeného před deaktivací), kde odstavená instance nesmí uživatele uvěznit.
 	 */
-	public function getInstanceForIdentity(Identity $identity): ?Keycloak
+	public function getInstanceForIdentity(Identity $identity, bool $activeOnly = true): ?Keycloak
 	{
-		$sso = $identity->getSso();
-		if ($sso === null || !$sso->getIsActive()) {
+		if (!$this->identityRequiresSso($identity)) {
 			return null;
 		}
 
-		// Zkontrolujeme, zda alespoň jedna role vyžaduje SSO
-		$needsSso = false;
-		foreach ($identity->getRoles() as $role) {
-			if ($role->getNeedsSso()) {
-				$needsSso = true;
-				break;
-			}
-		}
-
-		if (!$needsSso) {
+		$sso = $identity->getSso();
+		if ($activeOnly && !$sso->getIsActive()) {
 			return null;
 		}
 
 		return $this->getInstance($sso->getName());
+	}
+
+	/**
+	 * Má identita SSO vazbu a alespoň jednu roli s needsSso? Nezávisí na tom, zda je
+	 * instance aktivní.
+	 */
+	private function identityRequiresSso(Identity $identity): bool
+	{
+		if ($identity->getSso() === null) {
+			return false;
+		}
+
+		foreach ($identity->getRoles() as $role) {
+			if ($role->getNeedsSso()) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

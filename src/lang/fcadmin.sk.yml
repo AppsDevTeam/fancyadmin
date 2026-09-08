@@ -136,6 +136,7 @@ presenters:
       clientSecret: Client Secret
       frontendClientId: Frontend Client ID
       defaultRole: Predvolená rola pre nových používateľov
+      isActive: Aktívna
       submit: Uložiť
       errors:
         nameRequired: Názov je povinný

@@ -7,9 +7,9 @@ use ADT\Forms\StaticContainer;
 
 trait IsActiveFormField
 {
-	public function addIsActiveField(Form|StaticContainer $form): void
+	public function addIsActiveField(Form|StaticContainer $form, string $label = 'fcadmin.forms.user.labels.isActive'): void
 	{
-		$form->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive')
+		$form->addCheckbox('isActive', $label)
 			->setDefaultValue(true);
 	}
 }

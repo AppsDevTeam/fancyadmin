@@ -21,8 +21,8 @@ trait PresenterTrait
 	abstract public function redirect(string $destination, $args = []): void;
 	abstract public function redrawControl(string $name): void;
 
-	abstract public function flashMessageError(string $message, ?int $autoCloseDuration = null): stdClass;
-	abstract public function flashMessageWarning(string $message, ?int $autoCloseDuration = null): stdClass;
-	abstract public function flashMessageSuccess(string $message, ?int $autoCloseDuration = null): stdClass;
-	abstract public function flashMessageInfo(string $message, ?int $autoCloseDuration = null): stdClass;
+	abstract public function flashMessageError(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+	abstract public function flashMessageWarning(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+	abstract public function flashMessageSuccess(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+	abstract public function flashMessageInfo(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
 }

@@ -56,7 +56,7 @@ trait SsoFormTrait
 
 		// Neaktivní instance se nezapojí do přihlašování (viz KeycloakManager::getAllSsoRecords),
 		// aniž by se musela smazat.
-		$this->addIsActiveField($form);
+		$this->addIsActiveField($form, 'fcadmin.presenters.sso.form.isActive');
 
 		$form->addSubmit('submit', 'fcadmin.presenters.sso.form.submit');
 	}

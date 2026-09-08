@@ -117,32 +117,36 @@ trait BasePresenterTrait
 		throw new Exception('Use one of flashMessageError / flashMessageWarning / flashMessageSuccess / flashMessageInfo method instead.');
 	}
 
-	public function flashMessageError(string $message, ?int $autoCloseDuration = null): stdClass
+	/**
+	 * @param array<string, mixed> $parameters Parametry překladu (např. ['error' => $e]),
+	 *   aby se hláška s placeholdery nemusela překládat u volajícího a tady znovu.
+	 */
+	public function flashMessageError(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass
 	{
-		return $this->flashMessageCommon($message, 'danger', $autoCloseDuration);
+		return $this->flashMessageCommon($message, 'danger', $autoCloseDuration, $parameters);
 	}
 
-	public function flashMessageWarning(string $message, ?int $autoCloseDuration = null): stdClass
+	public function flashMessageWarning(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass
 	{
-		return $this->flashMessageCommon($message, 'warning', $autoCloseDuration);
+		return $this->flashMessageCommon($message, 'warning', $autoCloseDuration, $parameters);
 	}
 
 	// Success zprávy se defaultně samy zavřou; ostatní typy zůstávají, dokud je uživatel nezavře.
-	public function flashMessageSuccess(string $message, ?int $autoCloseDuration = BasePresenter::DEFAULT_AUTO_CLOSE_DURATION): stdClass
+	public function flashMessageSuccess(string $message, ?int $autoCloseDuration = BasePresenter::DEFAULT_AUTO_CLOSE_DURATION, array $parameters = []): stdClass
 	{
-		return $this->flashMessageCommon($message, 'success', $autoCloseDuration);
+		return $this->flashMessageCommon($message, 'success', $autoCloseDuration, $parameters);
 	}
 
-	public function flashMessageInfo(string $message, ?int $autoCloseDuration = null): stdClass
+	public function flashMessageInfo(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass
 	{
-		return $this->flashMessageCommon($message, 'info', $autoCloseDuration);
+		return $this->flashMessageCommon($message, 'info', $autoCloseDuration, $parameters);
 	}
 
 	/** @internal */
-	private function flashMessageCommon(string $message, string $type, ?int $autoCloseDuration = null)
+	private function flashMessageCommon(string $message, string $type, ?int $autoCloseDuration = null, array $parameters = [])
 	{
 		//$this->redrawControl('flashes');
-		$flash = parent::flashMessage($this->_translator->translate($message), $type);
+		$flash = parent::flashMessage($this->_translator->translate($message, $parameters), $type);
 		// null = zpráva se automaticky nezavírá (zůstává do zavření uživatelem).
 		$flash->closeDuration = $autoCloseDuration;
 		return $flash;

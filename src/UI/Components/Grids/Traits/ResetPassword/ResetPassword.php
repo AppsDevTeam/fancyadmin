@@ -60,6 +60,7 @@ trait ResetPassword
 
 		// SSO (Keycloak) uživateli pošleme reset hesla přes Keycloak místo lokálního recovery mailu
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
+			// Deaktivovaná instance vrátí null a uživatel dostane lokální recovery mail jako každý jiný.
 			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
 			if ($keycloak !== null) {
 				if ($keycloak->sendPasswordResetEmail($identity, $this->getPresenter()->link('//:Portal:Sign:in'))) {
