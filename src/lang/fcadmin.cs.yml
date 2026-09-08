@@ -112,14 +112,20 @@ presenters:
       delete: Opravdu chcete smazat tuto SSO instanci?
     errors:
       cannotDeleteHasIdentities: Nelze smazat — existují uživatelé navázaní na tuto SSO instanci.
+      testNotFound: SSO instance nebyla nalezena.
+      testServerFailed: "Server se na Keycloak nedovolal. Zkontrolujte interní URL, realm, Client ID a Client Secret."
+      testFailed: "Zkušební přihlášení neprošlo, Keycloak vrátil chybu %error%. Zkontrolujte veřejnou URL a registrovaná redirect URI."
     messages:
       deleted: SSO instance byla smazána.
+      testOk: Zkouška prošla — Keycloak je dostupný a konfigurace instance je v pořádku.
     grid:
       name: Název
       realm: Realm
       hostUrl: URL
       clientId: Client ID
       defaultRole: Výchozí role
+      test: Vyzkoušet
+      isActive: Aktivní
       delete: Smazat
     form:
       name: Název
@@ -130,6 +136,7 @@ presenters:
       clientSecret: Client Secret
       frontendClientId: Frontend Client ID
       defaultRole: Výchozí role pro nové uživatele
+      isActive: Aktivní
       submit: Uložit
       errors:
         nameRequired: Název je povinný
@@ -139,6 +146,8 @@ presenters:
         clientIdRequired: Client ID je povinný
         clientSecretRequired: Client Secret je povinný
         frontendClientIdRequired: Frontend Client ID je povinný
+        baseUrlInvalid: Interní URL musí být platná absolutní URL
+        hostUrlInvalid: Veřejná URL musí být platná absolutní URL
 
   profiles:
     title: Uživatelé

@@ -41,6 +41,7 @@ trait LostPasswordFormTrait
 
 		// Pokud má identita SSO vazbu a Keycloak je zapnutý, pošle reset email přes Keycloak
 		if ($this->_fancyAdmin->isKeycloakEnabled() && $identity->getSso() !== null) {
+			// Deaktivovaná instance vrátí null a uživatel dostane lokální recovery mail jako každý jiný.
 			$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity);
 			if ($keycloak !== null) {
 				$redirectUri = $this->getPresenter()->link('//:Portal:Sign:in');

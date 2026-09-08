@@ -203,10 +203,7 @@ trait SignInFormTrait
 		}
 
 		// Najdeme identitu podle emailu a zjistíme přiřazenou SSO instanci
-		$identity = $this->_identityQueryFactory->create()
-			->byEmail($email)
-			->fetchOneOrNull();
-
+		$identity = $this->findIdentityByEmail($email);
 		if ($identity === null) {
 			return null;
 		}
@@ -220,11 +217,20 @@ trait SignInFormTrait
 		return $keycloak->getLoginUrl($backRedirect, $email, true);
 	}
 
+	private function findIdentityByEmail(string $email): ?Identity
+	{
+		return $this->_identityQueryFactory->create()
+			->byEmail($email)
+			->fetchOneOrNull();
+	}
+
 	public function validateForm(array $values, Form $form): void
 	{
 		// Fallback pro klienty bez JS: AJAX kontrola (checkKeycloak) neproběhla,
 		// takže SSO uživatele přesměrujeme na Keycloak login až při odeslání formuláře.
 		// Heslo se v tom případě ignoruje - autorita pro SSO uživatele je Keycloak.
+		// Při deaktivované instanci getKeycloakLoginUrl() vrátí null a uživatel se přihlašuje
+		// heslem jako každý jiný (viz KeycloakManager::getInstanceForIdentity).
 		if ($loginUrl = $this->getKeycloakLoginUrl($values['email'])) {
 			$this->getPresenter()->redirectUrl($loginUrl);
 		}

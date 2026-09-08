@@ -141,8 +141,9 @@ trait SignPresenterTrait
 			if ($this->_fancyAdmin->isKeycloakEnabled()) {
 				$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceFromSession();
 				if ($keycloak === null) {
-					// Fallback — zkusíme najít instanci dle identity
-					$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($this->getUser()->getIdentity());
+					// Fallback - zkusíme najít instanci dle identity. I neaktivní: uživatel se mohl
+					// přihlásit před deaktivací a odstavená instance ho nesmí uvěznit v session.
+					$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($this->getUser()->getIdentity(), activeOnly: false);
 				}
 				$redirectUrl = $this->getPresenter()->link(':Portal:Sign:in');
 				$logoutUrl = $keycloak?->getLogoutUrl($redirectUrl);

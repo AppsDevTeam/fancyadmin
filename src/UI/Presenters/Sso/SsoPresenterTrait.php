@@ -9,6 +9,7 @@ use ADT\FancyAdmin\DI\Injects\SsoFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\SsoQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
+use ADT\FancyAdmin\Model\Security\Keycloak\Keycloak;
 use ADT\FancyAdmin\UI\Components\Grids\Sso\SsoGrid;
 use ADT\FancyAdmin\UI\Components\Grids\Sso\SsoGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
@@ -32,6 +33,19 @@ trait SsoPresenterTrait
 
 	public function actionDefault(?Sso $sso = null): void
 	{
+		// Návrat ze zkušebního průchodu (akce Vyzkoušet): výsledek přišel v URL, protože
+		// redirect z KeycloakAuth presenteru na absolutní URL flash session nepřenese.
+		// Redirect zároveň parametr z URL vyčistí, aby se hláška neopakovala při refreshi.
+		$ssoTest = $this->getParameter(Keycloak::SSO_TEST_PARAM);
+		if (is_string($ssoTest) && $ssoTest !== '') {
+			if ($ssoTest === Keycloak::SSO_TEST_OK) {
+				$this->flashMessageSuccess('fcadmin.presenters.sso.messages.testOk');
+			} else {
+				$this->flashMessageError('fcadmin.presenters.sso.errors.testFailed', parameters: ['error' => $ssoTest]);
+			}
+			$this->redirect('this');
+		}
+
 		if ($sso) {
 			$this->entity = $sso;
 		}

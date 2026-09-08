@@ -75,7 +75,7 @@ Všechny jsou v routě `keycloak-auth/*` resp. `keycloak-log/*`:
 | Endpoint | Metoda | Volá | Účel |
 |---|---|---|---|
 | `/keycloak-auth/callback?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | OAuth2 callback — ověření state proti session, výměna code za tokeny (s PKCE verifierem), přihlášení uživatele |
-| `/keycloak-auth/silent-check?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | Callback pro silent SSO check (`prompt=none`), stejná validace state/PKCE |
+| `/keycloak-auth/silent-check?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | Callback pro silent SSO check (`prompt=none`), stejná validace state/PKCE. Má i testovací režim (akce Vyzkoušet v SSO gridu) řízený příznakem `isTest` uloženým v session u `state`: nikoho nepřihlásí, `code` se za token nevymění, výsledek jen vrátí do gridu parametrem `ssoTest` v návratové URL ze session |
 | `/keycloak-auth/post-log-out?state=...` | GET | prohlížeč (redirect z KC) | Návrat po logoutu z KC, redirect na `state` |
 | `/keycloak-auth/backchannel-logout?instance={name}` | POST | **Keycloak server** | OIDC backchannel logout — přijímá `logout_token` (JWT) |
 | `/keycloak-auth/silent-check-sso` | GET | prohlížeč (iframe keycloak-js) | Stránka pro silent check iframe adapteru |
@@ -128,6 +128,7 @@ Klíčové body:
 
 - **`state` je náhodný jednorázový CSRF token** — při startu flow se uloží do serverové session (spolu s PKCE code_verifierem a návratovou URL), callback ho ověří a zneplatní; neznámý/expirovaný state (TTL 10 min) flow ukončí. Podvržený callback s cizím authorization code tak nelze do session oběti injektovat.
 - **PKCE (S256)** — code_verifier drží serverová session, k token requestu se přikládá při výměně code za tokeny
+- **SSO uživatel se přihlašuje jen přes Keycloak**: identita s vazbou na SSO instanci (`identity.sso_id`) a rolí s `needs_sso` se lokálním heslem nepřihlásí; je-li její instance deaktivovaná (`sso.is_active = 0`), chová se záměrně jako běžný uživatel s heslem (přihlášení heslem, lokální obnova i změna hesla), aby se do aplikace dostala i při výpadku Keycloaku
 - **Párování uživatele probíhá podle emailu** — email z KC userinfo se hledá v lokální tabulce `identity`
 - Pokud lokální identita neexistuje a je zapnutá auto-registrace, vytvoří se s výchozí rolí z konfigurace SSO instance
 - Pokud `/userinfo` selže, claims se čtou fallbackem z `id_token` (bez validace podpisu — jde o data z přímé TLS-ověřené komunikace s KC, ne od uživatele)
@@ -211,6 +212,8 @@ Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle 
 - **Ochrana proti open redirectu** — návratové URL pochází výhradně ze serverové session (generované aplikací); post-logout `state` se navíc validuje na shodu hostu s aplikací
 - **Backchannel logout** — `logout_token` se plně validuje podle OIDC spec (podpis proti JWKS, iss, aud, events, replay ochrana přes jti); identita uživatele se navíc ověřuje zpětným dotazem na KC Admin API (`sub` → uživatel → email)
 - **Žádné ukládání tokenů v DB** — `id_token` je pouze v serverové session (pro logout), access/refresh tokeny backend nedrží
+- **Deaktivace instance (`sso.is_active`)**: deaktivovanou instanci silent SSO vynechá a SSO uživatelé na ni navázaní se záměrně chovají jako běžní uživatelé s heslem (přihlášení heslem, lokální obnova i změna hesla), deaktivace je tedy i nouzový režim při výpadku Keycloaku; callback rozpracovaného requestu, odhlášení (včetně RP-initiated logoutu z KC) a backchannel logout fungují dál, aby deaktivace neuvěznila už přihlášené uživatele
+- **Testovací průchod (akce Vyzkoušet)**: příznak `isTest` je jen v serverové session u jednorázového `state`, ne v URL, takže ho nelze podvrhnout; `code` se v testovacím režimu za token nevymění a nikdo se nepřihlásí ani neprovisionuje; návrat vede výhradně na `backRedirect` ze session a kód chyby od KC se před zobrazením sanitizuje na `[a-z0-9_.-]` (max 64 znaků)
 - **Druhý faktor plně v KC** — WebAuthn ceremonie i credentials jsou na straně Keycloaku; aplikace klíče nevidí, neukládá a nijak s nimi nepracuje, jejich správa probíhá výhradně v Keycloaku (viz sekce 11)
 
 ---
