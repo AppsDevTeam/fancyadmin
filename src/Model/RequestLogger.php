@@ -21,6 +21,13 @@ use Tracy\ILogger;
 
 final class RequestLogger
 {
+	/**
+	 * Nejhlubší zanoření, které MySQL pustí do sloupce typu `json`; hlubší dokument odmítne
+	 * chybou 3157 (The JSON document exceeds the maximum depth). PHP proti tomu parsuje do
+	 * 512 úrovní, takže tělo mezi těmito dvěma limity aplikací projde a rozbije se až tady.
+	 */
+	private const int MAX_JSON_COLUMN_DEPTH = 100;
+
 	public static bool $logResponse = false;
 	public static ?int $apiKeyId = null;
 
@@ -68,7 +75,11 @@ final class RequestLogger
 	 */
 	private function doLogRequest(Presenter $presenter, Response $response): void
 	{
-		if (json_validate($presenter->getHttpRequest()->getRawBody())) {
+		// Hloubka se hlídá spolu s validitou: co se do `json` sloupce nevejde, uloží se jako
+		// text. Dřív takový požadavek shodil celý insert do `request_log_body`, takže se
+		// ztratilo tělo i odpověď - a stačilo ho poslat, aby v logu nebyly. Text je horší
+		// na dotazování, ale je to pořád celý obsah.
+		if (json_validate($presenter->getHttpRequest()->getRawBody(), self::MAX_JSON_COLUMN_DEPTH)) {
 			$raw_data_text = null;
 			$raw_data_json = Json::decode($presenter->getHttpRequest()->getRawBody(), forceArrays: true);
 		} else {
@@ -81,7 +92,7 @@ final class RequestLogger
 				ob_start();
 				$response->send($presenter->getHttpRequest(), $presenter->getHttpResponse());
 				$response = ob_get_clean();
-				if (json_validate($response)) {
+				if (json_validate($response, self::MAX_JSON_COLUMN_DEPTH)) {
 					$response_text = null;
 					$response_json = Json::decode($response, forceArrays: true);
 				} else {
