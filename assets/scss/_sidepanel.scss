@@ -405,17 +405,94 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		}
 	}
 
-	// Wrapper top-level has-submenu itemu: bez paddingu (padding jde na .item-header),
-	// inline submenu ve sbaleném režimu schované (přebít případný .open stav z JS applyState).
+	// Top-level has-submenu itemy - popover chování obdobné jako u skupin.
+	// Wrapper bez paddingu (padding jde na .item-header). Submenu se ve sbaleném
+	// režimu ukazuje jako popover vpravo od menu při hoveru (position: fixed +
+	// --item-top nastavené v JS z .item.offsetTop).
 	.menu-body > .item.has-submenu {
 		padding: 0;
 		gap: 0;
 
-		&,
-		&.open {
-			.submenu {
-				display: none;
+		.submenu {
+			display: none;
+			position: fixed;
+			top: var(--item-top, 0);
+			left: var(--side-panel-width);
+			min-width: 220px;
+			background: var(--menu-wide-popover-bg);
+			border: 1px solid var(--menu-wide-popover-border);
+			border-radius: var(--menu-wide-popover-radius);
+			box-shadow: var(--menu-wide-popover-shadow);
+			padding: 8px;
+			z-index: 1500;
+
+			// Bridge překlene mezeru mezi item a popoverem (jen na výšku itemu = 60px)
+			&::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				height: 60px;
+				left: calc(-1 * var(--side-panel-width));
+				width: var(--side-panel-width);
 			}
+
+			// V popoveru chceme submenu-heading vidět (label rodičovské položky)
+			.submenu-heading {
+				display: block;
+				font-size: 0.72rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--menu-wide-muted);
+				padding: 12px 12px 4px;
+			}
+
+			.item {
+				padding: 8px 12px;
+				font-size: 0.9rem;
+				font-weight: 400;
+				text-transform: none;
+				letter-spacing: 0;
+				background: transparent;
+				color: var(--menu-wide-text);
+				border-radius: var(--menu-wide-item-radius);
+				flex-direction: row;
+				height: auto;
+				gap: 12px;
+
+				.icon {
+					display: inline-flex;
+					width: 20px;
+					color: var(--menu-wide-muted);
+					font-size: 0.9rem;
+				}
+
+				.item-title {
+					flex: 1;
+					font-size: 0.9rem;
+					text-align: left;
+				}
+
+				&:hover {
+					background: var(--menu-wide-hover-bg);
+					color: var(--menu-wide-hover-text);
+				}
+
+				&.active {
+					background: var(--menu-wide-active-bg);
+					color: var(--menu-wide-active-text);
+
+					.icon {
+						color: var(--menu-wide-active-text);
+					}
+				}
+			}
+		}
+
+		// Popover se otevírá na hover; .open z JS (rozbalený režim) se ve sbaleném ignoruje
+		&:hover .submenu,
+		.submenu:hover {
+			display: block;
 		}
 	}
 

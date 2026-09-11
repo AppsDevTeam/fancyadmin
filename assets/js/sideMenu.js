@@ -54,13 +54,17 @@ function applyState() {
 	positionPopovers();
 }
 
-// Popover je position: fixed → potřebuje inline top nastavený podle Y skupiny,
-// jinak by šel na static position (pod heading) a nezarovnal by se s heading.
-// Nastavujeme CSS proměnnou --group-top na každou .group, popover ji čte v top:.
+// Popover je position: fixed → potřebuje inline top nastavený podle Y kotvy (heading skupiny
+// nebo top-level has-submenu itemu), jinak by šel na top: 0. Nastavujeme CSS proměnnou
+// --group-top / --item-top na kotvu, popover ji čte v top:.
 function positionPopovers() {
 	$('.side-panel-wide .group').each(function () {
 		const top = this.offsetTop;
 		this.style.setProperty('--group-top', top + 'px');
+	});
+	$('.side-panel-wide .menu-body > .item.has-submenu').each(function () {
+		const top = this.offsetTop;
+		this.style.setProperty('--item-top', top + 'px');
 	});
 }
 
