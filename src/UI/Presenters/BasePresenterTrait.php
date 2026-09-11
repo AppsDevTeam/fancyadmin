@@ -57,26 +57,39 @@ trait BasePresenterTrait
 			$ssoClass = $this->_em->findEntityClassByInterface(\ADT\FancyAdmin\Model\Entities\Sso::class);
 			$ssoRecords = $this->_em->getRepository($ssoClass)->findAll();
 			if (!empty($ssoRecords)) {
+				// Do hlavičky jde jen origin, ne uložená hodnota. CSP stejně porovnává origin,
+				// takže se tím nic neztrácí - a hodnota z administrace se do bezpečnostní
+				// hlavičky nedostane tak, jak ji tam někdo napsal.
+				//
+				// Samotná validace pole nestačí: `https://kc.example.com/a;b` je platná URL,
+				// ale středník v hlavičce ukončí direktivu a zbytek jejích zdrojů zahodí.
+				// Hodnoty uložené před zavedením validace navíc můžou být cokoli včetně
+				// `javascript:` (nález WEB-11).
 				$ssoUrls = [];
 				foreach ($ssoRecords as $sso) {
-					$ssoUrls[] = $sso->getHostUrl();
-				}
-				$urls = implode(' ', $ssoUrls);
-				$currentCsp = $this->getHttpResponse()->getHeader('Content-Security-Policy') ?? '';
-
-				// SSO URL se doplní do connect-src (obnova tokenu XHR) i frame-src (silent
-				// SSO iframe). Obojí musí rozšířit direktivu, pokud už v hlavičce je -
-				// z opakované direktivy prohlížeč respektuje jen první výskyt, takže
-				// přilepení druhé na konec by se tiše ignorovalo a iframe by se zablokoval.
-				foreach (['connect-src', 'frame-src'] as $directive) {
-					if (preg_match('/' . $directive . '\s+([^;]+)/', $currentCsp, $m)) {
-						$currentCsp = str_replace($m[0], $m[0] . ' ' . $urls, $currentCsp);
-					} else {
-						$currentCsp .= '; ' . $directive . ' \'self\' ' . $urls;
+					if ($origin = self::getCspOrigin($sso->getHostUrl())) {
+						$ssoUrls[] = $origin;
 					}
 				}
 
-				$this->getHttpResponse()->setHeader('Content-Security-Policy', $currentCsp);
+				if ($ssoUrls) {
+					$urls = implode(' ', $ssoUrls);
+					$currentCsp = $this->getHttpResponse()->getHeader('Content-Security-Policy') ?? '';
+
+					// SSO URL se doplní do connect-src (obnova tokenu XHR) i frame-src (silent
+					// SSO iframe). Obojí musí rozšířit direktivu, pokud už v hlavičce je -
+					// z opakované direktivy prohlížeč respektuje jen první výskyt, takže
+					// přilepení druhé na konec by se tiše ignorovalo a iframe by se zablokoval.
+					foreach (['connect-src', 'frame-src'] as $directive) {
+						if (preg_match('/' . $directive . '\s+([^;]+)/', $currentCsp, $m)) {
+							$currentCsp = str_replace($m[0], $m[0] . ' ' . $urls, $currentCsp);
+						} else {
+							$currentCsp .= '; ' . $directive . ' \'self\' ' . $urls;
+						}
+					}
+
+					$this->getHttpResponse()->setHeader('Content-Security-Policy', $currentCsp);
+				}
 			}
 		}
 
@@ -177,6 +190,33 @@ trait BasePresenterTrait
 		$list = parent::formatLayoutTemplateFiles();
 		$list[] = __DIR__ . "/@layout.latte";
 		return $list;
+	}
+
+	/**
+	 * Origin pro zdroj v CSP, tedy `schema://host[:port]` - nebo null, kdyz hodnota origin
+	 * nedává.
+	 *
+	 * Zahazuje cestu, dotaz i fragment: v CSP nemají význam a jsou to právě ony, kudy by se
+	 * do hlavičky dostal středník nebo mezera a rozbily ji. Jiné schéma než http(s) se
+	 * nepřipouští vůbec - `javascript:` ani `data:` jako zdroj nedávají smysl a v hlavičce
+	 * nemají co dělat.
+	 *
+	 * Host se kontroluje proti povoleným znakům, protože `parse_url()` ho nevaliduje:
+	 * z `https://ex;ample.com` vrátí host `ex;ample.com`.
+	 */
+	private static function getCspOrigin(?string $url): ?string
+	{
+		$parts = parse_url((string) $url);
+
+		if (
+			!in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+			|| !preg_match('~^[a-z0-9.-]+$~i', $parts['host'] ?? '')
+		) {
+			return null;
+		}
+
+		return $parts['scheme'] . '://' . $parts['host']
+			. (isset($parts['port']) ? ':' . $parts['port'] : '');
 	}
 
 	public function handleSetFirebaseToken(string $firebaseToken): void
