@@ -1,52 +1,104 @@
 {varType ADT\FancyAdmin\Model\Menu\NavbarMenu $navbarMenu}
-<div class="side-panel z-1 delay-animate">
-    <div class="menu">
-        <a class="logo" href="/">
-            {if isset($icon) && $icon}
-                <img src="{$icon}" style="max-height: 36px; max-width: 36px">
-            {else}
-                <svg width="36" height="32" viewBox="0 0 36 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M28.9001 26.249H7.09984C3.45951 26.249 0.5 23.2616 0.5 19.5868V6.66217C0.5 2.9875 3.45951 0 7.09984 0H28.9001C32.5405 0 35.5 2.9875 35.5 6.66217V19.5868C35.5 23.2616 32.5405 26.249 28.9001 26.249ZM7.09984 3.06461C5.13379 3.06461 3.53593 4.67755 3.53593 6.66217V19.5868C3.53593 21.5714 5.13379 23.1844 7.09984 23.1844H28.9001C30.8662 23.1844 32.4641 21.5714 32.4641 19.5868V6.66217C32.4641 4.67755 30.8662 3.06461 28.9001 3.06461H7.09984Z" fill="#42B6A4"/>
-                    <path d="M26.5729 31.8523H9.42724C8.58659 31.8523 7.90576 31.1651 7.90576 30.3166C7.90576 29.468 8.58659 28.7808 9.42724 28.7808H26.5799C27.4204 28.7808 28.1013 29.468 28.1013 30.3166C28.1013 31.1651 27.4204 31.8523 26.5799 31.8523H26.5729Z" fill="#42B6A4"/>
-                </svg>
-            {/if}
+
+{define renderMenuItem, $menuItem, $presenter, $user}
+    {varType ADT\FancyAdmin\Model\Menu\NavbarMenuItem $menuItem}
+    {if $menuItem->getLink()}
+        {var $link = $presenter->link($menuItem->getLink(), $menuItem->getLinkArgs())}
+        <a n:if="$menuItem->isVisible($user, $presenter)" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
+            <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
+            <div class="title">{_$menuItem->getLabel()}</div>
         </a>
+    {else}
+        <span n:if="$menuItem->isEnabledSubmenu($user, $presenter)" n:class="item, has-submenu, $menuItem->isCurrent($presenter) ? active" data-submenu-parent>
+            {* Header řádek jako samostatný wrapper - active bg jde jen sem, ne na submenu *}
+            <span class="item-header" role="button" tabindex="0" aria-label="{_$menuItem->getLabel()}">
+                <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
+                <div class="title">{_$menuItem->getLabel()}</div>
+                <i class="fa-solid fa-chevron-down submenu-chevron"></i>
+            </span>
+            {if $menuItem->getSubmenu()}
+                {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
+                <div class="submenu">
+                    {foreach $subMenu->getSubMenuItems() as $subMenuItem}
+                        {if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
+                            <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
+                        {else}
+                            {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
+                            <a n:if="$subMenuItem->isVisible($user, $presenter)" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
+                                <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
+                                <div class="item-title">{_$subMenuItem->getLabel()}</div>
+                            </a>
+                        {/if}
+                    {/foreach}
+                </div>
+            {/if}
+        </span>
+    {/if}
+{/define}
 
-        {foreach $navbarMenu->getMenuItems() as $menuItem}
-            {if $menuItem->getLink()}
-                {var $link = $presenter->link($menuItem->getLink(), $menuItem->getLinkArgs())}
+<div class="side-panel side-panel-wide z-1 delay-animate">
+    <div class="menu">
+        <div class="side-panel-header">
+            <a class="logo" href="/">
+                {if isset($icon) && $icon}
+                    <img src="{$icon}" alt="">
+                {else}
+                    <svg width="36" height="32" viewBox="0 0 36 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M28.9001 26.249H7.09984C3.45951 26.249 0.5 23.2616 0.5 19.5868V6.66217C0.5 2.9875 3.45951 0 7.09984 0H28.9001C32.5405 0 35.5 2.9875 35.5 6.66217V19.5868C35.5 23.2616 32.5405 26.249 28.9001 26.249ZM7.09984 3.06461C5.13379 3.06461 3.53593 4.67755 3.53593 6.66217V19.5868C3.53593 21.5714 5.13379 23.1844 7.09984 23.1844H28.9001C30.8662 23.1844 32.4641 21.5714 32.4641 19.5868V6.66217C32.4641 4.67755 30.8662 3.06461 28.9001 3.06461H7.09984Z" fill="#42B6A4"/>
+                        <path d="M26.5729 31.8523H9.42724C8.58659 31.8523 7.90576 31.1651 7.90576 30.3166C7.90576 29.468 8.58659 28.7808 9.42724 28.7808H26.5799C27.4204 28.7808 28.1013 29.468 28.1013 30.3166C28.1013 31.1651 27.4204 31.8523 26.5799 31.8523H26.5729Z" fill="#42B6A4"/>
+                    </svg>
+                {/if}
+            </a>
+        </div>
 
-                <a n:if="$menuItem->isVisible($user, $presenter)" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
-                    <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
-                    <div class="title">{_$menuItem->getLabel()}</div>
-                </a>
-            {else}
-                <span n:if="$menuItem->isEnabledSubmenu($user, $presenter)" href="#" n:class="item, $menuItem->isCurrent($presenter) ? active">
-                    <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
-                    <div class="title">{_$menuItem->getLabel()}</div>
-                    {if $menuItem->getSubmenu()}
-                        {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
-                        <div class="submenu">
-                            <div class="submenu-heading">{_$subMenu->getTitle()}</div>
-                            {foreach $subMenu->getSubMenuItems() as $subMenuItem}
-                                {if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
-                                    <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
-                                {else}
-                                    {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
+        <div class="menu-body">
+            {foreach $navbarMenu->getGroups() as $group}
+                {var ADT\FancyAdmin\Model\Menu\NavbarHeading|null $heading = $group['heading']}
 
-                                    <a n:if="$subMenuItem->isVisible($user, $presenter)" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
-                                        <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
-                                        <div class="item-title">{_$subMenuItem->getLabel()}</div>
-                                    </a>
-                                {/if}
+                {* Aktivní skupina - když je aktivní některá položka uvnitř (i v submenu), zvýrazní se ikonka skupiny *}
+                {var bool $isActiveGroup = false}
+                {foreach $group['items'] as $it}
+                    {if $it->getLink() && $it->isCurrent($presenter)}
+                        {do $isActiveGroup = true}
+                    {/if}
+                    {if $it->getSubmenu()}
+                        {foreach $it->getSubmenu()->getSubMenuItems() as $subIt}
+                            {if $subIt instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuItem && $subIt->isCurrent($presenter)}
+                                {do $isActiveGroup = true}
+                            {/if}
+                        {/foreach}
+                    {/if}
+                {/foreach}
+
+                {if $heading}
+                    <div n:class="group, $heading->isToggleable() ? toggleable, $isActiveGroup ? active-child" data-heading="{$heading->getLabel()|webalize}">
+                        <div class="group-heading" role="button" tabindex="0" aria-label="{_$heading->getLabel()}">
+                            <div n:if="$heading->getFaIcon()" class="icon"><i class="fa-solid fa-{$heading->getFaIcon()}"></i></div>
+                            <span class="group-heading-label">{_$heading->getLabel()}</span>
+                            <i n:if="$heading->isToggleable()" class="fa-solid fa-chevron-down group-heading-chevron"></i>
+                        </div>
+                        <div class="group-items">
+                            {foreach $group['items'] as $menuItem}
+                                {include renderMenuItem, menuItem: $menuItem, presenter: $presenter, user: $user}
                             {/foreach}
                         </div>
-                    {/if}
-                </span>
-            {/if}
+                    </div>
+                {else}
+                    {* Bez skupinové hlavičky - položky přímo v menu (top-level items) *}
+                    {foreach $group['items'] as $menuItem}
+                        {include renderMenuItem, menuItem: $menuItem, presenter: $presenter, user: $user}
+                    {/foreach}
+                {/if}
+            {/foreach}
 
-        {/foreach}
+            <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}">
+                <i class="fa-solid fa-angles-left"></i>
+                <span class="side-panel-toggle-label">{_fcadmin.layout.sideMenu.collapse}</span>
+            </button>
+        </div>
 
-        {include @userButton.latte}
+        <div class="side-panel-footer">
+            {include @userButton.latte}
+        </div>
     </div>
 </div>

@@ -1,10 +1,19 @@
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
 {varType ADT\FancyAdmin\Model\Menu\UserMenu $userMenu}
+{var $identity = $user->getIdentity()}
+{var $roles = $identity->getRoles()}
+{var $roleName = $roles ? reset($roles)->getName() : null}
 <div class="bottom-menu">
-    <div class="d-flex dropdown justify-content-center user">
-        <button class="btn btn-avatar" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-xl fa-user"></i>
-            <img src="{$user->getIdentity()->getGravatar()}" alt="gravatar" />
+    <div class="dropdown user">
+        <button class="btn user-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="btn-avatar">
+                <i class="fa-solid fa-xl fa-user"></i>
+                <img src="{$identity->getGravatar()}" alt="gravatar" />
+            </span>
+            <span class="user-button-info">
+                <span class="user-button-name">{$identity->getFullName()}</span>
+                <span n:if="$roleName" class="user-button-role">{$roleName}</span>
+            </span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end user-dropdown dropdown-menu-bottom">
             <li class="dropdown-item user-item-wrapper">

@@ -9,11 +9,21 @@ class NavbarMenu
 	/** @var NavbarMenuItem[] */
 	protected array $menuItems = [];
 
+	/** @var array<NavbarMenuItem|NavbarHeading> */
+	protected array $items = [];
+
 	protected LinkGenerator $linkGenerator;
 
 	public function addMenuItem(NavbarMenuItem $menuItem): self
 	{
 		$this->menuItems[] = $menuItem;
+		$this->items[] = $menuItem;
+		return $this;
+	}
+
+	public function addHeading(string $label, bool $toggleable = false, ?string $faIcon = null): self
+	{
+		$this->items[] = new NavbarHeading($label, $toggleable, $faIcon);
 		return $this;
 	}
 
@@ -23,6 +33,39 @@ class NavbarMenu
 	public function getMenuItems(): array
 	{
 		return $this->menuItems;
+	}
+
+	/**
+	 * @return array<NavbarMenuItem|NavbarHeading>
+	 */
+	public function getItems(): array
+	{
+		return $this->items;
+	}
+
+	/**
+	 * Rozdělí menu na skupiny podle NavbarHeading - potřebné pro nový DOM
+	 * (skupina wrapuje své položky, aby šlo v zabaleném režimu ukázat popover na hover).
+	 * @return array<array{heading: ?NavbarHeading, items: array<NavbarMenuItem>}>
+	 */
+	public function getGroups(): array
+	{
+		$groups = [];
+		$current = ['heading' => null, 'items' => []];
+		foreach ($this->items as $item) {
+			if ($item instanceof NavbarHeading) {
+				if ($current['heading'] !== null || $current['items']) {
+					$groups[] = $current;
+				}
+				$current = ['heading' => $item, 'items' => []];
+			} else {
+				$current['items'][] = $item;
+			}
+		}
+		if ($current['heading'] !== null || $current['items']) {
+			$groups[] = $current;
+		}
+		return $groups;
 	}
 
 
