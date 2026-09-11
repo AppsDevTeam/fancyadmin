@@ -366,9 +366,13 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		}
 	}
 
-	// Skupinová hlavička i top-level item (přímo v .menu-body) = stacked (ikona nahoře, text dole)
+	// Stacked layout (ikona nahoře, text dole) pro:
+	// - .group-heading - hlavička skupiny
+	// - .menu-body > .item - top-level linky bez podmenu
+	// - .menu-body > .item.has-submenu > .item-header - top-level s podmenu (obsah je uvnitř .item-header wrapperu)
 	.group-heading,
-	.menu-body > .item {
+	.menu-body > .item,
+	.menu-body > .item.has-submenu > .item-header {
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
@@ -398,6 +402,20 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		.group-heading-chevron,
 		.submenu-chevron {
 			display: none;
+		}
+	}
+
+	// Wrapper top-level has-submenu itemu: bez paddingu (padding jde na .item-header),
+	// inline submenu ve sbaleném režimu schované (přebít případný .open stav z JS applyState).
+	.menu-body > .item.has-submenu {
+		padding: 0;
+		gap: 0;
+
+		&,
+		&.open {
+			.submenu {
+				display: none;
+			}
 		}
 	}
 
