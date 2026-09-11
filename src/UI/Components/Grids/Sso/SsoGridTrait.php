@@ -23,10 +23,16 @@ trait SsoGridTrait
 		$grid->addColumnText('name', 'fcadmin.presenters.sso.grid.name');
 		$grid->addColumnText('realm', 'fcadmin.presenters.sso.grid.realm');
 		$grid->addColumnText('hostUrl', 'fcadmin.presenters.sso.grid.hostUrl')
-			->setRenderer(fn(Sso $sso) => \Nette\Utils\Html::el('a')
-				->href($sso->getHostUrl())
-				->setAttribute('target', '_blank')
-				->setText($sso->getHostUrl())
+			// Odkaz jen z http(s). `Html::href()` schema nekontroluje, takze ulozena hodnota
+			// `javascript:alert(1)` by se vykreslila jako klikatelne XSS (nalez WEB-11) -
+			// a ulozit ji slo do doby, nez pribyla validace pole (v1.3.0). Ostatni hodnoty
+			// se proto vypisuji jako text, at je v administraci porad videt, co je v datech.
+			->setRenderer(fn(Sso $sso) => preg_match('~^https?://~i', (string) $sso->getHostUrl())
+				? \Nette\Utils\Html::el('a')
+					->href($sso->getHostUrl())
+					->setAttribute('target', '_blank')
+					->setText($sso->getHostUrl())
+				: \Nette\Utils\Html::el('span')->setText($sso->getHostUrl())
 			);
 		$grid->addColumnText('clientId', 'fcadmin.presenters.sso.grid.clientId');
 		$grid->addColumnText('defaultRole', 'fcadmin.presenters.sso.grid.defaultRole')
