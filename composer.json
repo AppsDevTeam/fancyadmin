@@ -27,7 +27,7 @@
     "adt/datagrid-components": "^1.0",
     "nettrine/orm": "^0.10",
     "adt/route-port": "^3.0",
-    "adt/doctrine-loggable": "^3.0",
+    "adt/doctrine-loggable": "^3.0 || ^4.0",
     "adt/log-sanitizer": "^1.0",
     "lbuchs/webauthn": "^2.2"
   },
