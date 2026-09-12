@@ -32,10 +32,15 @@ trait BaseFormTrait
 			$refClass = new \ReflectionClass($this->getEntityClass());
 
 			if ($refClass->hasProperty('account')) {
-				$accountyQuery = $this->_accountQueryFactory->create();
-				if ($this->securityUser->getIdentity()->getSelectedAccount()) {
-					$accountyQuery->byIdOrParentId($this->securityUser->getIdentity()->getSelectedAccount());
+				// Bez účtu v URL jsme v backoffice - AuthPresenterTrait::startup() tam
+				// identitě vybraný účet nuluje. Výběr by nabízel všechny účty v systému,
+				// což u backoffice záznamu nedává smysl; účet doplní AccountFieldListener.
+				$selectedAccount = $this->securityUser->getIdentity()?->getSelectedAccount();
+				if (!$selectedAccount) {
+					return;
 				}
+
+				$accountyQuery = $this->_accountQueryFactory->create()->byIdOrParentId($selectedAccount);
 
 				if ($accountyQuery->count() > 1) {
 					$pairs = [];
