@@ -103,9 +103,14 @@ class Identity extends BaseEntity
 ```
 
 **IdentityTrait poskytuje:**
-- Sloupce: `firstName`, `lastName`, `email`, `username`, `password`, `phoneNumber`, `context`, `isActive`
+- Sloupce: `firstName`, `lastName`, `email`, `username`, `password`, `phoneNumber`, `context`, `isActive`, `ssoSub`
 - Timestamps: `createdAt`, `updatedAt`, `createdBy`, `updatedBy`
-- Vztahy: `profiles` (1:N), `roles` (M:N s AclRole), `selectedAccount` (N:1)
+- Vztahy: `profiles` (1:N), `roles` (M:N s AclRole), `selectedAccount` (N:1), `sso` (N:1)
+
+> `ssoSub` drží claim `sub` z SSO, tedy stabilní identifikátor uživatele u poskytovatele
+> identity. Používá se k párování při přihlášení — proti e-mailu je odolnější, protože
+> e-mail je měnitelný na obou stranách. Sloupec je nullable (uživatel nemusí chodit přes
+> SSO) a unikátní. Po přidání entity spusťte migraci.
 - Metody: `getFullName()`, `getRoles()`, `isAllowed()`, `isAdmin()`, `getGravatar()`
 - Auth metody: `getAuthObjectId()`, `getAuthToken()`, `setAuthToken()`, `setPassword()` (automaticky hashuje)
 

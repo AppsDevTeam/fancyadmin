@@ -71,6 +71,21 @@ trait IdentityTrait
 	#[LoggableProperty]
 	protected ?Sso $sso = null;
 
+	/**
+	 * Hodnota claimu `sub` z SSO — stabilní identifikátor uživatele u poskytovatele identity.
+	 *
+	 * Slouží k párování při přihlášení. Proti e-mailu je odolnější: e-mail je měnitelný na
+	 * obou stranách a jakmile se rozejdou, uživatel ztratí přístup.
+	 *
+	 * Nullable, protože uživatel nemusí přes SSO chodit vůbec. Unikátní záměrně globálně,
+	 * ne jen v rámci jedné SSO instance — dohledání podle `sub` se tím obejde bez filtru na
+	 * instanci a případná kolize mezi dvěma poskytovateli skončí hlasitě na constraintu,
+	 * místo aby tiše přihlásila k cizímu účtu.
+	 */
+	#[ORM\Column(unique: true, nullable: true)]
+	#[LoggableProperty]
+	protected ?string $ssoSub = null;
+
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
@@ -137,6 +152,17 @@ trait IdentityTrait
 	public function setEmail(?string $email): static
 	{
 		$this->email = $email;
+		return $this;
+	}
+
+	public function getSsoSub(): ?string
+	{
+		return $this->ssoSub;
+	}
+
+	public function setSsoSub(?string $ssoSub): static
+	{
+		$this->ssoSub = $ssoSub;
 		return $this;
 	}
 

@@ -463,18 +463,35 @@ class Keycloak
 	 * Přihlásí uživatele na základě Keycloak autentizace.
 	 * Uživatel musí již existovat v lokální databázi.
 	 */
+	/**
+	 * Uživatele hledá **přednostně podle claimu `sub`**, teprve pak podle e-mailu.
+	 *
+	 * `sub` je u poskytovatele identity stabilní, kdežto e-mail je měnitelný na obou stranách
+	 * — jakmile se rozejdou, uživatel se nepřihlásí. Dokud ale `ssoSub` u identity nemáme
+	 * (uživatelé založení před jeho zavedením nebo mimo SSO), je e-mail jediné, podle čeho
+	 * jde spárovat. Po takovém přihlášení si `sub` rovnou uložíme, takže každá identita
+	 * přejde na stabilní párování při svém prvním přihlášení a e-mailová větev postupně
+	 * přestane být potřeba.
+	 */
 	public function loginUser(KeycloakAuthentication $keycloakAuthentication, bool $autoRegister = false): void
 	{
 		$userInfo = $keycloakAuthentication->getUserInfo();
+		$ssoSub = $userInfo['sub'] ?? null;
 		$email = $userInfo['email'] ?? null;
 
-		if (empty($email)) {
-			throw new \Nette\Security\AuthenticationException('Keycloak user has no email.');
-		}
+		$identity = $ssoSub
+			? $this->identityQueryFactory->create()->bySsoSub($ssoSub)->fetchOneOrNull()
+			: null;
 
-		$identity = $this->identityQueryFactory->create()
-			->byEmail($email)
-			->fetchOneOrNull();
+		if ($identity === null) {
+			if (empty($email)) {
+				throw new \Nette\Security\AuthenticationException('Keycloak user has neither a known sub nor an email.');
+			}
+
+			$identity = $this->identityQueryFactory->create()
+				->byEmail($email)
+				->fetchOneOrNull();
+		}
 
 		if ($identity === null) {
             if ($autoRegister) {
@@ -482,6 +499,10 @@ class Keycloak
             } else {
 			    throw new \Nette\Security\AuthenticationException('User not found in application.');
             }
+		} elseif ($ssoSub && $identity->getSsoSub() === null) {
+			// Spárováno e-mailem - `sub` doplníme, ať příští přihlášení jde stabilní cestou.
+			$identity->setSsoSub($ssoSub);
+			$this->em->flush();
 		}
 
 		if ($keycloakAuthentication->getIdToken()) {
@@ -515,6 +536,7 @@ class Keycloak
 		$identity->setEmail($userInfo['email']);
 		$identity->setFirstName($userInfo['given_name'] ?? null);
 		$identity->setLastName($userInfo['family_name'] ?? null);
+		$identity->setSsoSub($userInfo['sub'] ?? null);
 
 		// Přiřadit SSO instanci
 		$sso = $this->findSsoEntity();

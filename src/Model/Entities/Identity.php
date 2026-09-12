@@ -42,6 +42,9 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getEmail(): ?string;
 	public function setEmail(?string $email): static;
 
+	public function getSsoSub(): ?string;
+	public function setSsoSub(?string $ssoSub): static;
+
 	public function getContext(): ?string;
 	public function setContext(?string $context): static;
 
