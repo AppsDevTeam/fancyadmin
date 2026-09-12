@@ -42,6 +42,11 @@ trait IdentityQueryTrait
 		return $this->by('email', $email);
 	}
 
+	public function bySsoSub(string $ssoSub): static
+	{
+		return $this->by('ssoSub', $ssoSub);
+	}
+
 	public function byEmailNot(string $email): static
 	{
 		return $this->by('email', $email, QueryObjectByMode::NOT_EQUALS);

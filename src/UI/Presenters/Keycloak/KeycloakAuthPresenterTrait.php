@@ -137,18 +137,27 @@ trait KeycloakAuthPresenterTrait
 			$this->sendResponse(new TextResponse('Missing sub claim'));
 		}
 
-		// Najdeme uživatele v Keycloaku podle sub → získáme email
-		$keycloakUser = $keycloak->getUserById($sub);
-		if ($keycloakUser === null || $keycloakUser->getEmail() === null) {
-			$this->getHttpResponse()->setCode(200);
-			$this->sendResponse(new TextResponse('OK'));
-		}
-
-		// Najdeme lokální identitu podle emailu a invalidujeme všechny její sessions
+		// Identitu hledáme přímo podle `sub` - stejně jako při přihlášení. Dotaz do Keycloaku
+		// na e-mail je až záloha pro identity, které `ssoSub` ještě nemají; těm se doplní
+		// při nejbližším přihlášení (viz Keycloak::loginUser), takže tahle větev postupně
+		// přestane být potřeba.
 		$identity = $this->_identityQueryFactory->create()
 			->disableSecurityFilter()
-			->byEmail($keycloakUser->getEmail())
+			->bySsoSub($sub)
 			->fetchOneOrNull();
+
+		if ($identity === null) {
+			$keycloakUser = $keycloak->getUserById($sub);
+			if ($keycloakUser === null || $keycloakUser->getEmail() === null) {
+				$this->getHttpResponse()->setCode(200);
+				$this->sendResponse(new TextResponse('OK'));
+			}
+
+			$identity = $this->_identityQueryFactory->create()
+				->disableSecurityFilter()
+				->byEmail($keycloakUser->getEmail())
+				->fetchOneOrNull();
+		}
 
 		if ($identity !== null) {
 			$this->_authenticator->clearIdentity($identity->getAuthObjectId());
