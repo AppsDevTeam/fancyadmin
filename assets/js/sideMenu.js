@@ -22,7 +22,28 @@ function applyState() {
 	const state = readState();
 	// default = zabalené menu, aby uživatel viděl přehled skupin s ikonami; rozbalí si přes toggle
 	const collapsed = state.collapsed !== false;
+	const wasCollapsed = $('body').hasClass('menu-collapsed');
 	$('body').toggleClass('menu-collapsed', collapsed);
+	// Chrome bug: po toggle body třídy sidebar width ani descendant styly (item
+	// layout, group heading, submenu popovery) se nezinvalidují - uživatel musí
+	// F5. Fix má dvě části:
+	//   1) inline width na sidebar (hodnoty duplikují --side-panel-width z SCSS)
+	//   2) detach + immediate reattach sidebar elementu ve stejném JS turnu -
+	//      vynutí full style recalc descendantů bez viditelného flashe (browser
+	//      nemaluje mid-turn). Bez detach zůstane item layout ve staré verzi.
+	// Skip pokud se state nezměnil (initial page load kdy preload script v
+	// layout.latte už přidal menu-collapsed na body) - jinak by detach způsobil
+	// jednoframový flash sidebar zmizení.
+	const sidebar = document.querySelector('.side-panel-wide');
+	if (sidebar && wasCollapsed !== collapsed) {
+		sidebar.style.width = collapsed ? '84px' : '200px';
+		if (sidebar.parentElement) {
+			const parent = sidebar.parentElement;
+			const next = sidebar.nextSibling;
+			parent.removeChild(sidebar);
+			parent.insertBefore(sidebar, next);
+		}
+	}
 
 	// toggleable skupiny - sbalitelnost v rozbaleném menu
 	const collapsedHeadings = state.collapsedHeadings || [];

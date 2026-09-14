@@ -40,13 +40,24 @@ body.menu-wide .side-panel-wide {
 	top: 0;
 	left: 0;
 	bottom: 0;
+	// width je nastavená inline v JS (applyState v sideMenu.js) - Chrome
+	// nespolehlivě invaliduje sidebar width po toggle body.menu-collapsed
+	// (přechod 84 → 200 zůstane zaseknutý ve staré šířce). Fallback na CSS var
+	// pro první render před spuštěním JS.
 	width: var(--side-panel-width);
 	background: var(--menu-wide-bg);
 	border-right: 1px solid var(--menu-wide-border);
 	// overflow visible, aby popovery a user dropdown mohly vylézt z boku sidebaru
 	overflow: visible;
-	transition: width 180ms ease;
 	z-index: 1000;
+
+	// transition jen po dokončení initial page loadu - .delay-animate class
+	// je iniciálně na sidebar a odstraňuje ji toggleMenu.js po ready.
+	// Bez toho by inline preload script v layout.latte animoval width z 200 na 84
+	// při každém F5 (viditelný FOUC v collapsed režimu).
+	&:not(.delay-animate) {
+		transition: width 180ms ease;
+	}
 
 	// Menu = flex sloupec vysoký přes celou výšku sidebaru.
 	// Header a footer sticky (flex: 0 0 auto), střed (menu-body) scrollovatelný přes overflow-y.
@@ -80,9 +91,10 @@ body.menu-wide .side-panel-wide {
 		}
 	}
 
-	// Toggle uvnitř .menu-body jako poslední položka: margin-top: auto ho v krátkém menu
-	// přitáhne ke spodku (nad footer border), v dlouhém menu je poslední item a scrolluje s
-	// obsahem. align-self: flex-start aby nezabíral celou šířku.
+	// Toggle uvnitř .menu-body jako poslední položka: 16px margin-top zajistí
+	// viditelnou mezeru od poslední menu položky (bez auto by v dlouhém scrollovaném
+	// menu toggle sedělo těsně za posledním item). align-self: flex-start aby
+	// nezabíral celou šířku.
 	.side-panel-toggle {
 		display: inline-flex;
 		align-self: flex-start;
@@ -97,7 +109,7 @@ body.menu-wide .side-panel-wide {
 		cursor: pointer;
 		line-height: 1;
 		font-size: 0.8rem;
-		margin: auto 10px 16px;
+		margin: 16px 10px;
 
 		&:hover {
 			background: var(--menu-wide-hover-bg);

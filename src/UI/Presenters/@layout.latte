@@ -73,6 +73,17 @@
 	data-adt-safari-support
 	data-summernote-upload="{$summernoteUpload ?? ''}"
 >
+{* Preload menu-collapsed z localStorage synchronně během HTML parse, aby se
+   předešel FOUC - bez toho page vždy rendruje jako rozbalená a sideMenu.js
+   ji sbalí až po DOM ready. Storage key sdílený s sideMenu.js/STORAGE_KEY. *}
+<script>
+	(function () {
+		try {
+			var s = JSON.parse(localStorage.getItem('fancyadmin-side-menu')) || {};
+			if (s.collapsed !== false) document.body.classList.add('menu-collapsed');
+		} catch (e) {}
+	})();
+</script>
 <div n:snippet="body">
 	<div data-adt-translate></div>
 
