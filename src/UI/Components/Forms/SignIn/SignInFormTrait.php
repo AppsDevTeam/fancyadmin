@@ -63,25 +63,24 @@ trait SignInFormTrait
 		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
 
-		// Keycloak email check — přidá data atribut pro JS kontrolu
-		if ($this->_fancyAdmin->isKeycloakEnabled()) {
-			$form->getElementPrototype()->setAttribute('data-adt-sign-in-form', true);
-
-			$form['email']->setHtmlAttribute(
-				'data-keycloak-check-url',
-				$this->link('checkKeycloak!', ['email' => '__EMAIL__'])
-			);
-		}
+		// Kontrola SSO v prohlížeči tu záměrně NENÍ (nález WEB-SSO-02): odpovídala jinak
+		// pro existující a neexistující účet, takže šlo enumerovat e-maily uživatelů SSO,
+		// a e-mail se navíc přenášel v URL, odkud se zapsal do přístupových záznamů.
+		//
+		// Přesměrování SSO uživatele na Keycloak obstará validateForm() po odeslání
+		// formuláře. Ta cesta tu byla už dřív pro klienty bez JavaScriptu, takže se nic
+		// neztratilo - jen se přesměrování děje po odeslání místo po opuštění pole
+		// a e-mail jde v těle requestu, ne v URL.
 	}
 
 	/**
-	 * AJAX signal — ověří, zda se uživatel má přihlašovat přes SSO.
-	 * Najde identitu podle emailu, zjistí přiřazenou SSO instanci,
-	 * a pokud existuje, vrátí loginUrl s login_hint pro redirect.
+	 * Zůstává jen proto, aby na něj nespadl starší klient s načteným skriptem v cache.
+	 * Odpovídá vždy stejně, ať účet existuje nebo ne - právě rozdíl v odpovědi byl jádrem
+	 * nálezu WEB-SSO-02. Přesměrování na SSO řeší validateForm() po odeslání formuláře.
 	 */
 	public function handleCheckKeycloak(string $email): void
 	{
-		$this->getPresenter()->sendJson(['loginUrl' => $this->getKeycloakLoginUrl($email)]);
+		$this->getPresenter()->sendJson(['loginUrl' => null]);
 	}
 
 	/**
