@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Components\Forms\LostPassword;
 
 use ADT\DoctrineAuthenticator\OTP\OnetimeToken;
+use ADT\DoctrineAuthenticator\OTP\TooManyTokenAttemptsException;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
@@ -35,8 +36,7 @@ trait LostPasswordFormTrait
 	{
 		/** @var Identity $identity */
 		if (!$identity = $this->_authenticator->findIdentity($values['email'], $this->_fancyAdmin->getContext())) {
-			$this->getPresenter()->flashMessageError('fcadmin.forms.lostPassword.messages.error');
-			$this->getPresenter()->redirect('this');
+			$this->processFormRedirect($values['email']);
 		}
 
 		// Pokud má identita SSO vazbu a Keycloak je zapnutý, pošle reset email přes Keycloak
@@ -46,12 +46,19 @@ trait LostPasswordFormTrait
 			if ($keycloak !== null) {
 				$redirectUri = $this->getPresenter()->link('//:Portal:Sign:in');
 				$keycloak->sendPasswordResetEmail($identity, $redirectUri);
-				$this->processFormRedirect($identity);
+				$this->processFormRedirect($values['email']);
 			}
 		}
 
-		$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
-		$this->processFormRedirect($identity);
+		try {
+			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
+		} catch (TooManyTokenAttemptsException) {
+			// Limit tokenů na IP se týká jen existujících účtů - pro neexistující se žádný
+			// token nezakládá. Kdyby se projevil v odpovědi, stačí ho vyčerpat a existenci
+			// účtu pak prozradí rozdíl mezi chybou a potvrzením.
+		}
+
+		$this->processFormRedirect($values['email']);
 	}
 
 	public function getEntityClass(): ?string
@@ -59,7 +66,7 @@ trait LostPasswordFormTrait
 		return null;
 	}
 
-	protected function processFormRedirect(Identity $identity): never
+	protected function processFormRedirect(string $email): never
 	{
 		$this->getPresenter()->flashMessageSuccess('fcadmin.forms.lostPassword.messages.success');
 		$this->getPresenter()->redirect('lostPassword');
