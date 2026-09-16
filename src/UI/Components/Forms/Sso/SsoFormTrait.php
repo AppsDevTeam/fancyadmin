@@ -50,8 +50,17 @@ trait SsoFormTrait
 		$form->addText('clientId', 'fcadmin.presenters.sso.form.clientId')
 			->setRequired('fcadmin.presenters.sso.form.errors.clientIdRequired');
 
-		$form->addText('clientSecret', 'fcadmin.presenters.sso.form.clientSecret')
-			->setRequired('fcadmin.presenters.sso.form.errors.clientSecretRequired');
+		// renderValue: false - hodnota by se jinak vypsala do atributu value, takze by
+		// client secret videl kazdy, kdo otevre zdroj stranky (nalez WEB-SSO-01).
+		$clientSecret = $form->addPasswordReveal('clientSecret', false, 'fcadmin.presenters.sso.form.clientSecret');
+
+		if ($this->getEntity()?->isNew() ?? true) {
+			$clientSecret->setRequired('fcadmin.presenters.sso.form.errors.clientSecretRequired');
+		} else {
+			// Pole se nevykresluje s hodnotou, takze prazdne znamena "nemenit" - viz
+			// processForm(). Povinnost by jinak nutila secret opsat pri kazde uprave.
+			$clientSecret->setHtmlAttribute('placeholder', 'fcadmin.presenters.sso.form.clientSecretKeep');
+		}
 
 		$form->addText('frontendClientId', 'fcadmin.presenters.sso.form.frontendClientId')
 			->setRequired('fcadmin.presenters.sso.form.errors.frontendClientIdRequired');
@@ -68,6 +77,13 @@ trait SsoFormTrait
 
 	public function processForm(Sso $entity): void
 	{
+		// Prazdny secret u ulozene instance znamena "nemenit". Formular ho do pole
+		// nevypisuje, takze bez teto vetve by kazde ulozeni secret smazalo.
+		if (!$entity->isNew() && trim($entity->getClientSecret()) === '') {
+			$original = $this->_em->getUnitOfWork()->getOriginalEntityData($entity);
+			$entity->setClientSecret($original['clientSecret'] ?? '');
+		}
+
 		$this->_em->flush();
 	}
 
