@@ -76,6 +76,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'passkeyRpId' => Expect::string()->nullable()->default(null),
 			// WebAuthn Relying Party name — když není nastaveno, použije se projectName
 			'passkeyRpName' => Expect::string()->nullable()->default(null),
+			// Hosty, na ktere smi mirit verejna URL SSO instance - viz Model\Security\SsoHostAllowlist.
+			// Prazdny seznam nepousti nic, projekt se SSO si hosty vypsat musi.
+			'ssoAllowedHosts' => Expect::listOf('string')->default([]),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -143,6 +146,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'passkeyEnabled' => $this->config->passkeyEnabled,
 				'passkeyRpId' => $this->config->passkeyRpId,
 				'passkeyRpName' => $this->config->passkeyRpName,
+				'ssoAllowedHosts' => $this->config->ssoAllowedHosts,
 			]);
 
 		$builder->addDefinition($this->prefix('jsComponents'))

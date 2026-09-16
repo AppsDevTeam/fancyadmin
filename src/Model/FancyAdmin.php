@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model;
 
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
+use ADT\FancyAdmin\Model\Security\SsoHostAllowlist;
 use Nette\Security\Resource;
 
 class FancyAdmin
@@ -32,7 +33,13 @@ class FancyAdmin
 		protected bool $passkeyEnabled = false,
 		protected ?string $passkeyRpId = null,
 		protected ?string $passkeyRpName = null,
+		protected array $ssoAllowedHosts = [],
 	) {}
+
+	public function getSsoHostAllowlist(): SsoHostAllowlist
+	{
+		return new SsoHostAllowlist($this->ssoAllowedHosts);
+	}
 
 	public function getProject(): string
 	{

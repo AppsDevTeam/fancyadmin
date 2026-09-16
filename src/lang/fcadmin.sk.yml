@@ -148,6 +148,7 @@ presenters:
         frontendClientIdRequired: Frontend Client ID je povinný
         baseUrlInvalid: Interná URL musí byť platná absolútna URL
         hostUrlInvalid: Verejná URL musí byť platná absolútna URL
+        hostUrlNotAllowed: Verejná URL musí mieriť na povolený host (%s)
 
   profiles:
     title: Používatelia

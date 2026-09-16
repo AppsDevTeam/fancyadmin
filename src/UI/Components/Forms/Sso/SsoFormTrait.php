@@ -40,7 +40,12 @@ trait SsoFormTrait
 
 		$form->addText('hostUrl', 'fcadmin.presenters.sso.form.hostUrl')
 			->setRequired('fcadmin.presenters.sso.form.errors.hostUrlRequired')
-			->addRule($this->isAbsoluteUrl(...), 'fcadmin.presenters.sso.form.errors.hostUrlInvalid');
+			->addRule($this->isAbsoluteUrl(...), 'fcadmin.presenters.sso.form.errors.hostUrlInvalid')
+			->addRule(
+				fn (TextInput $control) => $this->_fancyAdmin->getSsoHostAllowlist()->allows((string) $control->getValue()),
+				'fcadmin.presenters.sso.form.errors.hostUrlNotAllowed',
+				implode(', ', $this->_fancyAdmin->getSsoHostAllowlist()->getHosts()),
+			);
 
 		$form->addText('clientId', 'fcadmin.presenters.sso.form.clientId')
 			->setRequired('fcadmin.presenters.sso.form.errors.clientIdRequired');

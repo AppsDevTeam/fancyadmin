@@ -14,6 +14,8 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Nette\Application\LinkGenerator;
 use Nette\Caching\Storage;
 use Nette\Http\Session;
+use Tracy\Debugger;
+use Tracy\ILogger;
 
 class KeycloakManager
 {
@@ -183,8 +185,22 @@ class KeycloakManager
 		return $this->ssoClass;
 	}
 
-	private function createInstanceFromSso(Sso $sso): Keycloak
+	/**
+	 * Vraci null, kdyz verejna URL instance neni v allowlistu (nalez WEB-09). Kontrola
+	 * ve formulari plati jen pri ukladani, tady se zavira i radek, ktery uz v databazi je.
+	 * Volajici null uz obsluhuji - identita se chova jako bezny uzivatel s heslem.
+	 */
+	private function createInstanceFromSso(Sso $sso): ?Keycloak
 	{
+		if (!$this->fancyAdmin->getSsoHostAllowlist()->allows($sso->getHostUrl())) {
+			Debugger::log(
+				'Keycloak: SSO instance "' . $sso->getName() . '" ma verejnou URL mimo allowlist (' . $sso->getHostUrl() . '), nepouziva se.',
+				ILogger::CRITICAL
+			);
+
+			return null;
+		}
+
 		$instance = new Keycloak(
 			realm: $sso->getRealm(),
 			baseUrl: $sso->getBaseUrl(),

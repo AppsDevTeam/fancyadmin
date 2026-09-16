@@ -35,6 +35,12 @@
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
     "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
   },
+  "require-dev": {
+    "nette/tester": "^2.5"
+  },
+  "scripts": {
+    "test": "tester -C tests"
+  },
   "autoload": {
     "psr-4": {
       "ADT\\FancyAdmin\\": "src/"
