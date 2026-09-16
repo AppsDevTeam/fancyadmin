@@ -134,6 +134,7 @@ presenters:
       hostUrl: Verejná URL
       clientId: Client ID
       clientSecret: Client Secret
+      clientSecretKeep: Ponechať súčasný
       frontendClientId: Frontend Client ID
       defaultRole: Predvolená rola pre nových používateľov
       isActive: Aktívna
