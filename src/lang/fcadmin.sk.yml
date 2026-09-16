@@ -188,7 +188,6 @@ forms:
       submit: Odoslať odkaz pre obnovu
     messages:
       success: E-mail pre obnovu odoslaný
-      error: Účet nebol nájdený
     errors:
       emailRequired: E-mail je povinný
 

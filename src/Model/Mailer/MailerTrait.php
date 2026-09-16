@@ -21,6 +21,7 @@ use Nette\Application\UI\TemplateFactory;
 use Nette\Bridges\ApplicationLatte\Template;
 use Nette\Mail\Message;
 use ReflectionClass;
+use Throwable;
 use TijsVerkoyen\CssToInlineStyles;
 
 trait MailerTrait
@@ -157,19 +158,24 @@ trait MailerTrait
 	{
 		$this->em->beginTransaction();
 
-		$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'), $identity, checkLimit: $checkLimit);
+		try {
+			$token = $this->onetimeTokenService->saveToken(OnetimeTokenTypeEnum::LOGIN, new DateTimeImmutable('+ ' . $tokenLifetime . ' hour'), $identity, checkLimit: $checkLimit);
 
-		$message = $this->createTemplateMessage(
-			'passwordRecovery',
-			'Nové heslo',
-			[
-				'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $token]),
-			]
-		);
-		$message->addTo($identity->getEmail());
-		$this->send($message);
+			$message = $this->createTemplateMessage(
+				'passwordRecovery',
+				'Nové heslo',
+				[
+					'link' => $this->link(':Portal:Sign:newPassword', ['email' => $identity->getEmail(), 'token' => $token]),
+				]
+			);
+			$message->addTo($identity->getEmail());
+			$this->send($message);
 
-		$this->em->commit();
+			$this->em->commit();
+		} catch (Throwable $e) {
+			$this->em->rollback();
+			throw $e;
+		}
 	}
 
 	/**
