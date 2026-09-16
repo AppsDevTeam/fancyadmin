@@ -9,6 +9,7 @@ use ADT\FancyAdmin\DI\Injects\BreachedPasswordCheckerInject;
 use ADT\FancyAdmin\DI\Injects\ConfigurationQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\OnetimeTokenQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\OnetimeToken;
@@ -26,6 +27,7 @@ trait NewPasswordFormTrait
 	use AuthenticatorInject;
 	use BreachedPasswordCheckerInject;
 	use ConfigurationQueryFactoryInject;
+	use PasskeyServiceInject;
 	use SecurityUserInject;
 	use EntityManagerInject;
 
@@ -139,6 +141,9 @@ trait NewPasswordFormTrait
 		if ($canLogin) {
 			$this->_securityUser->logout(true);
 			$this->_securityUser->login($identity, context: $this->_fancyAdmin->getContext());
+
+			// Jinak by identita s vynuceným 2FA obnovou hesla získala session bez klíče
+			$this->_passkeyService->clearPasskeySession();
 		}
 
 		$this->getPresenter()->redirect('passwordSet');

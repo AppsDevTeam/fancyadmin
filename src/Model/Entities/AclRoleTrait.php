@@ -46,6 +46,12 @@ trait AclRoleTrait
 	#[LoggableProperty]
 	protected bool $needsSso = false;
 
+	// Vynucené přihlášení klíčem: heslo takové identitě nefunguje. SSO má přednost
+	// a při vypnutém passkeyEnabled je flag inertní (viz README 19.8).
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
+	protected bool $needs2fa = false;
+
 	public function __construct()
 	{
 		$this->acls = new ArrayCollection();
@@ -117,6 +123,17 @@ trait AclRoleTrait
 	public function setNeedsSso(bool $needsSso): static
 	{
 		$this->needsSso = $needsSso;
+		return $this;
+	}
+
+	public function getNeeds2fa(): bool
+	{
+		return $this->needs2fa;
+	}
+
+	public function setNeeds2fa(bool $needs2fa): static
+	{
+		$this->needs2fa = $needs2fa;
 		return $this;
 	}
 

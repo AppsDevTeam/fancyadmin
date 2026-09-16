@@ -35,6 +35,10 @@ interface AclRole extends Role, Entity
 	public function getNeedsSso(): bool;
 	public function setNeedsSso(bool $needsSso): static;
 
+	// Vynucené přihlášení klíčem
+	public function getNeeds2fa(): bool;
+	public function setNeeds2fa(bool $needs2fa): static;
+
 	// Zdroje
 	/**
 	 * @return AclResource[]

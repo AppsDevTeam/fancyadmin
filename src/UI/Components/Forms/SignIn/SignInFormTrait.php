@@ -139,6 +139,10 @@ trait SignInFormTrait
 			}
 
 			$this->_securityUser->login($identity, context: $this->_fancyAdmin->getContext());
+
+			// U identity s vynuceným 2FA je passkey session jediná, kterou AuthPresenter
+			// nechá naživu (README 19.8)
+			$this->_passkeyService->markPasskeySession();
 		} catch (PasskeyException $e) {
 			$this->getPresenter()->sendJson(['error' => $e->getMessage()]);
 		}
@@ -246,6 +250,17 @@ trait SignInFormTrait
 				$form->addError('fcadmin.appGeneral.exceptions.noPermission');
 			}
 
+			// Až za authenticate(), aby se hláška nedala použít na enumeraci účtů.
+			// Dokud identita klíč nemá, heslo projde a AuthPresenter ji zamkne na stránku
+			// Můj účet, kde si klíč zaregistruje (bootstrap okno, README 19.8).
+			if (
+				$this->_passkeyService->isPasskeyRequired($this->_identity)
+				&&
+				$this->_passkeyService->hasPasskeys($this->_identity)
+			) {
+				$form->addError('fcadmin.passkeys.errors.passwordDisabled');
+			}
+
 		} catch (AuthenticationException) {
 			$form->addError('fcadmin.appGeneral.exceptions.wrongCredentials');
 		}
@@ -257,6 +272,8 @@ trait SignInFormTrait
 	public function processForm(): never
 	{
 		$this->_securityUser->login($this->_identity, context: $this->_fancyAdmin->getContext());
+
+		$this->_passkeyService->clearPasskeySession();
 
 		$this->redirectAfterLogin();
 	}

@@ -261,6 +261,7 @@ forms:
       identity: Identita
       profile: Profil
     isAdmin: Administrátor
+    needs2fa: Vyžaduje 2FA
     needsSso: Vyžaduje přihlášení přes SSO
     submit: Odeslat
     errors:
@@ -377,6 +378,7 @@ passkeys:
   account:
     title: Přihlašovací klíče
     add: Přidat klíč
+    enrollmentInfo: Váš účet vyžaduje přihlášení přihlašovacím klíčem. Dokud si klíč nezaregistrujete, zůstanete na této stránce.
   form:
     name: Název klíče
     namePlaceholder: Např. Pracovní notebook
@@ -394,6 +396,7 @@ passkeys:
   messages:
     added: Přihlašovací klíč byl přidán.
     deleted: Přihlašovací klíč byl smazán.
+    enrollmentRequired: Než budete pokračovat, zaregistrujte si prosím přihlašovací klíč.
   errors:
     unsupportedBrowser: Váš prohlížeč nepodporuje přihlašovací klíče (passkeys).
     unknownKey: Neplatný nebo neznámý přihlašovací klíč.
@@ -403,6 +406,9 @@ passkeys:
     unavailable: Přihlašovací klíče nejsou momentálně dostupné.
     loginFailed: Přihlášení přihlašovacím klíčem se nezdařilo. Zkuste to prosím znovu.
     registrationFailed: Přihlašovací klíč se nepodařilo vytvořit. Zkuste to prosím znovu.
+    passwordDisabled: Váš účet vyžaduje přihlášení přihlašovacím klíčem. Heslem se přihlásit nelze.
+    lastKeyRequired: Poslední přihlašovací klíč nelze smazat, váš účet vyžaduje přihlášení klíčem.
+    passwordSessionRevoked: Byli jste odhlášeni. Váš účet vyžaduje přihlášení přihlašovacím klíčem.
 
 modules:
   web:

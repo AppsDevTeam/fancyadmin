@@ -192,7 +192,7 @@ class AclRole extends BaseEntity
 }
 ```
 
-**AclRoleTrait poskytuje:** `name`, `type` (AclRoleTypeEnum), `context`, `isAdmin`, `acls` (1:N), metody `isAllowed()`, `getResources()`, `getRoleId()`
+**AclRoleTrait poskytuje:** `name`, `type` (AclRoleTypeEnum), `context`, `isAdmin`, `needsSso` (vynucené SSO, sekce 18), `needs2fa` (vynucené přihlášení klíčem, sekce 19.8), `acls` (1:N), metody `isAllowed()`, `getResources()`, `getRoleId()`
 
 ### 3.5 AclResource
 
@@ -1371,8 +1371,9 @@ Fancyadmin podporuje přihlašování přes passkeys (WebAuthn) postavené na kn
 se configem `passkeyEnabled: true` (default `false`, viz 19.2). Při vypnuté featuře se
 nevykresluje tlačítko na login stránce ani karta v Můj účet a všechny passkey operace
 jsou zablokované i server-side (`PasskeyService::assertEnabled()`). Existující klíče
-v DB při vypnutí zůstávají — po opětovném zapnutí zase fungují. Passkey je vždy jen
-alternativa k heslu (žádné passkey-only účty). Klíč si může zaregistrovat i identita
+v DB při vypnutí zůstávají — po opětovném zapnutí zase fungují. Ve výchozím stavu je passkey
+alternativa k heslu; rolí s flagem `needs2fa` se ale dá přihlášení klíčem **vynutit** a heslo
+takové identitě přestane fungovat (viz 19.8). Klíč si může zaregistrovat i identita
 navázaná na Keycloak SSO, aby měla 2FA připravené na dobu, kdy jí SSO bude zrušeno.
 Uživatel s povinným Keycloak loginem (SSO instance + role s `needsSso`) se ale přes
 passkey nepřihlásí: místo přihlášení ho login formulář natvrdo přesměruje na Keycloak.
@@ -1620,6 +1621,62 @@ Vytvoří tabulku `passkey` a přidá sloupec `identity.passkey_user_handle`.
 - Ceremony se spouští jen kliknutím na tlačítko — na server nejde žádný request, dokud
   uživatel neklikne, takže anonymní návštěvník login stránky nedostane session cookie
   (challenge se do session zapisuje až v okamžiku ceremony)
+
+### 19.8 Vynucení přihlášení klíčem (2FA)
+
+ACL role má flag **`needs2fa`** („Vyžaduje 2FA" ve formuláři role). Identita, která má
+alespoň jednu roli s tímto flagem, se smí přihlásit **výhradně přihlašovacím klíčem** —
+heslo jí login formulář odmítne s hláškou `fcadmin.passkeys.errors.passwordDisabled`
+(kontrola běží až za `authenticate()`, aby se hláška nedala použít na enumeraci účtů).
+
+Požadavek se vyhodnocuje přes **všechny role identity**: její vlastní i role všech jejích
+profilů. Uživatel s více profily tedy 2FA neobejde přepnutím účtu.
+
+**Precedence SSO > 2FA > heslo.** Identita s rolí `needsSso` a přiřazenou (aktivní) SSO
+instancí se dál řeší Keycloakem a `needs2fa` se u ní ignoruje — autoritou je poskytovatel
+identity, kde se druhý faktor nastavuje. Jakmile SSO odpadne (zrušená vazba nebo
+deaktivovaná instance), `needs2fa` se aktivuje.
+
+**Bootstrap okno.** Dokud uživatel žádný klíč nemá, heslo mu ještě projde — jinak by se
+k registraci prvního klíče nedostal. Aplikace ho ale pustí jen na stránku **Můj účet**:
+`AuthPresenterTrait::startup()` ho odjinud přesměruje na `Account:default` s hláškou
+`fcadmin.passkeys.messages.enrollmentRequired` a stránka mu nad kartou s klíči vysvětlí,
+proč je tam zamčený. Po registraci prvního klíče je heslo pro něj mrtvé. Je to **vědomé
+omezení**: v bootstrap okně stojí bezpečnost účtu pořád jen na heslu, takže flag zapínejte
+společně s rozumnou politikou hesel a u existujících uživatelů ideálně až po tom, co si
+klíč zaregistrují.
+
+**Stránka Můj účet je vyjmutá z generického presenter ACL checku**
+(`AuthPresenterTrait::validatePresenterPermission()`), protože ukazuje vždy jen data
+přihlášeného uživatele — a hlavně proto, že resource `portalBackoffice.account` /
+`portalCustomer.account` projekty typicky nemají a neadmin by místo registrace klíče
+skončil ve 403. Presenter `Account` proto musí existovat v obou modulech (redirect je
+modulově relativní), stejně jako to má skeleton.
+
+**Už přihlášená heslová session.** Session se při přihlášení klíčem (a po registraci klíče
+v bootstrap okně) označí server-side markerem. Identita, která klíč vyžaduje a už ho má,
+se v session bez markeru odhlásí s hláškou
+`fcadmin.passkeys.errors.passwordSessionRevoked` — zapnutí flagu tedy zneplatní i běžící
+heslové session. Stejně skončí i každá jiná cesta k přihlášení, která není klíč: obnova
+hesla přes e-mail i jednorázový přihlašovací odkaz (`?token=`, tedy i „Přihlásit se jako"
+u takové identity) končí odhlášením, jakmile identita klíč má. Je to záměr — jinak by se
+klíč dal obejít.
+
+**Poslední klíč nelze smazat.** Identita s `needs2fa` by se tím downgradovala na heslo,
+takže smazání posledního klíče odmítne `PasskeyGridTrait::handleDeletePasskey()`
+(`fcadmin.passkeys.errors.lastKeyRequired`) — tlačítko je navíc v gridu skryté.
+
+**Při `passkeyEnabled: false` je flag zcela inertní** — nikoho neblokuje (jinak by jeden
+config vyřadil všechny adminy) a checkbox se ve formuláři role ani nezobrazí (stejně jako
+`needsSso` při vypnutém Keycloaku).
+
+Sloupec `acl_role.needs2fa` (NOT NULL, default 0) vlastní jako celé schéma projekt, takže
+po aktualizaci balíčku spusťte:
+
+```bash
+php bin/console migrations:diff
+php bin/console migrations:migrate
+```
 
 ---
 

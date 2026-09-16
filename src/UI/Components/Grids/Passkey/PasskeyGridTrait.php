@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Components\Grids\Passkey;
 
 use ADT\Datagrid\Component\DataGrid;
 use ADT\FancyAdmin\DI\Injects\PasskeyQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\Model\Entities\Passkey;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
@@ -17,6 +18,7 @@ use Nette\Utils\Html;
 trait PasskeyGridTrait
 {
 	use PasskeyQueryFactoryInject;
+	use PasskeyServiceInject;
 
 	public function initGrid(DataGrid $grid): void
 	{
@@ -38,10 +40,14 @@ trait PasskeyGridTrait
 					->setText($this->getTranslator()->translate('fcadmin.passkeys.grid.synced'))
 				: '');
 
+		// Skrytí tlačítka je jen kosmetika, rozhoduje handleDeletePasskey()
+		$isDeleteAllowed = !$this->isLastRequiredPasskey();
+
 		$grid->addAction('deletePasskey', 'fcadmin.passkeys.grid.delete', 'deletePasskey!')
 			->setIcon('trash')
 			->setClass('btn btn-danger btn-sm ajax datagrid-delete')
-			->setConfirmation(new StringConfirmation('fcadmin.passkeys.confirms.delete'));
+			->setConfirmation(new StringConfirmation('fcadmin.passkeys.confirms.delete'))
+			->setRenderCondition(fn(Passkey $passkey): bool => $isDeleteAllowed);
 	}
 
 	public function handleDeletePasskey(int $id): void
@@ -59,11 +65,32 @@ trait PasskeyGridTrait
 			$this->getPresenter()->error();
 		}
 
+		// Smazání posledního klíče by identitu s vynuceným 2FA downgradovalo na heslo
+		if ($this->isLastRequiredPasskey()) {
+			$this->getPresenter()->flashMessageError('fcadmin.passkeys.errors.lastKeyRequired');
+			$this->getPresenter()->redirect('this');
+		}
+
 		$this->getEntityManager()->remove($passkey);
 		$this->getEntityManager()->flush();
 
 		$this->getPresenter()->flashMessageSuccess('fcadmin.passkeys.messages.deleted');
 		$this->getPresenter()->redirect('this');
+	}
+
+	private function isLastRequiredPasskey(): bool
+	{
+		$identity = $this->getSecurityUser()->getIdentity();
+
+		if (!$this->_passkeyService->isPasskeyRequired($identity)) {
+			return false;
+		}
+
+		return $this->_passkeyQueryFactory->create()
+			->disableSecurityFilter()
+			->disableAccountFilter()
+			->byIdentity($identity)
+			->count() <= 1;
 	}
 
 	protected function initQueryObject($queryObject): void
