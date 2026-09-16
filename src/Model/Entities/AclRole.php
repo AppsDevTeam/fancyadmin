@@ -39,6 +39,27 @@ interface AclRole extends Role, Entity
 	public function getNeeds2fa(): bool;
 	public function setNeeds2fa(bool $needs2fa): static;
 
+	public function getPasswordPolicyEnabled(): bool;
+	public function setPasswordPolicyEnabled(bool $passwordPolicyEnabled): static;
+
+	public function getPasswordMinLength(): ?int;
+	public function setPasswordMinLength(?int $passwordMinLength): static;
+
+	public function getPasswordRequireUppercase(): bool;
+	public function setPasswordRequireUppercase(bool $passwordRequireUppercase): static;
+
+	public function getPasswordRequireLowercase(): bool;
+	public function setPasswordRequireLowercase(bool $passwordRequireLowercase): static;
+
+	public function getPasswordRequireDigit(): bool;
+	public function setPasswordRequireDigit(bool $passwordRequireDigit): static;
+
+	public function getPasswordRequireSpecialChar(): bool;
+	public function setPasswordRequireSpecialChar(bool $passwordRequireSpecialChar): static;
+
+	public function getSessionExpirationMinutes(): ?int;
+	public function setSessionExpirationMinutes(?int $sessionExpirationMinutes): static;
+
 	// Zdroje
 	/**
 	 * @return AclResource[]

@@ -229,6 +229,7 @@ forms:
       requireDigit: Heslo musí obsahovať aspoň jednu číslicu
       requireSpecialChar: Heslo musí obsahovať aspoň jeden špeciálny znak
       breachedPassword: Toto heslo bolo nájdené v databáze uniknutých hesiel. Zvoľte prosím iné heslo.
+      sameAsIdentifier: Heslo nesmie byť zhodné s e-mailom ani s používateľským menom
 
   changePassword:
     labels:
@@ -264,9 +265,18 @@ forms:
     isAdmin: Administrátor
     needs2fa: Vyžaduje 2FA
     needsSso: Vyžaduje prihlásenie cez SSO
+    passwordPolicyEnabled: Politika hesiel aktívna
+    passwordMinLength: Minimálna dĺžka hesla
+    passwordRequireUppercase: Vyžadovať veľké písmeno
+    passwordRequireLowercase: Vyžadovať malé písmeno
+    passwordRequireDigit: Vyžadovať číslicu
+    passwordRequireSpecialChar: Vyžadovať špeciálny znak
+    sessionExpirationMinutes: Expirácia session (minúty)
     submit: Odoslať
     errors:
       nameAlreadyExists: Rola s týmto názvom už existuje
+      passwordMinLength: Minimálna dĺžka hesla musí byť aspoň %d
+      sessionExpirationMinutes: Expirácia session musí byť aspoň %d minúta
 
   systemSelectCompany:
     options:
