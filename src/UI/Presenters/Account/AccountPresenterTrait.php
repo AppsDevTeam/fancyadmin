@@ -47,6 +47,7 @@ trait AccountPresenterTrait
 
 		$this->getTemplate()->identity = $this->_securityUser->getIdentity();
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
+		$this->getTemplate()->isPasskeyEnrollmentPending = $this->_passkeyService->isEnrollmentPending($this->_securityUser->getIdentity());
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 
@@ -174,6 +175,10 @@ trait AccountPresenterTrait
 		} catch (PasskeyException $e) {
 			$this->getPresenter()->sendJson(['error' => $e->getMessage()]);
 		}
+
+		// Bez markeru by uživatel, který si klíč právě vytvořil v bootstrap session,
+		// vyletěl ven jako stará heslová session (README 19.8)
+		$this->_passkeyService->markPasskeySession();
 
 		$this->flashMessageSuccess('fcadmin.passkeys.messages.added');
 		$this->getPresenter()->redirect('this');

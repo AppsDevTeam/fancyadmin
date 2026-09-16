@@ -31,9 +31,14 @@ trait AclRoleFormTrait
 				AclRoleTypeEnum::IDENTITY->value => 'fcadmin.forms.aclRole.types.identity',
 				AclRoleTypeEnum::PROFILE->value => 'fcadmin.forms.aclRole.types.profile',
 			])
+			->setPrompt('---')
 			->setRequired();
 
 		$form->addCheckbox('isAdmin', 'fcadmin.forms.aclRole.isAdmin');
+
+		if ($this->_fancyAdmin->isPasskeyEnabled()) {
+			$form->addCheckbox('needs2fa', 'fcadmin.forms.aclRole.needs2fa');
+		}
 
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
 			$form->addCheckbox('needsSso', 'fcadmin.forms.aclRole.needsSso');

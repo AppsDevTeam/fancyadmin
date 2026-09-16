@@ -49,6 +49,12 @@
 		</div>
 	</div>
 
+	{if $isPasskeyEnrollmentPending}
+		<div class="alert alert-warning">
+			{_fcadmin.passkeys.account.enrollmentInfo}
+		</div>
+	{/if}
+
 	{control passkeyGrid}
 {/if}
 

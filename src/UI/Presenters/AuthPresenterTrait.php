@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
+use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\DI\Injects\ReturnPathInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\File;
@@ -36,6 +37,7 @@ trait AuthPresenterTrait
 	use AuthenticatorInject;
 	use SecurityUserInject;
 	use ReturnPathInject;
+	use PasskeyServiceInject;
 
 	const string SIGNAL_METHOD_PREFIX = 'handle';
 
@@ -58,6 +60,10 @@ trait AuthPresenterTrait
 		if ($token = $this->getParameter('token')) {
 			try {
 				$this->_securityUser->login($token, context: $this->_fancyAdmin->getContext());
+
+				// Přihlášení odkazem není přihlášení klíčem (README 19.8)
+				$this->_passkeyService->clearPasskeySession();
+
 				$this->redirect('this');
 			} catch (AuthenticationException) {}
 		}
@@ -110,7 +116,49 @@ trait AuthPresenterTrait
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
 		$this->getSession()->start();
 
+		// Až tady, kdy je dořešený selectedAccount — bez něj nejde vygenerovat routa
+		// PortalCustomer:Account
+		$this->enforcePasskeyLogin();
+
 		$this->primaryTemplate = true;
+	}
+
+	/**
+	 * Vynucení přihlášení klíčem u identity s rolí `needs2fa` (README 19.8).
+	 * Při vypnutém `passkeyEnabled` no-op.
+	 *
+	 * @throws InvalidLinkException
+	 */
+	private function enforcePasskeyLogin(): void
+	{
+		$identity = $this->getUser()->getIdentity();
+
+		// Stará heslová session identity, která už klíč má: heslo je pro ni mrtvé
+		if (
+			$this->_passkeyService->isPasskeyRequired($identity)
+			&&
+			$this->_passkeyService->hasPasskeys($identity)
+			&&
+			!$this->_passkeyService->isPasskeySession()
+		) {
+			$this->flashMessageError('fcadmin.passkeys.errors.passwordSessionRevoked');
+			$this->getUser()->logout(true);
+			$this->redirect(':Portal:Sign:in');
+		}
+
+		// Bootstrap okno: dokud uživatel klíč nemá, pustíme ho jen na Můj účet, kde si ho
+		// zaregistruje (Account presenter je proto vyjmutý i z ACL checku níž)
+		if ($this->_passkeyService->isEnrollmentPending($identity) && !$this->isAccountPresenter()) {
+			$this->flashMessageWarning('fcadmin.passkeys.messages.enrollmentRequired');
+			$this->redirect('Account:default');
+		}
+	}
+
+	private function isAccountPresenter(): bool
+	{
+		$parts = explode(':', $this->getName());
+
+		return end($parts) === 'Account';
 	}
 
 	/**
@@ -177,6 +225,13 @@ trait AuthPresenterTrait
 	 */
 	private function validatePresenterPermission(): void
 	{
+		// Můj účet ukazuje vždy jen data přihlášeného uživatele a resource
+		// `portalBackoffice.account` / `portalCustomer.account` projekty typicky nemají —
+		// bez výjimky by neadmin skončil ve 403 místo u registrace klíče (README 19.8)
+		if ($this->isAccountPresenter()) {
+			return;
+		}
+
 		$parts = explode(':', $this->getName());
 		$resource = lcfirst($parts[0]) . '.' . lcfirst($parts[1]);
 

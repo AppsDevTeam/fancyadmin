@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Security\Passkey;
 
 use ADT\DoctrineComponents\EntityManager;
+use ADT\FancyAdmin\Model\Entities\AclRole;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Passkey;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
@@ -31,6 +32,8 @@ use Throwable;
  * - klíč si může registrovat i identita navázaná na Keycloak SSO (aby měla 2FA připravené
  *   ještě před zrušením SSO); uživatele s povinným Keycloak loginem přesměruje na Keycloak
  *   místo passkey loginu SignInFormTrait
+ * - role s `needs2fa` vynucuje přihlášení výhradně klíčem (isPasskeyRequired()); precedence
+ *   je SSO > 2FA > heslo a při vypnutém `passkeyEnabled` je flag inertní (README 19.8)
  * - všechny binárky v JSON args jsou base64url (ByteBuffer::$useBase64UrlEncoding)
  */
 class PasskeyService
@@ -246,6 +249,91 @@ class PasskeyService
 		$this->em->flush();
 
 		return $identity;
+	}
+
+	/**
+	 * Vyžaduje identita přihlášení klíčem (role s needs2fa)? Pak se heslem nepřihlásí.
+	 *
+	 * Bez side efektů — volá se v každém requestu z AuthPresenteru.
+	 */
+	public function isPasskeyRequired(Identity $identity): bool
+	{
+		if (!$this->fancyAdmin->isPasskeyEnabled()) {
+			return false;
+		}
+
+		// Role jsou v paměti, proto se čtou první — identita bez flagu nestojí dotaz do DB
+		if (!array_any($this->getAllRoles($identity), fn(AclRole $role) => $role->getNeeds2fa())) {
+			return false;
+		}
+
+		// Precedence SSO > 2FA > heslo: identitu s povinným Keycloak loginem řeší Keycloak.
+		// Podmínka je stejná jako v KeycloakManager::getInstanceForIdentity(), ale bez tvrdé
+		// závislosti — při vypnutém Keycloaku manager neexistuje a na SSO se neohlížíme.
+		if ($this->fancyAdmin->isKeycloakEnabled() && $this->fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity) !== null) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public function hasPasskeys(Identity $identity): bool
+	{
+		// Entita bez HasPasskeys žádný klíč mít nemůže (při passkeyEnabled to hlídá extension)
+		return $identity instanceof HasPasskeys && $identity->getPasskeys() !== [];
+	}
+
+	/**
+	 * Bootstrap okno: identita klíč vyžaduje, ale ještě žádný nemá — heslem se přihlásí,
+	 * ale jen na stránku Můj účet, kde si klíč zaregistruje (README 19.8).
+	 */
+	public function isEnrollmentPending(Identity $identity): bool
+	{
+		return $this->isPasskeyRequired($identity) && !$this->hasPasskeys($identity);
+	}
+
+	public function markPasskeySession(): void
+	{
+		$this->getSessionSection()->set(PasskeySessionSection::PASSKEY_SESSION, true);
+	}
+
+	public function isPasskeySession(): bool
+	{
+		return $this->getSessionSection()->get(PasskeySessionSection::PASSKEY_SESSION) === true;
+	}
+
+	/**
+	 * Volá se při přihlášení heslem: odhlášení maže jen auth cookie, ne session, takže
+	 * by si heslová session vzala marker po dřívějším přihlášení klíčem ve stejném prohlížeči.
+	 */
+	public function clearPasskeySession(): void
+	{
+		if (!$this->fancyAdmin->isPasskeyEnabled()) {
+			return;
+		}
+
+		$this->getSessionSection()->remove(PasskeySessionSection::PASSKEY_SESSION);
+	}
+
+	/**
+	 * Vlastní role identity + role všech jejích profilů.
+	 *
+	 * Identity::getRoles() vrací jen role profilu vybraného účtu, takže uživatel s více
+	 * profily by 2FA obešel přepnutím účtu — proto se doplňují role všech profilů.
+	 *
+	 * @return AclRole[]
+	 */
+	protected function getAllRoles(Identity $identity): array
+	{
+		// Nette IIdentity::getRoles() je typované jako string[], fancyadmin vrací AclRole[]
+		/** @var AclRole[] $roles */
+		$roles = $identity->getRoles();
+
+		foreach ($identity->getProfiles() as $profile) {
+			$roles = array_merge($roles, $profile->getRoles());
+		}
+
+		return $roles;
 	}
 
 	/**
