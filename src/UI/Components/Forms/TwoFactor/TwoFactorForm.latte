@@ -1,0 +1,42 @@
+{* Blok s klíčem je kopie ze SignInForm.latte — obsluhuje ho tatáž JS komponenta Forms/SignIn/index.js *}
+{define section-methods}
+	{if $isPasskeyLoginAvailable}
+	<div
+		class="passkey-login mb-3"
+		data-adt-fancyadmin-passkey-login
+		data-passkey-args-url="{link passkeyLoginArgs!}"
+		data-passkey-verify-url="{link passkeyLoginVerify!}"
+		data-passkey-error-unsupported="{_fcadmin.passkeys.errors.unsupportedBrowser}"
+		data-passkey-error-failed="{_fcadmin.passkeys.errors.loginFailed}"
+	>
+		<button type="button" class="btn btn-primary w-100" data-passkey-login-button>
+			<i class="fa-solid fa-fingerprint" style="margin-right: 20px"></i>
+			{_fcadmin.passkeys.loginButton}
+		</button>
+		<div class="alert alert-danger mt-2 d-none" data-passkey-error></div>
+	</div>
+	{/if}
+
+	<a href="{link sendCode!}" class="btn btn-primary w-100">
+		<i class="fa-solid fa-envelope" style="margin-right: 20px"></i>
+		{_fcadmin.passkeys.twoFactor.loginWithCode}
+	</a>
+{/define}
+
+{define section-codeSent}
+	<div class="textInForm text-center mb-3">
+		<p class="mb-2">{_fcadmin.passkeys.twoFactor.codeSentInfo, ['email' => $email]}</p>
+
+		{if $resendInSeconds > 0}
+			<span>{_fcadmin.passkeys.twoFactor.resendIn, ['seconds' => $resendInSeconds]}</span>
+		{else}
+			<a href="{link sendCode!}" class="linkInForm">{_fcadmin.passkeys.twoFactor.resend}</a>
+		{/if}
+	</div>
+{/define}
+
+{define section-back}
+	<p class="text-center mt-3 mb-0">
+		<a href="{link back!}" class="linkInForm">{_fcadmin.passkeys.twoFactor.back}</a>
+	</p>
+{/define}

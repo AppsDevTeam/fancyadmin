@@ -123,6 +123,11 @@ class FancyAdminRouter
 				'action' => 'out',
 			]);
 
+			$this->portalRouteList->addRoute('sign/two-factor', [
+				'presenter' => 'Sign',
+				'action' => 'twoFactor',
+			]);
+
 			$this->portalRouteList->addRoute('sign/new-password', [
 				'presenter' => 'Sign',
 				'action' => 'newPassword',

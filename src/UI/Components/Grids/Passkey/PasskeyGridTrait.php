@@ -13,7 +13,7 @@ use Contributte\Datagrid\Column\Action\Confirmation\StringConfirmation;
 use Nette\Utils\Html;
 
 /**
- * Grid přihlašovacích klíčů na Account stránce — vždy jen klíče přihlášené identity.
+ * Grid přihlašovacích klíčů na stránce Profil — vždy jen klíče přihlášené identity.
  */
 trait PasskeyGridTrait
 {

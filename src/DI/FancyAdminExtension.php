@@ -72,6 +72,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
 			'keycloakVerifySsl' => Expect::bool()->default(true),
 			'passkeyEnabled' => Expect::bool()->default(false),
+			// Záchranná cesta při vynuceném 2FA: jednorázový kód na e-mail místo tvrdé zdi (README 19.9)
+			'passkeyEmailOtpEnabled' => Expect::bool()->default(true),
+			// Zamknout uživatele přihlášeného jednorázovým kódem na Profil, dokud si nepřidá klíč
+			'passkeyEnrollmentRequired' => Expect::bool()->default(false),
 			// WebAuthn Relying Party ID (doména) — když není nastaveno, odvodí se za běhu host z adminHostPath
 			'passkeyRpId' => Expect::string()->nullable()->default(null),
 			// WebAuthn Relying Party name — když není nastaveno, použije se projectName
@@ -144,6 +148,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'colors' => (array) $this->config->colors,
 				'keycloakEnabled' => $this->config->keycloakEnabled,
 				'passkeyEnabled' => $this->config->passkeyEnabled,
+				'passkeyEmailOtpEnabled' => $this->config->passkeyEmailOtpEnabled,
+				'passkeyEnrollmentRequired' => $this->config->passkeyEnrollmentRequired,
 				'passkeyRpId' => $this->config->passkeyRpId,
 				'passkeyRpName' => $this->config->passkeyRpName,
 				'ssoAllowedHosts' => $this->config->ssoAllowedHosts,

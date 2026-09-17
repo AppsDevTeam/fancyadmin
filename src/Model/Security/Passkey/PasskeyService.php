@@ -34,6 +34,8 @@ use Throwable;
  *   místo passkey loginu SignInFormTrait
  * - role s `needs2fa` vynucuje přihlášení výhradně klíčem (isPasskeyRequired()); precedence
  *   je SSO > 2FA > heslo a při vypnutém `passkeyEnabled` je flag inertní (README 19.8)
+ * - záchranná cesta jednorázovým kódem na e-mail (`passkeyEmailOtpEnabled`) drží v session
+ *   jen ID čekající identity a po přihlášení kódem marker zamykající uživatele na Profil (README 19.9)
  * - všechny binárky v JSON args jsou base64url (ByteBuffer::$useBase64UrlEncoding)
  */
 class PasskeyService
@@ -284,8 +286,8 @@ class PasskeyService
 	}
 
 	/**
-	 * Bootstrap okno: identita klíč vyžaduje, ale ještě žádný nemá — heslem se přihlásí,
-	 * ale jen na stránku Můj účet, kde si klíč zaregistruje (README 19.8).
+	 * Bootstrap okno: identita klíč vyžaduje, ale ještě žádný nemá — dostane se dovnitř,
+	 * ale jen na stránku Profil, kde si klíč zaregistruje (README 19.8).
 	 */
 	public function isEnrollmentPending(Identity $identity): bool
 	{
@@ -313,6 +315,99 @@ class PasskeyService
 		}
 
 		$this->getSessionSection()->remove(PasskeySessionSection::PASSKEY_SESSION);
+	}
+
+	/**
+	 * Úklid markerů druhého faktoru na začátku každého přihlášení. Ze stejného důvodu jako
+	 * clearPasskeySession(): odhlášení session nemaže, takže by marker po přihlášení
+	 * jednorázovým kódem zdědil i další uživatel ve stejném prohlížeči.
+	 */
+	public function clearTwoFactorSession(): void
+	{
+		$this->clearPendingTwoFactor();
+		$this->clearOtpSession();
+	}
+
+	/** Volat výhradně po úspěšném ověření hesla (README 19.9). */
+	public function startPendingTwoFactor(Identity $identity): void
+	{
+		$section = $this->getSessionSection();
+		$section->set(PasskeySessionSection::PENDING_2FA, $identity->getId(), PasskeySessionSection::PENDING_2FA_EXPIRATION);
+		$section->remove(PasskeySessionSection::PENDING_2FA_ATTEMPTS);
+	}
+
+	public function getPendingTwoFactorIdentityId(): ?int
+	{
+		if (!$this->fancyAdmin->isPasskeyEmailOtpEnabled()) {
+			return null;
+		}
+
+		$id = $this->getSessionSection()->get(PasskeySessionSection::PENDING_2FA);
+
+		return is_int($id) ? $id : null;
+	}
+
+	public function clearPendingTwoFactor(): void
+	{
+		$section = $this->getSessionSection();
+		$section->remove(PasskeySessionSection::PENDING_2FA);
+		$section->remove(PasskeySessionSection::PENDING_2FA_ATTEMPTS);
+		$section->remove(PasskeySessionSection::PENDING_2FA_CODE_SENT_AT);
+	}
+
+	public function markTwoFactorCodeSent(): void
+	{
+		$this->getSessionSection()->set(PasskeySessionSection::PENDING_2FA_CODE_SENT_AT, time(), PasskeySessionSection::PENDING_2FA_EXPIRATION);
+	}
+
+	/** Unix timestamp odeslání posledního kódu, nebo null když žádný neodešel. */
+	public function getTwoFactorCodeSentAt(): ?int
+	{
+		$sentAt = $this->getSessionSection()->get(PasskeySessionSection::PENDING_2FA_CODE_SENT_AT);
+
+		return is_int($sentAt) ? $sentAt : null;
+	}
+
+	public function clearTwoFactorCodeSent(): void
+	{
+		$this->getSessionSection()->remove(PasskeySessionSection::PENDING_2FA_CODE_SENT_AT);
+	}
+
+	/** Vrátí celkový počet neúspěšných pokusů v tomhle čekajícím stavu. */
+	public function increasePendingTwoFactorAttempts(): int
+	{
+		$section = $this->getSessionSection();
+		$attempts = $section->get(PasskeySessionSection::PENDING_2FA_ATTEMPTS);
+		$attempts = (is_int($attempts) ? $attempts : 0) + 1;
+		$section->set(PasskeySessionSection::PENDING_2FA_ATTEMPTS, $attempts, PasskeySessionSection::PENDING_2FA_EXPIRATION);
+
+		return $attempts;
+	}
+
+	/** Session prošla druhým faktorem jednorázovým kódem, ne klíčem (README 19.9). */
+	public function markOtpSession(): void
+	{
+		$this->getSessionSection()->set(PasskeySessionSection::OTP_SESSION, true);
+	}
+
+	public function isOtpSession(): bool
+	{
+		if (!$this->fancyAdmin->isPasskeyEnabled()) {
+			return false;
+		}
+
+		return $this->getSessionSection()->get(PasskeySessionSection::OTP_SESSION) === true;
+	}
+
+	public function clearOtpSession(): void
+	{
+		$this->getSessionSection()->remove(PasskeySessionSection::OTP_SESSION);
+	}
+
+	/** Má se uživatel v téhle session držet na Profilu, dokud si nezaregistruje klíč? */
+	public function isEnrollmentRequiredSession(): bool
+	{
+		return $this->isOtpSession() && $this->fancyAdmin->isPasskeyEnrollmentRequired();
 	}
 
 	/**

@@ -1,17 +1,17 @@
 {define title}
-	{_fcadmin.presenters.account.pageTitle}
+	{_fcadmin.presenters.profile.pageTitle}
 {/define}
 
 {block content}
 
 <div class="header">
 	<h1 class="header-title">
-		{_fcadmin.presenters.account.myProfile}
+		{_fcadmin.presenters.profile.header}
 	</h1>
 
 	<div class="header-actions">
-		<a n:href="changePassword!" class="btn btn-outline-primary ajax">{_fcadmin.presenters.account.changePassword}</a>
-		<a n:href="editPersonalData!" class="btn btn-primary ajax">{_fcadmin.presenters.account.editPersonalData}</a>
+		<a n:href="changePassword!" class="btn btn-outline-primary ajax">{_fcadmin.presenters.profile.changePassword}</a>
+		<a n:href="editPersonalData!" class="btn btn-primary ajax">{_fcadmin.presenters.profile.editPersonalData}</a>
 	</div>
 </div>
 
@@ -27,7 +27,7 @@
 				<td>{$identity->getLastName()}</td>
 			</tr>
 			<tr>
-				<th>{_fcadmin.presenters.account.email}</th>
+				<th>{_fcadmin.presenters.profile.email}</th>
 				<td>{$identity->getEmail()}</td>
 			</tr>
 			<tr>
@@ -41,17 +41,21 @@
 {if $isPasskeyEnabled}
 	<div class="header mt-4">
 		<h2 class="header-title">
-			{_fcadmin.passkeys.account.title}
+			{_fcadmin.passkeys.profile.title}
 		</h2>
 
 		<div class="header-actions">
-			<a n:href="addPasskey!" class="btn btn-primary ajax">{_fcadmin.passkeys.account.add}</a>
+			<a n:href="addPasskey!" class="btn btn-primary ajax">{_fcadmin.passkeys.profile.add}</a>
 		</div>
 	</div>
 
-	{if $isPasskeyEnrollmentPending}
+	{if $isPasskeyEnrollmentRequired}
 		<div class="alert alert-warning">
-			{_fcadmin.passkeys.account.enrollmentInfo}
+			{_fcadmin.passkeys.twoFactor.enrollmentInfo}
+		</div>
+	{elseif $isPasskeyEnrollmentPending}
+		<div class="alert alert-warning">
+			{_fcadmin.passkeys.profile.enrollmentInfo}
 		</div>
 	{/if}
 
@@ -60,7 +64,7 @@
 
 <div class="header mt-4">
 	<h2 class="header-title">
-		{_fcadmin.presenters.account.sessions}
+		{_fcadmin.presenters.profile.sessions}
 	</h2>
 
 	<div class="header-actions">
@@ -70,8 +74,8 @@
 			</button>
 			<ul class="dropdown-menu dropdown-menu-end">
 				<li>
-					<a n:href="logoutAll!" class="dropdown-item text-danger" onclick="if(!confirm('{_fcadmin.presenters.account.logoutAllConfirm}')){ event.preventDefault(); return false; }">
-						{_fcadmin.presenters.account.logoutAll}
+					<a n:href="logoutAll!" class="dropdown-item text-danger" onclick="if(!confirm('{_fcadmin.presenters.profile.logoutAllConfirm}')){ event.preventDefault(); return false; }">
+						{_fcadmin.presenters.profile.logoutAll}
 					</a>
 				</li>
 			</ul>
