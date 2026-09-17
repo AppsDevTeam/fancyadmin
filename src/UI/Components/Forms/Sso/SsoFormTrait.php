@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\Sso;
 
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\FancyAdmin\UI\Components\Forms\IsActiveFormField;
 use ADT\Forms\Form;
@@ -16,6 +17,9 @@ trait SsoFormTrait
 {
 	use EntityManagerInject;
 	use AclRoleQueryFactoryInject;
+	// Kvůli allowlistu hostů u pole hostUrl. Bez toho je $this->_fancyAdmin
+	// nedeklarovaná property a formulář spadne hned při sestavení.
+	use FancyAdminInject;
 	use IsActiveFormField;
 
 	public function initForm(Form $form): void
