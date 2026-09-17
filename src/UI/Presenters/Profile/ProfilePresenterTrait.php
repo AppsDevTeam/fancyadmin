@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Presenters\Account;
+namespace ADT\FancyAdmin\UI\Presenters\Profile;
 
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\ChangePasswordFormFactoryInject;
@@ -25,7 +25,7 @@ use Nette\Utils\Json;
 use Nette\Utils\JsonException;
 use RuntimeException;
 
-trait AccountPresenterTrait
+trait ProfilePresenterTrait
 {
 	use PresenterTrait;
 	use SecurityUserInject;
@@ -41,13 +41,14 @@ trait AccountPresenterTrait
 		// Návrat z Keycloaku po úspěšné změně hesla (kc_action=UPDATE_PASSWORD) —
 		// redirect zároveň vyčistí parametr z URL, aby se hláška neopakovala při refreshi.
 		if ($this->getParameter('kcActionSuccess')) {
-			$this->flashMessageSuccess('fcadmin.presenters.account.passwordChanged');
+			$this->flashMessageSuccess('fcadmin.presenters.profile.passwordChanged');
 			$this->redirect('default');
 		}
 
 		$this->getTemplate()->identity = $this->_securityUser->getIdentity();
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
 		$this->getTemplate()->isPasskeyEnrollmentPending = $this->_passkeyService->isEnrollmentPending($this->_securityUser->getIdentity());
+		$this->getTemplate()->isPasskeyEnrollmentRequired = $this->_passkeyService->isEnrollmentRequiredSession();
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 
@@ -179,6 +180,9 @@ trait AccountPresenterTrait
 		// Bez markeru by uživatel, který si klíč právě vytvořil v bootstrap session,
 		// vyletěl ven jako stará heslová session (README 19.8)
 		$this->_passkeyService->markPasskeySession();
+
+		// Klíč pro tenhle prohlížeč už uživatel má, zámek na Profilu končí (README 19.9)
+		$this->_passkeyService->clearOtpSession();
 
 		$this->flashMessageSuccess('fcadmin.passkeys.messages.added');
 		$this->getPresenter()->redirect('this');

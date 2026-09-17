@@ -36,6 +36,9 @@ mailer:
   passwordRecovery:
     text: 'pre nastavenie nového hesla do aplikácie <strong>%projectName%</strong> kliknite na odkaz nižšie. <strong>Ak ste o nové heslo nežiadali, e-mail ignorujte.</strong><br><br>'
 
+  twoFactorCode:
+    text: 'pre dokončenie prihlásenia do aplikácie <strong>%projectName%</strong> opíšte tento jednorazový kód. Platí %validMinutes% minút a použiť ho možno len raz. <strong>Ak ste sa práve neprihlasovali, niekto pozná vaše heslo - čo najskôr si ho zmeňte.</strong><br><br>'
+
 presenters:
   permissions:
     title: Oprávnenia
@@ -54,11 +57,16 @@ presenters:
     pageTitle: Používatelia
     header: Používatelia
 
+  # Zoznam účtov (tenantov) — presenter Accounts
   account:
     title: Účty
-    pageTitle: Môj účet
+    pageTitle: Účty
     header: Účty
-    myProfile: Môj profil
+
+  # Stránka Môj profil — presenter Profile
+  profile:
+    pageTitle: Môj profil
+    header: Môj profil
     editPersonalData: Upraviť osobné údaje
     changePassword: Zmeniť heslo
     email: E-mail
@@ -157,6 +165,8 @@ presenters:
     header: Používatelia
 
   sign:
+    twoFactor:
+      pageTitle: "Overenie prihlásenia"
     errors:
       expiredLink: "Odkaz už nie je platný. Pre vygenerovanie nového odošlite znovu formulár."
 
@@ -358,6 +368,7 @@ appGeneral:
   exceptions:
     userNotFound: "Používateľ nenájdený"
     wrongCredentials: "Neplatné prihlasovacie údaje"
+    noPermission: "Nemáte právo na prihlásenie"
     inactiveUser: "Neaktívny používateľ"
 
 sidePanels:
@@ -385,10 +396,22 @@ keycloak:
 
 passkeys:
   loginButton: Prihlásiť sa prihlasovacím kľúčom
-  account:
+  profile:
     title: Prihlasovacie kľúče
     add: Pridať kľúč
     enrollmentInfo: Váš účet vyžaduje prihlásenie prihlasovacím kľúčom. Kým si kľúč nezaregistrujete, zostanete na tejto stránke.
+  twoFactor:
+    loginWithCode: "Prihlásiť sa jednorazovým heslom z e-mailu"
+    codeLabel: Jednorazové heslo z e-mailu
+    codeRequired: Zadajte jednorazové heslo z e-mailu
+    codeSentInfo: 'Jednorazové heslo sme odoslali na %email%. Platí 10 minút.'
+    codeSent: Jednorazové heslo sme odoslali znovu.
+    resend: Poslať heslo znovu
+    resendIn: 'Nové heslo si môžete nechať poslať o %seconds% s.'
+    back: Späť na výber spôsobu prihlásenia
+    submit: Prihlásiť
+    enrollmentRequired: Prihlásili ste sa jednorazovým heslom. Skôr ako budete pokračovať, zaregistrujte si pre tento prehliadač prihlasovací kľúč.
+    enrollmentInfo: Prihlásili ste sa jednorazovým heslom z e-mailu, nie prihlasovacím kľúčom. Zaregistrujte si prosím prihlasovací kľúč pre tento prehliadač - kým to neurobíte, zostanete na tejto stránke.
   form:
     name: Názov kľúča
     namePlaceholder: Napr. Pracovný notebook
@@ -417,14 +440,17 @@ passkeys:
     loginFailed: Prihlásenie prihlasovacím kľúčom sa nepodarilo. Skúste to prosím znovu.
     registrationFailed: Prihlasovací kľúč sa nepodarilo vytvoriť. Skúste to prosím znovu.
     passwordDisabled: Váš účet vyžaduje prihlásenie prihlasovacím kľúčom. Heslom sa prihlásiť nedá.
+    invalidCode: Jednorazové heslo nie je platné. Skontrolujte ho, alebo si nechajte poslať nové.
+    tooManyCodeRequests: Jednorazové heslo sme už poslali niekoľkokrát za sebou. Skúste to prosím o chvíľu.
+    resendTooSoon: Nové jednorazové heslo si môžete nechať poslať až o chvíľu.
     lastKeyRequired: Posledný prihlasovací kľúč sa nedá zmazať, váš účet vyžaduje prihlásenie kľúčom.
     passwordSessionRevoked: Boli ste odhlásení. Váš účet vyžaduje prihlásenie prihlasovacím kľúčom.
 
 modules:
   web:
     navbar:
-      account:
-        myAccount: "Môj účet"
+      profile:
+        myProfile: "Môj profil"
     presenters:
       sign:
         in:

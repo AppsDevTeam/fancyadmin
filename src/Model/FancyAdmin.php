@@ -31,6 +31,8 @@ class FancyAdmin
 		protected array $colors = [],
 		protected bool $keycloakEnabled = false,
 		protected bool $passkeyEnabled = false,
+		protected bool $passkeyEmailOtpEnabled = true,
+		protected bool $passkeyEnrollmentRequired = false,
 		protected ?string $passkeyRpId = null,
 		protected ?string $passkeyRpName = null,
 		protected array $ssoAllowedHosts = [],
@@ -185,6 +187,18 @@ class FancyAdmin
 	public function isPasskeyEnabled(): bool
 	{
 		return $this->passkeyEnabled;
+	}
+
+	/** Záchranná cesta jednorázovým kódem na e-mail při vynuceném 2FA (README 19.9). */
+	public function isPasskeyEmailOtpEnabled(): bool
+	{
+		return $this->passkeyEnabled && $this->passkeyEmailOtpEnabled;
+	}
+
+	/** Má být uživatel přihlášený jednorázovým kódem zamčený na Profilu, dokud si nepřidá klíč? */
+	public function isPasskeyEnrollmentRequired(): bool
+	{
+		return $this->passkeyEnabled && $this->passkeyEnrollmentRequired;
 	}
 
 	public function getPasskeyRpId(): ?string

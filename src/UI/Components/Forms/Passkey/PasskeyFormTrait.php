@@ -7,7 +7,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\Passkey;
 use ADT\Forms\Form;
 
 /**
- * Formulář pro přidání passkey v side panelu na Account stránce.
+ * Formulář pro přidání passkey v side panelu na stránce Profil.
  *
  * WebAuthn ceremony řídí JS komponenta (data-adt-fancyadmin-passkey-form), která volá
  * signály passkeyRegisterArgs / passkeyRegisterVerify na presenteru — formulář se

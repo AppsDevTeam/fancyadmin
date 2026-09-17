@@ -6,7 +6,7 @@ use Nette\Application\LinkGenerator;
 
 class UserMenu
 {
-	protected bool $addMyAccountMenuItem = true;
+	protected bool $addMyProfileMenuItem = true;
 
 	protected bool $addFirebaseMenuItem = true;
 
@@ -55,15 +55,15 @@ class UserMenu
 		return (bool)$this->linkGenerator->lastRequest?->hasFlag('current');
 	}
 
-	public function setAddMyAccountMenuItem(bool $addMyAccountMenuItem): self
+	public function setAddMyProfileMenuItem(bool $addMyProfileMenuItem): self
 	{
-		$this->addMyAccountMenuItem = $addMyAccountMenuItem;
+		$this->addMyProfileMenuItem = $addMyProfileMenuItem;
 		return $this;
 	}
 
-	public function isAddMyAccountMenuItem(): bool
+	public function isAddMyProfileMenuItem(): bool
 	{
-		return $this->addMyAccountMenuItem;
+		return $this->addMyProfileMenuItem;
 	}
 
 	public function setFirebaseMenuItem(bool $value): self
