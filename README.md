@@ -311,10 +311,12 @@ class GridFilter extends BaseEntity
 
 ## 4. ACL Resource Enum
 
-Definujte enum s ACL resources. Fancyadmin vyžaduje minimálně 3:
+Definujte enum s ACL resources. Fancyadmin vyžaduje minimálně 4:
 - customer resource (přístup do zákaznické části)
 - backoffice resource (přístup do administrace)
 - full data resource (plný přístup k datům)
+- personal data resource (změna vlastních osobních údajů na stránce „Můj profil", viz
+  sekce 14 „ProfilePresenter")
 
 ```php
 // app/Model/Entities/Enums/AclResourceNameEnum.php
@@ -331,12 +333,23 @@ enum AclResourceNameEnum: string implements Resource
 	case CUSTOMER_HOME = 'portalCustomer.home';
 	case BACKOFFICE_HOME = 'portalBackoffice.home';
 	case FULL_DATA = 'portal.fullData';
+	case PERSONAL_DATA = 'portal.personalData';
 
 	public function getResourceId(): string
 	{
 		return $this->value;
 	}
 }
+```
+
+Fancyadmin má svůj vlastní default (`ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum::PROFILE_PERSONAL_DATA`,
+`'profile.personalData'`) — pokud projekt používá vlastní enum (jako výše), nakonfigurujte
+resource výslovně v `common.neon`, stejně jako u `customerAclResource` / `backofficeAclResource`
+/ `fullDataAclResource` (viz sekce 15):
+
+```neon
+fancyadmin:
+	personalDataAclResource: App\Model\Entities\Enums\AclResourceNameEnum::PERSONAL_DATA
 ```
 
 ---
@@ -751,6 +764,35 @@ class ProfilePresenter extends AuthPresenter
 V `PortalCustomer` pak stojí vedle sebe `Profile` (moje údaje) a `Profiles` (seznam
 profilů účtu) — jsou to dva různé presentery.
 
+#### ACL na Profilu: presenter je vyjmutý, změna osobních údajů ne
+
+`AuthPresenterTrait::validatePresenterPermission()` vyjímá `Profile` presenter z běžné
+presenter-level ACL kontroly úplně (`isProfilePresenter()` → `return;`). Je to záměr, ne
+díra: presenter vždy pracuje jen s daty přihlášeného uživatele a bez výjimky by se neadmin
+zamknutý na povinné registraci passkey (viz 19.8, `enforcePasskeyLogin()`) dostal do 403
+místo na formulář, kde si klíč zaregistruje. Ze stejného důvodu zůstávají bez ACL i změna
+hesla, správa passkeys, grid přihlášených zařízení a `handleLogoutAll()`.
+
+Změna osobních údajů (`firstName`/`lastName`/`phoneNumber`, `PersonalDataFormTrait`) je ale
+jediná akce na Profilu, kterou chcete moci projektově omezit (typicky: údaje spravuje jen
+account manager, běžný uživatel je jen čte). Ta je proto pod samostatným ACL resourcem
+`AclResourceNameEnum::PROFILE_PERSONAL_DATA` (`profile.personalData`), kontrolovaným
+explicitně (`SecurityUserTrait::isAllowedPersonalData()`) na **obou** vstupech nezávisle na
+presenter-level výjimce:
+- `ProfilePresenterTrait::handleEditPersonalData()` — otevření formuláře,
+- `ProfilePresenterTrait::createComponentPersonalDataSidePanel()` — odeslání formuláře míří
+  signálem přímo na komponentu a `handleEditPersonalData()` obchází, takže bez kontroly i tady
+  by šel zámek na signálu obejít.
+
+Šablona `default.latte` navíc tlačítko „Upravit osobní údaje“ skrývá přes
+`$canEditPersonalData` (nastavuje `actionDefault()`), aby ho neviděl uživatel, který na něj
+stejně nemá právo.
+
+Resource je konfigurovatelný stejným způsobem jako `fullDataAclResource` (`personalDataAclResource`
+v `common.neon`, viz sekce 4 a 15) a čerstvá instalace bez proběhlé migrace balíčku nepadá —
+`isAllowedPersonalData()` neznámý resource v authorizátoru bere jako "zatím nic neomezuje", ne
+jako zákaz (viz sekce 16).
+
 > **BC break (přejmenování z `Account`).** Presenter „Můj účet" se jmenoval `Account`
 > a kolidoval s entitou `Account` (tenant) i s presenterem `Accounts` (seznam tenantů).
 > Při aktualizaci balíčku je potřeba v projektu:
@@ -986,6 +1028,29 @@ Po migraci vytvořte první identitu:
 ```bash
 php bin/console adt:fancyadmin:create-identity
 ```
+
+### Aktualizace balíčku — migrace v `src/Migrations`
+
+Balíček nese vlastní Doctrine migrace (`ADT\FancyAdmin\Migrations\*`), které se do projektu
+zapojí automaticky (nettrine migrations skenuje i vendor namespace) a při `migrations:migrate`
+proběhnou spolu s projektovými. Typicky přidávají jen sloupce/tabulky nebo (jako
+`Version20260917100000`, ACL resource `profile.personalData`) systémová data — assignment
+existujícího ACL resource všem existujícím rolím, aby se upgradem nikomu nic nezměnilo.
+
+Co si musí projekt po `composer update adt/fancyadmin` dodělat sám:
+1. `php bin/console migrations:migrate` — spustí i migrace balíčku.
+2. `php bin/console fancyadmin:generate-missing-acl-resources` — dogeneruje projektovou
+   migraci pro resources z **projektového** `AclResourceNameEnum` (balíčkové enum cases
+   generuje `Version20260917100000` rovnou, `GenerateMissingAclResourcesCommand` navíc
+   skenuje `src/Model/Entities/Enums` fancyadminu samo, takže by nemělo najít nic k doplnění
+   pro nový resource — spusťte pro jistotu, hlavně kvůli vlastním presenterům/enumům).
+3. Pokud projekt chce nový resource `profile.personalData` **omezit** (ne jen mít
+   nainstalovaný), odebrat ho ručně u vybraných rolí v Backoffice → Role, nebo vlastní
+   migrací — balíček ho z BC důvodů přiděluje všem.
+
+Do doby, než migrace proběhne, kód nespadne: `SecurityUserTrait::isAllowedPersonalData()`
+neznámý resource v authorizátoru bere jako "zatím nic neomezuje" (viz sekce 14), takže okno
+mezi deployem kódu a spuštěnou migrací není výpadek.
 
 ---
 

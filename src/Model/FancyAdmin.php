@@ -26,6 +26,7 @@ class FancyAdmin
 		protected Resource $customerAclResource,
 		protected Resource $backofficeAclResource,
 		protected Resource $fullDataAclResource,
+		protected Resource $personalDataAclResource,
 		protected ?string $context,
 		protected array $jsComponentsConfig = [],
 		protected array $colors = [],
@@ -116,6 +117,11 @@ class FancyAdmin
 	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;
+	}
+
+	public function getPersonalDataAclResource(): Resource
+	{
+		return $this->personalDataAclResource;
 	}
 
 	public function getJsComponentsConfig(): array
