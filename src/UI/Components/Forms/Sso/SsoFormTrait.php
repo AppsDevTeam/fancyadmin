@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms\Sso;
 use ADT\FancyAdmin\DI\Injects\AclRoleQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\SsoQueryFactoryInject;
 use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\FancyAdmin\UI\Components\Forms\IsActiveFormField;
 use ADT\Forms\Form;
@@ -21,6 +22,8 @@ trait SsoFormTrait
 	// nedeklarovaná property a formulář spadne hned při sestavení.
 	use FancyAdminInject;
 	use IsActiveFormField;
+	// Kvůli kontrole unikátnosti názvu ve validateForm().
+	use SsoQueryFactoryInject;
 
 	public function initForm(Form $form): void
 	{
@@ -77,6 +80,31 @@ trait SsoFormTrait
 		$this->addIsActiveField($form, 'fcadmin.presenters.sso.form.isActive');
 
 		$form->addSubmit('submit', 'fcadmin.presenters.sso.form.submit');
+	}
+
+	/**
+	 * Název má unique index (SsoTrait::$name), takže bez této kontroly spadne duplicita
+	 * až na flushi v processForm() jako UniqueConstraintViolationException - uživatel
+	 * dostane chybu 500 místo hlášky u pole.
+	 *
+	 * Oba filtry se vypínají schválně: index je globální, takže kdyby validace viděla jen
+	 * část tabulky, kolidující název by jí prošel a flush by spadl stejně jako předtím.
+	 * Stejný důvod jako v AclRoleFormTrait::validateForm().
+	 */
+	public function validateForm(?Sso $entity, array $inputs, Form $form): void
+	{
+		$query = $this->_ssoQueryFactory->create()
+			->disableSecurityFilter()
+			->disableAccountFilter()
+			->byName($inputs['name']);
+
+		if ($entity && !$entity->isNew()) {
+			$query->byIdNot($entity->getId());
+		}
+
+		if ($query->fetch()) {
+			$form['name']->addError('fcadmin.presenters.sso.form.errors.nameAlreadyExists');
+		}
 	}
 
 	public function processForm(Sso $entity): void

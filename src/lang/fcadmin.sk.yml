@@ -158,6 +158,7 @@ presenters:
         baseUrlInvalid: Interná URL musí byť platná absolútna URL
         hostUrlInvalid: Verejná URL musí byť platná absolútna URL
         hostUrlNotAllowed: Verejná URL musí mieriť na povolený host (%s)
+        nameAlreadyExists: SSO inštancia s týmto názvom už existuje
 
   profiles:
     title: Používatelia
