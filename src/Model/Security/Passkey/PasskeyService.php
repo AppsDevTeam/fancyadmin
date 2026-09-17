@@ -512,9 +512,20 @@ class PasskeyService
 		return $this->fancyAdmin->getPasskeyRpName();
 	}
 
+	/**
+	 * Challenge je náhodná binárka, do session ale patří jen text.
+	 *
+	 * Session se serializuje jako jeden blob a ukládá tak, jak si ji projekt nastaví —
+	 * typicky do textového sloupce v utf8mb4 (adt/doctrine-session-handler). Náhodné
+	 * bajty validní UTF-8 nejsou, takže by takový zápis buď spadl na MySQL 1366, nebo
+	 * (bez strict módu) prošel useknutý na prvním nevalidním bajtu. Useknutá session
+	 * se pak nedá dekódovat a *každý* další požadavek s tou cookie končí chybou
+	 * "Failed to decode session object" - ne jen přihlašování klíčem, ale celý portál,
+	 * a to až do expirace session.
+	 */
 	protected function storeChallenge(string $key, string $challenge): void
 	{
-		$this->getSessionSection()->set($key, $challenge, PasskeySessionSection::CHALLENGE_EXPIRATION);
+		$this->getSessionSection()->set($key, base64_encode($challenge), PasskeySessionSection::CHALLENGE_EXPIRATION);
 	}
 
 	/**
@@ -528,7 +539,11 @@ class PasskeyService
 		$challenge = $section->get($key);
 		$section->remove($key);
 
-		if (!is_string($challenge) || $challenge === '') {
+		// Nedekódovatelná hodnota je challenge uložená ještě v binární podobě (session
+		// z doby před touto verzí). Nic se s ní dělat nedá - uživatel to opakuje.
+		$challenge = is_string($challenge) ? base64_decode($challenge, true) : false;
+
+		if ($challenge === false || $challenge === '') {
 			throw new PasskeyException($this->translator->translate('fcadmin.passkeys.errors.expiredChallenge'));
 		}
 
