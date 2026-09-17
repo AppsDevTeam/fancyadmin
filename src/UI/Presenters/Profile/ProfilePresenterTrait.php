@@ -21,6 +21,7 @@ use ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGridFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Session\SessionGrid;
 use ADT\FancyAdmin\UI\Components\Grids\Session\SessionGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
+use Nette\Application\ForbiddenRequestException;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
 use RuntimeException;
@@ -49,11 +50,17 @@ trait ProfilePresenterTrait
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
 		$this->getTemplate()->isPasskeyEnrollmentPending = $this->_passkeyService->isEnrollmentPending($this->_securityUser->getIdentity());
 		$this->getTemplate()->isPasskeyEnrollmentRequired = $this->_passkeyService->isEnrollmentRequiredSession();
+		$this->getTemplate()->canEditPersonalData = $this->_securityUser->isAllowedPersonalData();
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 
+	// Presenter je z ACL vyjmutý (viz validatePresenterPermission), proto kontrola tady výslovně.
 	public function handleEditPersonalData(): void
 	{
+		if (!$this->_securityUser->isAllowedPersonalData()) {
+			throw new ForbiddenRequestException();
+		}
+
 		$this->redrawSidePanel('personalData');
 	}
 
@@ -86,8 +93,13 @@ trait ProfilePresenterTrait
 		$this->redirect(':Portal:Sign:in');
 	}
 
+	// Signál odeslaného formuláře míří sem přímo a handleEditPersonalData() obchází.
 	public function createComponentPersonalDataSidePanel(SidePanelControlFactory $factory): SidePanelControl
 	{
+		if (!$this->_securityUser->isAllowedPersonalData()) {
+			throw new ForbiddenRequestException();
+		}
+
 		return $factory->create()
 			->setFormFactory(fn() => $this->_personalDataFormFactory->create()
 				->setEntity($this->_securityUser->getIdentity()));

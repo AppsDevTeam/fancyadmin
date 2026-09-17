@@ -11,7 +11,7 @@
 
 	<div class="header-actions">
 		<a n:href="changePassword!" class="btn btn-outline-primary ajax">{_fcadmin.presenters.profile.changePassword}</a>
-		<a n:href="editPersonalData!" class="btn btn-primary ajax">{_fcadmin.presenters.profile.editPersonalData}</a>
+		<a n:if="$canEditPersonalData" n:href="editPersonalData!" class="btn btn-primary ajax">{_fcadmin.presenters.profile.editPersonalData}</a>
 	</div>
 </div>
 

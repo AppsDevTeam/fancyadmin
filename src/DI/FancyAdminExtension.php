@@ -65,6 +65,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
 			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
 			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
+			'personalDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
@@ -143,6 +144,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'customerAclResource' => $this->config->customerAclResource,
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
+				'personalDataAclResource' => $this->config->personalDataAclResource,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
@@ -204,6 +206,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$securityUserDef = $builder->getDefinitionByType(SecurityUser::class);
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
+		$securityUserDef->addSetup('setPersonalDataAclResource', [$this->config->personalDataAclResource]);
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);

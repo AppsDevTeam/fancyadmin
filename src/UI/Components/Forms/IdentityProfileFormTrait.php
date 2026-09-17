@@ -39,6 +39,7 @@ trait IdentityProfileFormTrait
 
 	abstract protected function addProfileFields(Form|Container $form, ?Profile $profile, array $roles): void;
 	abstract protected function addIdentityFields(Form|Container $form, ?Identity $identity, array $roles): void;
+	abstract public function isAllowedToEdit(?Identity $identity): bool;
 
 	/**
 	 * @throws \Exception
