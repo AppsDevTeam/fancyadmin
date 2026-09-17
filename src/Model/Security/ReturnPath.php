@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Security;
 
+use Nette\Application\UI\Presenter;
 use Nette\Http\IRequest;
 use Nette\Http\IResponse;
 use Nette\Http\Url;
@@ -22,6 +23,8 @@ use Throwable;
  * Ukládá se takhle každý nepřihlášený požadavek bez ohledu na metodu. Rozlišovat
  * GET a POST nemá smysl: na obejití by stačil GET s hlavičkou
  * X-Requested-With: XMLHttpRequest. Cenou je, že se POST po přihlášení nezopakuje.
+ *
+ * Ze stejného důvodu se neukládá signál - viz store().
  *
  * Cookie je vstup od klienta (HttpOnly brání JS, ne podvrženému requestu), proto
  * se z ní nikdy nestává celá URL: ukládá se jen cesta relativní k baseUrl a při
@@ -55,9 +58,18 @@ final readonly class ReturnPath
 	) {
 	}
 
-	/** Zapamatuje si cíl, na který se uživatel po přihlášení vrátí. */
+	/**
+	 * Zapamatuje si cíl, na který se uživatel po přihlášení vrátí.
+	 *
+	 * Signál se zahazuje a uživatel skončí na stránce, ze které odkaz vedl. Odkaz na
+	 * signál platí jen v sezení, ve kterém vznikl - nese jeho stav (pořadí v gridu,
+	 * CSRF token) - takže po přihlášení už neplatí a uživatel by místo cíle dostal
+	 * chybovou stránku. Zopakovat cizí akci po přihlášení navíc není o co stát.
+	 */
 	public function store(UrlScript $url): void
 	{
+		$url = $url->withQueryParameter(Presenter::SignalKey, null);
+
 		if (($path = $url->getRelativeUrl()) === '' || $this->toLocalUrl($path) === null) {
 			return;
 		}
