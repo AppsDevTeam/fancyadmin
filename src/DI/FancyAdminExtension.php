@@ -233,6 +233,62 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		) {
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale WebAuthn Relying Party ID není známé. Nastavte passkeyRpId na doménu adminu (bez schématu, cesty a portu), nebo doplňte adminHostPath. Pozor: pozdější změna rpId zneplatní všechny už registrované klíče.');
 		}
+
+		// PasskeyService stojí na HasPasskeys (user handle + inverzní kolekce klíčů). Projekt,
+		// který si kolekci passkeys namapoval ručně místo IdentityPasskeysTrait, projde
+		// i orm:validate-schema a chyba se projeví až jako 500 při registraci prvního klíče.
+		if ($this->config->passkeyEnabled
+			&& ($invalidIdentity = self::findIdentityWithoutPasskeys($this->findProjectIdentityClasses())) !== null
+		) {
+			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale ' . $invalidIdentity . ' neimplementuje ' . HasPasskeys::class . '. Přidejte entitě `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19), nebo passkeys vypněte.');
+		}
+	}
+
+	/**
+	 * @param class-string[] $identityClasses projektové entity Identity
+	 * @return class-string|null první entita bez HasPasskeys, null když jsou všechny v pořádku
+	 */
+	public static function findIdentityWithoutPasskeys(array $identityClasses): ?string
+	{
+		foreach ($identityClasses as $_identityClass) {
+			if (!is_a($_identityClass, HasPasskeys::class, true)) {
+				return $_identityClass;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return class-string[] entity projektu implementující fancyadmin Identity
+	 */
+	private function findProjectIdentityClasses(): array
+	{
+		$appDir = $this->getContainerBuilder()->parameters['appDir'] ?? null;
+
+		if (!is_string($appDir) || !is_dir($entitiesDir = $appDir . '/Model/Entities')) {
+			return [];
+		}
+
+		$loader = new RobotLoader();
+		$loader->addDirectory($entitiesDir);
+		$loader->acceptFiles = ['*.php'];
+		$loader->rebuild();
+
+		$identityClasses = [];
+		foreach (array_keys($loader->getIndexedClasses()) as $_class) {
+			if (!class_exists($_class)) {
+				continue;
+			}
+
+			$reflection = new ReflectionClass($_class);
+
+			if ($reflection->isInstantiable() && $reflection->implementsInterface(Identity::class)) {
+				$identityClasses[] = $_class;
+			}
+		}
+
+		return $identityClasses;
 	}
 
 	public function afterCompile(ClassType $class): void
