@@ -11,6 +11,7 @@ use ADT\FancyAdmin\Tests\Fixtures\TestIdentity;
 use ADT\FancyAdmin\Tests\Fixtures\TestProfile;
 use ADT\FancyAdmin\Tests\Fixtures\TestSso;
 use Nette\Security\Passwords;
+use Nette\Utils\Random;
 use Tester\Assert;
 
 /**
@@ -55,11 +56,12 @@ test('prazdne jmeno neni mezera', function () {
 
 test('heslo se uklada zahashovane', function () {
 	$identity = new TestIdentity();
+	$password = Random::generate(12);
 
-	$identity->setPassword('TajneHeslo123');
+	$identity->setPassword($password);
 
-	Assert::notSame('TajneHeslo123', $identity->getPassword());
-	Assert::true(new Passwords()->verify('TajneHeslo123', $identity->getPassword()));
+	Assert::notSame($password, $identity->getPassword());
+	Assert::true(new Passwords()->verify($password, $identity->getPassword()));
 	Assert::false(new Passwords()->verify('jine', $identity->getPassword()));
 });
 
@@ -67,7 +69,7 @@ test('heslo se uklada zahashovane', function () {
 test('prazdne heslo puvodni heslo nepremaze', function () {
 	// Formulare posilaji prazdne pole, kdyz uzivatel heslo nemeni.
 	$identity = new TestIdentity();
-	$identity->setPassword('TajneHeslo123');
+	$identity->setPassword(Random::generate(12));
 	$hash = $identity->getPassword();
 
 	$identity->setPassword(null);
@@ -79,8 +81,9 @@ test('prazdne heslo puvodni heslo nepremaze', function () {
 
 
 test('kazde zahashovani da jiny otisk', function () {
-	$a = new TestIdentity()->setPassword('TajneHeslo123');
-	$b = new TestIdentity()->setPassword('TajneHeslo123');
+	$password = Random::generate(12);
+	$a = new TestIdentity()->setPassword($password);
+	$b = new TestIdentity()->setPassword($password);
 
 	Assert::notSame($a->getPassword(), $b->getPassword());
 });
@@ -92,8 +95,9 @@ test('identita se autentizatoru predstavuje retezcovym id', function () {
 
 	Assert::same('15', $identity->getAuthObjectId());
 
-	$identity->setAuthToken('token-abc');
-	Assert::same('token-abc', $identity->getAuthToken());
+	$token = Random::generate(12);
+	$identity->setAuthToken($token);
+	Assert::same($token, $identity->getAuthToken());
 
 	// Metadata balicek nepouziva, ale rozhrani je vyzaduje.
 	Assert::same([], $identity->getAuthMetadata());

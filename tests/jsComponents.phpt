@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use Nette\Utils\Json;
+use Nette\Utils\Random;
 use Tester\Assert;
 
 /**
@@ -61,10 +62,12 @@ test('odkaz jde nastavit i bez Firebase konfigurace', function () {
 test('zname tokeny se ukladaji jako seznam', function () {
 	// Klice pole se zahazuji - v JSON musi vzniknout pole, ne objekt.
 	$components = new JsComponents();
+	$a = Random::generate(12);
+	$b = Random::generate(12);
 
-	$components->setFirebaseKnownTokens([3 => 'token-a', 7 => 'token-b']);
+	$components->setFirebaseKnownTokens([3 => $a, 7 => $b]);
 
-	Assert::same('{"notifications":{"knownTokens":["token-a","token-b"]}}', $components->generateConfig());
+	Assert::same(Json::encode(['notifications' => ['knownTokens' => [$a, $b]]]), $components->generateConfig());
 });
 
 
