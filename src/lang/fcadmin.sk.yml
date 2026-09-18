@@ -343,10 +343,11 @@ appGeneral:
       yes: áno
       no: nie
       decimalSeparator: ','
-      thousandsSeparator: ' '
+      thousandsSeparator: ' '
   exceptions:
     userNotFound: "Používateľ nenájdený"
     wrongCredentials: "Neplatné prihlasovacie údaje"
+    noPermission: "Nemáte právo na prihlásenie"
     inactiveUser: "Neaktívny používateľ"
 
 sidePanels:

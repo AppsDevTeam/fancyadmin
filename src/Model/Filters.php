@@ -108,8 +108,12 @@ class Filters
 		}
 
 		$price = $this->number($price, $decimals, $decimalSymbol, $thousandsSeparator);
+		$currency = trim($currency);
 
-		return trim($price . ' ' . $currency);
+		// Oddělovač se skládá jen tehdy, když je co oddělovat. trim() na celém výsledku
+		// nestačí - je to nezlomitelná mezera a tu přes charlist odříznout nelze bezpečně:
+		// trim() pracuje po bajtech, takže by rozbila měnu končící bajtem 0xA0 (např. 'à').
+		return $currency === '' ? $price : $price . ' ' . $currency;
 	}
 
 	public function priceNullable(null|float|string $price, string $currency, int $decimals = 2, ?string $decimalSymbol = null, ?string $thousandsSeparator = null): ?string
@@ -157,11 +161,15 @@ class Filters
 		$min = min($r, $g, $b);
 		$l = ($max + $min) / 2; // Světlost
 		$s = $max == $min ? 0 : ($l > 0.5 ? ($max - $min) / (2 - $max - $min) : ($max - $min) / ($max + $min));
-		$h = $max == $r
-			? fmod((60 * (($g - $b) / ($max - $min)) + 360), 360)
-			: ($max == $g
-				? fmod((60 * (($b - $r) / ($max - $min)) + 120), 360)
-				: fmod((60 * (($r - $g) / ($max - $min)) + 240), 360));
+		// U šedých odstínů (R = G = B) je odstín nedefinovaný a ($max - $min) nula -
+		// bez této větve by převod dělil nulou, a to i u bílé a černé.
+		$h = $max == $min
+			? 0.0
+			: ($max == $r
+				? fmod((60 * (($g - $b) / ($max - $min)) + 360), 360)
+				: ($max == $g
+					? fmod((60 * (($b - $r) / ($max - $min)) + 120), 360)
+					: fmod((60 * (($r - $g) / ($max - $min)) + 240), 360)));
 
 		// Snížit světlost
 		$l = max(0, $l - $percent / 100);
