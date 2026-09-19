@@ -5,6 +5,9 @@ declare(strict_types=1);
 use ADT\FancyAdmin\DI\FancyAdminExtension;
 use ADT\FancyAdmin\Model\Entities\Passkey;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
+use FancyAdminTests\Fixtures\EntityScan\Model\Entities\ScanMarker;
+use FancyAdminTests\Fixtures\EntityScan\Model\Entities\ScannedEntity;
+use Nette\Loaders\RobotLoader;
 use Tester\Assert;
 
 /**
@@ -17,6 +20,15 @@ use Tester\Assert;
  */
 
 require __DIR__ . '/bootstrap.php';
+
+$entityScanAppDir = __DIR__ . '/fixtures/entityScan/app';
+
+// Fixtury nejsou v composer autoloadu - findProjectEntityClasses() indexovane tridy jen
+// filtruje pres class_exists(), nacist si je musi projekt sam (v praxi composer nad app/).
+$fixtureLoader = new RobotLoader();
+$fixtureLoader->addDirectory($entityScanAppDir);
+$fixtureLoader->setTempDirectory(sys_get_temp_dir() . '/fancyadmin-tests-entity-scan');
+$fixtureLoader->register();
 
 
 class IdentityWithPasskeys implements HasPasskeys
@@ -76,8 +88,41 @@ test('hlasi se prvni nevyhovujici entita, i kdyz jich je vic', function () {
 });
 
 
-test('projekt bez entity Identity kontrolu nezablokuje', function () {
-	// appDir se nemusi podarit najit (dev checkout, path repository) - v takovem pripade
-	// se ma jen preskocit, ne shodit kompilaci kontejneru
+test('bez nalezenych entit se nehlasi nic', function () {
 	Assert::null(FancyAdminExtension::findIdentityWithoutPasskeys([]));
+});
+
+
+test('sken vrati jen instancovatelne entity s hledanym rozhranim', function () use ($entityScanAppDir) {
+	// abstraktni predek ani trida bez rozhrani se vracet nesmi - jinak by guard hlasil
+	// chybu na necem, co se nikdy nepouzije jako Identity
+	Assert::same(
+		[ScannedEntity::class],
+		FancyAdminExtension::findProjectEntityClasses($entityScanAppDir, ScanMarker::class)
+	);
+});
+
+
+test('nezname appDir kontrolu jen preskoci', function () {
+	// dev checkout nebo path repository - nefunkcni detekce cesty nesmi shodit kompilaci
+	Assert::same([], FancyAdminExtension::findProjectEntityClasses(null, ScanMarker::class));
+});
+
+
+test('appDir bez Model/Entities kontrolu jen preskoci', function () {
+	Assert::same(
+		[],
+		FancyAdminExtension::findProjectEntityClasses(__DIR__ . '/fixtures/entityScanWithoutEntities/app', ScanMarker::class)
+	);
+});
+
+
+test('sken se poskladany s kontrolou chova jako guard v beforeCompile', function () use ($entityScanAppDir) {
+	// ScannedEntity je "Identity" bez HasPasskeys - presne pripad, kvuli kteremu guard vznikl
+	Assert::same(
+		ScannedEntity::class,
+		FancyAdminExtension::findIdentityWithoutPasskeys(
+			FancyAdminExtension::findProjectEntityClasses($entityScanAppDir, ScanMarker::class)
+		)
+	);
 });

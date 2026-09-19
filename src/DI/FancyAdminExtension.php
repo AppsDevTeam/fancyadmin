@@ -8,17 +8,9 @@ use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
-use ADT\FancyAdmin\Model\Entities\AclResource;
-use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
-use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\AclRoleTrait;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\IdentityPasskeysTrait;
-use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
-use ADT\FancyAdmin\Model\Entities\Profile;
-use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Security\Authenticator;
@@ -181,8 +173,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				->setArgument('verifySsl', $this->config->keycloakVerifySsl);
 		}
 
-		//$this->validateTraitInterfaceCompliance();
-
 		// command registration
 
 		$defs[] = $builder->addDefinition($this->prefix('createIdentity'))
@@ -237,8 +227,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// PasskeyService stojí na HasPasskeys (user handle + inverzní kolekce klíčů). Projekt,
 		// který si kolekci passkeys namapoval ručně místo IdentityPasskeysTrait, projde
 		// i orm:validate-schema a chyba se projeví až jako 500 při registraci prvního klíče.
+		$appDir = $builder->parameters['appDir'] ?? null;
+
 		if ($this->config->passkeyEnabled
-			&& ($invalidIdentity = self::findIdentityWithoutPasskeys($this->findProjectIdentityClasses())) !== null
+			&& ($invalidIdentity = self::findIdentityWithoutPasskeys(
+				self::findProjectEntityClasses(is_string($appDir) ? $appDir : null, Identity::class)
+			)) !== null
 		) {
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale ' . $invalidIdentity . ' neimplementuje ' . HasPasskeys::class . '. Přidejte entitě `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19), nebo passkeys vypněte.');
 		}
@@ -260,13 +254,24 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	}
 
 	/**
-	 * @return class-string[] entity projektu implementující fancyadmin Identity
+	 * Sken projektových entit v `%appDir%/Model/Entities` podle implementovaného rozhraní.
+	 *
+	 * Best-effort: když se appDir nepodaří určit nebo entity v konvenčním adresáři nejsou
+	 * (dev checkout, path repository), vrátí prázdno a volající kontrola se přeskočí —
+	 * nefunkční detekce cesty nesmí shodit kompilaci kontejneru. Přesně na tohle dojela
+	 * a proto byla odstraněna dřívější validateTraitInterfaceCompliance() (42899d7), která
+	 * si cestu k entitám skládala natvrdo relativně k tomuhle souboru.
+	 *
+	 * Spoléhá na to, že si projekt adresář autoloaduje (composer `autoload.psr-4` nad app/);
+	 * třídy, které se nepodaří načíst, se tiše přeskočí.
+	 *
+	 * @param string|null $appDir hodnota parametru appDir, null když není k dispozici
+	 * @param class-string $interface rozhraní, které musí entita implementovat
+	 * @return class-string[] instancovatelné entity projektu implementující $interface
 	 */
-	private function findProjectIdentityClasses(): array
+	public static function findProjectEntityClasses(?string $appDir, string $interface): array
 	{
-		$appDir = $this->getContainerBuilder()->parameters['appDir'] ?? null;
-
-		if (!is_string($appDir) || !is_dir($entitiesDir = $appDir . '/Model/Entities')) {
+		if ($appDir === null || !is_dir($entitiesDir = $appDir . '/Model/Entities')) {
 			return [];
 		}
 
@@ -275,7 +280,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$loader->acceptFiles = ['*.php'];
 		$loader->rebuild();
 
-		$identityClasses = [];
+		$entityClasses = [];
 		foreach (array_keys($loader->getIndexedClasses()) as $_class) {
 			if (!class_exists($_class)) {
 				continue;
@@ -283,12 +288,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 			$reflection = new ReflectionClass($_class);
 
-			if ($reflection->isInstantiable() && $reflection->implementsInterface(Identity::class)) {
-				$identityClasses[] = $_class;
+			if ($reflection->isInstantiable() && $reflection->implementsInterface($interface)) {
+				$entityClasses[] = $_class;
 			}
 		}
 
-		return $identityClasses;
+		return $entityClasses;
 	}
 
 	public function afterCompile(ClassType $class): void
@@ -297,57 +302,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// method - musí se zaregistrovat za běhu, jinak by ji každý projekt musel
 		// registrovat sám ve svém Bootstrapu.
 		$this->getInitialization()->addBody(PasswordRevealInput::class . '::register();');
-	}
-
-	private function validateTraitInterfaceCompliance(): void
-	{
-		$traitInterfaceMap = [
-			AclResourceTrait::class => AclResource::class,
-			AclRoleTrait::class => AclRole::class,
-			IdentityTrait::class => Identity::class,
-			IdentityPasskeysTrait::class => HasPasskeys::class,
-			ProfileTrait::class => Profile::class,
-		];
-
-		$loader = new RobotLoader();
-		$loader->addDirectory(__DIR__ . '/../../../../../app/Model/Entities');
-		$loader->acceptFiles = ['*.php'];
-		$loader->rebuild();
-
-		foreach (array_keys($loader->getIndexedClasses()) as $class) {
-			if (!class_exists($class)) {
-				continue;
-			}
-
-			$reflection = new ReflectionClass($class);
-
-			if (!$reflection->isInstantiable() || $reflection->isAbstract()) {
-				continue;
-			}
-
-			$usedTraits = $this->class_uses_recursive($class);
-
-			foreach ($traitInterfaceMap as $trait => $interface) {
-				if (in_array($trait, $usedTraits, true) && !$reflection->implementsInterface($interface)) {
-					throw new RuntimeException("Třída $class používá $trait, ale neimplementuje požadované rozhraní $interface.");
-				}
-			}
-		}
-	}
-
-	private function class_uses_recursive(string $class): array
-	{
-		$results = [];
-
-		do {
-			$results += class_uses($class);
-		} while ($class = get_parent_class($class));
-
-		foreach ($results as $trait) {
-			$results += $this->class_uses_recursive($trait);
-		}
-
-		return array_unique($results);
 	}
 
 	public function getTranslationResources(): array
