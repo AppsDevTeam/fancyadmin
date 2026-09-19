@@ -2250,6 +2250,23 @@ i po smazání účtu — hodnoty se proto vybírají jmenovitě (role, stav ú�
 zaplacení). Celý payload stejně prochází `SensitiveDataSanitizer`, tedy stejnou
 sanitizací jako ostatní logy.
 
+### Co fancyadmin označuje sám
+
+Traity fancyadminu nesou `#[AuditedValue]` na vlastnostech, které vypovídají o identitě
+a oprávněních — `IdentityTrait` (email, username, roles, sso, ssoSub, anonymizedAt,
+anonymizedBy, isActive), `AclRoleTrait` (name, acls, isAdmin, needsSso, needs2fa,
+sessionExpirationMinutes), `AclTrait`, `SsoTrait`, `ProfileTrait`, `PasskeyTrait`.
+Jméno, příjmení, telefon a detaily heslové politiky zůstávají jen v change_logu.
+`ConfigurationTrait` hodnotu do auditu nepouští vůbec — do sloupce se vejde cokoliv
+včetně tajemství a která konfigurace se změnila, řekne identifikace záznamu.
+
+`#[Audited]` je atribut třídy, takže ho traity nesou nemohou — dává se na entitu v projektu.
+
+Hash hesla je zvláštní případ: `IdentityTrait` ho loguje jako
+`#[LoggableProperty(withValue: false)]`, tedy **bez hodnoty**. S hodnotou by change_log držel
+historii hashů včetně dávno neplatných hesel a při úniku dumpu by to byl materiál na offline
+lámání; bez atributu by se naopak změna hesla nezalogovala vůbec.
+
 Záznam nese `payload.changeLogId` a stejnou hodnotu v `correlation_id`, takže z auditu
 vede cesta na detail v `change_logu`. Jedna entita má v rámci requestu jeden řádek
 `change_logu`, který každý další flush doplní — takový záznam se do auditu zapíše znovu,

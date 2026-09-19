@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
@@ -24,10 +25,12 @@ trait AclRoleTrait
 
 	#[ORM\Column(unique: true, nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $name;
 
 	#[ORM\OneToMany(targetEntity: 'Acl', mappedBy: 'role')]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected Collection $acls;
 
 	#[ORM\Column(nullable: true)]
@@ -40,16 +43,19 @@ trait AclRoleTrait
 
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected bool $isAdmin = false;
 
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected bool $needsSso = false;
 
 	// Vynucené přihlášení klíčem: heslo takové identitě nefunguje. SSO má přednost
 	// a při vypnutém passkeyEnabled je flag inertní (viz README 19.8).
 	#[ORM\Column(nullable: false, options: ["default" => 0])]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected bool $needs2fa = false;
 
 	// Politika hesel role. Identita jich muze mit vic, takze se pri nastavovani hesla
@@ -80,6 +86,7 @@ trait AclRoleTrait
 
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?int $sessionExpirationMinutes = null;
 
 	public function __construct()
