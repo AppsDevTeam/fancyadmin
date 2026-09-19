@@ -72,7 +72,9 @@ trait ResetPassword
 			}
 		}
 
-		$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR);
+		// Akci spouští přihlášený admin nad cizím účtem, tokeny tak vznikají hromadně z jedné IP
+		// (např. při zakládání desítek účtů). Rate limit podle IP tady nic nechrání, jen brání práci.
+		$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_RECOVERY_VALID_FOR, checkLimit: false);
 
 		$this->getPresenter()->flashMessageSuccess('fcadmin.grids.user.messages.mailSuccess');
 	}
