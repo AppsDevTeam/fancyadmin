@@ -2285,6 +2285,42 @@ celý, s `payload.supersedesPrevious`.
 
 ---
 
+## 22. Retence logů (volitelné)
+
+Logovací tabulky rostou donekonečna, dokud je někdo nemaže. Jak dlouho se co drží, je
+slib vůči zákazníkovi i regulátorovi, takže to patří na jedno místo — do konfigurace:
+
+```neon
+fancyAdmin:
+	purge:
+		- {entity: App\Model\Entities\RequestLogBody, retention: '1 month'}
+		- {entity: App\Model\Entities\RequestLog, retention: '6 months'}
+		- {entity: App\Model\Entities\ApiLog, retention: '6 months'}
+```
+
+Maže `fancyadmin:purge-logs`, typicky z nočního cronu. Bere `--dry-run` (jen spočítá,
+co by smazal) a `--batch-size`.
+
+Každá entita musí mít `createdAt` — maže se podle času vzniku řádku, ne podle obchodních
+časů jako „kdy nastala chyba na zařízení". Ty se totiž mohou od vzniku záznamu lišit
+a řádek by zmizel dřív, než mu doběhne jeho doba. **Na `created_at` patří index**, jinak
+každé mazání projede celou tabulku.
+
+Maže se přes DBAL po dávkách s pauzou; jedno velké `DELETE` nad milionovou tabulkou drží
+zámky a utíká s ním replika. Rozbitá položka (překlep v názvu entity) shodí jen svůj řádek
+výpisu a příkaz skončí chybou — ostatní tabulky se domažou, aby databáze nerostla všude.
+
+**Pořadí v seznamu rozhoduje**, mazání jde odshora dolů. Záleží na něm tam, kde jsou
+tabulky svázané cizím klíčem: `request_log_body` visí na `request_log` s `ON DELETE
+CASCADE` a má kratší retenci, takže musí jít první — jinak by ho nejdřív odmazala kaskáda
+podle retence rodiče.
+
+`audit_log` sem **nepatří**. Auditní stopu odváží a maže mover, až když ji má bezpečně
+v dlouhodobém úložišti; smazat ji podle času by znamenalo ztratit záznamy, které nikde
+jinde ještě nejsou.
+
+---
+
 ## Shrnutí
 
 | Krok | Co | Proč |

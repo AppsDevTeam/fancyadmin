@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
+use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
@@ -64,6 +65,14 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
+			// Retence logů pro fancyadmin:purge-logs. Pořadí rozhoduje, mazání jde
+			// odshora dolů - záleží na něm tam, kde jsou tabulky svázané cizím klíčem.
+			// audit_log sem NEPATŘÍ, ten odváží a maže mover.
+			'purge' => Expect::listOf(Expect::structure([
+				'entity' => Expect::string()->required(),
+				// cokoliv, co bere DateTimeImmutable::modify(), např. '6 months'
+				'retention' => Expect::string()->required(),
+			])->castTo('array'))->default([]),
 			'keycloakEnabled' => Expect::bool()->default(false),
 			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
 			'keycloakVerifySsl' => Expect::bool()->default(true),
@@ -195,6 +204,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setFactory(GenerateMissingAclResourcesCommand::class, [
 				'appDir' => $builder->parameters['appDir'],
 			])
+			->setAutowired(false);
+
+		$defs[] = $builder->addDefinition($this->prefix('purgeLogs'))
+			->setFactory(PurgeLogsCommand::class, ['config' => $this->config->purge])
 			->setAutowired(false);
 
 		foreach ($defs as $_def) {

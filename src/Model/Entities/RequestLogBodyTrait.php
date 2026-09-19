@@ -13,6 +13,22 @@ trait RequestLogBodyTrait
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	protected RequestLog $requestLog;
 
+	/**
+	 * Vlastní čas, i když je to tentýž okamžik jako u rodiče - těla mají KRATŠÍ retenci
+	 * (typicky měsíc proti půl roku) a musí se mazat samostatně. Přes rodiče by to šlo
+	 * jen poddotazem nebo joinem, a to je na téhle tabulce ta nejobjemnější v databázi.
+	 * S vlastním sloupcem je to prostý DELETE po indexu.
+	 *
+	 * Zapisuje se vždy v UTC, stejně jako created_at rodiče - viz RequestLogger.
+	 *
+	 * POZOR: Doctrine čte #[Index] jen z entity, na traitě ho IGNORUJE. Entita v projektu
+	 * proto musí index deklarovat sama, jinak retenční mazání projede celou tabulku:
+	 *
+	 *   #[ORM\Index(fields: ['createdAt'])]
+	 */
+	#[Column]
+	protected \DateTimeImmutable $createdAt;
+
 	#[Column(type: 'json', nullable: true)]
 	protected ?array $headers = null;
 
@@ -33,6 +49,11 @@ trait RequestLogBodyTrait
 
 	#[Column(type: 'text', nullable: true)]
 	protected ?string $responseText = null;
+
+	public function getCreatedAt(): \DateTimeImmutable
+	{
+		return $this->createdAt;
+	}
 
 	public function getRequestLog(): RequestLog
 	{

@@ -25,15 +25,16 @@ final class TestEntityManager extends EntityManager
 	/** @var list<class-string> */
 	private array $entityClasses;
 
-	private ?TestConnection $testConnection = null;
+	private ?Connection $testConnection = null;
 
 	/** @var array<class-string, ClassMetadata> */
 	private array $metadata = [];
 
 	/** @noinspection PhpMissingParentConstructorInspection */
-	public function __construct(array $entityClasses = [])
+	public function __construct(array $entityClasses = [], ?Connection $connection = null)
 	{
 		$this->entityClasses = $entityClasses;
+		$this->testConnection = $connection;
 	}
 
 	public function getConnection(): Connection

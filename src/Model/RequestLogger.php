@@ -116,10 +116,14 @@ final class RequestLogger
 
 		// Systémové sloupce mají díky `+` vždy přednost – extra data (viz addValue())
 		// mohou pouze PŘIDÁVAT vlastní sloupce, ne přepsat defaultní logování.
+		// jeden okamzik pro rodice i telo: retencni mazani je porovnava mezi sebou
+		// (telo ma kratsi retenci), takze se nesmi lisit ani o milisekundu
+		$createdAt = new DateTimeImmutable('now', new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u');
+
 		$connection->insert('request_log', [
 			// UTC - stejne jako audit_log, kvuli korelaci a jednoznacnosti pri
 			// prechodu na zimni cas (2:30 nastane dvakrat)
-			'created_at' => new DateTimeImmutable('now', new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u'),
+			'created_at' => $createdAt,
 			'method' => $presenter->getHttpRequest()->getMethod(),
 			'url' => $presenter->getHttpRequest()->getUrl()->getBaseUrl() . ltrim($presenter->getHttpRequest()->getUrl()->getPath(), '/'),
 			// delku IP ovlada klient (X-Forwarded-For) - nesmi rozbit insert
@@ -134,6 +138,7 @@ final class RequestLogger
 
 		$connection->insert('request_log_body', [
 			'request_log_id' => $requestLogId,
+			'created_at' => $createdAt,
 			'headers' => $headers ? Json::encode($headers) : null,
 			'params' => $_GET ? Json::encode($this->sanitizer->sanitize($_GET)) : null,
 			'post_data' => $_POST ? Json::encode($this->sanitizer->sanitize($_POST)) : null,
