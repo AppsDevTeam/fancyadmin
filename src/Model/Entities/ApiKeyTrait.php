@@ -50,6 +50,11 @@ trait ApiKeyTrait
 	 * z traity nepřijde:
 	 *
 	 *   #[ORM\UniqueConstraint(name: 'uniq_api_key_name_account', columns: ['name', 'account_key'])]
+	 *
+	 * Definice sloupce MUSÍ končit NOT NULL a mapování ho nesmí mít nullable. Komparátor
+	 * columnDefinition nečte, porovnává vlastnosti - a kdyby si mapování a databáze
+	 * v nullabilitě odporovaly, padal by rozdíl do každého dalšího migrations-diff.
+	 * Na diff, který pořád něco hlásí, si člověk zvykne a přestane ho číst.
 	 */
 	// Bez generated: 'ALWAYS'. S ním Doctrine po INSERTu hodnotu do entity doplní, ale
 	// v původních datech nechá null - a od té chvíle vidí při každém dalším výpočtu změnu,
@@ -59,7 +64,7 @@ trait ApiKeyTrait
 		type: Types::BIGINT,
 		insertable: false,
 		updatable: false,
-		columnDefinition: 'BIGINT GENERATED ALWAYS AS (IFNULL(account_id, 0)) STORED',
+		columnDefinition: 'BIGINT GENERATED ALWAYS AS (IFNULL(account_id, 0)) STORED NOT NULL',
 	)]
 	protected ?string $accountKey = null;
 
