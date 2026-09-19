@@ -7,7 +7,9 @@ namespace ADT\FancyAdmin\DI;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
+use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
@@ -22,6 +24,7 @@ use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\Forms\Controls\PasswordRevealInput;
+use ADT\LogSanitizer\SensitiveDataSanitizer;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Config\Loader;
@@ -165,6 +168,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('auditLogger'))
 			->setFactory(AuditLogger::class);
 
+		$builder->addDefinition($this->prefix('auditActor'))
+			->setFactory(AuditActor::class);
+
+		// Zmeny entit s atributem #[Audited] -> audit_log. Navesit v projektu, aby
+		// o tom rozhodoval ten, kdo zna poradi rozsireni:
+		//   doctrineLoggable: onLogEntry: [[@fancyAdmin.changeLogAuditSubscriber, logEntry]]
+		$builder->addDefinition($this->prefix('changeLogAuditSubscriber'))
+			->setFactory(ChangeLogAuditSubscriber::class);
+
 
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
 		if ($this->config->keycloakEnabled) {
@@ -193,6 +205,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	public function beforeCompile(): void
 	{
 		$builder = $this->getContainerBuilder();
+
+		// Sanitizer si projekty registruji samy, protoze si upravuji citliva pole
+		// i chovani pri nalezu PANu. Auditni subscriber ho ale potrebuje vzdy,
+		// takze projektu, ktery zadny nema, dame vychozi - jinak by mu kontejner
+		// prestal jit zkompilovat jen tim, ze si aktualizoval fancyadmin.
+		if ($builder->getByType(SensitiveDataSanitizer::class) === null) {
+			$builder->addDefinition($this->prefix('logSanitizer'))
+				->setFactory(SensitiveDataSanitizer::class);
+		}
 		$securityUserDef = $builder->getDefinitionByType(SecurityUser::class);
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);

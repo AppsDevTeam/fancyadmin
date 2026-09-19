@@ -2199,6 +2199,64 @@ ověření dopsat do `key` hodnotu `ApiKeyHasher::hash($rawKey)` — od té chv�
 
 ---
 
+## 21. Auditní stopa změn entit (volitelné)
+
+`audit_log` je jeden append-only stream bezpečnostních událostí (přihlášení, zamítnutý
+přístup, export, výdej souboru). Změny entit do něj neputují samy — `change_log`
+z `adt/doctrine-loggable` je provozní historie a je hustá, auditní stopa se naproti tomu
+dlouhodobě archivuje a čte ji auditor.
+
+Do auditu se entity vybírají **jmenovitě**, atributem:
+
+```php
+use ADT\FancyAdmin\Model\Attributes\Audited;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
+use ADT\DoctrineLoggable\Attributes as ADA;
+
+#[ORM\Entity]
+#[ADA\LoggableEntity]
+#[Audited(action: 'identity_change')]
+class Identity
+{
+	#[ORM\Column]
+	#[ADA\LoggableProperty]
+	#[AuditedValue]
+	protected ?string $email = null;
+
+	// bez #[AuditedValue]: v auditu zůstane jen název změněné vlastnosti
+	#[ORM\Column]
+	#[ADA\LoggableProperty]
+	protected ?string $phoneNumber = null;
+}
+```
+
+Navěšení (pořadí rozšíření zná projekt, proto se to nedělá automaticky):
+
+```neon
+doctrineLoggable:
+	onLogEntry:
+		- [@fancyAdmin.changeLogAuditSubscriber, logEntry]
+```
+
+**`action`** se prvním nasazením zafixuje — `audit_log` je append-only a zpětně ji
+přejmenovat nejde, aniž by starým záznamům přestal rozumět dotaz nad novými. Volí se proto
+podle domény, ne podle entity (`identity_change` pro Identity, Passkey, ApiKey, Sso;
+`acl_change` pro Acl, AclRole, AclResource), takže detekční pravidla stojí na jedné hodnotě
+místo výčtu tříd.
+
+**`#[AuditedValue]`** rozhoduje, u kterých vlastností se přenese i stará a nová hodnota.
+Auditní stopa žije déle než provozní data, takže co do ní jednou spadne, zůstane tam
+i po smazání účtu — hodnoty se proto vybírají jmenovitě (role, stav účtu, příznak
+zaplacení). Celý payload stejně prochází `SensitiveDataSanitizer`, tedy stejnou
+sanitizací jako ostatní logy.
+
+Záznam nese `payload.changeLogId` a stejnou hodnotu v `correlation_id`, takže z auditu
+vede cesta na detail v `change_logu`. Jedna entita má v rámci requestu jeden řádek
+`change_logu`, který každý další flush doplní — takový záznam se do auditu zapíše znovu,
+celý, s `payload.supersedesPrevious`.
+
+---
+
 ## Shrnutí
 
 | Krok | Co | Proč |
