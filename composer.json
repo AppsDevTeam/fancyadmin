@@ -36,7 +36,8 @@
     "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
   },
   "require-dev": {
-    "nette/tester": "^2.5"
+    "nette/tester": "^2.5",
+    "guzzlehttp/guzzle": "^7.0"
   },
   "scripts": {
     "test": "tester -C tests"

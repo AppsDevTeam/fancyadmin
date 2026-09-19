@@ -21,10 +21,12 @@ use Tester\Assert;
 
 require __DIR__ . '/bootstrap.php';
 
-$entityScanAppDir = __DIR__ . '/fixtures/entityScan/app';
+$entityScanAppDir = __DIR__ . '/projects/entityScan/app';
 
-// Fixtury nejsou v composer autoloadu - findProjectEntityClasses() indexovane tridy jen
-// filtruje pres class_exists(), nacist si je musi projekt sam (v praxi composer nad app/).
+// Falesny projektovy strom zamerne nelezi v tests/Fixtures - ty bootstrap nacita globalne
+// a require_once by tyhle tridy natahl driv, nez je sken uvidi. Tady si je autoloaduje
+// test sam, presne jako projekt (v praxi composer nad app/): findProjectEntityClasses()
+// indexovane tridy jen filtruje pres class_exists(), nacist si je musi volajici.
 $fixtureLoader = new RobotLoader();
 $fixtureLoader->addDirectory($entityScanAppDir);
 $fixtureLoader->setTempDirectory(sys_get_temp_dir() . '/fancyadmin-tests-entity-scan');
@@ -112,7 +114,7 @@ test('nezname appDir kontrolu jen preskoci', function () {
 test('appDir bez Model/Entities kontrolu jen preskoci', function () {
 	Assert::same(
 		[],
-		FancyAdminExtension::findProjectEntityClasses(__DIR__ . '/fixtures/entityScanWithoutEntities/app', ScanMarker::class)
+		FancyAdminExtension::findProjectEntityClasses(__DIR__ . '/projects/entityScanWithoutEntities/app', ScanMarker::class)
 	);
 });
 
