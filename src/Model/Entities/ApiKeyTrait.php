@@ -51,12 +51,15 @@ trait ApiKeyTrait
 	 *
 	 *   #[ORM\UniqueConstraint(name: 'uniq_api_key_name_account', columns: ['name', 'account_key'])]
 	 */
+	// Bez generated: 'ALWAYS'. S ním Doctrine po INSERTu hodnotu do entity doplní, ale
+	// v původních datech nechá null - a od té chvíle vidí při každém dalším výpočtu změnu,
+	// kterou nemá jak zapsat. Takhle zůstane vlastnost u nové entity null (nikdo ji nečte)
+	// a u načtené nese, co spočítala databáze.
 	#[ORM\Column(
 		type: Types::BIGINT,
 		insertable: false,
 		updatable: false,
 		columnDefinition: 'BIGINT GENERATED ALWAYS AS (IFNULL(account_id, 0)) STORED',
-		generated: 'ALWAYS',
 	)]
 	protected ?string $accountKey = null;
 
