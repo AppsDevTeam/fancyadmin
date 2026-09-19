@@ -1604,6 +1604,11 @@ class Passkey extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Passk
 (BINARY(32)) — náhodný opaque WebAuthn user handle, generovaný při registraci prvního klíče
 (autentikátoru se nikdy neposílá interní ID identity) — a inverzní vazbu `getPasskeys()`.
 
+> Kolekci `passkeys` si nemapujte ručně. `PasskeyTrait` ji sice vyžaduje kvůli `inversedBy`,
+> ale ruční kolekce projde i `orm:validate-schema` — a protože entitě pak chybí
+> `HasPasskeys` (a s ním `passkeyUserHandle`), registrace klíče spadne za běhu na 500.
+> Při `passkeyEnabled: true` to hlídá `FancyAdminExtension` už při kompilaci kontejneru.
+
 ### 19.4 Query + factory
 
 ```php
