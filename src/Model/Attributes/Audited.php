@@ -14,6 +14,11 @@ use Attribute;
  * dlouhodobě archivuje, odváží do centrálního systému a čte ho auditor. Proto se
  * do ní entity vybírají jmenovitě, tímto atributem, a ne naopak vylučují.
  *
+ * PRO ENTITY FANCYADMINU HO NEPOTŘEBUJETE: identity, oprávnění, účty, profily
+ * a konfigurace se auditují samy podle rozhraní, které implementují - viz
+ * ChangeLogAuditSubscriber::DEFAULT_ACTIONS. Tenhle atribut je pro entity projektu
+ * a pro případ, kdy projektu nesedí výchozí akce a chce ji přepsat (atribut vyhrává).
+ *
  * Akce se zafixuje prvním nasazením: audit_log je append-only, takže ji nejde
  * zpětně přejmenovat, aniž by starým záznamům přestal rozumět dotaz nad novými.
  * Volí se proto podle domény, ne podle entity - detekční pravidla se pak klíčují

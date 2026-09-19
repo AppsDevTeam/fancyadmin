@@ -2206,7 +2206,31 @@ přístup, export, výdej souboru). Změny entit do něj neputují samy — `cha
 z `adt/doctrine-loggable` je provozní historie a je hustá, auditní stopa se naproti tomu
 dlouhodobě archivuje a čte ji auditor.
 
-Do auditu se entity vybírají **jmenovitě**, atributem:
+Navěšení stačí jedno (pořadí rozšíření zná projekt, proto se to nedělá automaticky):
+
+```neon
+doctrineLoggable:
+	onLogEntry:
+		- [@fancyAdmin.changeLogAuditSubscriber, logEntry]
+```
+
+Tím se rovnou auditují **entity fancyadminu** — poznají se podle rozhraní, které
+implementují, takže projekt k tomu nemusí sahat do entit:
+
+| Rozhraní | `action` |
+|---|---|
+| `Identity`, `Passkey`, `ApiKey`, `Sso` | `identity_change` |
+| `Acl`, `AclRole`, `AclResource` | `acl_change` |
+| `Account`, `Profile` | `account_change` |
+| `Configuration` | `configuration_change` |
+
+Osa je doména, ne entita: detekční pravidla se pak klíčují na jednu hodnotu místo výčtu
+tříd a přibytí další entity do domény nic nerozbije.
+
+### Entity projektu
+
+Ty fancyadmin nezná, takže se vybírají **jmenovitě**, atributem (ten zároveň přebíjí
+výchozí akci, kdyby projektu doménové dělení nesedělo):
 
 ```php
 use ADT\FancyAdmin\Model\Attributes\Audited;
@@ -2230,19 +2254,8 @@ class Identity
 }
 ```
 
-Navěšení (pořadí rozšíření zná projekt, proto se to nedělá automaticky):
-
-```neon
-doctrineLoggable:
-	onLogEntry:
-		- [@fancyAdmin.changeLogAuditSubscriber, logEntry]
-```
-
 **`action`** se prvním nasazením zafixuje — `audit_log` je append-only a zpětně ji
-přejmenovat nejde, aniž by starým záznamům přestal rozumět dotaz nad novými. Volí se proto
-podle domény, ne podle entity (`identity_change` pro Identity, Passkey, ApiKey, Sso;
-`acl_change` pro Acl, AclRole, AclResource), takže detekční pravidla stojí na jedné hodnotě
-místo výčtu tříd.
+přejmenovat nejde, aniž by starým záznamům přestal rozumět dotaz nad novými.
 
 **`#[AuditedValue]`** rozhoduje, u kterých vlastností se přenese i stará a nová hodnota.
 Auditní stopa žije déle než provozní data, takže co do ní jednou spadne, zůstane tam
@@ -2259,8 +2272,6 @@ sessionExpirationMinutes), `AclTrait`, `SsoTrait`, `ProfileTrait`, `PasskeyTrait
 Jméno, příjmení, telefon a detaily heslové politiky zůstávají jen v change_logu.
 `ConfigurationTrait` hodnotu do auditu nepouští vůbec — do sloupce se vejde cokoliv
 včetně tajemství a která konfigurace se změnila, řekne identifikace záznamu.
-
-`#[Audited]` je atribut třídy, takže ho traity nesou nemohou — dává se na entitu v projektu.
 
 Hash hesla je zvláštní případ: `IdentityTrait` ho loguje jako
 `#[LoggableProperty(withValue: false)]`, tedy **bez hodnoty**. S hodnotou by change_log držel

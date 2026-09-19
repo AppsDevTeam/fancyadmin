@@ -11,8 +11,13 @@ use ADT\DoctrineLoggable\Entity\ChangeLog;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
 use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
+use ADT\FancyAdmin\Tests\Fixtures\TestAccount;
+use ADT\FancyAdmin\Tests\Fixtures\TestAclRole;
 use ADT\FancyAdmin\Tests\Fixtures\TestAuditedEntity;
+use ADT\FancyAdmin\Tests\Fixtures\TestAuditedIdentity;
 use ADT\FancyAdmin\Tests\Fixtures\TestAuditLog;
+use ADT\FancyAdmin\Tests\Fixtures\TestConfiguration;
+use ADT\FancyAdmin\Tests\Fixtures\TestIdentity;
 use ADT\FancyAdmin\Tests\Fixtures\TestConnection;
 use ADT\FancyAdmin\Tests\Fixtures\TestEntityManager;
 use ADT\FancyAdmin\Tests\Fixtures\TestNotAuditedEntity;
@@ -25,9 +30,10 @@ use Tester\Assert;
 /**
  * ChangeLogAuditSubscriber - zmena entity (change_log) -> auditni zaznam (audit_log).
  *
- * Do auditu jde jen entita s atributem #[Audited]; change_log je proti tomu husty
- * a patri do nej provozni historie vseho. Hodnoty se prenasi jen u vlastnosti
- * s #[AuditedValue], zbytek zustava jmenem - detail je v change_logu.
+ * Do auditu jde entita fancyadminu (podle rozhrani) a entita s atributem #[Audited];
+ * change_log je proti tomu husty a patri do nej provozni historie vseho. Hodnoty se
+ * prenasi jen u vlastnosti s #[AuditedValue], zbytek zustava jmenem - detail je
+ * v change_logu.
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -233,6 +239,38 @@ test('citliva hodnota se do auditu nedostane v otevrene podobe', function () {
 	$payload = $connection->getLastInsert()['data']['payload'];
 	Assert::contains('password', $payload['properties']);
 	Assert::notContains('stare-heslo', json_encode($payload, JSON_THROW_ON_ERROR));
+});
+
+
+test('entity fancyadminu se auditují bez atributu, podle rozhrani', function () {
+	// Projekt navesenim v neonu rovnou ziska audit identit, opravneni, uctu
+	// a konfigurace - atribut na traite by nestacil, ten reflexe na entite nevidi.
+	$expected = [
+		TestIdentity::class => 'identity_change',
+		TestAclRole::class => 'acl_change',
+		TestAccount::class => 'account_change',
+		TestConfiguration::class => 'configuration_change',
+	];
+
+	foreach ($expected as $class => $action) {
+		[$subscriber, $connection] = createSubscriber();
+
+		$changeSet = createChangeSet([new Scalar('name', 'stare', 'nove')]);
+		$subscriber->logEntry(createChangeLog($class, $changeSet), new TestAuditedEntity(), false);
+
+		Assert::same($action, $connection->getLastInsert()['data']['action'], $class);
+	}
+});
+
+
+test('atribut prebiji vychozi akci podle rozhrani', function () {
+	// Projektu nemusi doménové deleni sedet, tak si ho prepise.
+	[$subscriber, $connection] = createSubscriber();
+
+	$changeSet = createChangeSet([new Scalar('email', 'jan@example.com', 'jan.novak@example.com')]);
+	$subscriber->logEntry(createChangeLog(TestAuditedIdentity::class, $changeSet), new TestAuditedEntity(), false);
+
+	Assert::same('vlastni_akce', $connection->getLastInsert()['data']['action']);
 });
 
 

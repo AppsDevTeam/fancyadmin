@@ -4,20 +4,61 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 trait ApiKeyTrait
 {
 	#[ORM\Column(nullable: false)]
+	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $name;
 
-	/** SHA-256 otisk klíče; samotný klíč se v čitelné podobě nikam neukládá. */
+	/**
+	 * SHA-256 otisk klíče; samotný klíč se v čitelné podobě nikam neukládá.
+	 *
+	 * Loguje se ZMĚNA, ne hodnota: otisk je materiál k ověření klíče, takže do logu
+	 * nepatří ani jako historie. Že se klíč přegeneroval, je naopak zásadní.
+	 */
 	#[ORM\Column(name: '`key`', unique: true, nullable: true)]
+	#[LoggableProperty(withValue: false)]
 	protected ?string $key = null;
 
+	/** Převod klíče pod jiný účet mění, k čím datům se jím dá dostat. */
 	#[ORM\ManyToOne(targetEntity: 'Account')]
 	#[ORM\JoinColumn(nullable: true)]
+	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?Account $account = null;
+
+	/**
+	 * Pomocný sloupec, který drží jedinečnost jména v rámci účtu. Nikdo ho nečte
+	 * ani nenastavuje, počítá si ho databáze.
+	 *
+	 * Index přes (name, account_id) by na to nestačil: MySQL bere v unikátním indexu
+	 * každý NULL jako jinou hodnotu, takže klíče BEZ účtu - tedy ty globální, které
+	 * vidí všichni - by se mohly jmenovat stejně kolikrát chtějí. IFNULL sloučí
+	 * globální klíče do jedné skupiny (0) a index pak platí i pro ně.
+	 *
+	 * Vynutit to jde jenom tady. Kontrola v aplikaci má závod: dva souběžné požadavky
+	 * projdou oba, protože ani jeden ještě nevidí zápis toho druhého. Aplikační kontrola
+	 * má smysl kvůli hlášce uživateli, ne jako záruka.
+	 *
+	 * POZOR: samotný unikátní index musí deklarovat entita v projektu, atribut třídy
+	 * z traity nepřijde:
+	 *
+	 *   #[ORM\UniqueConstraint(name: 'uniq_api_key_name_account', columns: ['name', 'account_key'])]
+	 */
+	#[ORM\Column(
+		type: Types::BIGINT,
+		insertable: false,
+		updatable: false,
+		columnDefinition: 'BIGINT GENERATED ALWAYS AS (IFNULL(account_id, 0)) STORED',
+		generated: 'ALWAYS',
+	)]
+	protected ?string $accountKey = null;
 
 	public function getName(): string
 	{

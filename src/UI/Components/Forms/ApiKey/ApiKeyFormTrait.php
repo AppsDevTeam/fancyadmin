@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Forms\ApiKey;
 
 use ADT\DoctrineForms\Form;
+use ADT\FancyAdmin\DI\Injects\ApiKeyQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\Model\Entities\ApiKey;
 use ADT\FancyAdmin\Model\Security\ApiKeyHasher;
@@ -17,6 +18,7 @@ use ADT\FancyAdmin\Model\Security\ApiKeyHasher;
  */
 trait ApiKeyFormTrait
 {
+	use ApiKeyQueryFactoryInject;
 	use EntityManagerInject;
 
 	public function initForm(Form $form): void
@@ -34,6 +36,44 @@ trait ApiKeyFormTrait
 	{
 		$form->addText('name', 'fcadmin.presenters.apiKeys.form.name')
 			->setRequired('fcadmin.presenters.apiKeys.form.errors.nameRequired');
+	}
+
+	/**
+	 * Jedinečnost jména v rámci účtu hlídá unikátní index (viz ApiKeyTrait::$accountKey);
+	 * tahle kontrola je kvůli hlášce, aby uživatel místo pádu na constraintu viděl,
+	 * co má opravit. Závod dvou souběžných požadavků proto řešit nemusí - ten doběhne
+	 * až na index.
+	 */
+	public function validateForm(?ApiKey $entity, array $inputs, Form $form): void
+	{
+		$query = $this->_apiKeyQueryFactory->create()
+			->disableSecurityFilter()
+			->byName($inputs['name'])
+			->byAccountOrGlobal($this->resolveAccountId($entity, $inputs));
+
+		if ($entity && !$entity->isNew()) {
+			$query->byIdNot($entity->getId());
+		}
+
+		if ($query->fetch()) {
+			$form['name']->addError('fcadmin.presenters.apiKeys.form.errors.nameAlreadyExists');
+		}
+	}
+
+	/**
+	 * Účet, do kterého klíč spadne. Pole ve formuláři je jen když má identita víc účtů
+	 * (BaseFormTrait::onBeforeInitForm), jinak ho při persistu doplní AccountFieldListener
+	 * z vybraného účtu - a v backoffice, kde vybraný účet není, zůstane klíč globální.
+	 * Kontrola musí sáhnout do stejné skupiny, jinak by hlídala něco jiného než index.
+	 */
+	private function resolveAccountId(?ApiKey $entity, array $inputs): ?int
+	{
+		if (isset($inputs['account'])) {
+			return $inputs['account'] ? (int) $inputs['account'] : null;
+		}
+
+		return $entity?->getAccount()?->getId()
+			?? $this->securityUser->getIdentity()?->getSelectedAccount()?->getId();
 	}
 
 	public function processForm(ApiKey $entity): void

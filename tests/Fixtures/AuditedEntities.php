@@ -39,3 +39,12 @@ final class TestNotAuditedEntity
 {
 	private ?string $title = null;
 }
+
+/**
+ * Entita fancyadminu, ktere projekt vychozi akci prepsal atributem. Abstraktni
+ * zamerne - subscriber pracuje s nazvem tridy, instance neni k nicemu potreba.
+ */
+#[Audited(action: 'vlastni_akce')]
+abstract class TestAuditedIdentity implements \ADT\FancyAdmin\Model\Entities\Identity
+{
+}

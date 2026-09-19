@@ -111,6 +111,7 @@ presenters:
       submit: Uložit
       errors:
         nameRequired: Název je povinný
+        nameAlreadyExists: Klíč s tímto názvem už v tomto účtu existuje
 
   sso:
     title: SSO instance

@@ -13,6 +13,7 @@ use ADT\DoctrineLoggable\ChangeSet\ToOne;
 use ADT\DoctrineLoggable\Entity\ChangeLog;
 use ADT\FancyAdmin\Model\Attributes\Audited;
 use ADT\FancyAdmin\Model\Attributes\AuditedValue;
+use ADT\FancyAdmin\Model\Entities;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
 use BackedEnum;
 use DateTimeImmutable;
@@ -29,10 +30,14 @@ use UnitEnum;
  * z postFlush - tedy až po commitu. Do auditu se proto nedostane změna, která se
  * nakonec nezapsala.
  *
- * Knihovna ohlašuje VŠECHNY změny a nefiltruje; výběr je tady a je jmenovitý:
- * projde jen entita s atributem #[Audited]. Change_log je provozní historie a smí
- * být hustá, auditní stopa je bezpečnostní záznam s dlouhou retencí - kdyby do ní
- * padalo všechno, utopí se v ní to podstatné a poroste donekonečna.
+ * Knihovna ohlašuje VŠECHNY změny a nefiltruje; výběr je tady. Change_log je provozní
+ * historie a smí být hustá, auditní stopa je bezpečnostní záznam s dlouhou retencí -
+ * kdyby do ní padalo všechno, utopí se v ní to podstatné a poroste donekonečna.
+ *
+ * Vybírá se ve dvou krocích: entity fancyadminu podle ROZHRANÍ, které implementují
+ * (viz DEFAULT_ACTIONS), cokoliv dalšího podle atributu #[Audited] na entitě. Projekt
+ * tak navěšením v neonu rovnou získá audit identit, oprávnění, účtů a konfigurace,
+ * aniž by k tomu musel obcházet entity - a atributem si přidá ty svoje.
  *
  * Záznam nese změněné vlastnosti jmény; hodnoty jen u těch s #[AuditedValue].
  * Detail je vždy v change_logu, kam z auditu vede payload.changeLogId.
@@ -41,8 +46,33 @@ final class ChangeLogAuditSubscriber
 {
 	private const string PAYLOAD_KEY_CHANGE_LOG_ID = 'changeLogId';
 
-	/** @var array<class-string, Audited|null> */
-	private array $auditedClasses = [];
+	/**
+	 * Výchozí akce pro entity fancyadminu, klíčované rozhraním - atribut na traitě by
+	 * nestačil, ten reflexe na cílové třídě nevidí.
+	 *
+	 * Osa je DOMÉNA, ne entita: detekční pravidla se pak klíčují na jednu hodnotu místo
+	 * výčtu tříd a přibytí další entity do domény nic nerozbije. Hodnoty se prvním
+	 * nasazením fixují - audit_log je append-only, zpětně je přejmenovat nejde.
+	 *
+	 * Pořadí rozhoduje: první rozhraní, které entita implementuje, vyhrává.
+	 *
+	 * @var array<class-string, string>
+	 */
+	private const array DEFAULT_ACTIONS = [
+		Entities\Identity::class => 'identity_change',
+		Entities\Passkey::class => 'identity_change',
+		Entities\ApiKey::class => 'identity_change',
+		Entities\Sso::class => 'identity_change',
+		Entities\Acl::class => 'acl_change',
+		Entities\AclRole::class => 'acl_change',
+		Entities\AclResource::class => 'acl_change',
+		Entities\Profile::class => 'account_change',
+		Entities\Account::class => 'account_change',
+		Entities\Configuration::class => 'configuration_change',
+	];
+
+	/** @var array<class-string, string|null> */
+	private array $actions = [];
 
 	/** @var array<class-string, list<string>> */
 	private array $auditedProperties = [];
@@ -62,8 +92,8 @@ final class ChangeLogAuditSubscriber
 	 */
 	public function logEntry(ChangeLog $logEntry, object $entity, bool $announced): void
 	{
-		$audited = $this->readAudited($logEntry->getObjectClass());
-		if ($audited === null) {
+		$action = $this->resolveAction($logEntry->getObjectClass());
+		if ($action === null) {
 			return;
 		}
 
@@ -92,7 +122,7 @@ final class ChangeLogAuditSubscriber
 		}
 
 		$this->auditLogger->log(
-			action: $audited->action,
+			action: $action,
 			// zápis proběhl, jinak by se změna neohlásila; neúspěšný pokus o změnu
 			// je zamítnutý přístup a ten loguje AccessDenied stopa, ne tahle
 			outcome: AuditLogger::OUTCOME_SUCCESS,
@@ -193,15 +223,36 @@ final class ChangeLogAuditSubscriber
 		return $value;
 	}
 
-	/** @param class-string $entityClass */
-	private function readAudited(string $entityClass): ?Audited
+	/**
+	 * Akce pro tuto entitu, nebo null, když do auditní stopy nepatří.
+	 *
+	 * Atribut má přednost před výchozí mapou: projekt tak může entitě fancyadminu
+	 * akci přepsat, když mu doménové dělení nesedí.
+	 *
+	 * @param class-string $entityClass
+	 */
+	private function resolveAction(string $entityClass): ?string
 	{
-		if (!array_key_exists($entityClass, $this->auditedClasses)) {
+		if (!array_key_exists($entityClass, $this->actions)) {
 			$attributes = new ReflectionClass($entityClass)->getAttributes(Audited::class);
-			$this->auditedClasses[$entityClass] = $attributes ? $attributes[0]->newInstance() : null;
+			$this->actions[$entityClass] = $attributes
+				? $attributes[0]->newInstance()->action
+				: $this->defaultAction($entityClass);
 		}
 
-		return $this->auditedClasses[$entityClass];
+		return $this->actions[$entityClass];
+	}
+
+	/** @param class-string $entityClass */
+	private function defaultAction(string $entityClass): ?string
+	{
+		foreach (self::DEFAULT_ACTIONS as $interface => $action) {
+			if (is_a($entityClass, $interface, true)) {
+				return $action;
+			}
+		}
+
+		return null;
 	}
 
 	/**
