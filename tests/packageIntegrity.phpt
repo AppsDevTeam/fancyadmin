@@ -16,8 +16,11 @@ require __DIR__ . '/bootstrap.php';
 
 const SRC_DIR = __DIR__ . '/../src';
 
-/** Migrace dedi z Doctrine\Migrations\AbstractMigration, coz neni zavislost balicku. */
-const NENACITATELNE = ['ADT\FancyAdmin\Migrations\Version20260329120000'];
+/**
+ * Migrace dedi z Doctrine\Migrations\AbstractMigration, coz neni zavislost balicku.
+ * Cely namespace, ne vyjmenovane tridy - jinak kazda dalsi migrace shodi tenhle test.
+ */
+const NENACITATELNY_NAMESPACE = 'ADT\FancyAdmin\Migrations\\';
 
 /** @return list<SplFileInfo> */
 function sourceFiles(string $extension = 'php'): array
@@ -66,7 +69,7 @@ test('vsechny tridy, rozhrani, traity i enumy se daji nacist', function () {
 	$problems = [];
 
 	foreach (declaredTypes() as $type => ['kind' => $kind, 'file' => $file]) {
-		if (in_array($type, NENACITATELNE, true)) {
+		if (str_starts_with($type, NENACITATELNY_NAMESPACE)) {
 			continue;
 		}
 
@@ -92,7 +95,7 @@ test('vsechny tridy, rozhrani, traity i enumy se daji nacist', function () {
 test('POZOR: migrace dedi z tridy, ktera neni zavislosti balicku', function () {
 	// doctrine/migrations neni ani v require, ani v suggest - dodava ji az projekt.
 	Assert::false(class_exists('Doctrine\Migrations\AbstractMigration'));
-	Assert::true(is_file(SRC_DIR . '/Migrations/Version20260329120000.php'));
+	Assert::notSame([], glob(SRC_DIR . '/Migrations/Version*.php'));
 });
 
 

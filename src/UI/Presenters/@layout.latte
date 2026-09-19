@@ -142,16 +142,16 @@
 
 				{if !empty($showBackButton)}
 					{if	$presenter->getAction() !== 'default'}
-						<p class="text-center"><a n:href="default">{_'fcadmin.layout.links.back'}</a></p>
+						<p class="text-center"><a n:href="default" class="linkOnCard">{_'fcadmin.layout.links.back'}</a></p>
 					{else}
-						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()">{_'fcadmin.layout.links.backToHomepage'}</a></p>
+						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()" class="linkOnCard">{_'fcadmin.layout.links.backToHomepage'}</a></p>
 					{/if}
 				{/if}
 
 				{include content}
 
 				{if !$user->isLoggedIn() && !$presenter->isLinkCurrent(':Portal:Sign:in')}
-					<p class="text-center"><a n:href=":Portal:Sign:in">{_'fcadmin.layout.links.goToLogin'}</a></p>
+					<p class="text-center"><a n:href=":Portal:Sign:in" class="linkOnCard">{_'fcadmin.layout.links.goToLogin'}</a></p>
 				{/if}
 			</div>
 			{if $account?->getLogo()}

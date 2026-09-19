@@ -11,11 +11,13 @@ use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\UI\Components\Forms\PasswordPolicyValidationTrait;
 use ADT\Forms\Form;
 
 trait ChangePasswordFormTrait
 {
 	use AuthenticatorInject;
+	use PasswordPolicyValidationTrait;
 	use BreachedPasswordCheckerInject;
 	use ConfigurationQueryFactoryInject;
 	use FancyAdminInject;
@@ -57,48 +59,6 @@ trait ChangePasswordFormTrait
 		}
 
 		$this->validatePasswordPolicy($values['password'], $form);
-	}
-
-	private function validatePasswordPolicy(string $password, Form $form): void
-	{
-		/** @var Identity $identity */
-		$identity = $this->getEntity();
-
-		if ($identity->isAdmin()) {
-			$policyKey = 'password.policy.admin';
-		} elseif ($identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			$policyKey = 'password.policy.backoffice';
-		} else {
-			return;
-		}
-
-		$config = $this->_configurationQueryFactory->create()->byKey($policyKey)->fetchOneOrNull();
-		if (!$config) {
-			return;
-		}
-
-		$policy = json_decode($config->getValue(), true);
-		if (!($policy['enabled'] ?? false)) {
-			return;
-		}
-
-		$field = $form->getComponentTextInput('password');
-
-		if (mb_strlen($password) < ($policy['minLength'] ?? 8)) {
-			$field->addError($this->getTranslator()->translate('fcadmin.forms.newPassword.errors.minLength', $policy['minLength']));
-		}
-		if (($policy['requireUppercase'] ?? false) && !preg_match('/[A-Z]/', $password)) {
-			$field->addError('fcadmin.forms.newPassword.errors.requireUppercase');
-		}
-		if (($policy['requireLowercase'] ?? false) && !preg_match('/[a-z]/', $password)) {
-			$field->addError('fcadmin.forms.newPassword.errors.requireLowercase');
-		}
-		if (($policy['requireDigit'] ?? false) && !preg_match('/\d/', $password)) {
-			$field->addError('fcadmin.forms.newPassword.errors.requireDigit');
-		}
-		if (($policy['requireSpecialChar'] ?? false) && !preg_match('/[^a-zA-Z0-9]/', $password)) {
-			$field->addError('fcadmin.forms.newPassword.errors.requireSpecialChar');
-		}
 	}
 
 	public function processForm(array $values): void

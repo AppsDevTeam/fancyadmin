@@ -6,19 +6,24 @@ use Nette\Utils\Json;
 use Tester\Assert;
 
 /**
- * Migrace, kterou balicek dodava projektum.
+ * Migrace, ktere balicek dodava projektum.
  *
- * Migrace zaklada konfiguracni polozky s politikou hesel - jejich klice a tvar musi sedet
- * s tim, co cte SessionExpirationCallback a validace hesel, jinak se politika tise neprojevi.
+ * Starsi z nich zaklada politiku hesel jako polozky ciselniku configuration, novejsi ji
+ * presouva na roli (acl_role). Obe se testuji proti tomu, co z nich aplikace cte - kdyz
+ * se klice nebo sloupce rozejdou, politika se tise neprojevi.
  *
- * Trida se neda instanciovat: dedi z Doctrine\Migrations\AbstractMigration, a doctrine/migrations
+ * Tridy se nedaji instanciovat: dedi z Doctrine\Migrations\AbstractMigration, a doctrine/migrations
  * neni zavislost balicku (dodava ji projekt). Testuje se proto obsah souboru.
  */
 
 require __DIR__ . '/bootstrap.php';
 
 
+/** Puvodni politika v ciselniku configuration - projekty, ktere ji uz maji, ji nesmi ztratit. */
 const MIGRATION_FILE = __DIR__ . '/../src/Migrations/Version20260329120000.php';
+
+/** Presun politiky na roli. */
+const POLICY_MIGRATION_FILE = __DIR__ . '/../src/Migrations/Version20260916130000.php';
 
 /** @return list<string> SQL prikazy z dane metody */
 function migrationSql(string $method): array
@@ -116,10 +121,35 @@ test('migrace jde vzit zpet', function () {
 });
 
 
-test('klice politik sedi s tim, co cte SessionExpirationCallback', function () {
+test('sloupce politiky na roli sedi s tim, co mapuje AclRoleTrait', function () {
+	// Politika uz nesedi v ciselniku configuration, ale na roli, takze klice nehlida
+	// SessionExpirationCallback - hlida je mapovani entity, ze ktere se politika cte.
+	$migration = (string) file_get_contents(POLICY_MIGRATION_FILE);
+	$trait = (string) file_get_contents(__DIR__ . '/../src/Model/Entities/AclRoleTrait.php');
+
+	$sloupce = [
+		'password_policy_enabled' => 'passwordPolicyEnabled',
+		'password_min_length' => 'passwordMinLength',
+		'password_require_uppercase' => 'passwordRequireUppercase',
+		'password_require_lowercase' => 'passwordRequireLowercase',
+		'password_require_digit' => 'passwordRequireDigit',
+		'password_require_special_char' => 'passwordRequireSpecialChar',
+		'session_expiration_minutes' => 'sessionExpirationMinutes',
+	];
+
+	foreach ($sloupce as $sloupec => $vlastnost) {
+		Assert::contains('ADD ' . $sloupec, $migration, $sloupec);
+		Assert::contains('DROP ' . $sloupec, $migration, $sloupec);
+		Assert::contains('$' . $vlastnost, $trait, $vlastnost);
+	}
+});
+
+
+test('expirace session se cte z politiky role, ne z ciselniku', function () {
 	$source = (string) file_get_contents(__DIR__ . '/../src/Model/Security/SessionExpirationCallback.php');
 
-	Assert::contains("'password.policy.admin'", $source);
-	Assert::contains("'password.policy.backoffice'", $source);
-	Assert::contains("'sessionExpirationMinutes'", $source);
+	Assert::contains('PasswordPolicy::strictestOf', $source);
+	Assert::contains('sessionExpirationMinutes', $source);
+	// Zbytek po ciselniku by znamenal, ze se politika cte ze dvou mist naraz.
+	Assert::notContains('password.policy.', $source);
 });

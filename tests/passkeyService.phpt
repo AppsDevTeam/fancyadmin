@@ -349,10 +349,11 @@ test('parametry prihlaseni jsou usernameless a s challenge v session', function 
 	Assert::false(property_exists($args->publicKey, 'allowCredentials'));
 	Assert::same(60000, $args->publicKey->timeout);
 
-	// Challenge se ulozila do session pod klicem pro prihlaseni.
+	// Challenge se ulozila do session pod klicem pro prihlaseni, zakodovana base64 - syrove
+	// bajty by se v session handleru nemusely prenest v poradku.
 	$stored = $session->getSection(PasskeySessionSection::SECTION_NAME)->get(PasskeySessionSection::GET_CHALLENGE);
 	Assert::type('string', $stored);
-	Assert::same(32, strlen($stored));
+	Assert::same(32, strlen(base64_decode($stored, true)));
 });
 
 

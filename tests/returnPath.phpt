@@ -14,6 +14,10 @@ use Tester\Assert;
  * Cookie je vstup od klienta, takze se z ni nikdy nestava cela URL: uklada se jen cesta
  * relativni k baseUrl a pri cteni se vysledek overuje proti hostu aktualniho pozadavku.
  * Bez toho by z prihlasovaci stranky sel udelat open redirect (CWE-601).
+ *
+ * Ze stejneho vstupu se nepamatuje ani signal: odkaz na signal nese stav sezeni, ve kterem
+ * vznikl - poradi v gridu, CSRF token - takze po prihlaseni uz neplati a uzivatel by misto
+ * cile dostal chybovou stranku. Tyka se to i razeni, strankovani a exportu v gridech.
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -27,6 +31,16 @@ function createReturnPath(array $cookies = [], string $requestUrl = BASE_URL . '
 	$response = new TestHttpResponse();
 
 	return [new ReturnPath($request, $response), $response];
+}
+
+
+/** Vrati hodnotu, kterou by si ReturnPath ulozil do cookie, nebo null, kdyz neuklada nic. */
+function stored(string $url): ?string
+{
+	[$returnPath, $response] = createReturnPath();
+	$returnPath->store(new UrlScript($url, '/app/'));
+
+	return $response->getLastCookie()['value'] ?? null;
 }
 
 
@@ -146,4 +160,21 @@ test('cil z jineho hostu se pri cteni neprijme', function () {
 
 	Assert::same('https://admin.example.com/app/orders', $returnPath->consume());
 	Assert::notContains('evil', (string) $returnPath->consume());
+});
+
+
+test('bezna cesta se pamatuje cela', function () {
+	Assert::same('devices', stored(BASE_URL . 'devices'));
+	Assert::same('devices?page=2&order=name', stored(BASE_URL . 'devices?page=2&order=name'));
+});
+
+
+test('signal se zahazuje, zbytek adresy zustava', function () {
+	Assert::same('devices?page=2', stored(BASE_URL . 'devices?page=2&do=grid-export'));
+	Assert::same('devices', stored(BASE_URL . 'devices?do=grid-export'));
+});
+
+
+test('kdyz po zahozeni signalu nic nezbyde, neuklada se nic', function () {
+	Assert::null(stored(BASE_URL . '?do=clearCache'));
 });

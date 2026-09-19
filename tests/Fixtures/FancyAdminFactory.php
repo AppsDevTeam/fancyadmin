@@ -33,6 +33,7 @@ final class FancyAdminFactory
 			'customerAclResource' => AclResourceNameEnum::CUSTOMER_DASHBOARD,
 			'backofficeAclResource' => AclResourceNameEnum::BACKOFFICE_DASHBOARD,
 			'fullDataAclResource' => AclResourceNameEnum::FULL_DATA,
+			'personalDataAclResource' => AclResourceNameEnum::PROFILE_PERSONAL_DATA,
 			'context' => 'admin',
 			'jsComponentsConfig' => [],
 			'colors' => [],

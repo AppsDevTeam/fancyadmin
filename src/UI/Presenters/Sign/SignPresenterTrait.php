@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\UI\Presenters\Sign;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
+use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
@@ -14,11 +15,14 @@ use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm;
 use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordFormFactory;
 use ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInForm;
 use ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory;
+use ADT\FancyAdmin\UI\Components\Forms\TwoFactor\TwoFactorForm;
+use ADT\FancyAdmin\UI\Components\Forms\TwoFactor\TwoFactorFormFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
 use ADT\FancyAdmin\UI\RedirectAfterLoginTrait;
 use Nette\Application\Attributes\Persistent;
 use Nette\Security\AuthenticationException;
 use Nette\Utils\Validators;
+use RuntimeException;
 
 trait SignPresenterTrait
 {
@@ -28,6 +32,7 @@ trait SignPresenterTrait
 	use FancyAdminInject;
 	use SecurityUserInject;
 	use AuthenticatorInject;
+	use PasskeyServiceInject;
 
 	#[Persistent]
 	public ?string $token = null;
@@ -200,8 +205,31 @@ trait SignPresenterTrait
 	{
 	}
 
+	/** Druhý krok přihlášení identity s vynuceným 2FA, která už klíč má (README 19.9). */
+	public function actionTwoFactor(): void
+	{
+		if ($this->getUser()->isLoggedIn()) {
+			$this->redirectAfterLogin();
+		}
+
+		if ($this->_passkeyService->getPendingTwoFactorIdentityId() === null) {
+			$this->redirect(':Portal:Sign:in');
+		}
+	}
+
 	public function createComponentSignInForm(SignInFormFactory $factory): SignInForm
 	{
+		return $factory->create();
+	}
+
+	// Factory je nullable — kdyby/autowired validuje parametry createComponent* metod už při
+	// attachi presenteru, takže bez nullable by chybějící glue rozbila i přihlašovací stránku
+	public function createComponentTwoFactorForm(?TwoFactorFormFactory $factory = null): TwoFactorForm
+	{
+		if ($factory === null) {
+			throw new RuntimeException('V projektu chybí implementace ' . TwoFactorFormFactory::class . ' — vytvořte TwoFactorForm podle README (sekce 19.9), nebo nastavte passkeyEmailOtpEnabled: false.');
+		}
+
 		return $factory->create();
 	}
 

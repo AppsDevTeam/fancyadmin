@@ -14,6 +14,9 @@ enum AclResourceNameEnum: string implements Resource
 	case BACKOFFICE_DASHBOARD = 'portalBackoffice.dashboard';
 	case FULL_DATA = 'fullData';
 
+	// Modulově neutrální - Profile presenter existuje v obou modulech, jde o tutéž akci.
+	case PROFILE_PERSONAL_DATA = 'profile.personalData';
+
 	public function getResourceId(): string
 	{
 		return $this->value;

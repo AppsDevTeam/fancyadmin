@@ -52,6 +52,36 @@ trait AclRoleTrait
 	#[LoggableProperty]
 	protected bool $needs2fa = false;
 
+	// Politika hesel role. Identita jich muze mit vic, takze se pri nastavovani hesla
+	// uplatni nejprisnejsi z nich - viz Model\Security\PasswordPolicy::strictestOf().
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
+	protected bool $passwordPolicyEnabled = false;
+
+	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
+	protected ?int $passwordMinLength = null;
+
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
+	protected bool $passwordRequireUppercase = false;
+
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
+	protected bool $passwordRequireLowercase = false;
+
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
+	protected bool $passwordRequireDigit = false;
+
+	#[ORM\Column(nullable: false, options: ["default" => 0])]
+	#[LoggableProperty]
+	protected bool $passwordRequireSpecialChar = false;
+
+	#[ORM\Column(nullable: true)]
+	#[LoggableProperty]
+	protected ?int $sessionExpirationMinutes = null;
+
 	public function __construct()
 	{
 		$this->acls = new ArrayCollection();
@@ -134,6 +164,83 @@ trait AclRoleTrait
 	public function setNeeds2fa(bool $needs2fa): static
 	{
 		$this->needs2fa = $needs2fa;
+		return $this;
+	}
+
+	public function getPasswordPolicyEnabled(): bool
+	{
+		return $this->passwordPolicyEnabled;
+	}
+
+	public function setPasswordPolicyEnabled(bool $passwordPolicyEnabled): static
+	{
+		$this->passwordPolicyEnabled = $passwordPolicyEnabled;
+		return $this;
+	}
+
+	public function getPasswordMinLength(): ?int
+	{
+		return $this->passwordMinLength;
+	}
+
+	public function setPasswordMinLength(?int $passwordMinLength): static
+	{
+		$this->passwordMinLength = $passwordMinLength;
+		return $this;
+	}
+
+	public function getPasswordRequireUppercase(): bool
+	{
+		return $this->passwordRequireUppercase;
+	}
+
+	public function setPasswordRequireUppercase(bool $passwordRequireUppercase): static
+	{
+		$this->passwordRequireUppercase = $passwordRequireUppercase;
+		return $this;
+	}
+
+	public function getPasswordRequireLowercase(): bool
+	{
+		return $this->passwordRequireLowercase;
+	}
+
+	public function setPasswordRequireLowercase(bool $passwordRequireLowercase): static
+	{
+		$this->passwordRequireLowercase = $passwordRequireLowercase;
+		return $this;
+	}
+
+	public function getPasswordRequireDigit(): bool
+	{
+		return $this->passwordRequireDigit;
+	}
+
+	public function setPasswordRequireDigit(bool $passwordRequireDigit): static
+	{
+		$this->passwordRequireDigit = $passwordRequireDigit;
+		return $this;
+	}
+
+	public function getPasswordRequireSpecialChar(): bool
+	{
+		return $this->passwordRequireSpecialChar;
+	}
+
+	public function setPasswordRequireSpecialChar(bool $passwordRequireSpecialChar): static
+	{
+		$this->passwordRequireSpecialChar = $passwordRequireSpecialChar;
+		return $this;
+	}
+
+	public function getSessionExpirationMinutes(): ?int
+	{
+		return $this->sessionExpirationMinutes;
+	}
+
+	public function setSessionExpirationMinutes(?int $sessionExpirationMinutes): static
+	{
+		$this->sessionExpirationMinutes = $sessionExpirationMinutes;
 		return $this;
 	}
 

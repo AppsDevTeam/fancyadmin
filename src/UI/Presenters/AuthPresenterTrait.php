@@ -63,6 +63,7 @@ trait AuthPresenterTrait
 
 				// Přihlášení odkazem není přihlášení klíčem (README 19.8)
 				$this->_passkeyService->clearPasskeySession();
+				$this->_passkeyService->clearTwoFactorSession();
 
 				$this->redirect('this');
 			} catch (AuthenticationException) {}
@@ -117,7 +118,7 @@ trait AuthPresenterTrait
 		$this->getSession()->start();
 
 		// Až tady, kdy je dořešený selectedAccount — bez něj nejde vygenerovat routa
-		// PortalCustomer:Account
+		// PortalCustomer:Profile
 		$this->enforcePasskeyLogin();
 
 		$this->primaryTemplate = true;
@@ -127,11 +128,26 @@ trait AuthPresenterTrait
 	 * Vynucení přihlášení klíčem u identity s rolí `needs2fa` (README 19.8).
 	 * Při vypnutém `passkeyEnabled` no-op.
 	 *
+	 * Na pořadí záleží: session z jednorázového kódu je pro druhou kontrolu „heslová"
+	 * a bez první větve by ji rovnou odhlásila.
+	 *
 	 * @throws InvalidLinkException
 	 */
 	private function enforcePasskeyLogin(): void
 	{
 		$identity = $this->getUser()->getIdentity();
+
+		// Session z jednorázového kódu druhým faktorem prošla, takže se nesmí propadnout do
+		// kontroly níž, která by ji jako „heslovou" odhlásila. Na Profilu ji drží jen
+		// passkeyEnrollmentRequired (README 19.9).
+		if ($this->_passkeyService->isOtpSession()) {
+			if ($this->_passkeyService->isEnrollmentRequiredSession() && !$this->isProfilePresenter()) {
+				$this->flashMessageWarning('fcadmin.passkeys.twoFactor.enrollmentRequired');
+				$this->redirect('Profile:default');
+			}
+
+			return;
+		}
 
 		// Stará heslová session identity, která už klíč má: heslo je pro ni mrtvé
 		if (
@@ -146,19 +162,19 @@ trait AuthPresenterTrait
 			$this->redirect(':Portal:Sign:in');
 		}
 
-		// Bootstrap okno: dokud uživatel klíč nemá, pustíme ho jen na Můj účet, kde si ho
-		// zaregistruje (Account presenter je proto vyjmutý i z ACL checku níž)
-		if ($this->_passkeyService->isEnrollmentPending($identity) && !$this->isAccountPresenter()) {
+		// Bootstrap okno: dokud uživatel klíč nemá, pustíme ho jen na Profil, kde si ho
+		// zaregistruje (Profile presenter je proto vyjmutý i z ACL checku níž)
+		if ($this->_passkeyService->isEnrollmentPending($identity) && !$this->isProfilePresenter()) {
 			$this->flashMessageWarning('fcadmin.passkeys.messages.enrollmentRequired');
-			$this->redirect('Account:default');
+			$this->redirect('Profile:default');
 		}
 	}
 
-	private function isAccountPresenter(): bool
+	private function isProfilePresenter(): bool
 	{
 		$parts = explode(':', $this->getName());
 
-		return end($parts) === 'Account';
+		return end($parts) === 'Profile';
 	}
 
 	/**
@@ -225,10 +241,10 @@ trait AuthPresenterTrait
 	 */
 	private function validatePresenterPermission(): void
 	{
-		// Můj účet ukazuje vždy jen data přihlášeného uživatele a resource
-		// `portalBackoffice.account` / `portalCustomer.account` projekty typicky nemají —
+		// Profil ukazuje vždy jen data přihlášeného uživatele a resource
+		// `portalBackoffice.profile` / `portalCustomer.profile` projekty typicky nemají —
 		// bez výjimky by neadmin skončil ve 403 místo u registrace klíče (README 19.8)
-		if ($this->isAccountPresenter()) {
+		if ($this->isProfilePresenter()) {
 			return;
 		}
 

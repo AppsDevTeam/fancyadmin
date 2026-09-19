@@ -316,7 +316,7 @@ test('nadpis v podmenu nese jen popisek', function () {
 test('uzivatelske menu ma vychozi polozky zapnute', function () {
 	$menu = new UserMenu();
 
-	Assert::true($menu->isAddMyAccountMenuItem());
+	Assert::true($menu->isAddMyProfileMenuItem());
 	Assert::true($menu->isFirebaseMenuItem());
 	Assert::null($menu->getProfileLink());
 	Assert::same([], $menu->getMenuItems());
@@ -327,10 +327,10 @@ test('uzivatelske menu se da nastavit', function () {
 	$menu = new UserMenu();
 	$item = new UserMenuItem()->setLabel('Odhlasit')->setFaIcon('sign-out')->setLink('Sign:out')->setLinkArgs(['a' => 1]);
 
-	$menu->addMenuItem($item)->setAddMyAccountMenuItem(false)->setFirebaseMenuItem(false)->setProfileLink('Profile:default');
+	$menu->addMenuItem($item)->setAddMyProfileMenuItem(false)->setFirebaseMenuItem(false)->setProfileLink('Profile:default');
 
 	Assert::same([$item], $menu->getMenuItems());
-	Assert::false($menu->isAddMyAccountMenuItem());
+	Assert::false($menu->isAddMyProfileMenuItem());
 	Assert::false($menu->isFirebaseMenuItem());
 	Assert::same('Profile:default', $menu->getProfileLink());
 	Assert::same('Odhlasit', $item->getLabel());

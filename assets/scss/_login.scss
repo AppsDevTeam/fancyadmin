@@ -44,6 +44,12 @@
 	}
 }
 
+// Odkazy mimo formulář dědí barvu z .bg-primary-variant (kvůli globálnímu `a { color: inherit }`),
+// takže na kartě zmizí. loginInputTextColor je jediný token, který jde s barvou karty.
+.linkOnCard {
+	color: var(--loginInputTextColor);
+}
+
 .wrap-login {
 	position: relative;
 	width: 100%;
@@ -177,6 +183,12 @@
 	}
 
 	.linkInForm {
+		color: var(--loginPageTextColor, #{$tertiary-text});
+	}
+
+	// Text uvnitř formuláře si musí barvu resolvovat sám, zděděná je spočítaná
+	// už na .bg-primary-variant a projektové přebarvení karty by ji minulo
+	.textInForm {
 		color: var(--loginPageTextColor, #{$tertiary-text});
 	}
 

@@ -97,6 +97,7 @@ test('routy prihlaseni', function () {
 	Assert::same([
 		'https://admin.example.com/sign/in',
 		'https://admin.example.com/sign/out',
+		'https://admin.example.com/sign/two-factor',
 		'https://admin.example.com/sign/new-password',
 		'https://admin.example.com/sign/password-set',
 		'https://admin.example.com/sign/lost-password',
@@ -109,7 +110,7 @@ test('vypnuta obnova hesla routu nepridava', function () {
 	$masks = masks(createRouter(['lostPasswordEnabled' => false])->getPortalRouteList());
 
 	Assert::notContains('https://admin.example.com/sign/lost-password', $masks);
-	Assert::count(4, $masks);
+	Assert::count(5, $masks);
 });
 
 

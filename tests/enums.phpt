@@ -28,7 +28,8 @@ test('nazvy ACL zdroju', function () {
 	Assert::same('customer.dashboard', AclResourceNameEnum::CUSTOMER_DASHBOARD->value);
 	Assert::same('portalBackoffice.dashboard', AclResourceNameEnum::BACKOFFICE_DASHBOARD->value);
 	Assert::same('fullData', AclResourceNameEnum::FULL_DATA->value);
-	Assert::count(5, AclResourceNameEnum::cases());
+	Assert::same('profile.personalData', AclResourceNameEnum::PROFILE_PERSONAL_DATA->value);
+	Assert::count(6, AclResourceNameEnum::cases());
 });
 
 

@@ -1,0 +1,6 @@
+{layout $layoutFile}
+
+{block content}
+{_fcadmin.mailer.twoFactorCode.text, ['projectName' => $projectName, 'validMinutes' => $validMinutes] |noescape}
+
+<div style="font-family:Roboto, Helvetica, Arial, sans-serif;font-size:32px;font-weight:bold;letter-spacing:6px;color:#555555;padding:20px 0;">{$code}</div>

@@ -134,8 +134,10 @@ test('nazvy klicu passkey session se nesmi zmenit', function () {
 	Assert::same('passkey', ADT\FancyAdmin\Model\Security\Passkey\PasskeySessionSection::SECTION_NAME);
 	Assert::same('passkey', new ADT\FancyAdmin\Model\Security\Passkey\PasskeySessionSection()->getSectionName());
 	Assert::same('5 minutes', ADT\FancyAdmin\Model\Security\Passkey\PasskeySessionSection::CHALLENGE_EXPIRATION);
+	Assert::same('10 minutes', ADT\FancyAdmin\Model\Security\Passkey\PasskeySessionSection::PENDING_2FA_EXPIRATION);
+	// PENDING_2FA_EXPIRATION neni klic sekce, jen doba platnosti - v seznamu byt nema
 	Assert::same(
-		['createChallenge', 'getChallenge', 'passkeySession'],
+		['createChallenge', 'getChallenge', 'passkeySession', 'pending2fa', 'pending2faAttempts', 'pending2faCodeSentAt', 'otpSession'],
 		new ADT\FancyAdmin\Model\Security\Passkey\PasskeySessionSection()->getSessionKeys(),
 	);
 });

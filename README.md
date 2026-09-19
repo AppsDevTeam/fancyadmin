@@ -311,10 +311,12 @@ class GridFilter extends BaseEntity
 
 ## 4. ACL Resource Enum
 
-Definujte enum s ACL resources. Fancyadmin vyžaduje minimálně 3:
+Definujte enum s ACL resources. Fancyadmin vyžaduje minimálně 4:
 - customer resource (přístup do zákaznické části)
 - backoffice resource (přístup do administrace)
 - full data resource (plný přístup k datům)
+- personal data resource (změna vlastních osobních údajů na stránce „Můj profil", viz
+  sekce 14 „ProfilePresenter")
 
 ```php
 // app/Model/Entities/Enums/AclResourceNameEnum.php
@@ -331,12 +333,23 @@ enum AclResourceNameEnum: string implements Resource
 	case CUSTOMER_HOME = 'portalCustomer.home';
 	case BACKOFFICE_HOME = 'portalBackoffice.home';
 	case FULL_DATA = 'portal.fullData';
+	case PERSONAL_DATA = 'portal.personalData';
 
 	public function getResourceId(): string
 	{
 		return $this->value;
 	}
 }
+```
+
+Fancyadmin má svůj vlastní default (`ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum::PROFILE_PERSONAL_DATA`,
+`'profile.personalData'`) — pokud projekt používá vlastní enum (jako výše), nakonfigurujte
+resource výslovně v `common.neon`, stejně jako u `customerAclResource` / `backofficeAclResource`
+/ `fullDataAclResource` (viz sekce 15):
+
+```neon
+fancyadmin:
+	personalDataAclResource: App\Model\Entities\Enums\AclResourceNameEnum::PERSONAL_DATA
 ```
 
 ---
@@ -723,6 +736,80 @@ abstract class AuthPresenter extends BasePresenter
 }
 ```
 
+### ProfilePresenter (stránka „Můj profil")
+
+Osobní údaje přihlášeného uživatele, změna hesla, přihlášená zařízení a karta
+přihlašovacích klíčů. Presenter **musí existovat v obou portálových modulech**
+(`PortalBackoffice` i `PortalCustomer`) — fancyadmin na něj přesměrovává modulově
+relativně (`Profile:default`, viz 19.8 a 19.9), takže uživatel zamčený v customer modulu
+se na backoffice presenter nedostane.
+
+```php
+// app/UI/Portal/Backoffice/Presenters/Profile/ProfilePresenter.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Backoffice\Presenters\Profile;
+
+use ADT\FancyAdmin\UI\Presenters\Profile\ProfilePresenterTrait;
+use App\UI\Portal\Presenters\AuthPresenter;
+
+class ProfilePresenter extends AuthPresenter
+{
+	use ProfilePresenterTrait;
+}
+```
+
+V `PortalCustomer` pak stojí vedle sebe `Profile` (moje údaje) a `Profiles` (seznam
+profilů účtu) — jsou to dva různé presentery.
+
+#### ACL na Profilu: presenter je vyjmutý, změna osobních údajů ne
+
+`AuthPresenterTrait::validatePresenterPermission()` vyjímá `Profile` presenter z běžné
+presenter-level ACL kontroly úplně (`isProfilePresenter()` → `return;`). Je to záměr, ne
+díra: presenter vždy pracuje jen s daty přihlášeného uživatele a bez výjimky by se neadmin
+zamknutý na povinné registraci passkey (viz 19.8, `enforcePasskeyLogin()`) dostal do 403
+místo na formulář, kde si klíč zaregistruje. Ze stejného důvodu zůstávají bez ACL i změna
+hesla, správa passkeys, grid přihlášených zařízení a `handleLogoutAll()`.
+
+Změna osobních údajů (`firstName`/`lastName`/`phoneNumber`, `PersonalDataFormTrait`) je ale
+jediná akce na Profilu, kterou chcete moci projektově omezit (typicky: údaje spravuje jen
+account manager, běžný uživatel je jen čte). Ta je proto pod samostatným ACL resourcem
+`AclResourceNameEnum::PROFILE_PERSONAL_DATA` (`profile.personalData`), kontrolovaným
+explicitně (`SecurityUserTrait::isAllowedPersonalData()`) na **obou** vstupech nezávisle na
+presenter-level výjimce:
+- `ProfilePresenterTrait::handleEditPersonalData()` — otevření formuláře,
+- `ProfilePresenterTrait::createComponentPersonalDataSidePanel()` — odeslání formuláře míří
+  signálem přímo na komponentu a `handleEditPersonalData()` obchází, takže bez kontroly i tady
+  by šel zámek na signálu obejít.
+
+Šablona `default.latte` navíc tlačítko „Upravit osobní údaje“ skrývá přes
+`$canEditPersonalData` (nastavuje `actionDefault()`), aby ho neviděl uživatel, který na něj
+stejně nemá právo.
+
+Resource je konfigurovatelný stejným způsobem jako `fullDataAclResource` (`personalDataAclResource`
+v `common.neon`, viz sekce 4 a 15) a čerstvá instalace bez proběhlé migrace balíčku nepadá —
+`isAllowedPersonalData()` neznámý resource v authorizátoru bere jako "zatím nic neomezuje", ne
+jako zákaz (viz sekce 16).
+
+> **BC break (přejmenování z `Account`).** Presenter „Můj účet" se jmenoval `Account`
+> a kolidoval s entitou `Account` (tenant) i s presenterem `Accounts` (seznam tenantů).
+> Při aktualizaci balíčku je potřeba v projektu:
+> - přejmenovat `AccountPresenter` → `ProfilePresenter` v obou modulech
+>   (`ADT\FancyAdmin\UI\Presenters\Account\AccountPresenterTrait` →
+>   `ADT\FancyAdmin\UI\Presenters\Profile\ProfilePresenterTrait`),
+> - přepsat vlastní odkazy `Account:default` → `Profile:default`,
+> - přejmenovat `UserMenu::setAddMyAccountMenuItem()` → `setAddMyProfileMenuItem()`
+>   a `isAddMyAccountMenuItem()` → `isAddMyProfileMenuItem()`,
+> - u vlastních překladů přejmenovat `presenters.account.*` (klíče stránky),
+>   `passkeys.account.*` → `passkeys.profile.*` a
+>   `modules.web.navbar.account.myAccount` → `modules.web.navbar.profile.myProfile`.
+>
+> Entita `Account`, `AccountQuery`, `AccountGrid`, `AccountForm`, presenter `Accounts`
+> ani routovací parametr `selectedAccount` se nemění. URL se mění z `/<id>/account`
+> na `/<id>/profile`; migrace nejsou potřeba.
+
 ### Kam se uživatel vrátí po přihlášení
 
 Nepřihlášený požadavek na AuthPresenter skončí na přihlašovací stránce a cíl se zapamatuje
@@ -942,6 +1029,29 @@ Po migraci vytvořte první identitu:
 php bin/console adt:fancyadmin:create-identity
 ```
 
+### Aktualizace balíčku — migrace v `src/Migrations`
+
+Balíček nese vlastní Doctrine migrace (`ADT\FancyAdmin\Migrations\*`), které se do projektu
+zapojí automaticky (nettrine migrations skenuje i vendor namespace) a při `migrations:migrate`
+proběhnou spolu s projektovými. Typicky přidávají jen sloupce/tabulky nebo (jako
+`Version20260917100000`, ACL resource `profile.personalData`) systémová data — assignment
+existujícího ACL resource všem existujícím rolím, aby se upgradem nikomu nic nezměnilo.
+
+Co si musí projekt po `composer update adt/fancyadmin` dodělat sám:
+1. `php bin/console migrations:migrate` — spustí i migrace balíčku.
+2. `php bin/console fancyadmin:generate-missing-acl-resources` — dogeneruje projektovou
+   migraci pro resources z **projektového** `AclResourceNameEnum` (balíčkové enum cases
+   generuje `Version20260917100000` rovnou, `GenerateMissingAclResourcesCommand` navíc
+   skenuje `src/Model/Entities/Enums` fancyadminu samo, takže by nemělo najít nic k doplnění
+   pro nový resource — spusťte pro jistotu, hlavně kvůli vlastním presenterům/enumům).
+3. Pokud projekt chce nový resource `profile.personalData` **omezit** (ne jen mít
+   nainstalovaný), odebrat ho ručně u vybraných rolí v Backoffice → Role, nebo vlastní
+   migrací — balíček ho z BC důvodů přiděluje všem.
+
+Do doby, než migrace proběhne, kód nespadne: `SecurityUserTrait::isAllowedPersonalData()`
+neznámý resource v authorizátoru bere jako "zatím nic neomezuje" (viz sekce 14), takže okno
+mezi deployem kódu a spuštěnou migrací není výpadek.
+
 ---
 
 ## 17. Struktura souborů
@@ -998,13 +1108,24 @@ app/
 │   └── Translator.php
 └── UI/
     ├── Portal/
-    │   └── Presenters/
-    │       ├── AuthPresenter.php
-    │       └── BasePresenter.php
+    │   ├── Presenters/
+    │   │   ├── AuthPresenter.php
+    │   │   └── BasePresenter.php
+    │   ├── Backoffice/
+    │   │   └── Presenters/
+    │   │       └── Profile/
+    │   │           └── ProfilePresenter.php
+    │   └── Customer/
+    │       └── Presenters/
+    │           └── Profile/
+    │               └── ProfilePresenter.php
     └── Web/
         └── Presenters/
             └── BasePresenter.php
 ```
+
+Presenter `Profile` („Můj profil") musí být v **obou** portálových modulech — redirecty
+fancyadminu na něj jsou modulově relativní (viz sekce 14, 19.8 a 19.9).
 
 ---
 
@@ -1088,7 +1209,7 @@ Co deaktivace ovlivní:
 - **Silent SSO** instanci vynechá, `prompt=none` check se na ni neposílá.
 - **SSO uživatelé navázaní na instanci** (identita se `sso_id` a alespoň jednou rolí
   s `needs_sso`) se chovají jako **běžní uživatelé s heslem**: přihlásí se lokálním heslem,
-  lost password i reset hesla z gridu uživatelů pošlou lokální recovery mail a v Můj účet
+  lost password i reset hesla z gridu uživatelů pošlou lokální recovery mail a na Profilu
   si mění lokální heslo. `KeycloakManager::getInstanceForIdentity()` pro ně vrátí `null`
   a všechny tyhle cesty propadnou na stejnou větev, kterou používají uživatelé bez SSO.
 - **Callback rozpracovaného requestu, odhlášení a backchannel logout fungují dál.** Odhlášení
@@ -1369,7 +1490,7 @@ Pro použití vlastní třídy je potřeba rozšířit `KeycloakManager::createI
 Fancyadmin podporuje přihlašování přes passkeys (WebAuthn) postavené na knihovně
 [lbuchs/webauthn](https://github.com/lbuchs/WebAuthn). Passkeys jsou **opt-in** — zapínají
 se configem `passkeyEnabled: true` (default `false`, viz 19.2). Při vypnuté featuře se
-nevykresluje tlačítko na login stránce ani karta v Můj účet a všechny passkey operace
+nevykresluje tlačítko na login stránce ani karta na stránce Profil a všechny passkey operace
 jsou zablokované i server-side (`PasskeyService::assertEnabled()`). Existující klíče
 v DB při vypnutí zůstávají — po opětovném zapnutí zase fungují. Ve výchozím stavu je passkey
 alternativa k heslu; rolí s flagem `needs2fa` se ale dá přihlášení klíčem **vynutit** a heslo
@@ -1390,7 +1511,7 @@ Co uživatel dostane:
   prohlížeč nabídne uložené discoverable credentials). Tlačítko je jediná cesta —
   passkey se **nenabízí automaticky** v autofillu email pole (conditional mediation
   není zapnutá)
-- **Můj účet** — karta „Přihlašovací klíče": přidání klíče (side panel s povinným názvem),
+- **Profil** — karta „Přihlašovací klíče": přidání klíče (side panel s povinným názvem),
   smazání, badge pro synchronizované klíče (zálohované u správce passkeys)
 
 ### 19.1 Požadavky
@@ -1417,9 +1538,15 @@ fancyadmin:
     passkeyRpId: admin.muj-projekt.cz
     # Relying Party name — zobrazuje se v dialogu autentikátoru; default = projectName
     passkeyRpName: Můj projekt
+    # Záchranná cesta při vynuceném 2FA: jednorázový kód na e-mail (default: true, viz 19.9)
+    passkeyEmailOtpEnabled: true
+    # Zamknout uživatele přihlášeného kódem na Profil, dokud si nepřidá klíč (default: false)
+    passkeyEnrollmentRequired: false
 ```
 
-Povinné je jen `passkeyEnabled` (pro zapnutí), `passkeyRpId` a `passkeyRpName` jsou volitelné.
+Povinné je jen `passkeyEnabled` (pro zapnutí), zbytek je volitelný.
+`passkeyEmailOtpEnabled` i `passkeyEnrollmentRequired` jsou aktivní jen při
+`passkeyEnabled: true`; při vypnutém `passkeyEmailOtpEnabled` platí tvrdá zeď popsaná v 19.8.
 
 ### 19.3 Entity — Passkey + rozšíření Identity
 
@@ -1477,6 +1604,11 @@ class Passkey extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Passk
 (BINARY(32)) — náhodný opaque WebAuthn user handle, generovaný při registraci prvního klíče
 (autentikátoru se nikdy neposílá interní ID identity) — a inverzní vazbu `getPasskeys()`.
 
+> Kolekci `passkeys` si nemapujte ručně. `PasskeyTrait` ji sice vyžaduje kvůli `inversedBy`,
+> ale ruční kolekce projde i `orm:validate-schema` — a protože entitě pak chybí
+> `HasPasskeys` (a s ním `passkeyUserHandle`), registrace klíče spadne za běhu na 500.
+> Při `passkeyEnabled: true` to hlídá `FancyAdminExtension` už při kompilaci kontejneru.
+
 ### 19.4 Query + factory
 
 ```php
@@ -1518,7 +1650,7 @@ interface PasskeyQueryFactory extends \ADT\FancyAdmin\Model\Queries\Factories\Pa
 }
 ```
 
-### 19.5 Form + grid (Account stránka)
+### 19.5 Form + grid (stránka Profil)
 
 ```php
 // app/UI/Portal/Components/Forms/Passkey/PasskeyForm.php
@@ -1628,6 +1760,8 @@ ACL role má flag **`needs2fa`** („Vyžaduje 2FA" ve formuláři role). Identi
 alespoň jednu roli s tímto flagem, se smí přihlásit **výhradně přihlašovacím klíčem** —
 heslo jí login formulář odmítne s hláškou `fcadmin.passkeys.errors.passwordDisabled`
 (kontrola běží až za `authenticate()`, aby se hláška nedala použít na enumeraci účtů).
+Při zapnutém `passkeyEmailOtpEnabled` (default) se místo té hlášky nabídne druhý krok
+s jednorázovým kódem na e-mail — viz 19.9.
 
 Požadavek se vyhodnocuje přes **všechny role identity**: její vlastní i role všech jejích
 profilů. Uživatel s více profily tedy 2FA neobejde přepnutím účtu.
@@ -1637,21 +1771,39 @@ instancí se dál řeší Keycloakem a `needs2fa` se u ní ignoruje — autorito
 identity, kde se druhý faktor nastavuje. Jakmile SSO odpadne (zrušená vazba nebo
 deaktivovaná instance), `needs2fa` se aktivuje.
 
-**Bootstrap okno.** Dokud uživatel žádný klíč nemá, heslo mu ještě projde — jinak by se
-k registraci prvního klíče nedostal. Aplikace ho ale pustí jen na stránku **Můj účet**:
-`AuthPresenterTrait::startup()` ho odjinud přesměruje na `Account:default` s hláškou
+**Bootstrap okno.** Dokud uživatel žádný klíč nemá, dostane se dovnitř i bez něj — jinak by
+se k registraci prvního klíče nedostal. Při zapnutém `passkeyEmailOtpEnabled` (default) po
+něm systém kromě hesla chce i jednorázový kód z e-mailu (19.9); při vypnutém mu stačí heslo.
+Aplikace ho pak pustí jen na stránku **Profil**:
+`AuthPresenterTrait::startup()` ho odjinud přesměruje na `Profile:default` s hláškou
 `fcadmin.passkeys.messages.enrollmentRequired` a stránka mu nad kartou s klíči vysvětlí,
-proč je tam zamčený. Po registraci prvního klíče je heslo pro něj mrtvé. Je to **vědomé
-omezení**: v bootstrap okně stojí bezpečnost účtu pořád jen na heslu, takže flag zapínejte
-společně s rozumnou politikou hesel a u existujících uživatelů ideálně až po tom, co si
-klíč zaregistrují.
+proč je tam zamčený — pokud je zapnuté `passkeyEnrollmentRequired` (19.9), jinak se dostane
+kamkoliv. Po registraci prvního klíče je heslo pro něj mrtvé. Při vypnutém
+`passkeyEmailOtpEnabled` je to **vědomé omezení**: v bootstrap okně pak stojí bezpečnost
+účtu jen na heslu, takže flag zapínejte společně s rozumnou politikou hesel a u existujících
+uživatelů ideálně až po tom, co si klíč zaregistrují.
 
-**Stránka Můj účet je vyjmutá z generického presenter ACL checku**
+**Stránka Profil je vyjmutá z generického presenter ACL checku**
 (`AuthPresenterTrait::validatePresenterPermission()`), protože ukazuje vždy jen data
-přihlášeného uživatele — a hlavně proto, že resource `portalBackoffice.account` /
-`portalCustomer.account` projekty typicky nemají a neadmin by místo registrace klíče
-skončil ve 403. Presenter `Account` proto musí existovat v obou modulech (redirect je
-modulově relativní), stejně jako to má skeleton.
+přihlášeného uživatele — a hlavně proto, že resource `portalBackoffice.profile` /
+`portalCustomer.profile` projekty typicky nemají a neadmin by místo registrace klíče
+skončil ve 403. Presenter `Profile` proto **musí existovat v obou modulech**
+(`PortalBackoffice` i `PortalCustomer`) — redirect v `enforcePasskeyLogin()` je modulově
+relativní, takže uživatel zamčený v customer modulu se na backoffice presenter nedostane.
+V `PortalCustomer` tak stojí vedle sebe `Profile` (moje údaje přihlášeného uživatele)
+a `Profiles` (seznam profilů účtu); jsou to dva různé presentery a je to v pořádku.
+
+**Precedence kontrol při každém requestu.** `AuthPresenterTrait::enforcePasskeyLogin()` je
+vyhodnocuje v tomhle pořadí a na pořadí záleží:
+
+1. session vzniklá jednorázovým kódem (`otpSession`, 19.9) — druhým faktorem prošla, takže
+   se nechává naživu; na `Profile` ji drží jen `passkeyEnrollmentRequired`,
+2. stará heslová session identity, která klíč už má — odhlásí,
+3. bootstrap okno (identita klíč vyžaduje, ale žádný nemá) — pustí jen na `Profile`.
+
+Bez první položky by session z jednorázového kódu spadla do druhé kontroly (je to session
+bez passkey markeru) a uživatele by rovnou odhlásila — proto se z první větve vrací vždycky,
+bez ohledu na `passkeyEnrollmentRequired`.
 
 **Už přihlášená heslová session.** Session se při přihlášení klíčem (a po registraci klíče
 v bootstrap okně) označí server-side markerem. Identita, která klíč vyžaduje a už ho má,
@@ -1677,6 +1829,145 @@ po aktualizaci balíčku spusťte:
 php bin/console migrations:diff
 php bin/console migrations:migrate
 ```
+
+### 19.9 Přihlášení jednorázovým kódem (fallback)
+
+Samotné 19.8 má nepříjemný důsledek: uživatel s `needs2fa`, který si sedne k novému
+zařízení bez klíče (nový notebook, rozbitý telefon, klíč nesynchronizovaný přes správce
+hesel), se do aplikace nedostane vůbec a musí volat adminovi. Fallback to řeší tak, že ho
+pustí dovnitř a zároveň ho donutí si tam klíč přidat.
+
+**Kdy se druhý krok zobrazí.** Jen když je současně splněné všechno z toho:
+`passkeyEnabled: true`, `passkeyEmailOtpEnabled: true` (default), identita má roli
+s `needs2fa`, není to uživatel s povinným SSO loginem (`isPasskeyRequired()` u něj vrací
+`false`) a **právě zadal správné heslo**. Místo hlášky `passwordDisabled` ho login formulář
+přesměruje na `:Portal:Sign:twoFactor` (`/sign/two-factor`). Ten má dvě obrazovky:
+
+**Výběr způsobu ověření**
+
+1. tlačítko **Přihlásit se přihlašovacím klíčem** (stejná WebAuthn ceremony jako na login
+   stránce) — jen pokud identita nějaký klíč má,
+2. tlačítko **Přihlásit se jednorázovým heslem z e-mailu** — odešle kód a překlopí na druhou
+   obrazovku.
+
+**Zadání kódu**
+
+Uživateli se ukáže, na jakou adresu kód odešel, pod tím odkaz na opětovné odeslání (aktivní
+až po minutě, do té doby se místo něj zobrazuje zbývající čas), pole pro kód a přihlašovací
+tlačítko. Odkazem dole se dá vrátit zpátky na výběr způsobu; už odeslaný kód zůstává platný.
+Kód má 6 znaků, platí 10 minut a je jednorázový.
+
+Stav „kód odeslán" drží timestamp v session, který zároveň hlídá prodlevu mezi odesláními.
+Zaniká spolu s čekajícím stavem (10 minut) nebo návratem na výběr metody.
+
+**Platí i pro identitu, která ještě žádný klíč nemá.** Bootstrap okno z 19.8 tím nezaniká,
+ale dostane se do něj až přes heslo **i** kód z e-mailu. Je to silnější než chování bez
+fallbacku, kde takovému uživateli stačilo samotné heslo.
+
+**Zámek na Profilu (`passkeyEnrollmentRequired`, default `false`).** Session z jednorázového
+kódu se označí markerem `otpSession`. Při `passkeyEnrollmentRequired: true` je uživatel
+přihlášený, ale **zamčený na stránce Profil** — odjinud ho `enforcePasskeyLogin()` vrátí zpět
+s hláškou a nad kartou klíčů se mu vysvětlí proč; zámek povolí až registrace klíče
+(`handlePasskeyRegisterVerify()` marker zahodí a session označí jako passkey session).
+Ve výchozím stavu (`false`) žádný zámek není a e-mailový kód je plnohodnotný druhý faktor.
+Marker se nastavuje tak jako tak — bez něj by session z kódu spadla do kontroly „stará
+heslová session" a uživatele s klíčem by rovnou odhlásila.
+
+> **Poctivě: tohle 2FA oslabuje.** Kdo ovládne mailovou schránku uživatele **a zná jeho
+> heslo**, dostane se dovnitř bez klíče — z „něco vím + něco mám" se stává „něco vím +
+> jiné něco vím". S `passkeyEnrollmentRequired: false` (default) navíc nic uživatele netlačí
+> k phishing-rezistentnímu faktoru: klíč zůstane nepovinný napořád a tenhle stav je trvalý,
+> ne přechodný. Zapnutí zámku to jen zmírňuje (útočník po sobě zanechá zaregistrovaný klíč,
+> který je vidět na Profilu, a oběť dostane e-mail s kódem, o který nežádala — proto v něm
+> stojí výzva ke změně hesla). Pro prostředí, kde má 2FA držet i proti kompromitovanému
+> mailboxu, fallback **vypněte** (`passkeyEmailOtpEnabled: false`) a řešte ztracené klíče
+> procesně přes administrátora.
+
+**Proč se kód neověřuje přes `Authenticator::authenticate()`.**
+`OnetimeTokenAuthenticator::verifyCredentials()` bere druhý argument jako heslo *nebo* OTP
+token — pokud heslo nesedí, zkusí ho ještě dohledat mezi jednorázovými tokeny. Kdyby druhý
+krok volal `authenticate()`, stačilo by do pole pro kód napsat znovu heslo a druhý faktor
+by se obešel. Kód se proto ověřuje napřímo přes `OnetimeTokenService::findToken()`
+(`markAsUsed: false`) a navíc se kontroluje, že token patří právě té identitě, která na
+druhý faktor čeká (`objectClass` + `objectId`). `usedAt` doplní až `onLoggedIn` hook
+v `ADT\DoctrineAuthenticator\OTP\SecurityUser` — kód se tedy spotřebuje jen při skutečném
+přihlášení.
+
+**Proč se token ukládá s `identifier` (e-mailem).** `findToken()` s `identifier === null`
+má v dotazu podmínku `ot.identifier IS NULL`. Token uložený s identifikátorem tudíž nejde
+použít jako `?token=` v URL, což je cesta, kterou zpracovává
+`AuthPresenterTrait::startup()`. Bez toho by byl každý odeslaný šestiznakový kód zároveň
+brute-forcovatelným přihlašovacím odkazem.
+
+**Další zábrany.**
+
+- Čekající stav v session drží **jen ID identity** s expirací 10 minut a vzniká výhradně
+  po úspěšném ověření hesla. Není v něm nic, co by samo o sobě k přihlášení stačilo.
+- Přímý přístup na `/sign/two-factor` bez čekajícího stavu (i po jeho expiraci) končí
+  redirectem na `:Portal:Sign:in`.
+- Pět neúspěšně zadaných kódů čekající stav zruší a vrátí uživatele na přihlášení.
+- Mezi dvěma odesláními kódu musí uběhnout minuta; dřívější pokus skončí hláškou
+  `fcadmin.passkeys.errors.resendTooSoon`.
+- Odesílání kódů kryje navíc limit tokenů na IP (`OnetimeTokenService`: 5 **nepoužitých**
+  tokenů za 15 minut); jeho vyčerpání skončí hláškou
+  `fcadmin.passkeys.errors.tooManyCodeRequests`, ne pětistovkou. Úspěšné přihlášení token
+  označí za použitý, takže do limitu se počítají jen kódy, které nikdo nedotáhl — za NATem
+  se sdílenou IP to ale stojí za ověření.
+- Před ověřením kódu se znovu kontroluje `isPasskeyRequired()` a `isActive` — role se mezi
+  zadáním hesla a kódu mohly změnit.
+- Session vzniklá kódem **nedostane** passkey marker (`markPasskeySession()`), naopak se
+  případný zděděný marker z dřívějšího přihlášení klíčem ve stejném prohlížeči zahodí.
+- Marker `otpSession` platí jen pro tu jednu session: odhlášení session nemaže, takže každá
+  přihlašovací cesta (heslo, klíč, odkaz `?token=`) na začátku volá
+  `PasskeyService::clearTwoFactorSession()`. Bez toho by ho zdědil i další uživatel,
+  který se ve stejném prohlížeči přihlásí po něm.
+
+**Co musí dodat projekt.** Formulář druhého kroku (analogicky k `SignInForm` z 19.5),
+jinak `Sign:twoFactor` skončí `RuntimeException` s odkazem sem:
+
+```php
+// app/UI/Portal/Components/Forms/TwoFactor/TwoFactorForm.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Forms\TwoFactor;
+
+use ADT\FancyAdmin\UI\Components\Forms\TwoFactor\TwoFactorFormTrait;
+use App\UI\Portal\Components\Forms\Base\BaseForm;
+
+class TwoFactorForm extends BaseForm implements \ADT\FancyAdmin\UI\Components\Forms\TwoFactor\TwoFactorForm
+{
+    use TwoFactorFormTrait;
+}
+```
+
+```php
+// app/UI/Portal/Components/Forms/TwoFactor/TwoFactorFormFactory.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\Portal\Components\Forms\TwoFactor;
+
+interface TwoFactorFormFactory extends \ADT\FancyAdmin\UI\Components\Forms\TwoFactor\TwoFactorFormFactory
+{
+    public function create(): TwoFactorForm;
+}
+```
+
+Presenter `Profile` musí existovat v **obou** modulech (viz 19.8) — redirect na zámek je
+modulově relativní. Žádná migrace potřeba není, tabulku `onetime_token` má projekt už kvůli
+obnově hesla. Na straně JS taky nic: druhý krok vykresluje stejný blok `section-passkey`
+s týmiž data atributy jako login stránka a komponenta `Forms/SignIn/index.js` má listener
+delegovaný na `document`.
+
+> **BC break — `Mailer`.** Interface `ADT\FancyAdmin\Model\Mailer\Mailer` má novou metodu
+> `sendTwoFactorCodeMail(Identity $identity, int $tokenLifetimeMinutes): void`. Projekty
+> postavené na `MailerTrait` (což je standard) nemusí dělat nic — implementaci i šablonu
+> `twoFactorCode.latte` dodává trait. Projekt s vlastní implementací interface si metodu
+> musí doplnit. Vlastní šablona mailu se jako u ostatních přebije souborem
+> `twoFactorCode.latte` ve vlastním `templates/` adresáři.
 
 ---
 

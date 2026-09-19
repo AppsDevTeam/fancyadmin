@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Presenters\Account;
+namespace ADT\FancyAdmin\UI\Presenters\Profile;
 
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\ChangePasswordFormFactoryInject;
@@ -21,11 +21,12 @@ use ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGridFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Session\SessionGrid;
 use ADT\FancyAdmin\UI\Components\Grids\Session\SessionGridFactory;
 use ADT\FancyAdmin\UI\Presenters\PresenterTrait;
+use Nette\Application\ForbiddenRequestException;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;
 use RuntimeException;
 
-trait AccountPresenterTrait
+trait ProfilePresenterTrait
 {
 	use PresenterTrait;
 	use SecurityUserInject;
@@ -41,18 +42,25 @@ trait AccountPresenterTrait
 		// Návrat z Keycloaku po úspěšné změně hesla (kc_action=UPDATE_PASSWORD) —
 		// redirect zároveň vyčistí parametr z URL, aby se hláška neopakovala při refreshi.
 		if ($this->getParameter('kcActionSuccess')) {
-			$this->flashMessageSuccess('fcadmin.presenters.account.passwordChanged');
+			$this->flashMessageSuccess('fcadmin.presenters.profile.passwordChanged');
 			$this->redirect('default');
 		}
 
 		$this->getTemplate()->identity = $this->_securityUser->getIdentity();
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
 		$this->getTemplate()->isPasskeyEnrollmentPending = $this->_passkeyService->isEnrollmentPending($this->_securityUser->getIdentity());
+		$this->getTemplate()->isPasskeyEnrollmentRequired = $this->_passkeyService->isEnrollmentRequiredSession();
+		$this->getTemplate()->canEditPersonalData = $this->_securityUser->isAllowedPersonalData();
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 
+	// Presenter je z ACL vyjmutý (viz validatePresenterPermission), proto kontrola tady výslovně.
 	public function handleEditPersonalData(): void
 	{
+		if (!$this->_securityUser->isAllowedPersonalData()) {
+			throw new ForbiddenRequestException();
+		}
+
 		$this->redrawSidePanel('personalData');
 	}
 
@@ -85,8 +93,13 @@ trait AccountPresenterTrait
 		$this->redirect(':Portal:Sign:in');
 	}
 
+	// Signál odeslaného formuláře míří sem přímo a handleEditPersonalData() obchází.
 	public function createComponentPersonalDataSidePanel(SidePanelControlFactory $factory): SidePanelControl
 	{
+		if (!$this->_securityUser->isAllowedPersonalData()) {
+			throw new ForbiddenRequestException();
+		}
+
 		return $factory->create()
 			->setFormFactory(fn() => $this->_personalDataFormFactory->create()
 				->setEntity($this->_securityUser->getIdentity()));
@@ -179,6 +192,9 @@ trait AccountPresenterTrait
 		// Bez markeru by uživatel, který si klíč právě vytvořil v bootstrap session,
 		// vyletěl ven jako stará heslová session (README 19.8)
 		$this->_passkeyService->markPasskeySession();
+
+		// Klíč pro tenhle prohlížeč už uživatel má, zámek na Profilu končí (README 19.9)
+		$this->_passkeyService->clearOtpSession();
 
 		$this->flashMessageSuccess('fcadmin.passkeys.messages.added');
 		$this->getPresenter()->redirect('this');
