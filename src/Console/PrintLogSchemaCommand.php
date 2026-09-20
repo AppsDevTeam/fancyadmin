@@ -30,7 +30,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class PrintLogSchemaCommand extends Command
 {
 	/**
-	 * @param list<array{entity: class-string, table: string|null, hot: string|null, retention: string|null}> $config
+	 * @param list<array{entity: class-string, table: string|null, hot: string|null, retention: string|null, readable: bool}> $config
 	 */
 	public function __construct(
 		private readonly EntityManagerInterface $em,
@@ -219,8 +219,13 @@ class PrintLogSchemaCommand extends Command
 	/**
 	 * Práva aplikace. Až za tabulkami - grant na neexistující tabulku neprojde.
 	 *
-	 * Chunky hypertabulky vznikají za provozu; TimescaleDB jim práva rodiče předá sama,
-	 * `ALTER DEFAULT PRIVILEGES` kryje tabulky založené později (další log v konfiguraci).
+	 * Vypisuje se tabulka po tabulce, ne paušálně na schéma: odvoz z cíle nečte, takže
+	 * tabulka s `readable: false` (auditní stopa) dostane jen INSERT a z aplikace se
+	 * přečíst nedá ani při plném přístupu k ní.
+	 *
+	 * Chunky hypertabulky vznikají za provozu; TimescaleDB jim práva rodiče předá sama.
+	 * Sloupcové právo (`GRANT SELECT (id)`) by nepomohlo - na komprimované hypertabulce
+	 * ho PostgreSQL odmítne.
 	 */
 	private function grants(bool $isPostgres, string $dbname, string $user): string
 	{
@@ -229,16 +234,26 @@ class PrintLogSchemaCommand extends Command
 			return '';
 		}
 
-		return implode("\n", [
+		$sql = [
 			'',
-			'-- Práva aplikace: číst a zapisovat, nic víc. Mazat smí jen retenční politika,',
-			'-- aby se odvezený záznam nedal odstranit odtud, odkud přišel.',
+			'-- Práva aplikace: zapisovat, a číst jen tam, kde to potřebuje. Žádné UPDATE',
+			'-- ani DELETE - mazat smí jen retenční politika, aby se odvezený záznam nedal',
+			'-- odstranit odtud, odkud přišel.',
 			"GRANT CONNECT ON DATABASE \"$dbname\" TO $user;",
 			"GRANT USAGE ON SCHEMA public TO $user;",
-			"GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO $user;",
-			"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO $user;",
-			"REVOKE CREATE ON SCHEMA public FROM PUBLIC;",
-		]);
+		];
+
+		foreach ($this->config as $_entry) {
+			$table = $_entry['table'] ?? $this->em->getClassMetadata($_entry['entity'])->getTableName();
+
+			$sql[] = ($_entry['readable'] ?? true)
+				? "GRANT SELECT, INSERT ON $table TO $user;"
+				: "GRANT INSERT ON $table TO $user;   -- číst ji aplikace nemá";
+		}
+
+		$sql[] = 'REVOKE CREATE ON SCHEMA public FROM PUBLIC;';
+
+		return implode("\n", $sql);
 	}
 
 	private function header(): string

@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\Model\Log;
 
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Throwable;
 
@@ -32,9 +33,12 @@ use Throwable;
  *
  * POŘADÍ OPERACÍ: nejdřív zápis do cíle, pak teprve mazání ve zdroji, a mazat se smí jen
  * to, co se opravdu zapsalo. Kdyby se běh přerušil mezi zápisem a mazáním, zůstanou
- * záznamy v obou - a další běh je podle id pozná a přeskočí. Opačné pořadí nebo mazání
- * "co se stihlo" znamená ztrátu, kterou nikdo nedohledá, protože záznam o ní byl právě
- * v tom, co zmizelo.
+ * záznamy v obou - a další běh na nich skončí na duplicitě klíče a přeskočí je. Opačné
+ * pořadí nebo mazání "co se stihlo" znamená ztrátu, kterou nikdo nedohledá, protože
+ * záznam o ní byl právě v tom, co zmizelo.
+ *
+ * Z CÍLE SE NEČTE. Aplikaci proto stačí na cílové tabulce právo INSERT - u auditní stopy
+ * je to podstatné, ta z aplikace číst nemá jít vůbec.
  */
 class LogMover
 {
@@ -105,16 +109,12 @@ class LogMover
 			}
 
 			$ids = array_map(static fn (array $row) => (int) $row['id'], $batch);
-			$alreadyThere = $this->findAlreadyMoved($targetTable, $ids);
 
 			$this->targetConnection->beginTransaction();
 			try {
+				$written = 0;
 				foreach ($batch as $_row) {
-					if (isset($alreadyThere[(int) $_row['id']])) {
-						continue;
-					}
-
-					$this->targetConnection->insert($targetTable, $this->toTargetRow($_row));
+					$written += $this->insertIgnoringDuplicates($targetTable, $this->toTargetRow($_row));
 				}
 				$this->targetConnection->commit();
 			} catch (Throwable $e) {
@@ -124,14 +124,15 @@ class LogMover
 				throw $e;
 			}
 
-			// až teď, a jen to, co v cíli prokazatelně je
+			// až teď, a jen to, co v cíli prokazatelně je: zápis buď prošel, nebo
+			// se zastavil na duplicitě, což znamená, že tam záznam už byl
 			$source->executeStatement(
 				"DELETE FROM $sourceTable WHERE id IN (?)",
 				[$ids],
 				[ArrayParameterType::INTEGER],
 			);
 
-			$moved += count($batch) - count($alreadyThere);
+			$moved += $written;
 			$processed += count($batch);
 
 			if ($limit > 0 && $processed >= $limit) {
@@ -189,20 +190,32 @@ class LogMover
 	}
 
 	/**
-	 * Které z těchto id už v cíli jsou.
+	 * Zapíše řádek a mlčky přeskočí ten, který už v cíli je.
 	 *
-	 * @param list<int> $ids
-	 * @return array<int, true>
+	 * BEZ ČTENÍ CÍLE. Dřív se napřed zjišťovalo, která id už tam jsou - jenže pak
+	 * aplikace musí mít na cílové tabulce právo SELECT, a u auditní stopy je to přesně
+	 * to, co dokument slibuje vyloučit. Takhle jí stačí INSERT.
+	 *
+	 * Řeší to duplicita klíče, ne zahazování chyb: `INSERT IGNORE` na MySQL polyká
+	 * i useknutou hodnotu nebo nesedící typ, takže by se ze zdroje smazalo něco, co
+	 * v cíli není. Proto se na duplicitu míří výslovně.
+	 *
+	 * @param array<string, mixed> $row
+	 * @return int 1 = zapsáno, 0 = v cíli už bylo
 	 */
-	private function findAlreadyMoved(string $targetTable, array $ids): array
+	private function insertIgnoringDuplicates(string $targetTable, array $row): int
 	{
-		$existing = $this->targetConnection->fetchFirstColumn(
-			"SELECT id FROM $targetTable WHERE id IN (?)",
-			[$ids],
-			[ArrayParameterType::INTEGER],
-		);
+		$platform = $this->targetConnection->getDatabasePlatform();
+		$columns = array_map($platform->quoteSingleIdentifier(...), array_keys($row));
+		$placeholders = implode(', ', array_fill(0, count($row), '?'));
 
-		return array_fill_keys(array_map('intval', $existing), true);
+		$sql = 'INSERT INTO ' . $targetTable . ' (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ')';
+		$sql .= $platform instanceof PostgreSQLPlatform
+			? ' ON CONFLICT DO NOTHING'
+			// ne INSERT IGNORE: `id = id` se dotkne jen duplicity, ostatni chyby probublaji
+			: ' ON DUPLICATE KEY UPDATE ' . $columns[0] . ' = ' . $columns[0];
+
+		return (int) $this->targetConnection->executeStatement($sql, array_values($row));
 	}
 
 	/**

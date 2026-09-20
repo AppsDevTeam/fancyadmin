@@ -168,7 +168,7 @@ test('aplikace dostane jen cteni a zapis', function () {
 	// prepsat zaznamy o tom, co v ni delal. Vlastnikem databaze proto neni aplikace.
 	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
 
-	Assert::contains('GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO pokladna', $sql);
+	Assert::contains('GRANT SELECT, INSERT ON audit_log TO pokladna;', $sql);
 	Assert::contains('WITH OWNER = <vlastnik>', $sql);
 	Assert::notContains('WITH OWNER = pokladna', $sql);
 
@@ -178,12 +178,20 @@ test('aplikace dostane jen cteni a zapis', function () {
 });
 
 
+test('tabulka, kterou aplikace cist nema, dostane jen zapis', function () {
+	// Auditni stopa: odvoz do ni jen zapisuje (z cile necte), takze pravo SELECT
+	// neni k cemu a dokument slibuje, ze z aplikace pristupna neni.
+	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null, 'readable' => false]]);
+
+	Assert::contains('GRANT INSERT ON audit_log TO pokladna;', $sql);
+	Assert::notContains('GRANT SELECT', $sql);
+});
+
+
 test('prava se udeluji az za tabulkami', function () {
 	// GRANT na jeste neexistujici tabulku neprojde - kdo vypis pousti odshora dolu,
 	// by se zastavil na chybe.
 	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
 
-	Assert::true(strpos($sql, 'GRANT SELECT, INSERT ON ALL TABLES') > strpos($sql, 'CREATE TABLE audit_log'));
-	// tabulky zalozene pozdeji (dalsi log v konfiguraci) musi prava podedit
-	Assert::contains('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO pokladna', $sql);
+	Assert::true(strpos($sql, 'GRANT SELECT, INSERT ON audit_log') > strpos($sql, 'CREATE TABLE audit_log'));
 });

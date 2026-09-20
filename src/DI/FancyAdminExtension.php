@@ -92,6 +92,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					// `retention` = po jake dobe zaznam v cili zanikne
 					'hot' => Expect::string()->nullable()->default(null),
 					'retention' => Expect::string()->nullable()->default(null),
+					// Smi aplikace tabulku v cili CIST? Odvoz ji nepotrebuje (z cile necte),
+					// takze `false` znamena, ze dostane jen pravo zapisu - to je pripad
+					// auditni stopy, ktera z aplikace pristupna byt nema. `true` je pro
+					// logy, ktere ukazuji sekce Logy v administraci.
+					'readable' => Expect::bool()->default(true),
 					// Podminka (SQL, bez WHERE) omezujici, co uz je zrale na odvoz. Patri sem
 					// tabulka, do ktere se po zalozeni jeste zapisuje - odvezeny radek uz
 					// aplikace ve zdroji nenajde a dopsat do nej nedokaze. Zaznamy, ktere se

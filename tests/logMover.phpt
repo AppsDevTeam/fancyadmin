@@ -53,29 +53,46 @@ final class SourceConnection extends Doctrine\DBAL\Connection
 	}
 }
 
-/** Cilove spojeni: zapisuje do pameti, umi predstirat uz odvezene zaznamy i selhani. */
+/**
+ * Cilove spojeni: zapisuje do pameti, umi predstirat uz odvezene zaznamy i selhani.
+ *
+ * Mover do cile jen zapisuje (nedostane od nej vic nez pocet dotcenych radku), takze
+ * duplicita se predstira vracenim nuly - presne to vrati databaze pri ON CONFLICT.
+ */
 final class TargetConnection extends Doctrine\DBAL\Connection
 {
 	public array $inserted = [];
+	public array $statements = [];
 	public array $transactions = [];
 
 	/** @param list<int> $alreadyMoved */
-	public function __construct(private array $alreadyMoved = [], private bool $failOnInsert = false)
-	{
+	public function __construct(
+		private array $alreadyMoved = [],
+		private bool $failOnInsert = false,
+		private Doctrine\DBAL\Platforms\AbstractPlatform|null $platform = null,
+	) {
 	}
 
-	public function fetchFirstColumn(string $query, array $params = [], array $types = []): array
+	public function getDatabasePlatform(): Doctrine\DBAL\Platforms\AbstractPlatform
 	{
-		return $this->alreadyMoved;
+		return $this->platform ??= new Doctrine\DBAL\Platforms\PostgreSQLPlatform();
 	}
 
-	public function insert(string $table, array $data, array $types = []): int|string
+	public function executeStatement(string $sql, array $params = [], array $types = []): int|string
 	{
 		if ($this->failOnInsert) {
 			throw new RuntimeException('cil je nedostupny');
 		}
 
-		$this->inserted[] = $data;
+		$this->statements[] = $sql;
+
+		// prvni sloupec je id - kdyz uz v cili je, databaze zapis zahodi a vrati nulu
+		$row = array_combine(insertedColumns($sql), $params);
+		if (in_array((int) $row['id'], $this->alreadyMoved, true)) {
+			return 0;
+		}
+
+		$this->inserted[] = $row;
 
 		return 1;
 	}
@@ -94,6 +111,14 @@ final class TargetConnection extends Doctrine\DBAL\Connection
 	{
 		$this->transactions[] = 'rollback';
 	}
+}
+
+/** @return list<string> nazvy sloupcu z vygenerovaneho INSERTu */
+function insertedColumns(string $sql): array
+{
+	preg_match('/\((.*?)\) VALUES/', $sql, $matches);
+
+	return array_map(static fn (string $column) => trim($column, ' "`'), explode(',', $matches[1]));
 }
 
 function auditRow(int $id, string $action = 'login'): array
@@ -198,6 +223,8 @@ test('uz odvezeny zaznam se nezapise podruhe, jen se uklidi ze zdroje', function
 	Assert::same([[7, 8]], $source->deleted);
 	// sedmicka uz v cili byla, takze se do poctu odvezenych nezapocitala
 	Assert::same(1, $moved);
+	// a zjistilo se to bez cteni cile - aplikace na nem ma mit jen pravo zapisu
+	Assert::contains('ON CONFLICT DO NOTHING', end($target->statements));
 });
 
 
@@ -297,4 +324,17 @@ test('bez podminky se vybira cela tabulka', function () {
 	createMover($source, new TargetConnection())->moveAll();
 
 	Assert::notContains('WHERE', $source->queries[0]);
+});
+
+
+test('na MySQL cili se duplicita resi bez INSERT IGNORE', function () {
+	// INSERT IGNORE polyka i useknutou hodnotu nebo nesedici typ, takze by se ze zdroje
+	// smazalo neco, co v cili neni. Miri se proto vyslovne na duplicitu klice.
+	$source = new SourceConnection([[auditRow(1)], []]);
+	$target = new TargetConnection(platform: new Doctrine\DBAL\Platforms\MySQLPlatform());
+
+	createMover($source, $target)->moveAll();
+
+	Assert::contains('ON DUPLICATE KEY UPDATE', $target->statements[0]);
+	Assert::notContains('INSERT IGNORE', $target->statements[0]);
 });

@@ -2336,9 +2336,15 @@ fancyAdmin:
 			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog, hot: '3 months', retention: '13 months'}
 			- {entity: App\Model\Entities\RequestLog, table: request_log_archive}
 			- {entity: App\Model\Entities\TransactionLog, where: 'response_at IS NOT NULL OR created_at < NOW() - INTERVAL 1 DAY'}
+			- {entity: App\Model\Entities\AuditLog, readable: false}
 ```
 
 `hot` a `retention` používá jen `fancyadmin:print-log-schema` (viz níže), odvoz sám ne.
+
+`readable: false` znamená, že aplikace tabulku v cíli číst nesmí — dostane na ni jen právo
+zápisu. Odvoz to nebolí: z cíle nečte, duplicitu řeší klíčem (`ON CONFLICT DO NOTHING`).
+Patří sem auditní stopa, kterou má dokumentace typicky slíbenou jako z aplikace nedostupnou.
+Logy, které ukazují sekce Logy v administraci, musí zůstat `readable` (výchozí).
 
 `where` omezuje, co už je zralé na odvoz. Patří sem tabulka, do které se po založení ještě
 zapisuje — typicky request teď, response za chvíli: odvezený řádek už aplikace ve zdroji
@@ -2368,10 +2374,13 @@ doplní u tabulek, které mají `hot` nebo `retention`, i hypertable, kompresní
 politiku TimescaleDB.
 
 **Uživatelé jsou dva.** Vlastník (`<vlastnik>`) schéma založí a patří mu retenční politiky;
-aplikace dostane účet, který umí jen `SELECT` a `INSERT` — žádné `UPDATE`, `DELETE`, `DROP`
-ani `ALTER`. Bez toho celé oddělené úložiště nedává smysl: kdo se dostane k aplikaci, mohl by
-přepsat záznamy o tom, co v ní dělal. `SELECT` aplikace potřebovat bude (odvoz podle id
-poznává, co už v cíli je, a sekce Logy odtud čtou), mazání zůstává výhradně retenční politice.
+aplikace dostane účet bez `UPDATE`, `DELETE`, `DROP` i `ALTER`. Bez toho celé oddělené
+úložiště nedává smysl: kdo se dostane k aplikaci, mohl by přepsat záznamy o tom, co v ní
+dělal. Práva se udělují tabulku po tabulce — `INSERT` všude, `SELECT` jen tam, kde má
+konfigurace `readable` (výchozí); mazání zůstává výhradně retenční politice.
+
+Sloupcové právo typu `GRANT SELECT (id)` nezkoušejte, na komprimované hypertabulce ho
+PostgreSQL odmítne (`column "id" of relation "_compressed_hypertable_…" does not exist`).
 Údaje vlastníka se do aplikace nikdy nedostanou.
 
 Schéma se odvozuje **z entit**, takže neodejde od zdroje — přibude sloupec v logu a příští
