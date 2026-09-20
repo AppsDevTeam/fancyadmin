@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-use ADT\FancyAdmin\Console\MoveLogsCommand;
+use ADT\FancyAdmin\Model\Log\LogMover;
 use ADT\FancyAdmin\Tests\Fixtures\TestAuditLog;
+use ADT\FancyAdmin\Tests\Fixtures\TestRequestLog;
 use ADT\FancyAdmin\Tests\Fixtures\TestEntityManager;
 use Tester\Assert;
 
@@ -107,26 +108,23 @@ function auditRow(int $id, string $action = 'login'): array
 	];
 }
 
-function createMover(SourceConnection $source, TargetConnection $target, ?array $config = null): MoveLogsCommand
+function createMover(SourceConnection $source, TargetConnection $target, ?array $config = null): LogMover
 {
-	$em = new TestEntityManager([TestAuditLog::class], $source);
+	$em = new TestEntityManager([TestAuditLog::class, TestRequestLog::class], $source);
 	$em->getClassMetadata(TestAuditLog::class)->setPrimaryTable(['name' => 'audit_log']);
+	$em->getClassMetadata(TestRequestLog::class)->setPrimaryTable(['name' => 'request_log']);
 
-	$command = new MoveLogsCommand($em, $target, $config ?? [
-		['entity' => TestAuditLog::class, 'table' => null],
+	return new LogMover($em, $target, $config ?? [
+		['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null],
 	]);
-	$command->setLocksDir(sys_get_temp_dir());
-
-	return $command;
 }
 
-/** @return array{0: int, 1: string} */
-function runMover(MoveLogsCommand $command, array $input = []): array
+/** @return array{0: int, 1: string} pocet odvezenych a souhrn chyb */
+function runMover(LogMover $mover, array $options = []): array
 {
-	$tester = new Symfony\Component\Console\Tester\CommandTester($command);
-	$tester->execute($input);
+	$result = $mover->moveAll($options['batchSize'] ?? LogMover::BATCH_SIZE, $options['limit'] ?? 0);
 
-	return [$tester->getStatusCode(), $tester->getDisplay()];
+	return [array_sum($result['moved']), implode(', ', array_keys($result['errors']))];
 }
 
 
@@ -173,10 +171,12 @@ test('kdyz zapis do cile selze, ze zdroje nezmizi nic', function () {
 	$source = new SourceConnection([[auditRow(1)]]);
 	$target = new TargetConnection(failOnInsert: true);
 
-	runMover(createMover($source, $target));
+	[, $errors] = runMover(createMover($source, $target));
 
 	Assert::same([], $source->deleted);
 	Assert::same(['begin', 'rollback'], $target->transactions);
+	// chyba se vrati volajicimu - command ji vypise, job na ni spadne
+	Assert::same('audit_log', $errors);
 });
 
 
@@ -185,14 +185,14 @@ test('uz odvezeny zaznam se nezapise podruhe, jen se uklidi ze zdroje', function
 	$source = new SourceConnection([[auditRow(7), auditRow(8)]]);
 	$target = new TargetConnection(alreadyMoved: [7]);
 
-	[, $display] = runMover(createMover($source, $target));
+	[$moved] = runMover(createMover($source, $target));
 
 	Assert::count(1, $target->inserted);
 	Assert::same(8, $target->inserted[0]['id']);
 	// smazat se musi obe: sedmicka uz v cili je
 	Assert::same([[7, 8]], $source->deleted);
-	// prvni radek uz v cili byl, takze se do poctu odvezenych nezapocital
-	Assert::contains('1', $display);
+	// sedmicka uz v cili byla, takze se do poctu odvezenych nezapocitala
+	Assert::same(1, $moved);
 });
 
 
@@ -200,11 +200,11 @@ test('vozi se po davkach, dokud je co', function () {
 	$source = new SourceConnection([[auditRow(1)], [auditRow(2)], []]);
 	$target = new TargetConnection();
 
-	[, $display] = runMover(createMover($source, $target));
+	[$moved] = runMover(createMover($source, $target));
 
 	Assert::count(2, $target->inserted);
 	Assert::same([[1], [2]], $source->deleted);
-	Assert::contains('2', $display);
+	Assert::same(2, $moved);
 });
 
 
@@ -213,20 +213,19 @@ test('limit zastavi beh drive', function () {
 	$source = new SourceConnection([[auditRow(1)], [auditRow(2)], [auditRow(3)]]);
 	$target = new TargetConnection();
 
-	runMover(createMover($source, $target), ['--limit' => '1']);
+	runMover(createMover($source, $target), ['limit' => 1]);
 
 	Assert::count(1, $target->inserted);
 });
 
 
-test('dry-run jen spocita a nesahne na data', function () {
+test('spocitat cekajici zaznamy jde bez sahnuti na data', function () {
 	$source = new SourceConnection(count: 128);
 	$target = new TargetConnection();
 
-	[$status, $display] = runMover(createMover($source, $target), ['--dry-run' => true]);
+	$mover = createMover($source, $target);
 
-	Assert::same(0, $status);
-	Assert::contains('128', $display);
+	Assert::same(128, $mover->countWaiting(TestAuditLog::class));
 	Assert::same([], $target->inserted);
 	Assert::same([], $source->deleted);
 });
@@ -238,28 +237,26 @@ test('odvazi se vsechny tabulky z konfigurace', function () {
 	$source = new SourceConnection([[auditRow(1)], [], [auditRow(2)], []]);
 	$target = new TargetConnection();
 	$config = [
-		['entity' => TestAuditLog::class, 'table' => null],
-		['entity' => TestAuditLog::class, 'table' => 'change_log'],
+		['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null],
+		['entity' => TestRequestLog::class, 'table' => 'request_log_archive', 'hot' => null, 'retention' => null],
 	];
 
-	[$status, $display] = runMover(createMover($source, $target, $config), []);
+	$result = createMover($source, $target, $config)->moveAll();
 
-	Assert::same(0, $status);
 	Assert::count(2, $target->inserted);
-	// cilova tabulka se bere z konfigurace, vychozi je stejny nazev jako ve zdroji
-	Assert::contains('audit_log', $display);
-	Assert::contains('change_log', $display);
+	Assert::same([], $result['errors']);
+	// vysledek je klicovany zdrojovou tabulkou, kazda ma svou
+	Assert::same(['audit_log' => 1, 'request_log' => 1], $result['moved']);
 });
 
 
 test('nedostupna tabulka shodi jen svuj radek', function () {
 	$source = new SourceConnection([[auditRow(1)]]);
 	$target = new TargetConnection(failOnInsert: true);
-	$config = [['entity' => TestAuditLog::class, 'table' => null]];
+	$config = [['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]];
 
-	[$status, $display] = runMover(createMover($source, $target, $config), []);
+	$result = createMover($source, $target, $config)->moveAll();
 
-	Assert::same(1, $status);
-	Assert::contains('CHYBA', $display);
+	Assert::same(['audit_log'], array_keys($result['errors']));
 	Assert::same([], $source->deleted);
 });

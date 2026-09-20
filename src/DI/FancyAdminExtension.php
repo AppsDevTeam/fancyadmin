@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\DI;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Console\MoveLogsCommand;
+use ADT\FancyAdmin\Model\Log\LogMover;
 use ADT\FancyAdmin\Console\PrintLogSchemaCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
@@ -238,11 +239,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				throw new RuntimeException('fancyadmin: logMover potřebuje vyplnit connection i tables.');
 			}
 
-			$defs[] = $builder->addDefinition($this->prefix('moveLogs'))
-				->setFactory(MoveLogsCommand::class, [
+			// sluzba, ne jen command: odvoz se pousti i z fronty, aby jel po minutach
+			$builder->addDefinition($this->prefix('logMover'))
+				->setFactory(LogMover::class, [
 					'targetConnection' => $mover->connection,
 					'config' => $mover->tables,
-				])
+				]);
+
+			$defs[] = $builder->addDefinition($this->prefix('moveLogs'))
+				->setFactory(MoveLogsCommand::class)
 				->setAutowired(false);
 
 			$defs[] = $builder->addDefinition($this->prefix('printLogSchema'))
