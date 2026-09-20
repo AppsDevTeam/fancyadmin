@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -53,7 +54,7 @@ class PrintLogSchemaCommand extends Command
 			$timescale = $isPostgres && ($_entry['hot'] !== null || $_entry['retention'] !== null);
 
 			$schema = new Schema();
-			$this->buildTable($meta, $schema->createTable($targetTable), $timescale);
+			$this->buildTable($meta, $schema->createTable($targetTable), $timescale, $isPostgres);
 
 			$output->writeln('');
 			$output->writeln('-- ' . $targetTable);
@@ -81,12 +82,12 @@ class PrintLogSchemaCommand extends Command
 	 * a podle ní pozná, co už odvezl. Kdyby si ji cíl přiděloval sám, ztratí se vazba
 	 * na zdroj a opakovaný běh po přerušení by zapsal totéž podruhé.
 	 */
-	private function buildTable(ClassMetadata $meta, Table $table, bool $timescale): void
+	private function buildTable(ClassMetadata $meta, Table $table, bool $timescale, bool $withTimeZone): void
 	{
 		foreach ($meta->getFieldNames() as $_field) {
 			$mapping = $meta->getFieldMapping($_field);
 
-			$table->addColumn($meta->getColumnName($_field), $mapping['type'], array_filter([
+			$table->addColumn($meta->getColumnName($_field), $this->resolveType($mapping['type'], $withTimeZone), array_filter([
 				'notnull' => !($mapping['nullable'] ?? false),
 				'length' => $mapping['length'] ?? null,
 				'precision' => $mapping['precision'] ?? null,
@@ -118,6 +119,27 @@ class PrintLogSchemaCommand extends Command
 		}
 	}
 
+	/**
+	 * Cas se v cili uklada SE ZONOU, i kdyz ho zdroj ma bez ni.
+	 *
+	 * Zdrojove logy jsou v UTC, ale sloupec to nerika - a mover proto posila hodnotu
+	 * s vyslovnym offsetem. Kdyby ji cil prijal do sloupce bez zony, offset zahodi a po
+	 * case uz z dat nepozna, v cem jsou; se zonou je to jednoznacne i za rok.
+	 * MySQL zonu u DATETIME neumi, takze tam zustava puvodni typ.
+	 */
+	private function resolveType(string $type, bool $withTimeZone): string
+	{
+		if (!$withTimeZone) {
+			return $type;
+		}
+
+		return match ($type) {
+			Types::DATETIME_MUTABLE => Types::DATETIMETZ_MUTABLE,
+			Types::DATETIME_IMMUTABLE => Types::DATETIMETZ_IMMUTABLE,
+			default => $type,
+		};
+	}
+
 	private function timescale(string $table, ?string $hot, ?string $retention): string
 	{
 		$sql = ["SELECT create_hypertable('$table', 'created_at');"];
@@ -138,9 +160,12 @@ class PrintLogSchemaCommand extends Command
 
 	private function createDatabase(bool $isPostgres): string
 	{
+		// prazdny retezec je v konfiguraci bezny (hodnotu doplnuje az stage), takze
+		// ?: misto ?? - jinak by ve vypisu zustalo CREATE DATABASE "" a nikdo si toho
+		// nemusi vsimnout
 		$params = $this->targetConnection->getParams();
-		$dbname = $params['dbname'] ?? 'logdb';
-		$user = $params['user'] ?? 'logdb';
+		$dbname = ($params['dbname'] ?? '') ?: '<databaze>';
+		$user = ($params['user'] ?? '') ?: '<uzivatel>';
 
 		if (!$isPostgres) {
 			return implode("\n", [

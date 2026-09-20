@@ -73,6 +73,26 @@ test('vypis zaklada uzivatele i databazi podle spojeni', function () {
 });
 
 
+test('cas ma v PostgreSQL cilu zonu', function () {
+	// Zdroj ma UTC, ale sloupec to nerika; mover posila offset, takze cil ho musi umet
+	// prijmout - jinak ho zahodi a po case z dat nepozna, v cem jsou.
+	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
+
+	Assert::contains('WITH TIME ZONE', $sql);
+	Assert::notContains('WITHOUT TIME ZONE', $sql);
+});
+
+
+test('prazdne jmeno databaze se ve vypisu pozna', function () {
+	// V konfiguraci je bezne prazdno (hodnotu doplnuje stage); CREATE DATABASE ""
+	// by si nikdo nemusel vsimnout.
+	$sql = printSchema([], new SchemaConnection(['dbname' => '', 'user' => '']));
+
+	Assert::contains('<databaze>', $sql);
+	Assert::contains('<uzivatel>', $sql);
+});
+
+
 test('tabulka se odvodi z entity a jede v dialektu cile', function () {
 	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
 
