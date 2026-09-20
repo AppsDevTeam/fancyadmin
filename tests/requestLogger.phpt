@@ -116,3 +116,31 @@ test('hloubka JSON je omezena limitem MySQL', function () {
 	// by proslo aplikaci a rozbilo se az pri insertu.
 	Assert::same(100, new ReflectionClassConstant(RequestLogger::class, 'MAX_JSON_COLUMN_DEPTH')->getValue());
 });
+
+
+test('kdyz selze telo, nezustane po pozadavku ani hlavicka', function () {
+	// Hlavicka a telo jsou dva inserty, ale jedna transakce. Bez ni je mezi nimi okamzik,
+	// kdy rodic uz v databazi je a telo jeste ne - a soubezny odvoz logu (move-logs) ho
+	// v tu chvili muze odvezt a smazat, takze telo spadne na cizim klici:
+	//   Cannot add or update a child row: a foreign key constraint fails
+	// Tady se totez nasimuluje chybejici tabulkou tela: kdyz zapis tela selze, nesmi po
+	// pozadavku zustat osirela hlavicka.
+	$soubor = tempnam(sys_get_temp_dir(), 'requestlog') . '.sqlite';
+	$dbParams = ['driver' => 'pdo_sqlite', 'path' => $soubor];
+
+	$connection = Doctrine\DBAL\DriverManager::getConnection($dbParams);
+	$connection->executeStatement('CREATE TABLE request_log (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT)');
+	// request_log_body schvalne neexistuje
+
+	$logger = new RequestLogger($dbParams, new TestSecurityUser(isLoggedIn: true, identity: new TestIdentity()), new SensitiveDataSanitizer());
+	$zapis = new ReflectionMethod(RequestLogger::class, 'writeLog');
+
+	Assert::exception(
+		fn() => $zapis->invoke($logger, $connection, ['created_at' => '2026-09-20 12:00:00'], ['headers' => null]),
+		Throwable::class,
+	);
+
+	Assert::same(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM request_log'), 'hlavicka se musela vratit zpet');
+
+	@unlink($soubor);
+});

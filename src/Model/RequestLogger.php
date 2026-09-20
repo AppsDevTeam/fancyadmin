@@ -8,6 +8,7 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
 use DateTimeImmutable;
 use DateTimeZone;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception;
 use Nette\Application\Response;
@@ -120,33 +121,63 @@ final class RequestLogger
 		// (telo ma kratsi retenci), takze se nesmi lisit ani o milisekundu
 		$createdAt = new DateTimeImmutable('now', new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u');
 
-		$connection->insert('request_log', [
-			// UTC - stejne jako audit_log, kvuli korelaci a jednoznacnosti pri
-			// prechodu na zimni cas (2:30 nastane dvakrat)
-			'created_at' => $createdAt,
-			'method' => $presenter->getHttpRequest()->getMethod(),
-			'url' => $presenter->getHttpRequest()->getUrl()->getBaseUrl() . ltrim($presenter->getHttpRequest()->getUrl()->getPath(), '/'),
-			// delku IP ovlada klient (X-Forwarded-For) - nesmi rozbit insert
-			'ip' => mb_substr((string) $presenter->getHttpRequest()->getRemoteAddress(), 0, 45),
-			'code' => $presenter->getHttpResponse()->getCode(),
-			'response_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']),
-			'identity_id' => $this->securityUser->isLoggedIn() ? $this->securityUser->getId() : null,
-			'api_key_id' => self::$apiKeyId,
-		] + self::$extraLogData);
+		$this->writeLog(
+			$connection,
+			[
+				// UTC - stejne jako audit_log, kvuli korelaci a jednoznacnosti pri
+				// prechodu na zimni cas (2:30 nastane dvakrat)
+				'created_at' => $createdAt,
+				'method' => $presenter->getHttpRequest()->getMethod(),
+				'url' => $presenter->getHttpRequest()->getUrl()->getBaseUrl() . ltrim($presenter->getHttpRequest()->getUrl()->getPath(), '/'),
+				// delku IP ovlada klient (X-Forwarded-For) - nesmi rozbit insert
+				'ip' => mb_substr((string) $presenter->getHttpRequest()->getRemoteAddress(), 0, 45),
+				'code' => $presenter->getHttpResponse()->getCode(),
+				'response_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']),
+				'identity_id' => $this->securityUser->isLoggedIn() ? $this->securityUser->getId() : null,
+				'api_key_id' => self::$apiKeyId,
+			] + self::$extraLogData,
+			[
+				'created_at' => $createdAt,
+				'headers' => $headers ? Json::encode($headers) : null,
+				'params' => $_GET ? Json::encode($this->sanitizer->sanitize($_GET)) : null,
+				'post_data' => $_POST ? Json::encode($this->sanitizer->sanitize($_POST)) : null,
+				'raw_data_json' => $raw_data_json ? Json::encode($this->sanitizer->sanitize($raw_data_json)) : null,
+				'raw_data_text' => $raw_data_text === null ? null : $this->sanitizer->sanitize($raw_data_text),
+				'response_json' => $response_json ? Json::encode($this->sanitizer->sanitize($response_json)) : null,
+				'response_text' => $response_text === null ? null : $this->sanitizer->sanitize($response_text),
+			],
+		);
+	}
 
-		$requestLogId = $connection->lastInsertId();
+	/**
+	 * Zapíše hlavičku a tělo požadavku JEDNOU TRANSAKCÍ, i když jsou to dva inserty.
+	 *
+	 * Mezi zápisem hlavičky a těla je jinak okamžik, kdy rodič už v databázi je a tělo ještě
+	 * ne. Odvoz logů (fancyadmin:move-logs) běží souběžně a v tu chvíli mu nic nebrání rodiče
+	 * odvézt a ze zdroje smazat - tělo pak spadne na cizím klíči:
+	 *
+	 *   Cannot add or update a child row: a foreign key constraint fails
+	 *   (`request_log_body`, CONSTRAINT `FK_...` FOREIGN KEY (`request_log_id`))
+	 *
+	 * a z požadavku nezbude ani hlavička, ani tělo. V transakci rodič pro odvoz neexistuje,
+	 * dokud není hotové i tělo.
+	 *
+	 * @param array<string, mixed> $requestLog
+	 * @param array<string, mixed> $requestLogBody
+	 * @throws Exception
+	 */
+	private function writeLog(Connection $connection, array $requestLog, array $requestLogBody): void
+	{
+		$connection->beginTransaction();
+		try {
+			$connection->insert('request_log', $requestLog);
+			$connection->insert('request_log_body', ['request_log_id' => $connection->lastInsertId()] + $requestLogBody);
+			$connection->commit();
+		} catch (Throwable $e) {
+			$connection->rollBack();
 
-		$connection->insert('request_log_body', [
-			'request_log_id' => $requestLogId,
-			'created_at' => $createdAt,
-			'headers' => $headers ? Json::encode($headers) : null,
-			'params' => $_GET ? Json::encode($this->sanitizer->sanitize($_GET)) : null,
-			'post_data' => $_POST ? Json::encode($this->sanitizer->sanitize($_POST)) : null,
-			'raw_data_json' => $raw_data_json ? Json::encode($this->sanitizer->sanitize($raw_data_json)) : null,
-			'raw_data_text' => $raw_data_text === null ? null : $this->sanitizer->sanitize($raw_data_text),
-			'response_json' => $response_json ? Json::encode($this->sanitizer->sanitize($response_json)) : null,
-			'response_text' => $response_text === null ? null : $this->sanitizer->sanitize($response_text),
-		]);
+			throw $e;
+		}
 	}
 
 }
