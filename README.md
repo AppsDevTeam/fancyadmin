@@ -2321,6 +2321,90 @@ jinde ještě nejsou.
 
 ---
 
+## 23. Odvoz logů do odděleného úložiště (volitelné)
+
+Logovací tabulky v aplikaci jsou jen přestupní stanice. Logy se drží mnohem déle, než má
+smysl zatěžovat provozní databázi, a auditní stopa má navíc být **jinde než systém, o kterém
+vypovídá** — kdo se dostane k aplikaci, nesmí umět přepsat záznamy o tom, co v ní dělal.
+
+```neon
+fancyAdmin:
+	logMover:
+		connection: @nettrine.dbal.connections.logdb.connection
+		tables:
+			- {entity: App\Model\Entities\AuditLog}
+			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog}
+			- {entity: App\Model\Entities\RequestLog, table: request_log_archive}
+```
+
+Odváží `fancyadmin:move-logs`, typicky z cronu. Bere `--dry-run`, `--batch-size` a `--limit`
+(strop na tabulku a běh, aby se noční odvoz nezakousl, když se něco nahromadí). Nedostupná
+nebo rozbitá tabulka shodí jen svůj řádek výpisu, ostatní se odvezou. Bez konfigurace se
+příkaz neregistruje.
+
+**Odvoz vs. mazání:** `purge-logs` záznam zahodí, `move-logs` ho přestěhuje. Do moveru proto
+patří i to, co se podle retenční politiky musí uchovat dlouho — auditní stopa, change log,
+provozní logy, u kterých jde spíš o velikost provozní databáze než o životnost dat. Tatáž
+tabulka nemá být v obou konfiguracích.
+
+### Cílová tabulka
+
+Cílová tabulka má tytéž sloupce jako zdrojová. **Záznam si veze své `id`** — jde podle něj
+dohledat zpátky, mover podle něj pozná, co už odvezl, a odkazy mezi odvezenými tabulkami
+(`request_log_body.request_log_id`) dál sedí.
+
+Proto ale **cílová databáze patří vždy jen jednomu zdroji**: id se mezi systémy potkávají,
+takže dva zdroje v jedné tabulce by si je přepsaly. Každý projekt má vlastní cílovou
+databázi. Příklad pro `audit_log`:
+
+```sql
+CREATE TABLE audit_log (
+    id               BIGINT       NOT NULL,
+    action           VARCHAR(255) NOT NULL,
+    outcome          VARCHAR(255) NOT NULL,
+    created_at       TIMESTAMPTZ  NOT NULL,
+    created_by_id    VARCHAR(255),
+    created_by_label VARCHAR(255),
+    created_by       JSONB,
+    source_ip        VARCHAR(45),
+    user_agent       TEXT,
+    correlation_id   VARCHAR(255),
+    payload          JSONB,
+    CONSTRAINT audit_log_primary PRIMARY KEY (id, created_at)
+);
+```
+
+Na TimescaleDB (doporučeno — dělení podle času, komprese starších dat, retenční politika
+v databázi místo v cronu) musí být dělicí sloupec v každém unikátním klíči, proto je
+`created_at` i v primárním klíči:
+
+```sql
+SELECT create_hypertable('audit_log', 'created_at');
+SELECT add_compression_policy('audit_log', INTERVAL '3 months');
+SELECT add_retention_policy('audit_log', INTERVAL '13 months');
+```
+
+Obě doby volte podle toho, co má projekt slíbené, ne podle toho, co se hodí databázi.
+Komprese je hranice mezi provozní a archivní vrstvou — komprimovaná data jdou číst dál,
+ale s prodlevou na dekompresi, takže pokud dokument slibuje „záznamy za poslední X měsíců
+dohledatelné bez prodlevy", je to právě tohle X. Retence je horní mez, po které data
+zmizí; kratší hodnota než slíbená dělá z dokumentu nepravdu.
+
+Čas jde ze zdroje v UTC a mover ho posílá s výslovným offsetem. Kdyby ho posílal bez něj,
+`TIMESTAMPTZ` by si ho vyložil podle zóny serveru a záznamy by se posunuly — tiše, nic by
+nespadlo, jen by přestaly sedět s ostatními logy.
+
+### Pořadí operací
+
+Nejdřív zápis do cíle, pak teprve mazání ve zdroji — a maže se jen to, co se opravdu
+zapsalo. Když zápis selže, ze zdroje nezmizí nic. Přeruší-li se běh mezi zápisem a mazáním,
+zůstanou záznamy v obou a další běh je podle `(source, source_id)` pozná a přeskočí.
+
+Opačné pořadí (nebo mazání „co se stihlo") znamená ztrátu, kterou nikdo nedohledá, protože
+záznam o ní byl právě v tom, co zmizelo.
+
+---
+
 ## Shrnutí
 
 | Krok | Co | Proč |
