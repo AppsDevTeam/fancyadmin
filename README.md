@@ -2391,6 +2391,43 @@ Aplikace ten příkaz nespouští, jen tiskne: do cílového serveru nemá pří
 smysl odděleného úložiště**. Právo mazat tam aplikace mít nemá, jinak by šel odvezený záznam
 odstranit odtud, odkud přišel.
 
+### Časová zóna
+
+**Logy se ukládají v UTC**, cílový sloupec je `TIMESTAMPTZ` a mover posílá hodnotu
+s výslovným `+00:00`. Záznam zapsaný v zóně projektu by v cíli skončil posunutý o její
+offset - a poznalo by se to až tím, že řádky z různých tabulek jdou v přehledu proti sobě.
+
+`RequestLogger`, `ApiLogger`, `AuditLogger` i auth log v `adt/doctrine-authenticator` UTC
+píšou samy. Logovací entity projektu na to mají traity - **ne** obvyklý `CreatedAt`
+s Gedmo Timestampable, ten bere čas v zóně aplikace:
+
+```php
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]   // bez toho se razítko nezavolá
+class DeviceLog extends BaseEntity
+{
+	use \ADT\FancyAdmin\Model\Entities\Traits\CreatedAtUtc;
+	use \ADT\FancyAdmin\Model\Entities\Traits\UpdatedAtUtc;
+}
+```
+
+Podmínky v `where` pak musí porovnávat taky v UTC (`UTC_TIMESTAMP()` místo `NOW()`), jinak
+se liší o offset zóny serveru.
+
+**Administrace to i tak ukazuje v čase projektu** - převádí se to při čtení, na spojení:
+
+```neon
+nettrine.dbal:
+	connections:
+		logdb:
+			middlewares:
+				timeZone: ADT\FancyAdmin\Model\Doctrine\SessionTimeZoneMiddleware(%timeZone%)
+```
+
+Záměrně na spojení, ne v gridech: část jich chodí odsud (Change log, Přihlašování) a o zóně
+projektu nic neví. Převod navíc dělá databáze, takže přechod mezi letním a zimním časem sedí
+ke každému záznamu zvlášť. Uložené hodnoty to nemění, jen to, v čem se čtou.
+
 ### Cílová tabulka
 
 Cílová tabulka má tytéž sloupce jako zdrojová. **Záznam si veze své `id`** — jde podle něj
