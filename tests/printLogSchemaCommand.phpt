@@ -211,3 +211,14 @@ test('jmeno uzivatele s pomlckou projde', function () {
 	Assert::contains('CREATE USER "pokladna-local_cashdesk"', $sql);
 	Assert::contains('TO "pokladna-local_cashdesk";', $sql);
 });
+
+
+test('tabulky zaklada vlastnik, ne ten, kdo skript pousti', function () {
+	// Skript projde superuzivatel (rozsireni jinak nezalozi), ale tabulky a retencni
+	// politiky maji patrit vlastnikovi - jinak by je aplikace ... resp. kdokoliv s uctem
+	// superuzivatele mohl menit, a hlavne by je nesel predat dal.
+	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
+
+	Assert::true(strpos($sql, 'SET ROLE "<vlastnik>";') > strpos($sql, 'CREATE EXTENSION'));
+	Assert::true(strpos($sql, 'SET ROLE "<vlastnik>";') < strpos($sql, 'CREATE TABLE audit_log'));
+});

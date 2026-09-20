@@ -210,11 +210,14 @@ class PrintLogSchemaCommand extends Command
 			'-- aplikace - prava dostane az za tabulkami, viz konec vypisu',
 			"CREATE USER \"$user\" WITH PASSWORD '<heslo>';",
 			'',
-			'-- Dál se pokračuje jako <vlastnik>, připojený k této databázi.',
+			'-- Dál se pokračuje připojený k TÉTO databázi. Rozšíření zakládá superuživatel',
+			'-- (vlastník na to právo nemá), zbytek už běží pod vlastníkem - aby mu patřily',
+			'-- tabulky i retenční politiky.',
 			'',
-			// az tady: rozsireni se zaklada v te databazi, kde se ma pouzivat, ne
-			// v te, ze ktere se pousti CREATE DATABASE
+			// rozsireni se zaklada v te databazi, kde se ma pouzivat, ne v te,
+			// ze ktere se poustel CREATE DATABASE
 			'CREATE EXTENSION IF NOT EXISTS timescaledb;',
+			'SET ROLE "<vlastnik>";',
 		]);
 	}
 
