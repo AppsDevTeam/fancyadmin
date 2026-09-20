@@ -310,37 +310,6 @@ test('nedostupna tabulka shodi jen svuj radek', function () {
 });
 
 
-test('podminka zralosti se uplatni uz pri vyberu ze zdroje', function () {
-	// Tabulka, do ktere se po zalozeni jeste zapisuje (request ted, response za chvili),
-	// se nesmi odvezt driv, nez je hotova - ve zdroji uz by ji aplikace nenasla.
-	// Filtrovat az pri mazani nestaci: maze se podle id toho, co se odvezlo.
-	$source = new SourceConnection([[auditRow(1)], []]);
-	$target = new TargetConnection();
-	$config = [[
-		'entity' => TestAuditLog::class,
-		'table' => null,
-		'hot' => null,
-		'retention' => null,
-		'where' => 'outcome IS NOT NULL',
-	]];
-
-	$mover = createMover($source, $target, $config);
-	$mover->moveAll();
-
-	Assert::contains('FROM audit_log WHERE outcome IS NOT NULL ORDER BY id ASC', $source->queries[0]);
-	// i pocitadlo cekajicich musi merit totez, co se doopravdy odveze
-	$mover->countWaiting(TestAuditLog::class);
-	Assert::contains('FROM audit_log WHERE outcome IS NOT NULL', end($source->queries));
-});
-
-
-test('bez podminky se vybira cela tabulka', function () {
-	$source = new SourceConnection([[auditRow(1)], []]);
-
-	createMover($source, new TargetConnection())->moveAll();
-
-	Assert::notContains('WHERE', $source->queries[0]);
-});
 
 
 test('na MySQL cili se duplicita resi bez INSERT IGNORE', function () {

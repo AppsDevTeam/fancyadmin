@@ -2335,7 +2335,6 @@ fancyAdmin:
 			- {entity: App\Model\Entities\AuditLog, hot: '3 months', retention: '13 months'}
 			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog, hot: '3 months', retention: '13 months'}
 			- {entity: App\Model\Entities\RequestLog, table: request_log_archive}
-			- {entity: App\Model\Entities\TransactionLog, where: 'response_at IS NOT NULL OR created_at < NOW() - INTERVAL 1 DAY'}
 			- {entity: App\Model\Entities\AuditLog, readable: false}
 ```
 
@@ -2346,11 +2345,13 @@ zápisu. Odvoz to nebolí: z cíle nečte, duplicitu řeší klíčem (`ON CONFL
 Patří sem auditní stopa, kterou má dokumentace typicky slíbenou jako z aplikace nedostupnou.
 Logy, které ukazují sekce Logy v administraci, musí zůstat `readable` (výchozí).
 
-`where` omezuje, co už je zralé na odvoz. Patří sem tabulka, do které se po založení ještě
-zapisuje — typicky request teď, response za chvíli: odvezený řádek už aplikace ve zdroji
-nenajde a dopsat do něj nedokáže. Podmínka musí pustit dál i záznamy, které se nikdy
-nedokončí (proto to `OR created_at < ...`), jinak ve zdroji zůstanou navždy. Uplatní se
-při výběru ze zdroje, ne až při mazání — maže se podle id toho, co se opravdu odvezlo.
+**Logovací řádek musí být neměnný.** Do tabulky, kde vzniká záznam o requestu a odpověď se
+dopisuje později, se odvoz trefí uprostřed: odvezený řádek už aplikace ve zdroji nenajde
+a dopsat do něj nedokáže. Řeší se to na straně zápisu — dva samostatné řádky se společným
+korelačním identifikátorem (`action` = `request` / `response`) — ne odkládáním odvozu.
+Odložit ho jde vždycky jen o kus a záznam, který se nikdy nedokončí, by ve zdroji zůstal
+navždy; navíc by se ta nejzajímavější událost (nedokončená operace) objevila v administraci
+jako poslední.
 
 Odváží `fancyadmin:move-logs`, typicky z cronu. Bere `--dry-run`, `--batch-size` a `--limit`
 (strop na tabulku a běh, aby se noční odvoz nezakousl, když se něco nahromadí). Nedostupná
@@ -2410,9 +2411,6 @@ class DeviceLog extends BaseEntity
 	use \ADT\FancyAdmin\Model\Entities\Traits\UpdatedAtUtc;
 }
 ```
-
-Podmínky v `where` pak musí porovnávat taky v UTC (`UTC_TIMESTAMP()` místo `NOW()`), jinak
-se liší o offset zóny serveru.
 
 **Administrace to i tak ukazuje v čase projektu** - převádí se to při čtení, na spojení:
 

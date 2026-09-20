@@ -97,12 +97,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					// auditni stopy, ktera z aplikace pristupna byt nema. `true` je pro
 					// logy, ktere ukazuji sekce Logy v administraci.
 					'readable' => Expect::bool()->default(true),
-					// Podminka (SQL, bez WHERE) omezujici, co uz je zrale na odvoz. Patri sem
-					// tabulka, do ktere se po zalozeni jeste zapisuje - odvezeny radek uz
-					// aplikace ve zdroji nenajde a dopsat do nej nedokaze. Zaznamy, ktere se
-					// nikdy nedokonci, je potreba pustit dal casem, jinak ve zdroji zustanou
-					// navzdy: `response_at IS NOT NULL OR created_at < NOW() - INTERVAL 1 DAY`.
-					'where' => Expect::string()->nullable()->default(null),
 				])->castTo('array'))->default([]),
 			]),
 			'keycloakEnabled' => Expect::bool()->default(false),
