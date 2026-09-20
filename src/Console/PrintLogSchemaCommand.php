@@ -202,8 +202,6 @@ class PrintLogSchemaCommand extends Command
 		}
 
 		return implode("\n", [
-			'CREATE EXTENSION IF NOT EXISTS timescaledb;',
-			'',
 			'-- vlastnik schematu - zaklada tabulky a patri mu retencni politiky,',
 			'-- aplikace jeho udaje nezna',
 			'CREATE USER "<vlastnik>" WITH PASSWORD \'<heslo vlastnika>\';',
@@ -213,6 +211,10 @@ class PrintLogSchemaCommand extends Command
 			"CREATE USER \"$user\" WITH PASSWORD '<heslo>';",
 			'',
 			'-- Dál se pokračuje jako <vlastnik>, připojený k této databázi.',
+			'',
+			// az tady: rozsireni se zaklada v te databazi, kde se ma pouzivat, ne
+			// v te, ze ktere se pousti CREATE DATABASE
+			'CREATE EXTENSION IF NOT EXISTS timescaledb;',
 		]);
 	}
 

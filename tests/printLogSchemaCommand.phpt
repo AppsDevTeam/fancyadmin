@@ -65,7 +65,10 @@ test('vypis zaklada uzivatele i databazi podle spojeni', function () {
 	// Aplikace do ciloveho serveru nema pristup - proto se to vypisuje k rucnimu spusteni.
 	$sql = printSchema([]);
 
-	Assert::contains('CREATE EXTENSION IF NOT EXISTS timescaledb', $sql);
+	// rozsireni az za CREATE DATABASE: zaklada se v te databazi, kde se ma pouzivat
+	Assert::true(
+		strpos($sql, 'CREATE EXTENSION IF NOT EXISTS timescaledb') > strpos($sql, 'CREATE DATABASE'),
+	);
 	Assert::contains('CREATE USER "pokladna"', $sql);
 	Assert::contains('CREATE DATABASE "pokladna_cashdesk"', $sql);
 	// heslo se nevypisuje
