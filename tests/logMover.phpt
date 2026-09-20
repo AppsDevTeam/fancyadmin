@@ -25,17 +25,33 @@ final class SourceConnection extends Doctrine\DBAL\Connection
 {
 	public array $deleted = [];
 	public array $queries = [];
+	private array $batch = [];
+	private array $rows = [];
 
 	/** @param list<list<array<string, mixed>>> $batches */
 	public function __construct(private array $batches = [], private int $count = 0)
 	{
 	}
 
-	public function fetchAllAssociative(string $query, array $params = [], array $types = []): array
+	/** Davka se ctou nejdriv id, pak radek po radku - stub to musi umet stejne. */
+	public function fetchFirstColumn(string $query, array $params = [], array $types = []): array
 	{
 		$this->queries[] = $query;
 
-		return array_shift($this->batches) ?? [];
+		$this->batch = array_shift($this->batches) ?? [];
+		$this->rows = [];
+		foreach ($this->batch as $_row) {
+			$this->rows[(int) $_row['id']] = $_row;
+		}
+
+		return array_column($this->batch, 'id');
+	}
+
+	public function fetchAssociative(string $query, array $params = [], array $types = []): array|false
+	{
+		$this->queries[] = $query;
+
+		return $this->rows[(int) $params[0]] ?? false;
 	}
 
 	public function fetchOne(string $query, array $params = [], array $types = []): mixed
@@ -337,4 +353,20 @@ test('na MySQL cili se duplicita resi bez INSERT IGNORE', function () {
 
 	Assert::contains('ON DUPLICATE KEY UPDATE', $target->statements[0]);
 	Assert::notContains('INSERT IGNORE', $target->statements[0]);
+});
+
+
+test('ze zdroje se nebere cela davka najednou', function () {
+	// Regrese: `SELECT *` na celou davku prevedl tisic radku do pameti naraz. Logovaci
+	// zaznam ma klidne megabajty (telo requestu, cele XML odpovedi), takze konzument
+	// fronty spadl na memory_limit. Nejdriv se proto ctou jen id, pak radek po radku.
+	$source = new SourceConnection([[auditRow(1), auditRow(2)], []]);
+
+	createMover($source, new TargetConnection())->moveAll();
+
+	Assert::contains('SELECT id FROM audit_log', $source->queries[0]);
+	Assert::notContains('SELECT * FROM audit_log ORDER BY', implode("\n", $source->queries));
+	// kazdy radek zvlast, at je spotreba pameti nezavisla na sirce tabulky
+	Assert::contains('SELECT * FROM audit_log WHERE id = ?', $source->queries[1]);
+	Assert::contains('SELECT * FROM audit_log WHERE id = ?', $source->queries[2]);
 });

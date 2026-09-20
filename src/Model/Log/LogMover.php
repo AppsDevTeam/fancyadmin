@@ -37,6 +37,10 @@ use Throwable;
  * pořadí nebo mazání "co se stihlo" znamená ztrátu, kterou nikdo nedohledá, protože
  * záznam o ní byl právě v tom, co zmizelo.
  *
+ * PAMĚŤ NEROSTE S ŠÍŘKOU TABULKY. Řádky se ze zdroje berou po jednom, ne celá dávka
+ * jedním `SELECT *` - logovací záznam může mít megabajty (tělo requestu, celé XML
+ * odpovědi) a tisíc takových najednou přeteče memory_limit konzumenta fronty.
+ *
  * Z CÍLE SE NEČTE. Aplikaci proto stačí na cílové tabulce právo INSERT - u auditní stopy
  * je to podstatné, ta z aplikace číst nemá jít vůbec.
  */
@@ -101,20 +105,33 @@ class LogMover
 		$processed = 0;
 
 		while (true) {
+			// NEJDŘÍV JEN ID, teprve pak řádky po jednom. `SELECT *` na celou dávku vypadá
+			// úsporněji (jeden dotaz místo tisíce), jenže logovací řádek může mít megabajty -
+			// tělo requestu, celé XML odpovědi - a ovladač si celý výsledek drží v paměti.
+			// Tisíc takových řádků spolehlivě přeteče memory_limit konzumenta fronty.
+			// Takhle je spotřeba paměti stejná pro úzkou i širokou tabulku.
+			//
 			// nejstarší napřed: kdyby běh skončil dřív, zůstane ve zdroji ta novější část,
 			// kterou je i tak nejsnazší dohledat
-			$batch = $source->fetchAllAssociative("SELECT * FROM $sourceTable$condition ORDER BY id ASC LIMIT $batchSize");
-			if (!$batch) {
+			$ids = array_map('intval', $source->fetchFirstColumn(
+				"SELECT id FROM $sourceTable$condition ORDER BY id ASC LIMIT $batchSize",
+			));
+			if (!$ids) {
 				break;
 			}
-
-			$ids = array_map(static fn (array $row) => (int) $row['id'], $batch);
 
 			$this->targetConnection->beginTransaction();
 			try {
 				$written = 0;
-				foreach ($batch as $_row) {
-					$written += $this->insertIgnoringDuplicates($targetTable, $this->toTargetRow($_row));
+				foreach ($ids as $_id) {
+					$row = $source->fetchAssociative("SELECT * FROM $sourceTable WHERE id = ?", [$_id]);
+					if ($row === false) {
+						// mezitim zmizel - mazat ho uz nikdo nemusi
+						continue;
+					}
+
+					$written += $this->insertIgnoringDuplicates($targetTable, $this->toTargetRow($row));
+					unset($row);
 				}
 				$this->targetConnection->commit();
 			} catch (Throwable $e) {
@@ -133,7 +150,7 @@ class LogMover
 			);
 
 			$moved += $written;
-			$processed += count($batch);
+			$processed += count($ids);
 
 			if ($limit > 0 && $processed >= $limit) {
 				break;
