@@ -80,6 +80,11 @@ presenters:
     pageTitle: Logy změn
     header: Logy změn
 
+  authLogs:
+    title: Přihlašování
+    pageTitle: Přihlašování
+    header: Přihlašování
+
   configurations:
     title: Konfigurace
     pageTitle: Konfigurace
@@ -315,6 +320,21 @@ grids:
     email: E-mail
     fullName: Jméno
     phoneNumber: Telefon
+
+  authLog:
+    createdAt: Datum
+    type: Událost
+    identity: Přihlašovací jméno
+    ip: IP adresa
+    userAgent: Prohlížeč
+    reason: Důvod
+    types:
+      login: Přihlášení
+      login_failed: Neúspěšné přihlášení
+      login_blocked: Zablokovaný pokus
+      logout: Odhlášení
+      fraud_detected: Ukončení podezřelé session
+      invalid_token: Neplatný token
 
   changeLog:
     createdAt: Datum

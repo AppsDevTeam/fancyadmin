@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\DI;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Console\MoveLogsCommand;
+use ADT\FancyAdmin\Console\PrintLogSchemaCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
@@ -85,6 +86,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'tables' => Expect::listOf(Expect::structure([
 					'entity' => Expect::string()->required(),
 					'table' => Expect::string()->nullable()->default(null),
+					// jen pro fancyadmin:print-log-schema, samotny odvoz je nepouziva:
+					// `hot` = hranice provozni a archivni vrstvy (komprese v TimescaleDB),
+					// `retention` = po jake dobe zaznam v cili zanikne
+					'hot' => Expect::string()->nullable()->default(null),
+					'retention' => Expect::string()->nullable()->default(null),
 				])->castTo('array'))->default([]),
 			]),
 			'keycloakEnabled' => Expect::bool()->default(false),
@@ -234,6 +240,13 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 			$defs[] = $builder->addDefinition($this->prefix('moveLogs'))
 				->setFactory(MoveLogsCommand::class, [
+					'targetConnection' => $mover->connection,
+					'config' => $mover->tables,
+				])
+				->setAutowired(false);
+
+			$defs[] = $builder->addDefinition($this->prefix('printLogSchema'))
+				->setFactory(PrintLogSchemaCommand::class, [
 					'targetConnection' => $mover->connection,
 					'config' => $mover->tables,
 				])

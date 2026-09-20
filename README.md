@@ -2332,10 +2332,12 @@ fancyAdmin:
 	logMover:
 		connection: @nettrine.dbal.connections.logdb.connection
 		tables:
-			- {entity: App\Model\Entities\AuditLog}
-			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog}
+			- {entity: App\Model\Entities\AuditLog, hot: '3 months', retention: '13 months'}
+			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog, hot: '3 months', retention: '13 months'}
 			- {entity: App\Model\Entities\RequestLog, table: request_log_archive}
 ```
+
+`hot` a `retention` používá jen `fancyadmin:print-log-schema` (viz níže), odvoz sám ne.
 
 Odváží `fancyadmin:move-logs`, typicky z cronu. Bere `--dry-run`, `--batch-size` a `--limit`
 (strop na tabulku a běh, aby se noční odvoz nezakousl, když se něco nahromadí). Nedostupná
@@ -2346,6 +2348,25 @@ příkaz neregistruje.
 patří i to, co se podle retenční politiky musí uchovat dlouho — auditní stopa, change log,
 provozní logy, u kterých jde spíš o velikost provozní databáze než o životnost dat. Tatáž
 tabulka nemá být v obou konfiguracích.
+
+### Založení cílového úložiště
+
+```bash
+php bin/console fancyadmin:print-log-schema
+```
+
+Vypíše SQL k ručnímu spuštění: vytvoření uživatele a databáze podle nastaveného spojení
+(heslo tam schválně není) a `CREATE TABLE` pro každou tabulku z konfigurace. Na PostgreSQL
+doplní u tabulek, které mají `hot` nebo `retention`, i hypertable, kompresní a retenční
+politiku TimescaleDB.
+
+Schéma se odvozuje **z entit**, takže neodejde od zdroje — přibude sloupec v logu a příští
+výpis ho má taky. Ručně psané SQL vedle entit se rozejde a přijde se na to až tím, že odvoz
+spadne na neznámém sloupci.
+
+Aplikace ten příkaz nespouští, jen tiskne: do cílového serveru nemá přístup a **to je celý
+smysl odděleného úložiště**. Právo mazat tam aplikace mít nemá, jinak by šel odvezený záznam
+odstranit odtud, odkud přišel.
 
 ### Cílová tabulka
 
@@ -2402,6 +2423,52 @@ zůstanou záznamy v obou a další běh je podle `(source, source_id)` pozná a
 
 Opačné pořadí (nebo mazání „co se stihlo") znamená ztrátu, kterou nikdo nedohledá, protože
 záznam o ní byl právě v tom, co zmizelo.
+
+---
+
+## 24. Přihlašování v administraci (volitelné)
+
+Sekce **Přihlašování** ukazuje v Backoffice, kdo se kdy odkud přihlásil — pro podporu
+a diagnostiku. Zdrojem je tabulka `auth_log` z `adt/doctrine-authenticator`.
+
+**Není to auditní stopa.** Ta má být mimo aplikaci právě proto, aby ji nepřepsal nikdo, kdo
+se do administrace dostane; tady jde o provozní pohled a co je vidět odsud, není důkaz. Mít
+obojí je záměr — dvě kopie téže události s jinou retencí a jiným okruhem čtenářů. Jen ať to
+odpovídá tomu, co o přístupu k logům tvrdí politika projektu.
+
+Zapíná se v knihovně:
+
+```neon
+security.authenticator:
+	setup:
+		- setAuthLog(true)
+```
+
+Projekt si dodá query (entitu `AuthLog` mapuje knihovna sama) a presenter:
+
+```php
+class AuthLogQuery extends BaseQuery implements \ADT\FancyAdmin\Model\Queries\AuthLogQuery
+{
+	use AuthLogQueryTrait;
+
+	// auth_log je globální systémová tabulka bez vazby na account,
+	// sekce je proto jen v Backoffice přes vlastní ACL resource
+	protected function applySecurityFilter(): void {}
+	protected function applyAccountFilter(QueryBuilder $qb, Account $account): void {}
+}
+
+class AuthLogsPresenter extends BasePresenter
+{
+	use AuthLogsPresenterTrait;
+}
+```
+
+Plus `AuthLogQueryFactory`, `AuthLogGrid` + `AuthLogGridFactory` (stejným vzorem jako
+ostatní gridy) a položka v menu přes `addAuthLogsItem()`.
+
+Retenci si řídí projekt — tabulka patří do `purge` (viz sekce 22), ne do moveru: odvézt ji
+do odděleného úložiště by znamenalo, že v administraci nebude vidět, což je přesně to, kvůli
+čemu je tady.
 
 ---
 
