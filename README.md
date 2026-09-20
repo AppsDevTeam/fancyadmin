@@ -2498,3 +2498,58 @@ do odděleného úložiště by znamenalo, že v administraci nebude vidět, co�
 | Portal presentery | BasePresenter + AuthPresenter s fancyadmin traits | Admin layout, auth check, side panel |
 | Passkey glue třídy | Entita Passkey, PasskeyQuery + factory, PasskeyForm + factory, PasskeyGrid + factory | Přihlašování přes passkeys (WebAuthn) — viz sekce 19 |
 | ApiKey glue třídy | Entita ApiKey, ApiKeyQuery + factory, ApiKeyForm + factory, ApiKeyGrid + factory, ApiKeysPresenter | Správa API klíčů pro server-to-server přístup — viz sekce 20 |
+
+---
+
+## 24. Log volání cizích rozhraní (volitelné)
+
+Opak `request_log`: ten drží, co přišlo zvenčí, `api_log` to, co aplikace sama poslala ven —
+odeslaný požadavek, přijatou odpověď, stavový kód, dobu zpracování a případnou chybu spojení.
+
+```php
+#[ORM\Entity]
+#[ORM\Index(fields: ['createdAt'])]
+#[ORM\Index(fields: ['accountId'])]
+#[ORM\Index(fields: ['type'])]
+class ApiLog extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\ApiLog
+{
+	use \ADT\FancyAdmin\Model\Entities\ApiLogTrait;
+
+	// `type` je na projektu: každá aplikace volá jiná rozhraní a chce je mít otypovaná
+	#[ORM\Column(enumType: ApiLogTypeEnum::class)]
+	protected ApiLogTypeEnum $type;
+
+	// vlastní sloupce projektu, např. vazba na doklad, kvůli kterému se volalo
+	#[ORM\Column(nullable: true)]
+	protected ?int $documentId = null;
+}
+```
+
+```neon
+services:
+	- ADT\FancyAdmin\Model\ApiLogger(@nettrine.dbal.connections.default.connection::getParams())
+```
+
+```php
+$this->apiLogger->log(
+	type: ApiLogTypeEnum::SUBMISSION->value,
+	environment: 'playground',
+	endpointUrl: $url,
+	request: $xml,
+	response: $response?->body,
+	httpStatusCode: $response?->statusCode,
+	durationMs: $durationMs,
+	accountId: $account?->getId(),
+	errorMessage: $error,
+	extraValues: ['document_id' => $document?->getId()],   // systémové sloupce nepřepíšou
+);
+```
+
+**Vlastní spojení, ne to od EntityManageru.** Volání ven typicky probíhá uvnitř otevřené ORM
+transakce a ta se může rozpadnout právě kvůli tomu, co protistrana odpověděla — na sdíleném
+spojení by se rollbackem ztratil přesně ten záznam, kvůli kterému se loguje. Zápis přes DBAL
+(ne přes entitu) navíc nesahá na rozpracovaný flush. Selhání zápisu se polyká: log nesmí
+shodit operaci, o které vypovídá.
+
+Obsah prochází `SensitiveDataSanitizer` — do cizího rozhraní i zpátky můžou téct údaje, které
+se do logu uložit nesmí.
