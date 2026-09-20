@@ -24,6 +24,7 @@ require __DIR__ . '/bootstrap.php';
 final class SourceConnection extends Doctrine\DBAL\Connection
 {
 	public array $deleted = [];
+	public array $queries = [];
 
 	/** @param list<list<array<string, mixed>>> $batches */
 	public function __construct(private array $batches = [], private int $count = 0)
@@ -32,11 +33,15 @@ final class SourceConnection extends Doctrine\DBAL\Connection
 
 	public function fetchAllAssociative(string $query, array $params = [], array $types = []): array
 	{
+		$this->queries[] = $query;
+
 		return array_shift($this->batches) ?? [];
 	}
 
 	public function fetchOne(string $query, array $params = [], array $types = []): mixed
 	{
+		$this->queries[] = $query;
+
 		return $this->count;
 	}
 
@@ -259,4 +264,37 @@ test('nedostupna tabulka shodi jen svuj radek', function () {
 
 	Assert::same(['audit_log'], array_keys($result['errors']));
 	Assert::same([], $source->deleted);
+});
+
+
+test('podminka zralosti se uplatni uz pri vyberu ze zdroje', function () {
+	// Tabulka, do ktere se po zalozeni jeste zapisuje (request ted, response za chvili),
+	// se nesmi odvezt driv, nez je hotova - ve zdroji uz by ji aplikace nenasla.
+	// Filtrovat az pri mazani nestaci: maze se podle id toho, co se odvezlo.
+	$source = new SourceConnection([[auditRow(1)], []]);
+	$target = new TargetConnection();
+	$config = [[
+		'entity' => TestAuditLog::class,
+		'table' => null,
+		'hot' => null,
+		'retention' => null,
+		'where' => 'outcome IS NOT NULL',
+	]];
+
+	$mover = createMover($source, $target, $config);
+	$mover->moveAll();
+
+	Assert::contains('FROM audit_log WHERE outcome IS NOT NULL ORDER BY id ASC', $source->queries[0]);
+	// i pocitadlo cekajicich musi merit totez, co se doopravdy odveze
+	$mover->countWaiting(TestAuditLog::class);
+	Assert::contains('FROM audit_log WHERE outcome IS NOT NULL', end($source->queries));
+});
+
+
+test('bez podminky se vybira cela tabulka', function () {
+	$source = new SourceConnection([[auditRow(1)], []]);
+
+	createMover($source, new TargetConnection())->moveAll();
+
+	Assert::notContains('WHERE', $source->queries[0]);
 });

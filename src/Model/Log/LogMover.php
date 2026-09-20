@@ -26,6 +26,10 @@ use Throwable;
  * Předpokladem je JEDNA CÍLOVÁ DATABÁZE NA ZDROJ - id se mezi systémy potkávají, takže
  * dva zdroje v jedné tabulce by si je přepsaly.
  *
+ * NE VŠECHNO JE HNED ZRALÉ. Do tabulky, kde vzniká záznam o requestu a odpověď se dopisuje
+ * později, se smí sáhnout až když je hotová - odvezený řádek už aplikace ve zdroji nenajde.
+ * K tomu je v konfiguraci `where`.
+ *
  * POŘADÍ OPERACÍ: nejdřív zápis do cíle, pak teprve mazání ve zdroji, a mazat se smí jen
  * to, co se opravdu zapsalo. Kdyby se běh přerušil mezi zápisem a mazáním, zůstanou
  * záznamy v obou - a další běh je podle id pozná a přeskočí. Opačné pořadí nebo mazání
@@ -37,7 +41,7 @@ class LogMover
 	public const int BATCH_SIZE = 1000;
 
 	/**
-	 * @param list<array{entity: class-string, table: string|null, hot: string|null, retention: string|null}> $config
+	 * @param list<array{entity: class-string, table: string|null, hot: string|null, retention: string|null, where: string|null}> $config
 	 */
 	public function __construct(
 		private readonly EntityManagerInterface $em,
@@ -46,7 +50,7 @@ class LogMover
 	) {
 	}
 
-	/** @return list<array{entity: class-string, table: string|null, hot: string|null, retention: string|null}> */
+	/** @return list<array{entity: class-string, table: string|null, hot: string|null, retention: string|null, where: string|null}> */
 	public function getTables(): array
 	{
 		return $this->config;
@@ -88,13 +92,14 @@ class LogMover
 		$sourceTable = $this->getSourceTable($entityClass);
 		$targetTable = $this->getTargetTable($entityClass);
 		$source = $this->em->getConnection();
+		$condition = $this->getCondition($entityClass);
 		$moved = 0;
 		$processed = 0;
 
 		while (true) {
 			// nejstarší napřed: kdyby běh skončil dřív, zůstane ve zdroji ta novější část,
 			// kterou je i tak nejsnazší dohledat
-			$batch = $source->fetchAllAssociative("SELECT * FROM $sourceTable ORDER BY id ASC LIMIT $batchSize");
+			$batch = $source->fetchAllAssociative("SELECT * FROM $sourceTable$condition ORDER BY id ASC LIMIT $batchSize");
 			if (!$batch) {
 				break;
 			}
@@ -141,8 +146,9 @@ class LogMover
 	public function countWaiting(string $entityClass): int
 	{
 		$table = $this->getSourceTable($entityClass);
+		$condition = $this->getCondition($entityClass);
 
-		return (int) $this->em->getConnection()->fetchOne("SELECT COUNT(*) FROM $table");
+		return (int) $this->em->getConnection()->fetchOne("SELECT COUNT(*) FROM $table$condition");
 	}
 
 	/** @param class-string $entityClass */
@@ -161,6 +167,25 @@ class LogMover
 		}
 
 		return $this->getSourceTable($entityClass);
+	}
+
+	/**
+	 * Podmínka zralosti na odvoz, i s klíčovým slovem - prázdný řetězec, když žádná není.
+	 *
+	 * Musí být v SELECTu, ne až v mazání: maže se podle id toho, co se opravdu odvezlo,
+	 * takže nezralý řádek se sem vůbec nesmí dostat.
+	 *
+	 * @param class-string $entityClass
+	 */
+	private function getCondition(string $entityClass): string
+	{
+		foreach ($this->config as $_entry) {
+			if ($_entry['entity'] === $entityClass && !empty($_entry['where'] ?? null)) {
+				return ' WHERE ' . $_entry['where'];
+			}
+		}
+
+		return '';
 	}
 
 	/**

@@ -2335,9 +2335,16 @@ fancyAdmin:
 			- {entity: App\Model\Entities\AuditLog, hot: '3 months', retention: '13 months'}
 			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog, hot: '3 months', retention: '13 months'}
 			- {entity: App\Model\Entities\RequestLog, table: request_log_archive}
+			- {entity: App\Model\Entities\TransactionLog, where: 'response_at IS NOT NULL OR created_at < NOW() - INTERVAL 1 DAY'}
 ```
 
 `hot` a `retention` používá jen `fancyadmin:print-log-schema` (viz níže), odvoz sám ne.
+
+`where` omezuje, co už je zralé na odvoz. Patří sem tabulka, do které se po založení ještě
+zapisuje — typicky request teď, response za chvíli: odvezený řádek už aplikace ve zdroji
+nenajde a dopsat do něj nedokáže. Podmínka musí pustit dál i záznamy, které se nikdy
+nedokončí (proto to `OR created_at < ...`), jinak ve zdroji zůstanou navždy. Uplatní se
+při výběru ze zdroje, ne až při mazání — maže se podle id toho, co se opravdu odvezlo.
 
 Odváží `fancyadmin:move-logs`, typicky z cronu. Bere `--dry-run`, `--batch-size` a `--limit`
 (strop na tabulku a běh, aby se noční odvoz nezakousl, když se něco nahromadí). Nedostupná
