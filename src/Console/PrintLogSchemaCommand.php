@@ -206,11 +206,11 @@ class PrintLogSchemaCommand extends Command
 			'',
 			'-- vlastnik schematu - zaklada tabulky a patri mu retencni politiky,',
 			'-- aplikace jeho udaje nezna',
-			"CREATE USER <vlastnik> WITH PASSWORD '<heslo vlastnika>';",
-			"CREATE DATABASE \"$dbname\" WITH OWNER = <vlastnik> ENCODING = 'UTF8' TEMPLATE = template0;",
+			'CREATE USER "<vlastnik>" WITH PASSWORD \'<heslo vlastnika>\';',
+			"CREATE DATABASE \"$dbname\" WITH OWNER = \"<vlastnik>\" ENCODING = 'UTF8' TEMPLATE = template0;",
 			'',
 			'-- aplikace - prava dostane az za tabulkami, viz konec vypisu',
-			"CREATE USER $user WITH PASSWORD '<heslo>';",
+			"CREATE USER \"$user\" WITH PASSWORD '<heslo>';",
 			'',
 			'-- Dál se pokračuje jako <vlastnik>, připojený k této databázi.',
 		]);
@@ -239,16 +239,18 @@ class PrintLogSchemaCommand extends Command
 			'-- Práva aplikace: zapisovat, a číst jen tam, kde to potřebuje. Žádné UPDATE',
 			'-- ani DELETE - mazat smí jen retenční politika, aby se odvezený záznam nedal',
 			'-- odstranit odtud, odkud přišel.',
-			"GRANT CONNECT ON DATABASE \"$dbname\" TO $user;",
-			"GRANT USAGE ON SCHEMA public TO $user;",
+			"GRANT CONNECT ON DATABASE \"$dbname\" TO \"$user\";",
+			"GRANT USAGE ON SCHEMA public TO \"$user\";",
 		];
 
 		foreach ($this->config as $_entry) {
 			$table = $_entry['table'] ?? $this->em->getClassMetadata($_entry['entity'])->getTableName();
 
+			// jmeno uzivatele se uvozuje: databaze se casto jmenuji podle projektu
+			// a pomlcka v identifikatoru bez uvozovek neprojde
 			$sql[] = ($_entry['readable'] ?? true)
-				? "GRANT SELECT, INSERT ON $table TO $user;"
-				: "GRANT INSERT ON $table TO $user;   -- číst ji aplikace nemá";
+				? "GRANT SELECT, INSERT ON $table TO \"$user\";"
+				: "GRANT INSERT ON $table TO \"$user\";   -- číst ji aplikace nemá";
 		}
 
 		$sql[] = 'REVOKE CREATE ON SCHEMA public FROM PUBLIC;';

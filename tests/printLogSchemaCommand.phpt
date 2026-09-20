@@ -66,7 +66,7 @@ test('vypis zaklada uzivatele i databazi podle spojeni', function () {
 	$sql = printSchema([]);
 
 	Assert::contains('CREATE EXTENSION IF NOT EXISTS timescaledb', $sql);
-	Assert::contains('CREATE USER pokladna', $sql);
+	Assert::contains('CREATE USER "pokladna"', $sql);
 	Assert::contains('CREATE DATABASE "pokladna_cashdesk"', $sql);
 	// heslo se nevypisuje
 	Assert::contains('<heslo>', $sql);
@@ -168,9 +168,9 @@ test('aplikace dostane jen cteni a zapis', function () {
 	// prepsat zaznamy o tom, co v ni delal. Vlastnikem databaze proto neni aplikace.
 	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
 
-	Assert::contains('GRANT SELECT, INSERT ON audit_log TO pokladna;', $sql);
-	Assert::contains('WITH OWNER = <vlastnik>', $sql);
-	Assert::notContains('WITH OWNER = pokladna', $sql);
+	Assert::contains('GRANT SELECT, INSERT ON audit_log TO "pokladna";', $sql);
+	Assert::contains('WITH OWNER = "<vlastnik>"', $sql);
+	Assert::notContains('WITH OWNER = "pokladna"', $sql);
 
 	foreach (['UPDATE', 'DELETE', 'TRUNCATE', 'GRANT ALL'] as $_privilege) {
 		Assert::notContains("$_privilege ON", $sql, "aplikace nesmi dostat $_privilege");
@@ -183,7 +183,7 @@ test('tabulka, kterou aplikace cist nema, dostane jen zapis', function () {
 	// neni k cemu a dokument slibuje, ze z aplikace pristupna neni.
 	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null, 'readable' => false]]);
 
-	Assert::contains('GRANT INSERT ON audit_log TO pokladna;', $sql);
+	Assert::contains('GRANT INSERT ON audit_log TO "pokladna";', $sql);
 	Assert::notContains('GRANT SELECT', $sql);
 });
 
@@ -194,4 +194,17 @@ test('prava se udeluji az za tabulkami', function () {
 	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
 
 	Assert::true(strpos($sql, 'GRANT SELECT, INSERT ON audit_log') > strpos($sql, 'CREATE TABLE audit_log'));
+});
+
+
+test('jmeno uzivatele s pomlckou projde', function () {
+	// Uzivatele se jmenuji podle projektu (sobitpokladna-local_cashdesk) a pomlcka
+	// v neuvozenem identifikatoru je v PostgreSQL syntakticka chyba.
+	$sql = printSchema(
+		[['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]],
+		new SchemaConnection(['dbname' => 'pokladna-local_cashdesk_logs', 'user' => 'pokladna-local_cashdesk']),
+	);
+
+	Assert::contains('CREATE USER "pokladna-local_cashdesk"', $sql);
+	Assert::contains('TO "pokladna-local_cashdesk";', $sql);
 });
