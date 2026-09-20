@@ -67,6 +67,13 @@ class PrintLogSchemaCommand extends Command
 			}
 		}
 
+		$params = $this->targetConnection->getParams();
+		$output->writeln($this->grants(
+			$isPostgres,
+			($params['dbname'] ?? '') ?: '<databaze>',
+			($params['user'] ?? '') ?: '<uzivatel>',
+		));
+
 		return self::SUCCESS;
 	}
 
@@ -158,6 +165,17 @@ class PrintLogSchemaCommand extends Command
 		return implode("\n", $sql);
 	}
 
+	/**
+	 * DVA UŽIVATELÉ, ne jeden.
+	 *
+	 * Vlastník založí tabulky a patří mu retenční politiky. Aplikace dostane účet, který
+	 * umí jen ČÍST A ZAPISOVAT - žádné UPDATE, DELETE, DROP ani ALTER. Bez toho celé
+	 * oddělené úložiště nedává smysl: kdo se dostane k aplikaci, mohl by přepsat záznamy
+	 * o tom, co v ní dělal, a to je přesně ta vlastnost, kterou má úložiště zaručit.
+	 *
+	 * Aplikace potřebuje i SELECT: odvoz podle id poznává, co už v cíli je, a sekce Logy
+	 * v administraci odtud čtou. Mazání zůstává výhradně retenční politice.
+	 */
 	private function createDatabase(bool $isPostgres): string
 	{
 		// prazdny retezec je v konfiguraci bezny (hodnotu doplnuje az stage), takze
@@ -170,18 +188,56 @@ class PrintLogSchemaCommand extends Command
 		if (!$isPostgres) {
 			return implode("\n", [
 				"CREATE DATABASE `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;",
+				'',
+				'-- vlastnik schematu - zaklada tabulky, aplikace jeho udaje nezna',
+				"CREATE USER '<vlastnik>'@'%' IDENTIFIED BY '<heslo vlastnika>';",
+				"GRANT ALL PRIVILEGES ON `$dbname`.* TO '<vlastnik>'@'%';",
+				'',
+				'-- aplikace - jen cist a zapisovat',
 				"CREATE USER '$user'@'%' IDENTIFIED BY '<heslo>';",
 				"GRANT SELECT, INSERT ON `$dbname`.* TO '$user'@'%';",
+				'',
+				'-- Dál se pokračuje jako <vlastnik>, připojený k této databázi.',
 			]);
 		}
 
 		return implode("\n", [
 			'CREATE EXTENSION IF NOT EXISTS timescaledb;',
 			'',
-			"CREATE USER $user WITH PASSWORD '<heslo>';",
-			"CREATE DATABASE \"$dbname\" WITH OWNER = $user ENCODING = 'UTF8' TEMPLATE = template0;",
+			'-- vlastnik schematu - zaklada tabulky a patri mu retencni politiky,',
+			'-- aplikace jeho udaje nezna',
+			"CREATE USER <vlastnik> WITH PASSWORD '<heslo vlastnika>';",
+			"CREATE DATABASE \"$dbname\" WITH OWNER = <vlastnik> ENCODING = 'UTF8' TEMPLATE = template0;",
 			'',
-			'-- Dál se pokračuje připojený k této databázi.',
+			'-- aplikace - prava dostane az za tabulkami, viz konec vypisu',
+			"CREATE USER $user WITH PASSWORD '<heslo>';",
+			'',
+			'-- Dál se pokračuje jako <vlastnik>, připojený k této databázi.',
+		]);
+	}
+
+	/**
+	 * Práva aplikace. Až za tabulkami - grant na neexistující tabulku neprojde.
+	 *
+	 * Chunky hypertabulky vznikají za provozu; TimescaleDB jim práva rodiče předá sama,
+	 * `ALTER DEFAULT PRIVILEGES` kryje tabulky založené později (další log v konfiguraci).
+	 */
+	private function grants(bool $isPostgres, string $dbname, string $user): string
+	{
+		if (!$isPostgres) {
+			// MySQL resi prava uz u CREATE USER, tady uz neni co dodat
+			return '';
+		}
+
+		return implode("\n", [
+			'',
+			'-- Práva aplikace: číst a zapisovat, nic víc. Mazat smí jen retenční politika,',
+			'-- aby se odvezený záznam nedal odstranit odtud, odkud přišel.',
+			"GRANT CONNECT ON DATABASE \"$dbname\" TO $user;",
+			"GRANT USAGE ON SCHEMA public TO $user;",
+			"GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO $user;",
+			"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO $user;",
+			"REVOKE CREATE ON SCHEMA public FROM PUBLIC;",
 		]);
 	}
 
@@ -193,9 +249,10 @@ class PrintLogSchemaCommand extends Command
 			'-- Databáze patří VŽDY JEN JEDNOMU zdroji: záznam si veze své id ze zdrojové',
 			'-- databáze, takže dva zdroje v jedné tabulce by si je přepsaly.',
 			'--',
-			'-- Heslo doplňte, ve výpisu schválně není. Aplikaci stačí právo číst a zapisovat;',
-			'-- mazat má jen retenční politika, aby se odvezený záznam nedal odstranit odtud,',
-			'-- odkud přišel.',
+			'-- Hesla doplňte, ve výpisu schválně nejsou. Uživatelé jsou dva: vlastník, který',
+			'-- schéma založí, a aplikace, která umí jen číst a zapisovat - žádné UPDATE,',
+			'-- DELETE, DROP ani ALTER. Mazat smí jen retenční politika, aby se odvezený',
+			'-- záznam nedal odstranit odtud, odkud přišel.',
 			'',
 		]);
 	}

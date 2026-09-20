@@ -161,3 +161,29 @@ test('na MySQL se zaklada s kodovanim, ktere pouzivame', function () {
 	// TimescaleDB je jen v PostgreSQL, na MySQL se nesmi objevit
 	Assert::notContains('create_hypertable', $sql);
 });
+
+
+test('aplikace dostane jen cteni a zapis', function () {
+	// Tohle je duvod celeho oddeleneho uloziste: kdo se dostane k aplikaci, nesmi umet
+	// prepsat zaznamy o tom, co v ni delal. Vlastnikem databaze proto neni aplikace.
+	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
+
+	Assert::contains('GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO pokladna', $sql);
+	Assert::contains('WITH OWNER = <vlastnik>', $sql);
+	Assert::notContains('WITH OWNER = pokladna', $sql);
+
+	foreach (['UPDATE', 'DELETE', 'TRUNCATE', 'GRANT ALL'] as $_privilege) {
+		Assert::notContains("$_privilege ON", $sql, "aplikace nesmi dostat $_privilege");
+	}
+});
+
+
+test('prava se udeluji az za tabulkami', function () {
+	// GRANT na jeste neexistujici tabulku neprojde - kdo vypis pousti odshora dolu,
+	// by se zastavil na chybe.
+	$sql = printSchema([['entity' => TestAuditLog::class, 'table' => null, 'hot' => null, 'retention' => null]]);
+
+	Assert::true(strpos($sql, 'GRANT SELECT, INSERT ON ALL TABLES') > strpos($sql, 'CREATE TABLE audit_log'));
+	// tabulky zalozene pozdeji (dalsi log v konfiguraci) musi prava podedit
+	Assert::contains('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO pokladna', $sql);
+});

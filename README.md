@@ -2362,10 +2362,17 @@ tabulka nemá být v obou konfiguracích.
 php bin/console fancyadmin:print-log-schema
 ```
 
-Vypíše SQL k ručnímu spuštění: vytvoření uživatele a databáze podle nastaveného spojení
-(heslo tam schválně není) a `CREATE TABLE` pro každou tabulku z konfigurace. Na PostgreSQL
+Vypíše SQL k ručnímu spuštění: vytvoření uživatelů a databáze podle nastaveného spojení
+(hesla tam schválně nejsou) a `CREATE TABLE` pro každou tabulku z konfigurace. Na PostgreSQL
 doplní u tabulek, které mají `hot` nebo `retention`, i hypertable, kompresní a retenční
 politiku TimescaleDB.
+
+**Uživatelé jsou dva.** Vlastník (`<vlastnik>`) schéma založí a patří mu retenční politiky;
+aplikace dostane účet, který umí jen `SELECT` a `INSERT` — žádné `UPDATE`, `DELETE`, `DROP`
+ani `ALTER`. Bez toho celé oddělené úložiště nedává smysl: kdo se dostane k aplikaci, mohl by
+přepsat záznamy o tom, co v ní dělal. `SELECT` aplikace potřebovat bude (odvoz podle id
+poznává, co už v cíli je, a sekce Logy odtud čtou), mazání zůstává výhradně retenční politice.
+Údaje vlastníka se do aplikace nikdy nedostanou.
 
 Schéma se odvozuje **z entit**, takže neodejde od zdroje — přibude sloupec v logu a příští
 výpis ho má taky. Ručně psané SQL vedle entit se rozejde a přijde se na to až tím, že odvoz
