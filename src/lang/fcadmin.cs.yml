@@ -390,6 +390,8 @@ appGeneral:
   exceptions:
     userNotFound: "Uživatel nenalezen"
     wrongCredentials: "Neplatné přihlašovací údaje"
+    wrongCredentialsAttemptsLeft: '{1}Neplatné přihlašovací údaje. Zbývá 1 pokus, poté bude přihlášení dočasně zablokováno.|]1,4]Neplatné přihlašovací údaje. Zbývají %count% pokusy.|[5,Inf[Neplatné přihlašovací údaje. Zbývá %count% pokusů.'
+    signInBlocked: "Vyčerpali jste povolený počet pokusů, přihlášení je proto dočasně zablokováno. Zkusit to můžete znovu v %time%."
     noPermission: "Nemáte právo pro přihlášení"
     inactiveUser: "Neaktivní uživatel"
 

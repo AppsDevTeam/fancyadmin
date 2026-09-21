@@ -120,8 +120,38 @@ trait SignInFormTrait
 				}
 			}
 		} catch (AuthenticationException) {
-			$form->addError('fcadmin.appGeneral.exceptions.wrongCredentials');
+			$form->addError($this->getRejectedSignInError($values['email']), false);
 		}
+	}
+
+	/**
+	 * Proc ne proste "neplatne prihlasovaci udaje": TooManyLoginAttemptsException z te hlasky
+	 * dedi, takze uzivatel po vycerpani pokusu cetl tutez vetu jako pri prvnim prekleplem
+	 * hesle. Nevedel, ze je zablokovany, ani do kdy, a sel s tim na podporu.
+	 *
+	 * Cisla si nepocitame sami, ale ptame se na ne autentizatoru - jinak by se rozesla s tim,
+	 * co opravdu vynucuje, a hlaska by slibovala pokus, ktery uz neexistuje.
+	 *
+	 * Enumerace uctu tim nevznika: brzda pocita zadany retezec, at uz k nemu ucet existuje
+	 * nebo ne, takze neexistujici e-mail odpovida uplne stejne.
+	 */
+	private function getRejectedSignInError(string $username): string
+	{
+		$status = $this->_authenticator->getLoginThrottleStatus($username);
+
+		if ($status->remainingAttempts === null) {
+			return $this->_translator->translate('fcadmin.appGeneral.exceptions.wrongCredentials');
+		}
+
+		if ($status->isBlocked()) {
+			return $this->_translator->translate('fcadmin.appGeneral.exceptions.signInBlocked', [
+				'time' => $status->blockedUntil->format('H:i'),
+			]);
+		}
+
+		return $this->_translator->translate('fcadmin.appGeneral.exceptions.wrongCredentialsAttemptsLeft', [
+			'count' => $status->remainingAttempts,
+		]);
 	}
 
 	/**
