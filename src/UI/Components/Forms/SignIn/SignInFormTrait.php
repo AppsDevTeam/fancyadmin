@@ -144,9 +144,13 @@ trait SignInFormTrait
 		}
 
 		if ($status->isBlocked()) {
-			return $this->_translator->translate('fcadmin.appGeneral.exceptions.signInBlocked', [
-				'time' => $status->blockedUntil->format('H:i'),
-			]);
+			// Cas odblokovani knihovna nemusi znat - blokace na nem zamerne nevisi, aby se
+			// brzda neotevrela kvuli tomu, ze se ho nepodarilo dopocitat.
+			return $status->blockedUntil
+				? $this->_translator->translate('fcadmin.appGeneral.exceptions.signInBlocked', [
+					'time' => $status->blockedUntil->format('H:i'),
+				])
+				: $this->_translator->translate('fcadmin.appGeneral.exceptions.signInBlockedUnknownTime');
 		}
 
 		return $this->_translator->translate('fcadmin.appGeneral.exceptions.wrongCredentialsAttemptsLeft', [

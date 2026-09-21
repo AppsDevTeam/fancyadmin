@@ -392,6 +392,7 @@ appGeneral:
     wrongCredentials: "Neplatné prihlasovacie údaje"
     wrongCredentialsAttemptsLeft: '{1}Neplatné prihlasovacie údaje. Zostáva 1 pokus, potom bude prihlásenie dočasne zablokované.|]1,4]Neplatné prihlasovacie údaje. Zostávajú %count% pokusy.|[5,Inf[Neplatné prihlasovacie údaje. Zostáva %count% pokusov.'
     signInBlocked: "Vyčerpali ste povolený počet pokusov, prihlásenie je preto dočasne zablokované. Skúsiť to môžete znova o %time%."
+    signInBlockedUnknownTime: "Vyčerpali ste povolený počet pokusov, prihlásenie je preto dočasne zablokované. Skúste to prosím o chvíľu znova."
     noPermission: "Nemáte právo na prihlásenie"
     inactiveUser: "Neaktívny používateľ"
 
