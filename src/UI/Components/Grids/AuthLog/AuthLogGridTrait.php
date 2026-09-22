@@ -27,7 +27,9 @@ trait AuthLogGridTrait
 
 		$grid->setDefaultSort(['createdAt' => 'DESC']);
 
-		$grid->addColumnDateTime('createdAt', 'fcadmin.grids.authLog.createdAt');
+		// v logu se hleda skoro vzdycky "co se delo v ten a ten den"
+		$grid->addColumnDateTime('createdAt', 'fcadmin.grids.authLog.createdAt')
+			->setFilterDateRange();
 
 		$grid->addColumnText('type', 'fcadmin.grids.authLog.type')
 			->setRenderer(function (AuthLog $authLog) {
@@ -36,9 +38,11 @@ trait AuthLogGridTrait
 
 		// prihlasovaci jmeno tak, jak ho uzivatel zadal - ucet toho jmena nemusi existovat,
 		// a prave to je u neuspesnych pokusu ta zajimava informace
-		$grid->addColumnText('identity', 'fcadmin.grids.authLog.identity');
+		$grid->addColumnText('identity', 'fcadmin.grids.authLog.identity')
+			->setFilterText();
 
-		$grid->addColumnText('ip', 'fcadmin.grids.authLog.ip');
+		$grid->addColumnText('ip', 'fcadmin.grids.authLog.ip')
+			->setFilterText();
 
 		$grid->addColumnText('userAgent', 'fcadmin.grids.authLog.userAgent');
 
@@ -58,7 +62,11 @@ trait AuthLogGridTrait
 		$grid->addFilterSelect('type', 'fcadmin.grids.authLog.type', $this->getTypeOptions())
 			->setPrompt('—');
 
-		$this->addSearchFilter($grid, ['identity', 'ip']);
+		// prohlizec a duvod odmitnuti jsou casto to jedine, co odlisi jeden pokus od druheho
+		$this->addSearchFilter($grid, ['identity', 'ip', 'userAgent', 'reason']);
+
+		$grid->addAdvancedFilteredSearch();
+		$grid->addExportExcel('Export', 'auth-logs.xlsx');
 	}
 
 	/** @return array<string, string> */

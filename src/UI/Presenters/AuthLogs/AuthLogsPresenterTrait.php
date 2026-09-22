@@ -14,7 +14,7 @@ trait AuthLogsPresenterTrait
 
 	public function actionDefault(): void
 	{
-		$this->template->setFile(__DIR__ . '/default.latte');
+		$this->setPackageTemplateFile(__DIR__ . '/default.latte');
 	}
 
 	public function createComponentAuthLogGrid(AuthLogGridFactory $factory): AuthLogGrid

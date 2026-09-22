@@ -351,6 +351,8 @@ grids:
       uploaded: Nahraný nový súbor
       removed: Súbor odstránený
       changed: Súbor zmenený
+    # namiesto hodnoty pri properties z getMaskedProperties() - heslá, tokeny, certifikáty
+    masked: (skryté)
 
   user:
     labels:
