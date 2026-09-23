@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Security;
 
 use ADT\FancyAdmin\Model\Entities\AclRole;
+use Nette\Localization\Translator;
 
 /**
  * Politika hesel, kterou nese role.
@@ -91,6 +92,41 @@ final readonly class PasswordPolicy
 		}
 
 		return $violations;
+	}
+
+	/**
+	 * @param iterable<AclRole> $roles
+	 * @return array<int, array{0: string, 1?: int}>
+	 */
+	public static function violationsFor(string $password, ?string $email, ?string $username, iterable $roles): array
+	{
+		$violations = [];
+
+		if (self::matchesIdentifier($password, $email, $username)) {
+			$violations[] = ['fcadmin.forms.newPassword.errors.sameAsIdentifier'];
+		}
+
+		if ($policy = self::strictestOf($roles)) {
+			array_push($violations, ...$policy->violations($password));
+		}
+
+		return $violations;
+	}
+
+	/**
+	 * @param array<int, array{0: string, 1?: int}> $violations
+	 * @return list<string>
+	 */
+	public static function translateViolations(Translator $translator, array $violations): array
+	{
+		$messages = [];
+
+		foreach ($violations as $_violation) {
+			$message = $translator->translate(...$_violation);
+			$messages[] = isset($_violation[1]) ? str_replace('%d', (string) $_violation[1], $message) : $message;
+		}
+
+		return $messages;
 	}
 
 	/**

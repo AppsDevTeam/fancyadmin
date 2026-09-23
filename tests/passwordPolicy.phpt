@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use ADT\FancyAdmin\Model\Security\PasswordPolicy;
+use ADT\FancyAdmin\Tests\Fixtures\TestTranslator;
 use Tester\Assert;
 
 /**
@@ -155,4 +156,93 @@ test('heslo, ktere prihlasovaci udaj jen obsahuje, projde', function () {
 test('prazdny udaj nic nezakazuje', function () {
 	Assert::false(PasswordPolicy::matchesIdentifier('', null, null));
 	Assert::false(PasswordPolicy::matchesIdentifier('', '', ''));
+});
+
+
+test('violationsFor bez politiky hlida jen shodu s prihlasovacim udajem', function () {
+	Assert::same(
+		[['fcadmin.forms.newPassword.errors.sameAsIdentifier']],
+		PasswordPolicy::violationsFor('prodavac1', null, 'prodavac1', [])
+	);
+	Assert::same([], PasswordPolicy::violationsFor('kratke', null, 'prodavac1', []));
+	Assert::same([], PasswordPolicy::violationsFor('kratke', null, 'prodavac1', [role(enabled: false, minLength: 30)]));
+});
+
+
+test('violationsFor hlida shodu s e-mailem i s jeho casti pred zavinacem', function () {
+	Assert::same(
+		[['fcadmin.forms.newPassword.errors.sameAsIdentifier']],
+		PasswordPolicy::violationsFor('alfa.prodavac@pentest.example', 'alfa.prodavac@pentest.example', 'prodavac1', [])
+	);
+	Assert::same(
+		[['fcadmin.forms.newPassword.errors.sameAsIdentifier']],
+		PasswordPolicy::violationsFor('alfa.prodavac', 'alfa.prodavac@pentest.example', null, [])
+	);
+});
+
+
+test('violationsFor uplatni nejprisnejsi politiku z roli', function () {
+	Assert::same(
+		[
+			['fcadmin.forms.newPassword.errors.minLength', 12],
+			['fcadmin.forms.newPassword.errors.requireDigit'],
+		],
+		PasswordPolicy::violationsFor('kratke', null, 'prodavac1', [role(minLength: 8), role(minLength: 12, digit: true)])
+	);
+});
+
+
+test('violationsFor hlasi shodu s udajem i porusenou politiku najednou', function () {
+	// Shoda s udajem je prvni, aby ji uzivatel videl i vedle hlasek politiky.
+	Assert::same(
+		[
+			['fcadmin.forms.newPassword.errors.sameAsIdentifier'],
+			['fcadmin.forms.newPassword.errors.minLength', 12],
+		],
+		PasswordPolicy::violationsFor('prodavac1', null, 'prodavac1', [role(minLength: 12)])
+	);
+});
+
+
+test('violationsFor pusti heslo, ktere nic neporusuje', function () {
+	Assert::same([], PasswordPolicy::violationsFor('Silne-Heslo1!', 'jan@example.com', 'jan', [role(minLength: 12, upper: true, digit: true, special: true)]));
+});
+
+
+test('translateViolations dosadi minimalni delku do hlasky', function () {
+	// Prekladac by cislo dosadil jen za %count%, klic ale nese %d kvuli pravidlu MinLength.
+	$translator = new TestTranslator([
+		'fcadmin.forms.newPassword.errors.minLength' => 'Heslo musí mít alespoň %d znaků',
+		'fcadmin.forms.newPassword.errors.sameAsIdentifier' => 'Heslo nesmí být shodné s e-mailem ani s uživatelským jménem',
+	]);
+
+	$messages = PasswordPolicy::translateViolations(
+		$translator,
+		PasswordPolicy::violationsFor('prodavac1', null, 'prodavac1', [role(minLength: 12)])
+	);
+
+	Assert::same([
+		'Heslo nesmí být shodné s e-mailem ani s uživatelským jménem',
+		'Heslo musí mít alespoň 12 znaků',
+	], $messages);
+});
+
+
+test('translateViolations preda prekladaci klic i parametr', function () {
+	$translator = new TestTranslator();
+
+	PasswordPolicy::translateViolations($translator, [
+		['fcadmin.forms.newPassword.errors.minLength', 12],
+		['fcadmin.forms.newPassword.errors.requireDigit'],
+	]);
+
+	Assert::same([
+		['fcadmin.forms.newPassword.errors.minLength', [12]],
+		['fcadmin.forms.newPassword.errors.requireDigit', []],
+	], $translator->calls);
+});
+
+
+test('translateViolations bez poruseni nevrati nic', function () {
+	Assert::same([], PasswordPolicy::translateViolations(new TestTranslator(), []));
 });
