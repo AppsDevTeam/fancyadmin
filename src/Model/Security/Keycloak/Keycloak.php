@@ -14,6 +14,7 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Nette\Application\LinkGenerator;
 use Nette\Caching\Cache;
@@ -21,7 +22,10 @@ use Nette\Caching\Storage;
 use Nette\Http\Session;
 use Nette\Http\Url;
 use Nette\Utils\Json;
+use Nette\Utils\JsonException;
 use Psr\Http\Message\ResponseInterface;
+use Tracy\Debugger;
+use Tracy\ILogger;
 
 class Keycloak
 {
@@ -122,29 +126,11 @@ class Keycloak
 	 */
 	public function getLoginUrl(?string $backRedirect = null, ?string $loginHint = null, bool $autoFocusPassword = false): string
 	{
-		$redirectUri = $this->getAuthRedirectUri();
-
-		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
-
-		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
-
-		$url->setQueryParameter('state', $state);
-		$url->setQueryParameter('client_id', $this->clientId);
-		$url->setQueryParameter('response_type', 'code');
-		$url->setQueryParameter('redirect_uri', $redirectUri);
-		$url->setQueryParameter('scope', 'openid email profile');
-		$url->setQueryParameter('code_challenge', $codeChallenge);
-		$url->setQueryParameter('code_challenge_method', 'S256');
-
-		if (!empty($loginHint)) {
-			$url->setQueryParameter('login_hint', $loginHint);
-		}
-
-		if ($autoFocusPassword) {
-			$url->setQueryParameter('ui_locales', 'autofocus-password');
-		}
-
-		return (string) $url;
+		return $this->getAuthorizationUrl(
+			$backRedirect,
+			$loginHint,
+			$autoFocusPassword ? ['ui_locales' => 'autofocus-password'] : [],
+		);
 	}
 
 	/**
@@ -154,10 +140,59 @@ class Keycloak
 	 */
 	public function getUpdatePasswordUrl(?string $backRedirect = null, ?string $loginHint = null): string
 	{
-		$url = new Url($this->getLoginUrl($backRedirect, $loginHint));
-		$url->setQueryParameter('kc_action', 'UPDATE_PASSWORD');
+		return $this->getAuthorizationUrl($backRedirect, $loginHint, ['kc_action' => 'UPDATE_PASSWORD']);
+	}
 
-		return (string) $url;
+	/**
+	 * @param array<string, string> $extraParameters
+	 */
+	private function getAuthorizationUrl(?string $backRedirect, ?string $loginHint, array $extraParameters): string
+	{
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
+
+		$parameters = [
+			'state' => $state,
+			'client_id' => $this->clientId,
+			'response_type' => 'code',
+			'redirect_uri' => $this->getAuthRedirectUri(),
+			'scope' => 'openid email profile',
+			'code_challenge' => $codeChallenge,
+			'code_challenge_method' => 'S256',
+		] + $extraParameters;
+
+		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
+
+		if (
+			!empty($loginHint)
+			&& ($requestUri = $this->pushAuthorizationRequest($parameters + ['login_hint' => $loginHint])) !== null
+		) {
+			$parameters = ['client_id' => $this->clientId, 'request_uri' => $requestUri];
+		}
+
+		return (string) $url->setQuery($parameters);
+	}
+
+	/**
+	 * @param array<string, string> $parameters
+	 * @return string|null
+	 */
+	protected function pushAuthorizationRequest(array $parameters): ?string
+	{
+		try {
+			$response = $this->client->post(
+				$this->getOpenIdRealmUrl('ext/par/request'),
+				[
+					'form_params' => $parameters + ['client_secret' => $this->clientSecret],
+				]
+			);
+
+			$requestUri = Json::decode((string) $response->getBody(), true)['request_uri'] ?? null;
+		} catch (GuzzleException | JsonException $e) {
+			Debugger::log('Keycloak PAR (' . $this->instanceName . ') selhal: ' . $e->getMessage(), ILogger::WARNING);
+			return null;
+		}
+
+		return is_string($requestUri) && $requestUri !== '' ? $requestUri : null;
 	}
 
 	/**
