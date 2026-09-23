@@ -43,6 +43,7 @@ Aplikace **nepoužívá**: Implicit Flow, Direct Access Grants (ROPC), offline t
 
 | Endpoint | Metoda | Účel |
 |---|---|---|
+| `/realms/{realm}/protocol/openid-connect/ext/par/request` | POST | Pushed Authorization Request (RFC 9126) - autorizační request s `login_hint`, vrací jednorázové `request_uri` |
 | `/realms/{realm}/protocol/openid-connect/token` | POST | Výměna authorization code za tokeny (`grant_type=authorization_code`); získání admin tokenu (`grant_type=client_credentials`) |
 | `/realms/{realm}/protocol/openid-connect/userinfo` | GET | Získání user claims (email, jméno) z access tokenu |
 | `/realms/{realm}/protocol/openid-connect/certs` | GET | JWKS — podpisové klíče realmu pro validaci backchannel logout tokenu (cachováno 1 h) |
@@ -63,6 +64,12 @@ Všechna Admin API volání jsou autentizována Bearer tokenem získaným přes 
 | `/realms/{realm}/protocol/openid-connect/logout` | RP-initiated logout (s `id_token_hint`, `post_logout_redirect_uri`, `client_id`, `state`) |
 
 Autorizační request vždy obsahuje: `client_id`, `response_type=code`, `redirect_uri`, `scope=openid email profile`, `state` (náhodný CSRF token vázaný na session), `code_challenge` + `code_challenge_method=S256` (PKCE), volitelně `login_hint` (předvyplnění emailu), `ui_locales`, `kc_action`.
+
+**`login_hint` nikdy nejde v URL.** Request s ním se nejdřív pošle ze serveru na PAR endpoint (s `client_secret`) a prohlížeč dostane jen `client_id` a `request_uri`. Keycloak pak použije výhradně parametry z PAR, proto v nich jsou i `kc_action` a `ui_locales`. E-mail tak nekončí v historii prohlížeče, v access logu Keycloaku ani v hlavičce Referer (nález WEB-SSO-02). Když PAR selže (Keycloak nedostupný, PAR zakázaný), zaloguje se to jako warning a přihlášení pokračuje bez nápovědy - uživatel e-mail v Keycloaku napíše znovu. Requesty bez `login_hint` (silent check, přihlášení bez e-mailu) jdou přímo v URL, citlivé nic nenesou.
+
+`request_uri` platí v Keycloaku ve výchozím stavu 60 s (*Realm settings - Tokens - Pushed Authorization Request lifespan*), což stačí, protože aplikace na URL přesměrovává hned. PAR musí mít klient povolený (v Keycloaku je ve výchozím stavu povolený všem klientům, vynutit ho jde volbou *Pushed authorization request required*).
+
+AJAX kontrola, jestli se e-mail přihlašuje přes SSO (`signInForm-checkKeycloak`), posílá e-mail v těle POST, ne v adrese signálu, aby nekončil v access logu aplikace.
 
 Návratová URL se do Keycloaku neposílá — drží se v serverové session pod klíčem `state` a callback si ji vyzvedne po ověření state. `redirect_uri` jsou proto statická a v konfiguraci KC klienta se vyjmenovávají jako exact matches (bez wildcardů).
 
@@ -95,8 +102,14 @@ uživatel                 aplikace                        Keycloak
    │                        │ 2. lookup: má identita        │
    │                        │    (nebo její role) SSO?      │
    │                        │                               │
-   │ 3. redirect na /auth (login_hint=email, state=CSRF token,
-   │    code_challenge=S256; návratová URL zůstává v session)
+   │                        │ 2a. POST /ext/par/request     │
+   │                        │  (login_hint=email, state, PKCE, client_secret)
+   │                        │──────────────────────────────►│
+   │                        │◄──────────────────────────────│
+   │                        │  request_uri                  │
+   │                        │                               │
+   │ 3. redirect na /auth (client_id, request_uri; e-mail ani
+   │    návratová URL v adrese nejsou)
    │────────────────────────────────────────────────────────►
    │                        │                               │
    │ 4. přihlášení v KC     │                               │

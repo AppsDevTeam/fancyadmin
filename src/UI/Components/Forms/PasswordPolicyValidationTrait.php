@@ -19,16 +19,10 @@ trait PasswordPolicyValidationTrait
 		$identity = $this->getEntity();
 		$field = $form->getComponentTextInput('password');
 
-		if (PasswordPolicy::matchesIdentifier($password, $identity->getEmail(), $identity->getUsername())) {
-			$field->addError('fcadmin.forms.newPassword.errors.sameAsIdentifier');
-		}
+		$violations = PasswordPolicy::violationsFor($password, $identity->getEmail(), $identity->getUsername(), $identity->getRoles());
 
-		if (!$policy = PasswordPolicy::strictestOf($identity->getRoles())) {
-			return;
-		}
-
-		foreach ($policy->violations($password) as $_violation) {
-			$field->addError($this->getTranslator()->translate(...$_violation));
+		foreach (PasswordPolicy::translateViolations($this->getTranslator(), $violations) as $_message) {
+			$field->addError($_message, false);
 		}
 	}
 }

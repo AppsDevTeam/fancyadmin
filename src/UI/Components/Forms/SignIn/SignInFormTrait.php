@@ -67,7 +67,7 @@ trait SignInFormTrait
 
 			$form['email']->setHtmlAttribute(
 				'data-keycloak-check-url',
-				$this->link('checkKeycloak!', ['email' => '__EMAIL__'])
+				$this->link('checkKeycloak!')
 			);
 		}
 	}
@@ -75,11 +75,15 @@ trait SignInFormTrait
 	/**
 	 * AJAX signal — ověří, zda se uživatel má přihlašovat přes SSO.
 	 * Najde identitu podle emailu, zjistí přiřazenou SSO instanci,
-	 * a pokud existuje, vrátí loginUrl s login_hint pro redirect.
+	 * a pokud existuje, vrátí loginUrl pro redirect.
 	 */
-	public function handleCheckKeycloak(string $email): void
+	public function handleCheckKeycloak(): void
 	{
-		$this->getPresenter()->sendJson(['loginUrl' => $this->getKeycloakLoginUrl($email)]);
+		$email = $this->getPresenter()->getHttpRequest()->getPost('email');
+
+		$this->getPresenter()->sendJson([
+			'loginUrl' => is_string($email) ? $this->getKeycloakLoginUrl($email) : null,
+		]);
 	}
 
 	public function validateForm(array $values, Form $form): void

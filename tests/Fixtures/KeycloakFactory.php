@@ -25,9 +25,14 @@ final class KeycloakFactory
 	public const string REALM = 'test-realm';
 	public const string CLIENT_ID = 'admin-client';
 
-	public static function create(TestSession $session, string $instanceName = 'default'): Keycloak
+	/**
+	 * @template T of Keycloak
+	 * @param class-string<T> $class
+	 * @return T
+	 */
+	public static function create(TestSession $session, string $instanceName = 'default', string $class = TestParKeycloak::class): Keycloak
 	{
-		$keycloak = new ReflectionClass(Keycloak::class)->newInstanceWithoutConstructor();
+		$keycloak = new ReflectionClass($class)->newInstanceWithoutConstructor();
 
 		self::set($keycloak, 'realm', self::REALM);
 		self::set($keycloak, 'baseUrl', 'https://internal.example.com');
