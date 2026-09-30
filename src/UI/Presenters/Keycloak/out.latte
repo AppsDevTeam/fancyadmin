@@ -44,7 +44,7 @@
 			<p>{_fcadmin.keycloak.logout.noscriptLink, ['url' => $keycloakLogoutUrl]|noescape}</p>
 		</noscript>
 
-		<script>
+		<script n:nonce>
 			setTimeout(function () {
 				window.location.href = {$keycloakLogoutUrl};
 			}, 100);
