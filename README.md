@@ -1010,6 +1010,19 @@ decorator:
 			- setSecurityUser(@App\Model\Security\SecurityUser)
 ```
 
+### security.neon - CSP
+
+`security.neon` posílá `Content-Security-Policy` se `script-src 'nonce' 'self'` (Nette z `'nonce'` udělá
+`'nonce-…'` pro každý request). Skripty ze stejného originu a `{asset}` projdou samy, inline `<script>`
+v šablonách projektu musí mít `n:nonce`, jinak je prohlížeč zablokuje. Inline skript poskládaný v PHP
+(mimo Latte) si nonce musí vzít z hlavičky sám, viz `PasswordRevealInput` v `adt/nette-forms-components`.
+
+Nonce nepomůže u skriptu, který přijde v AJAX snippetu (má nonce jiného requestu). `BootstrapFormRenderer`
+proto při takové CSP inline skript u chyb formulářů vynechá a třídu `is-invalid` nastaví `SubmitForm`
+z `adt-js-components` podle atributu `data-adt-errors-for`. Projekt musí volat `AdtJsComponents.initSubmitForm()`.
+
+Zdroje, které projekt potřebuje navíc (HMR dev server, Keycloak, mapy, …), doplň v konfiguraci projektu.
+
 ---
 
 ## 16. Migrace
@@ -1360,6 +1373,15 @@ import '../path/to/vendor/adt/fancyadmin/assets/js/signInKeycloak';
 **Závislost:** Projekt musí mít nainstalovaný npm balíček `keycloak-js`:
 ```bash
 yarn add keycloak-js
+```
+
+**CSP:** s `security.neon` volá keycloak-js Keycloak server přes `fetch` (token, refresh), takže jeho URL
+musí být v `connect-src` projektu, jinak ho `connect-src 'self'` zablokuje:
+
+```neon
+http:
+    csp:
+        connect-src: "'self' https://auth.muj-projekt.cz"
 ```
 
 ### 18.7 Co se děje automaticky
