@@ -348,6 +348,18 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide .group.toggleable.collapsed
 	}
 }
 
+// Svislá čára vlevo od podpoložek (jen v rozbaleném módu, ve sbaleném je submenu popover).
+// Čára je zarovnaná pod střed ikonky rodiče (item-header padding 14px + polovina 20px ikonky).
+body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu {
+	margin: 4px 0 8px 23px;
+	padding: 0 0 0 6px;
+	border-left: 1px solid var(--menu-wide-border);
+
+	.item {
+		padding: 8px 10px;
+	}
+}
+
 // Ve sbaleném módu toggle jen ikonka bez textu Sbalit, centrovaná v šířce menu
 body.menu-wide.menu-collapsed .side-panel-wide .side-panel-toggle {
 	align-self: center;
