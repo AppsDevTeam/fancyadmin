@@ -545,6 +545,16 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		}
 	}
 
+	// Aktivní top-level item s podmenu - stacked layout nastavuje barvu přímo na .item-header
+	// (vyšší specificita), takže bílou z wrapperu nezdědí
+	.menu-body > .item.has-submenu.active > .item-header {
+		color: var(--menu-wide-active-text);
+
+		.icon {
+			color: var(--menu-wide-active-text);
+		}
+	}
+
 	// Aktivní skupina - kterákoli z jejích položek (i sub-items) je current stránka.
 	.group.active-child .group-heading {
 		background: var(--menu-wide-active-bg);
