@@ -6,9 +6,6 @@ namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
-use ADT\FancyAdmin\Console\MoveLogsCommand;
-use ADT\FancyAdmin\Model\Log\LogMover;
-use ADT\FancyAdmin\Console\PrintLogSchemaCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
@@ -70,35 +67,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'locksDir' => Expect::string()->required(),
 			// Retence logů pro fancyadmin:purge-logs. Pořadí rozhoduje, mazání jde
 			// odshora dolů - záleží na něm tam, kde jsou tabulky svázané cizím klíčem.
-			// audit_log sem NEPATŘÍ, ten odváží a maže mover.
+			// audit_log sem NEPATŘÍ, ten odváží a maže mover (adt/log-mover).
 			'purge' => Expect::listOf(Expect::structure([
 				'entity' => Expect::string()->required(),
 				// cokoliv, co bere DateTimeImmutable::modify(), např. '6 months'
 				'retention' => Expect::string()->required(),
 			])->castTo('array'))->default([]),
-			// Odvoz logu do oddeleneho uloziste - viz fancyadmin:move-logs. Bez vyplneneho
-			// spojeni a zdroje se command neregistruje, protoze nema kam vozit.
-			// Zaznam si do cile veze sve id, takze cilova databaze patri VZDY jen jednomu
-			// zdroji - dva by si id prepsaly.
-			'logMover' => Expect::structure([
-				// DBAL spojeni do cile, napr. @nettrine.dbal.connections.logdb.connection
-				'connection' => Expect::string()->dynamic()->nullable()->default(null),
-				// co se odvazi; `table` je nepovinna, vychozi je stejny nazev jako ve zdroji
-				'tables' => Expect::listOf(Expect::structure([
-					'entity' => Expect::string()->required(),
-					'table' => Expect::string()->nullable()->default(null),
-					// jen pro fancyadmin:print-log-schema, samotny odvoz je nepouziva:
-					// `hot` = hranice provozni a archivni vrstvy (komprese v TimescaleDB),
-					// `retention` = po jake dobe zaznam v cili zanikne
-					'hot' => Expect::string()->nullable()->default(null),
-					'retention' => Expect::string()->nullable()->default(null),
-					// Smi aplikace tabulku v cili CIST? Odvoz ji nepotrebuje (z cile necte),
-					// takze `false` znamena, ze dostane jen pravo zapisu - to je pripad
-					// auditni stopy, ktera z aplikace pristupna byt nema. `true` je pro
-					// logy, ktere ukazuji sekce Logy v administraci.
-					'readable' => Expect::bool()->default(true),
-				])->castTo('array'))->default([]),
-			]),
 			'keycloakEnabled' => Expect::bool()->default(false),
 			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
 			'keycloakVerifySsl' => Expect::bool()->default(true),
@@ -235,33 +209,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$defs[] = $builder->addDefinition($this->prefix('purgeLogs'))
 			->setFactory(PurgeLogsCommand::class, ['config' => $this->config->purge])
 			->setAutowired(false);
-
-		$mover = $this->config->logMover;
-		if ($mover->connection !== null || $mover->tables) {
-			// Pulka nastaveni je horsi nez zadne: odvoz by bud nemel kam vozit, nebo by
-			// nemel co. Radsi hlasita chyba pri kompilaci.
-			if ($mover->connection === null || !$mover->tables) {
-				throw new RuntimeException('fancyadmin: logMover potřebuje vyplnit connection i tables.');
-			}
-
-			// sluzba, ne jen command: odvoz se pousti i z fronty, aby jel po minutach
-			$builder->addDefinition($this->prefix('logMover'))
-				->setFactory(LogMover::class, [
-					'targetConnection' => $mover->connection,
-					'config' => $mover->tables,
-				]);
-
-			$defs[] = $builder->addDefinition($this->prefix('moveLogs'))
-				->setFactory(MoveLogsCommand::class)
-				->setAutowired(false);
-
-			$defs[] = $builder->addDefinition($this->prefix('printLogSchema'))
-				->setFactory(PrintLogSchemaCommand::class, [
-					'targetConnection' => $mover->connection,
-					'config' => $mover->tables,
-				])
-				->setAutowired(false);
-		}
 
 		foreach ($defs as $_def) {
 			$_def->addSetup('setLocksDir', [$this->config->locksDir]);

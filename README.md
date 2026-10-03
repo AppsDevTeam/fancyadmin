@@ -2337,7 +2337,7 @@ tabulky svázané cizím klíčem: `request_log_body` visí na `request_log` s `
 CASCADE` a má kratší retenci, takže musí jít první — jinak by ho nejdřív odmazala kaskáda
 podle retence rodiče.
 
-`audit_log` sem **nepatří**. Auditní stopu odváží a maže mover, až když ji má bezpečně
+`audit_log` sem **nepatří**. Auditní stopu odváží a maže mover (`adt/log-mover`), až když ji má bezpečně
 v dlouhodobém úložišti; smazat ji podle času by znamenalo ztratit záznamy, které nikde
 jinde ještě nejsou.
 
@@ -2345,83 +2345,45 @@ jinde ještě nejsou.
 
 ## 23. Odvoz logů do odděleného úložiště (volitelné)
 
-Logovací tabulky v aplikaci jsou jen přestupní stanice. Logy se drží mnohem déle, než má
-smysl zatěžovat provozní databázi, a auditní stopa má navíc být **jinde než systém, o kterém
-vypovídá** — kdo se dostane k aplikaci, nesmí umět přepsat záznamy o tom, co v ní dělal.
+Odvoz logů do odděleného úložiště (dřív `fancyAdmin: logMover`, `fancyadmin:move-logs`
+a `fancyadmin:print-log-schema`) je samostatný balíček
+[adt/log-mover](https://github.com/AppsDevTeam/log-mover) — návod, konfigurace i to, proč
+je to celé takhle, jsou v jeho README.
+
+Přechod z fancyadminu 1.x:
 
 ```neon
-fancyAdmin:
-	logMover:
-		connection: @nettrine.dbal.connections.logdb.connection
-		tables:
-			- {entity: App\Model\Entities\AuditLog, hot: '3 months', retention: '13 months'}
-			- {entity: ADT\DoctrineLoggable\Entity\ChangeLog, hot: '3 months', retention: '13 months'}
-			- {entity: App\Model\Entities\RequestLog, table: request_log_archive}
-			- {entity: App\Model\Entities\AuditLog, readable: false}
+extensions:
+	logMover: ADT\LogMover\DI\LogMoverExtension
+
+# dřív fancyAdmin: logMover:
+logMover:
+	target: @nettrine.dbal.connections.logdb.connection
+	tables:
+		- {entity: App\Model\Entities\AuditLog, hot: '3 months', retention: '13 months', readable: false}
 ```
 
-`hot` a `retention` používá jen `fancyadmin:print-log-schema` (viz níže), odvoz sám ne.
+| fancyadmin 1.x | adt/log-mover |
+|---|---|
+| `fancyAdmin: logMover: connection` | `logMover: target` |
+| `ADT\FancyAdmin\Model\Log\LogMover` | `ADT\LogMover\LogMover` |
+| `fancyadmin:move-logs` | `log-mover:move` |
+| `fancyadmin:print-log-schema` | `log-mover:print-schema` |
 
-`readable: false` znamená, že aplikace tabulku v cíli číst nesmí — dostane na ni jen právo
-zápisu. Odvoz to nebolí: z cíle nečte, duplicitu řeší klíčem (`ON CONFLICT DO NOTHING`).
-Patří sem auditní stopa, kterou má dokumentace typicky slíbenou jako z aplikace nedostupnou.
-Logy, které ukazují sekce Logy v administraci, musí zůstat `readable` (výchozí).
-
-**Logovací řádek musí být neměnný.** Do tabulky, kde vzniká záznam o requestu a odpověď se
-dopisuje později, se odvoz trefí uprostřed: odvezený řádek už aplikace ve zdroji nenajde
-a dopsat do něj nedokáže. Řeší se to na straně zápisu — dva samostatné řádky se společným
-korelačním identifikátorem (`action` = `request` / `response`) — ne odkládáním odvozu.
-Odložit ho jde vždycky jen o kus a záznam, který se nikdy nedokončí, by ve zdroji zůstal
-navždy; navíc by se ta nejzajímavější událost (nedokončená operace) objevila v administraci
-jako poslední.
-
-Odváží `fancyadmin:move-logs`, typicky z cronu. Bere `--dry-run`, `--batch-size` a `--limit`
-(strop na tabulku a běh, aby se noční odvoz nezakousl, když se něco nahromadí). Nedostupná
-nebo rozbitá tabulka shodí jen svůj řádek výpisu, ostatní se odvezou. Bez konfigurace se
-příkaz neregistruje.
-
-**Odvoz vs. mazání:** `purge-logs` záznam zahodí, `move-logs` ho přestěhuje. Do moveru proto
-patří i to, co se podle retenční politiky musí uchovat dlouho — auditní stopa, change log,
-provozní logy, u kterých jde spíš o velikost provozní databáze než o životnost dat. Tatáž
-tabulka nemá být v obou konfiguracích.
-
-### Založení cílového úložiště
-
-```bash
-php bin/console fancyadmin:print-log-schema
-```
-
-Vypíše SQL k ručnímu spuštění: vytvoření uživatelů a databáze podle nastaveného spojení
-(hesla tam schválně nejsou) a `CREATE TABLE` pro každou tabulku z konfigurace. Na PostgreSQL
-doplní u tabulek, které mají `hot` nebo `retention`, i hypertable, kompresní a retenční
-politiku TimescaleDB.
-
-**Uživatelé jsou dva.** Vlastník (`<vlastnik>`) schéma založí a patří mu retenční politiky;
-aplikace dostane účet bez `UPDATE`, `DELETE`, `DROP` i `ALTER`. Bez toho celé oddělené
-úložiště nedává smysl: kdo se dostane k aplikaci, mohl by přepsat záznamy o tom, co v ní
-dělal. Práva se udělují tabulku po tabulce — `INSERT` všude, `SELECT` jen tam, kde má
-konfigurace `readable` (výchozí); mazání zůstává výhradně retenční politice.
-
-Sloupcové právo typu `GRANT SELECT (id)` nezkoušejte, na komprimované hypertabulce ho
-PostgreSQL odmítne (`column "id" of relation "_compressed_hypertable_…" does not exist`).
-Údaje vlastníka se do aplikace nikdy nedostanou.
-
-Schéma se odvozuje **z entit**, takže neodejde od zdroje — přibude sloupec v logu a příští
-výpis ho má taky. Ručně psané SQL vedle entit se rozejde a přijde se na to až tím, že odvoz
-spadne na neznámém sloupci.
-
-Aplikace ten příkaz nespouští, jen tiskne: do cílového serveru nemá přístup a **to je celý
-smysl odděleného úložiště**. Právo mazat tam aplikace mít nemá, jinak by šel odvezený záznam
-odstranit odtud, odkud přišel.
+Stejně tak request logger (`ADT\FancyAdmin\Model\RequestLogger` a entity
+`RequestLog`/`RequestLogBody` s traity) je v
+[adt/request-logger](https://github.com/AppsDevTeam/request-logger) — stačí vyměnit
+namespace `ADT\FancyAdmin\Model` za `ADT\RequestLogger` a doplnit `SecurityUser`
+projektu o `implements \ADT\RequestLogger\SecurityUser`.
 
 ### Časová zóna
 
-**Logy se ukládají v UTC**, cílový sloupec je `TIMESTAMPTZ` a mover posílá hodnotu
+**Logy se ukládají v UTC**, cílový sloupec je `TIMESTAMPTZ` a `adt/log-mover` posílá hodnotu
 s výslovným `+00:00`. Záznam zapsaný v zóně projektu by v cíli skončil posunutý o její
 offset - a poznalo by se to až tím, že řádky z různých tabulek jdou v přehledu proti sobě.
 
-`RequestLogger`, `ApiLogger`, `AuditLogger` i auth log v `adt/doctrine-authenticator` UTC
-píšou samy. Logovací entity projektu na to mají traity - **ne** obvyklý `CreatedAt`
+`ApiLogger`, `AuditLogger`, `RequestLogger` z `adt/request-logger` i auth log v
+`adt/doctrine-authenticator` UTC píšou samy. Logovací entity projektu na to mají traity - **ne** obvyklý `CreatedAt`
 s Gedmo Timestampable, ten bere čas v zóně aplikace:
 
 ```php
@@ -2447,62 +2409,6 @@ nettrine.dbal:
 Záměrně na spojení, ne v gridech: část jich chodí odsud (Change log, Přihlašování) a o zóně
 projektu nic neví. Převod navíc dělá databáze, takže přechod mezi letním a zimním časem sedí
 ke každému záznamu zvlášť. Uložené hodnoty to nemění, jen to, v čem se čtou.
-
-### Cílová tabulka
-
-Cílová tabulka má tytéž sloupce jako zdrojová. **Záznam si veze své `id`** — jde podle něj
-dohledat zpátky, mover podle něj pozná, co už odvezl, a odkazy mezi odvezenými tabulkami
-(`request_log_body.request_log_id`) dál sedí.
-
-Proto ale **cílová databáze patří vždy jen jednomu zdroji**: id se mezi systémy potkávají,
-takže dva zdroje v jedné tabulce by si je přepsaly. Každý projekt má vlastní cílovou
-databázi. Příklad pro `audit_log`:
-
-```sql
-CREATE TABLE audit_log (
-    id               BIGINT       NOT NULL,
-    action           VARCHAR(255) NOT NULL,
-    outcome          VARCHAR(255) NOT NULL,
-    created_at       TIMESTAMPTZ  NOT NULL,
-    created_by_id    VARCHAR(255),
-    created_by_label VARCHAR(255),
-    created_by       JSONB,
-    source_ip        VARCHAR(45),
-    user_agent       TEXT,
-    correlation_id   VARCHAR(255),
-    payload          JSONB,
-    CONSTRAINT audit_log_primary PRIMARY KEY (id, created_at)
-);
-```
-
-Na TimescaleDB (doporučeno — dělení podle času, komprese starších dat, retenční politika
-v databázi místo v cronu) musí být dělicí sloupec v každém unikátním klíči, proto je
-`created_at` i v primárním klíči:
-
-```sql
-SELECT create_hypertable('audit_log', 'created_at');
-SELECT add_compression_policy('audit_log', INTERVAL '3 months');
-SELECT add_retention_policy('audit_log', INTERVAL '13 months');
-```
-
-Obě doby volte podle toho, co má projekt slíbené, ne podle toho, co se hodí databázi.
-Komprese je hranice mezi provozní a archivní vrstvou — komprimovaná data jdou číst dál,
-ale s prodlevou na dekompresi, takže pokud dokument slibuje „záznamy za poslední X měsíců
-dohledatelné bez prodlevy", je to právě tohle X. Retence je horní mez, po které data
-zmizí; kratší hodnota než slíbená dělá z dokumentu nepravdu.
-
-Čas jde ze zdroje v UTC a mover ho posílá s výslovným offsetem. Kdyby ho posílal bez něj,
-`TIMESTAMPTZ` by si ho vyložil podle zóny serveru a záznamy by se posunuly — tiše, nic by
-nespadlo, jen by přestaly sedět s ostatními logy.
-
-### Pořadí operací
-
-Nejdřív zápis do cíle, pak teprve mazání ve zdroji — a maže se jen to, co se opravdu
-zapsalo. Když zápis selže, ze zdroje nezmizí nic. Přeruší-li se běh mezi zápisem a mazáním,
-zůstanou záznamy v obou a další běh je podle `(source, source_id)` pozná a přeskočí.
-
-Opačné pořadí (nebo mazání „co se stihlo") znamená ztrátu, kterou nikdo nedohledá, protože
-záznam o ní byl právě v tom, co zmizelo.
 
 ---
 
