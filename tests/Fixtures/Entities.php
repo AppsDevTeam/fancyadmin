@@ -29,10 +29,6 @@ use ADT\FancyAdmin\Model\Entities\Passkey;
 use ADT\FancyAdmin\Model\Entities\PasskeyTrait;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Entities\ProfileTrait;
-use ADT\FancyAdmin\Model\Entities\RequestLog;
-use ADT\FancyAdmin\Model\Entities\RequestLogBody;
-use ADT\FancyAdmin\Model\Entities\RequestLogBodyTrait;
-use ADT\FancyAdmin\Model\Entities\RequestLogTrait;
 use ADT\FancyAdmin\Model\Entities\Sso;
 use ADT\FancyAdmin\Model\Entities\SsoTrait;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
@@ -323,16 +319,13 @@ final class TestAuditLog implements AuditLog
 	}
 }
 
-final class TestRequestLog implements RequestLog
+/**
+ * Provozni log - pro purgeLogsCommand jen jmeno tridy, metadata si test sklada sam.
+ * Request logger samotny zije v adt/request-logger.
+ */
+final class TestRequestLog
 {
 	use Identifier;
-	use RequestLogTrait;
-}
-
-final class TestRequestLogBody implements RequestLogBody
-{
-	use Identifier;
-	use RequestLogBodyTrait;
 }
 
 final class TestGridFilter
