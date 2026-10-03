@@ -2396,14 +2396,15 @@ class DeviceLog extends BaseEntity
 }
 ```
 
-**Administrace to i tak ukazuje v čase projektu** - převádí se to při čtení, na spojení:
+**Administrace to i tak ukazuje v čase projektu** - převádí se to při čtení, na spojení
+(middleware je v `adt/doctrine-components`, dřív `ADT\FancyAdmin\Model\Doctrine\SessionTimeZoneMiddleware`):
 
 ```neon
 nettrine.dbal:
 	connections:
 		logdb:
 			middlewares:
-				timeZone: ADT\FancyAdmin\Model\Doctrine\SessionTimeZoneMiddleware(%timeZone%)
+				timeZone: ADT\DoctrineComponents\Middleware\SessionTimeZoneMiddleware(%timeZone%)
 ```
 
 Záměrně na spojení, ne v gridech: část jich chodí odsud (Change log, Přihlašování) a o zóně

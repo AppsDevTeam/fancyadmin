@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use ADT\FancyAdmin\Model\Doctrine\SessionTimeZoneMiddleware;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAtUtc;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAtUtc;
 use Tester\Assert;
@@ -12,7 +11,8 @@ use Tester\Assert;
  *
  * Logy se ukladaji v UTC, protoze koncí v jednom ulozisti vedle sebe a mover jim pri odvozu
  * pripisuje `+00:00` - lokalni cas by tam skoncil posunuty o offset zony. Uzivateli se
- * prevadi az pri cteni, a to na spojeni, aby o tom nemusel vedet zadny grid.
+ * prevadi az pri cteni, a to na spojeni, aby o tom nemusel vedet zadny grid - to resi
+ * SessionTimeZoneMiddleware z adt/doctrine-components (a testuje se tam).
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -64,90 +64,4 @@ test('updated_at se razitkuje take v UTC', function () {
 	} finally {
 		date_default_timezone_set($puvodni);
 	}
-});
-
-
-test('spojeni si po pripojeni nastavi zonu projektu', function () {
-	// Bez toho vraci PostgreSQL TIMESTAMPTZ s offsetem +00:00 a administrace ukazuje UTC,
-	// tedy v lete o dve hodiny zpatky proti tomu, co uzivatel ceka.
-	$executed = [];
-	$driver = new class ($executed) implements Doctrine\DBAL\Driver {
-		public function __construct(private array &$executed)
-		{
-		}
-
-		public function connect(array $params): Doctrine\DBAL\Driver\Connection
-		{
-			$executed = &$this->executed;
-
-			return new class ($executed) implements Doctrine\DBAL\Driver\Connection {
-				public function __construct(private array &$executed)
-				{
-				}
-
-				public function exec(string $sql): int|string
-				{
-					$this->executed[] = $sql;
-
-					return 0;
-				}
-
-				public function prepare(string $sql): Doctrine\DBAL\Driver\Statement
-				{
-					throw new LogicException('nepouziva se');
-				}
-
-				public function query(string $sql): Doctrine\DBAL\Driver\Result
-				{
-					throw new LogicException('nepouziva se');
-				}
-
-				public function quote(string $value): string
-				{
-					return $value;
-				}
-
-				public function lastInsertId(): int|string
-				{
-					return 0;
-				}
-
-				public function beginTransaction(): void
-				{
-				}
-
-				public function commit(): void
-				{
-				}
-
-				public function rollBack(): void
-				{
-				}
-
-				public function getNativeConnection(): mixed
-				{
-					return null;
-				}
-
-				public function getServerVersion(): string
-				{
-					return '17.4';
-				}
-			};
-		}
-
-		public function getDatabasePlatform(Doctrine\DBAL\ServerVersionProvider $versionProvider): Doctrine\DBAL\Platforms\AbstractPlatform
-		{
-			return new Doctrine\DBAL\Platforms\PostgreSQLPlatform();
-		}
-
-		public function getExceptionConverter(): Doctrine\DBAL\Driver\API\ExceptionConverter
-		{
-			throw new LogicException('nepouziva se');
-		}
-	};
-
-	new SessionTimeZoneMiddleware('Europe/Prague')->wrap($driver)->connect([]);
-
-	Assert::same(["SET TIME ZONE 'Europe/Prague'"], $executed);
 });
