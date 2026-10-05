@@ -17,7 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
  * nesla jinou zónu, nedaly by se mezi sebou porovnat a nikde by to nebylo vidět.
  *
  * Administrace je i tak ukazuje v čase projektu - převádí se to až při čtení, viz
- * ADT\FancyAdmin\Model\Doctrine\SessionTimeZoneMiddleware.
+ * ADT\DoctrineComponents\Middleware\SessionTimeZoneMiddleware (adt/doctrine-components).
  *
  * Proti traitě CreatedAt tu není Gedmo Timestampable: ten bere čas v zóně aplikace.
  * Entita musí mít #[ORM\HasLifecycleCallbacks], jinak se razítko nezavolá.
