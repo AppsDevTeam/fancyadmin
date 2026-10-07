@@ -58,6 +58,13 @@ final class TestEntityManager extends EntityManager
 		return new TestClassMetadataFactory(array_map($this->getClassMetadata(...), $this->entityClasses));
 	}
 
+	public int $flushCount = 0;
+
+	public function flush(): void
+	{
+		$this->flushCount++;
+	}
+
 	public function getRepository(string $className): EntityRepository
 	{
 		return $this->repositories[$className] ??= new TestRepository();

@@ -231,6 +231,8 @@ forms:
       requiredBranch: "Je nutné vyplniť pobočku"
       ssoRequired: "SSO inštancia je povinná pre vybranú rolu"
       userAlreadyExists: "Používateľ už vo vybranom účte existuje."
+    messages:
+      passwordMailSent: "Na e-mail %email% bol odoslaný odkaz na nastavenie hesla."
 
   newPassword:
     labels:

@@ -220,9 +220,33 @@ trait IdentityProfileFormTrait
 			return;
 		}
 
-		if (!$identity->getPassword()) {
+		// SSO uživatel heslo nemá nikdy - bez téhle podmínky by dostal e-mail při každé
+		// úpravě. Jakmile se mu SSO vypne, e-mail dostane, jinak by se nepřihlásil vůbec.
+		if (!$identity->getPassword() && !$this->getIdentityUsesSso($identity)) {
 			$this->_mailer->sendPasswordRecoveryMail($identity, OnetimeToken::PASSWORD_CREATION_VALID_FOR, checkLimit: false);
+			$this->getPresenter()->flashMessageSuccess('fcadmin.forms.user.messages.passwordMailSent', parameters: ['email' => $identity->getEmail()]);
 		}
+	}
+
+	/**
+	 * Přihlašuje se identita přes SSO, takže lokální heslo nepotřebuje?
+	 *
+	 * Výchozí implementace zná jen Keycloak. Projekt s vlastním SSO mimo balíček metodu
+	 * přepíše a výsledek getIdentityUsesKeycloak() v ní zachová.
+	 */
+	protected function getIdentityUsesSso(Identity $identity): bool
+	{
+		return $this->getIdentityUsesKeycloak($identity);
+	}
+
+	/**
+	 * Deaktivovaná instance vrátí null a identita je pak běžný uživatel s heslem
+	 * (nouzový režim, README 18.2) - e-mail na nastavení hesla tedy dostane.
+	 */
+	protected function getIdentityUsesKeycloak(Identity $identity): bool
+	{
+		return $this->_fancyAdmin->isKeycloakEnabled()
+			&& $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($identity) !== null;
 	}
 
 	protected function validateForm(Form $form): void
