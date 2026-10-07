@@ -42,7 +42,13 @@ $input-color-focus: #F2F3F6;
   $btn-line-height: normal !default,
   $btn-border-radius: $br-container !default,
   $btn-padding-y: 15px !default,
-  $btn-padding-x: 25px !default
+  $btn-padding-x: 25px !default,
+  $component-active-bg: var(--primaryColor) !default,
+  $focus-ring-color: color-mix(in srgb, var(--primaryColor) 25%, transparent) !default,
+  $input-focus-border-color: var(--primaryColor) !default,
+  $form-range-thumb-active-bg: var(--primaryColorDark) !default,
+  $form-switch-focus-color: rgba(0, 0, 0, 0.25) !default,
+  $progress-bar-bg: var(--primaryColor) !default
 );
 
 
