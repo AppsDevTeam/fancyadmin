@@ -5,6 +5,7 @@ global:
 
   flashes:
     close: Beru na vědomí
+    sortableError: Nové pořadí se nepodařilo uložit. Obnovte prosím stránku a zkuste to znovu.
 
 layout:
   sideMenu:

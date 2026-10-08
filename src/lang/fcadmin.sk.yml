@@ -5,6 +5,7 @@ global:
 
   flashes:
     close: Beriem na vedomie
+    sortableError: Nové poradie sa nepodarilo uložiť. Obnovte prosím stránku a skúste to znova.
 
 layout:
   sideMenu:

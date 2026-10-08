@@ -1,3 +1,5 @@
+import { showSortableError } from '../flashes';
+
 var dataGridRegisterExtension, dataGridRegisterAjaxCall, dataGridLoad, dataGridSubmitForm;
 
 if (typeof naja !== "undefined") {
@@ -404,7 +406,9 @@ datagridSortable = function() {
 				url: url,
 				data: data,
 				error: function(jqXHR, textStatus, errorThrown) {
-					return alert(jqXHR.statusText);
+					if (errorThrown !== 'abort') {
+						showSortableError();
+					}
 				}
 			});
 		},
@@ -474,7 +478,7 @@ if (typeof datagridSortableTree === 'undefined') {
 					data: data,
 					error: function(jqXHR, textStatus, errorThrown) {
 						if (errorThrown !== 'abort') {
-							return alert(jqXHR.statusText);
+							showSortableError();
 						}
 					}
 				});
