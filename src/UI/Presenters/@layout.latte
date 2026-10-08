@@ -160,7 +160,7 @@
 		</div>
 	{/if}
 
-	<div n:snippet="flashes" class="snippet-flashes">
+	<div n:snippet="flashes" class="snippet-flashes" data-close-label="{_fcadmin.global.flashes.close}" data-sortable-error="{_fcadmin.global.flashes.sortableError}">
 		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type" data-close-duration={$flash->closeDuration}>
 			<div class="alert-text d-block">{$flash->message|noescape}</div>
 			<div class="alert-close-btn-wrapper">
