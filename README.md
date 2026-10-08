@@ -2533,3 +2533,41 @@ shodit operaci, o které vypovídá.
 
 Obsah prochází `SensitiveDataSanitizer` — do cizího rozhraní i zpátky můžou téct údaje, které
 se do logu uložit nesmí.
+
+---
+
+## 25. Další tlačítka na přihlašovací stránce (volitelné)
+
+Tlačítko pro přihlášení jinou cestou (např. externí SSO) se nepřidává vlastní šablonou
+přihlašovací stránky, ale přepsáním `getSignInButtons()` v projektovém `SignInForm`.
+Tlačítka se vykreslí pod formulář (za přihlášení klíčem) se stejnými mezerami:
+
+```php
+class SignInForm extends BaseForm implements \ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInForm
+{
+	use SignInFormTrait;
+
+	#[Autowire]
+	protected Config $config;
+
+	protected function getSignInButtons(): array
+	{
+		if (!$this->config->getTmobileSsoEnabled()) {
+			return [];
+		}
+
+		return [new SignInButton('app.tmobileSso.loginButton', ':Portal:TmobileSsoAuth:in')];
+	}
+}
+```
+
+`SignInButton` bere překladový klíč popisku, cíl odkazu (pro `plink`), volitelně parametry
+odkazu a třídy ikonky. Podmínku, kdy se tlačítko ukáže, drží projekt v kódu - typicky jen
+když existuje routa, na kterou odkaz vede.
+
+Vzhled přihlašovací stránky jde doladit CSS proměnnými bez přepisování stylů:
+
+| Proměnná | Výchozí | Význam |
+|---|---|---|
+| `--loginLogoWidth` | `226px` | šířka loga nad formulářem (na mobilu max. 156px) |
+| `--loginLostPasswordAlign` | `start` | zarovnání odkazu na zapomenuté heslo pod heslem |
