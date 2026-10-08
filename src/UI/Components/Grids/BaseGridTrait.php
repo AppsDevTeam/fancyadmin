@@ -17,6 +17,7 @@ use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
 use Nette\Application\AbortException;
+use Nette\Application\UI\Presenter;
 use Nette\Security\User;
 
 trait BaseGridTrait
@@ -30,6 +31,19 @@ trait BaseGridTrait
 	use GridFilterQueryFactoryInject;
 	use QueryObjectDataSourceInject;
 	use GridFilterFormFactoryInject;
+
+	public function __construct()
+	{
+		parent::__construct();
+
+		// Stromový grid kreslíme vlastní šablonou (hlavička, sticky první sloupec a akce),
+		// ke které patří styly v _datagridTree.scss.
+		$this->monitor(Presenter::class, function () {
+			if ($this->getGrid()->isTreeView()) {
+				$this->getGrid()->setTemplateFile(__DIR__ . '/DataGridTree.latte');
+			}
+		});
+	}
 
 	public function getGridFilterQueryFactory(): GridFilterQueryFactory
 	{

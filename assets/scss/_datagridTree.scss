@@ -1,0 +1,273 @@
+@use 'variables' as *;
+
+$treeChevronWidth: 22px;
+$treeIndent: 24px;
+$treeFirstColumnWidth: 300px;
+$treeColumnMinWidth: 15rem;
+
+.datagrid .datagrid-tree {
+	width: max-content;
+	min-width: 100%;
+	--actionShadowWidthLeft: 0px;
+	--actionShadowWidthRight: 0px;
+
+	padding-left: 0;
+	padding-bottom: $cardPadding - $paddingTableRowY;
+	background-color: $background;
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 18px;
+
+	> .datagrid-tree-item {
+		margin-left: 0;
+	}
+
+	> .datagrid-tree-header {
+		position: sticky;
+		top: 0;
+		z-index: 9;
+		background-color: $background;
+	}
+
+	> .datagrid-tree-header.datagrid-tree-item .datagrid-tree-item-content {
+		font-weight: 500;
+
+		.datagrid-tree-item-left {
+			padding-top: $cardPadding;
+		}
+
+		.datagrid-tree-item-right {
+			.datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column,
+			.datagrid-tree-item-right-actions {
+				padding-top: $cardPadding;
+			}
+
+			.datagrid-tree-item-right-actions .datagrid-tree-item-right-actions-action {
+				opacity: 0;
+				pointer-events: none;
+			}
+		}
+	}
+
+	.datagrid-tree-header-divider {
+		padding: 0 $cardPadding;
+		background-color: $background;
+
+		> div {
+			height: 1px;
+			background-color: $background-darker;
+		}
+	}
+
+	.datagrid-tree-no-items {
+		padding: $paddingTableRowY $cardPadding;
+	}
+
+	.datagrid-tree-item .datagrid-tree-item-content {
+		height: auto;
+		min-height: 0;
+		align-items: stretch;
+		background-color: $background;
+
+		.datagrid-tree-item-left {
+			flex: 0 0 min(calc(30vw + #{2 * $cardPadding}), #{$treeFirstColumnWidth + 2 * $cardPadding});
+			max-width: min(calc(30vw + #{2 * $cardPadding}), #{$treeFirstColumnWidth + 2 * $cardPadding});
+			align-items: center;
+			padding: $paddingTableRowY $cardPadding $paddingTableRowY $cardPadding - $treeChevronWidth;
+			white-space: normal;
+			position: sticky;
+			left: 0;
+			z-index: 1;
+			background-color: inherit;
+
+			&:after {
+				content: " ";
+				display: flex;
+				position: absolute;
+				right: calc(var(--actionShadowWidthLeft) * -1);
+				width: var(--actionShadowWidthLeft);
+				top: 0;
+				bottom: 0;
+				transition: all 0.2s;
+				box-shadow: inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) #b3b3b3;
+				pointer-events: none;
+			}
+
+			> div {
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			> .chevron {
+				flex: 0 0 $treeChevronWidth;
+				width: $treeChevronWidth;
+				height: 18px;
+				line-height: 18px;
+				margin: 0;
+				color: $primary;
+
+				&.hidden,
+				&.chevron-placeholder {
+					display: inline-block !important;
+					visibility: hidden;
+				}
+			}
+		}
+
+		.datagrid-tree-item-right {
+			flex: 1 1 auto;
+			min-width: 0;
+			align-items: center;
+			background-color: inherit;
+
+			.datagrid-tree-item-right-columns {
+				flex: 1 1 auto;
+				min-width: 0;
+				align-items: center;
+
+				.datagrid-tree-item-right-columns-column {
+					flex: 1 1 0;
+					min-width: $treeColumnMinWidth;
+					padding: $paddingTableRowY $cardPadding;
+
+					> div {
+						overflow: hidden;
+						text-overflow: ellipsis;
+					}
+				}
+			}
+
+			.datagrid-tree-item-right-actions {
+				flex: 0 0 auto;
+				margin-left: auto;
+				padding: $paddingTableRowY $cardPadding;
+				position: sticky;
+				right: 0;
+				z-index: 1;
+				background-color: inherit;
+
+				&:before {
+					content: " ";
+					display: flex;
+					position: absolute;
+					left: calc(var(--actionShadowWidthRight) * -1);
+					width: var(--actionShadowWidthRight);
+					top: 0;
+					bottom: 0;
+					transition: all 0.2s;
+					box-shadow: inset calc(var(--actionShadowWidthRight) * -1) 0 calc(var(--actionShadowWidthRight) * 0.5) calc(var(--actionShadowWidthRight) * -1) #b3b3b3;
+					pointer-events: none;
+				}
+
+				.datagrid-tree-item-right-actions-action {
+					margin: 0 0 0 auto;
+					gap: 15px;
+
+					a {
+						display: inline-flex;
+						justify-content: center;
+						align-items: center;
+					}
+
+					.fa {
+						color: $primary;
+
+						&:hover {
+							color: $primary-dark;
+						}
+					}
+
+					.btn {
+						margin: 0;
+						padding: 0;
+						height: initial;
+						background: transparent;
+						border-color: transparent;
+						box-shadow: none;
+					}
+
+					.dropdown-menu.show {
+						border: 0;
+						box-shadow: 0 4px 8px 0 #00000026;
+						max-width: 300px;
+						margin-top: 8px !important;
+						margin-right: -15px !important;
+
+						> a {
+							display: flex;
+							justify-content: flex-start;
+							align-items: center;
+							background: $background;
+							gap: 10px;
+							align-self: stretch;
+							text-decoration: none;
+							font-size: 14px;
+							line-height: 18px;
+							padding: 15px !important;
+							text-wrap: nowrap;
+							color: inherit;
+
+							&:hover, &:focus {
+								background: $secondary-dark;
+							}
+						}
+
+						> .datagrid-delete {
+							.fa {
+								color: $red;
+							}
+
+							&:hover, &:focus {
+								background: $red-100;
+							}
+						}
+
+						> :not(:first-child).datagrid-delete {
+							border-top: 1px solid black;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	.datagrid-tree-item:not(.datagrid-tree-header):hover > .datagrid-tree-item-content {
+		background-color: $background-dark;
+	}
+
+	.datagrid-tree-item:has(.datagrid-tree-item:hover) > .datagrid-tree-item-content {
+		background-color: $background;
+	}
+
+	@for $level from 1 through 4 {
+		$children: '';
+
+		@for $i from 1 through $level {
+			$children: $children + '.datagrid-tree-item-children:not(.datagrid-tree) ';
+		}
+
+		#{$children} .datagrid-tree-item-content .datagrid-tree-item-left {
+			padding-left: $cardPadding - $treeChevronWidth + $treeIndent * $level;
+		}
+	}
+
+	@include media-breakpoint-down(sm) {
+		.datagrid-tree-item .datagrid-tree-item-content {
+			.datagrid-tree-item-left {
+				padding: 15px 20px 15px 0;
+				position: initial;
+			}
+
+			.datagrid-tree-item-right {
+				.datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column,
+				.datagrid-tree-item-right-actions {
+					padding: 15px 20px;
+				}
+
+				.datagrid-tree-item-right-actions {
+					position: initial;
+				}
+			}
+		}
+	}
+}
