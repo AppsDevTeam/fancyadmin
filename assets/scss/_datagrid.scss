@@ -161,7 +161,7 @@
 			}
 
 			.fa {
-				color: $primary;
+				color: inherit;
 
 				&:hover {
 					color: $primary-dark;
@@ -171,6 +171,7 @@
 			.btn:has(> .fa) {
 				padding: 0;
 				height: initial;
+				color: inherit;
 			}
 
 			.dropdown-menu.show {
@@ -201,6 +202,12 @@
 					padding: 15px !important;
 					text-wrap: nowrap;
 					color: inherit;
+
+					> :first-child {
+						flex-shrink: 0;
+						width: 1.25em;
+						text-align: center;
+					}
 
 					> a:not(.btn-edit) {
 						padding: 15px;
