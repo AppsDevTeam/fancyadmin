@@ -14,6 +14,7 @@ use ADT\FancyAdmin\Model\Entities\File;
 use ADT\FancyAdmin\Model\FileUploadRules;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\Model\Menu\UserMenuFactory;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountFormFactory;
 use Nette\Application\AbortException;
@@ -319,7 +320,9 @@ trait AuthPresenterTrait
 	 */
 	public function redrawSidePanel(?string $name = null): never
 	{
-		$this->getPresenter()->payload->snippets[$this->getSnippetId('sidePanel')] = $this[$name ? $name . ucfirst('sidePanel') : 'sidePanel']->renderToString();
+		$sidePanel = $this[$name ? $name . ucfirst('sidePanel') : 'sidePanel'];
+		$snippet = $sidePanel instanceof SidePanelControl ? $sidePanel->getSnippetName() : 'sidePanel';
+		$this->getPresenter()->payload->snippets[$this->getSnippetId($snippet)] = $sidePanel->renderToString();
 		$this->getPresenter()->sendPayload();
 	}
 
