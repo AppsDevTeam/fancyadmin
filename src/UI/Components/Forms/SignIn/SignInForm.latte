@@ -7,7 +7,7 @@
 {define section-passkey}
 	{if $isPasskeyEnabled}
 	<div
-		class="passkey-login mt-3"
+		class="passkey-login mt-3 mt-sm-0"
 		data-adt-fancyadmin-passkey-login
 		data-passkey-args-url="{link passkeyLoginArgs!}"
 		data-passkey-verify-url="{link passkeyLoginVerify!}"
@@ -21,4 +21,13 @@
 		<div class="alert alert-danger mt-2 d-none" data-passkey-error></div>
 	</div>
 	{/if}
+{/define}
+
+{define section-signInButtons}
+	<div class="sign-in-buttons">
+		<a n:foreach="$signInButtons as $button" href="{plink $button->destination, (expand) $button->args}" class="btn btn-primary w-100">
+			<i n:if="$button->icon" class="{$button->icon} me-3"></i>
+			{_$button->label}
+		</a>
+	</div>
 {/define}

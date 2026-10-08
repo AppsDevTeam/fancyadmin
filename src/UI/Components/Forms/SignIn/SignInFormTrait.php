@@ -47,9 +47,9 @@ trait SignInFormTrait
 				->setHtmlAttribute('id', 'login-form-input-password')
 				->setHtmlAttribute('placeholder', 'fcadmin.forms.signIn.labels.password')
 				->setRequired('fcadmin.forms.signIn.errors.passwordRequired');
-		}, 'inputsWrap');
 
-		$form->addSection(name: 'lostPassword');
+			$form->addSection(name: 'lostPassword');
+		}, 'inputsWrap');
 
 		$form->addSubmit('submit', 'fcadmin.forms.signIn.labels.logIn')
 			->getControlPrototype()->class[] = 'w-100';
@@ -58,8 +58,14 @@ trait SignInFormTrait
 			$form->addSection(name: 'passkey');
 		}
 
+		$signInButtons = $this->getSignInButtons();
+		if ($signInButtons) {
+			$form->addSection(name: 'signInButtons');
+		}
+
 		$this->getTemplate()->isLostPasswordEnabled = $this->_fancyAdmin->isLostPasswordEnabled();
 		$this->getTemplate()->isPasskeyEnabled = $this->_fancyAdmin->isPasskeyEnabled();
+		$this->getTemplate()->signInButtons = $signInButtons;
 
 		// Keycloak email check — přidá data atribut pro JS kontrolu
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
@@ -77,6 +83,16 @@ trait SignInFormTrait
 	 * Najde identitu podle emailu, zjistí přiřazenou SSO instanci,
 	 * a pokud existuje, vrátí loginUrl pro redirect.
 	 */
+	/**
+	 * Další tlačítka pod formulářem, projekt je přidá přepsáním této metody.
+	 *
+	 * @return list<SignInButton>
+	 */
+	protected function getSignInButtons(): array
+	{
+		return [];
+	}
+
 	public function handleCheckKeycloak(): void
 	{
 		$email = $this->getPresenter()->getHttpRequest()->getPost('email');

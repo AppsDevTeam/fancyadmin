@@ -1,5 +1,8 @@
 @use 'variables' as *;
 
+$login-inputs-gap: 20px;
+$login-lost-password-offset: 6px;
+
 .bg-primary-variant {
 	background-color: var(--loginPageBackground, #{$tertiary});
 	color: var(--loginPageTextColor, #{$tertiary-text});
@@ -39,6 +42,14 @@
 
 			.login-form {
 				gap: 0;
+
+				#inputsWrap {
+					margin-bottom: 1rem;
+				}
+
+				.sign-in-buttons {
+					margin-top: 1rem;
+				}
 			}
 		}
 	}
@@ -64,7 +75,7 @@
 	padding: 80px 40px;
 
 	img {
-		width: 226px;
+		width: var(--loginLogoWidth, 226px);
 		height: auto;
         margin: 0 auto;
 	}
@@ -81,10 +92,22 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		gap: 20px;
+		gap: $login-inputs-gap;
+	}
+
+	#lostPassword {
+		margin-top: calc(#{$login-lost-password-offset} - #{$login-inputs-gap});
+		text-align: var(--loginLostPasswordAlign, start);
+	}
+
+	.sign-in-buttons {
+		display: flex;
+		flex-direction: column;
+		gap: $login-inputs-gap;
 	}
 
 	div:has(> .form-control),
+	div:has(> .input-group > .form-control),
 	div:has(> .form-check) {
 		width: 100%;
 		margin-bottom: 0 !important;

@@ -425,7 +425,7 @@ keycloak:
     loopDetected: Bolo detegované opakované presmerovanie. Skúste to prosím znovu.
 
 passkeys:
-  loginButton: Prihlásiť sa prihlasovacím kľúčom
+  loginButton: Prihlásiť sa kľúčom
   profile:
     title: Prihlasovacie kľúče
     add: Pridať kľúč
