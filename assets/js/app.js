@@ -119,4 +119,5 @@ import './tableActionsShadow';
 import './sideMenu'
 import './datagrid/datagrid'
 import './datagrid'
+import './datagridInfiniteScroll'
 import './sidePanel'

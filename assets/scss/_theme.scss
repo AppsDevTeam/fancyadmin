@@ -97,8 +97,11 @@ a {
 }
 
 .form-label {
-	font-size: 18px;
-	color: $black;
+	font-size: 14px;
+	line-height: 18px;
+	color: var(--labelColor, #878787);
+	margin-bottom: 6px;
+	padding-left: $padding-input + 1px;
 }
 
 input[type="file"] {
@@ -132,7 +135,8 @@ input[type="color"]::-webkit-color-swatch {
 	border: none;
 }
 
-:not(.form-group-filter) .form-control {
+:not(.form-group-filter) .form-control,
+:not(.form-group-filter) .form-select {
 	border: 0;
 	height: 49px;
 	border-radius: 20px;
@@ -152,7 +156,8 @@ input[type="color"]::-webkit-color-swatch {
 	}
 }
 
-.form-control {
+.form-control,
+.form-select {
 	&:not(:disabled) {
 		background-color: var(--inputBackground);
 		border: var(--inputBorder);
@@ -161,6 +166,57 @@ input[type="color"]::-webkit-color-swatch {
 	&:focus {
 		background-color: var(--inputFocusBackground) !important;
 		border: var(--inputFocusBorder);
+	}
+}
+
+:not(.form-group-filter) .form-select {
+	padding-right: 2 * $padding-input + 16px;
+	background-position: right $padding-input center;
+}
+
+:not(.form-group-filter) textarea.form-control {
+	height: auto;
+	min-height: 120px;
+	line-height: 1.4;
+	resize: vertical;
+}
+
+.input-group {
+	> .select2-container {
+		flex: 1 1 auto;
+		width: 1% !important;
+		min-width: 0;
+	}
+
+	> .form-control:not(:last-child),
+	> .form-select:not(:last-child),
+	> .select2-container:not(:last-child) .select2-selection {
+		border-top-right-radius: 0 !important;
+		border-bottom-right-radius: 0 !important;
+	}
+
+	> a.btn,
+	> button.btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		width: 49px;
+		height: 49px;
+		padding: 0;
+		margin-left: 0 !important;
+		background-color: var(--inputBackground);
+		border: var(--inputBorder);
+		border-left: 1px solid var(--secondaryColorDarker);
+		border-radius: 0 20px 20px 0 !important;
+		color: var(--primaryColor);
+		box-shadow: none;
+
+		&:hover,
+		&:focus-visible {
+			background-color: var(--inputFocusBackground);
+			color: var(--primaryColorDark);
+		}
 	}
 }
 
@@ -1099,7 +1155,6 @@ body:not(:has(.navbar)) #snippet--container {
 		font-size: 90%;
 		text-wrap: nowrap;
 	}
-
 
 	li {
 		margin-bottom: 10px;

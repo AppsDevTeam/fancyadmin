@@ -270,6 +270,17 @@ class Keycloak
 		return $this->linkGenerator->link("//:Portal:KeycloakAuth:$action", ['instance' => $this->instanceName]);
 	}
 
+	/**
+	 * redirect_uri pro check-sso iframe frontendového klienta (keycloak-js, silentCheckSsoRedirectUri).
+	 * Přes LinkGenerator, ne přes Presenter::link(): ten by do URL propsal persistentní parametry
+	 * aktuálního presenteru a exact redirect URI matching v Keycloaku by request odmítl
+	 * (invalid_redirect_uri).
+	 */
+	public function getSilentCheckSsoUri(): string
+	{
+		return $this->linkGenerator->link('//:Portal:KeycloakAuth:silentCheckSso');
+	}
+
 	public function getAuthRedirectUri(): string
 	{
 		return $this->linkGenerator->link('//:Portal:KeycloakAuth:callback', ['instance' => $this->instanceName]);
