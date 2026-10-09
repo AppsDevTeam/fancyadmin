@@ -150,7 +150,6 @@ body:has(.side-panel) .container {
 
 $sidePanelTemplateAnimation: .4s;
 
-
 .side-panel-template-backdrop {
   position: fixed;
   background-color: rgb(0 0 0 / 0%);
@@ -160,11 +159,10 @@ $sidePanelTemplateAnimation: .4s;
   z-index: 9010;
 }
 
-body:has(.side-panel-template-container form) {
-  .side-panel-template-backdrop {
-    pointer-events: all;
-    background-color: rgb(0 0 0 / 30%);
-  }
+body:has(.side-panel-template-container:not(.side-panel-template-container--stacked) form) .side-panel-template-backdrop:not(.side-panel-template-backdrop--stacked),
+body:has(.side-panel-template-container--stacked :is(form, .side-panel-loading)) .side-panel-template-backdrop--stacked {
+  pointer-events: all;
+  background-color: rgb(0 0 0 / 30%);
 }
 
 .side-panel-template-container {
@@ -183,9 +181,17 @@ body:has(.side-panel-template-container form) {
 
   transition: right .4s ease;
 
-  &:has(form) {
+  &:has(form, .side-panel-loading) {
     right: 0;
     box-shadow: 0 0 45px -10px black;
+  }
+
+  .side-panel-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--primaryColor);
   }
 
   .btn-close {
@@ -227,6 +233,22 @@ body:has(.side-panel-template-container form) {
     tr, td {
       border-width: 1px;
     }
+  }
+}
+
+$sidePanelStackedOffset: 48px;
+
+.side-panel-template-backdrop--stacked {
+  z-index: 9022;
+}
+
+.side-panel-template-container--stacked {
+  z-index: 9024;
+}
+
+.side-panel-template-container:not(.side-panel-template-container--stacked):has(form) {
+  body:has(.side-panel-template-container--stacked :is(form, .side-panel-loading)) & {
+    right: $sidePanelStackedOffset;
   }
 }
 

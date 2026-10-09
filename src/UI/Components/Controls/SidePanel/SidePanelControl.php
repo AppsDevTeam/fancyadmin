@@ -9,7 +9,9 @@ use ADT\FancyAdmin\UI\RenderToStringTrait;
 use ADT\Forms\BaseForm;
 use Exception;
 use Nette\Application\UI\Control;
+use Stringable;
 use Nette\Http\Url;
+use Nette\Utils\Html;
 
 class SidePanelControl extends Control
 {
@@ -22,9 +24,15 @@ class SidePanelControl extends Control
 
 	private string $closeConfirm = 'fcadmin.sidePanels.control.closeConfirm';
 
+	private bool $stacked = false;
+
+	/** @var callable|null */
+	private $resultLabel = null;
+
 	public function render(): void
 	{
 		$this->template->size = $this->size->value;
+		$this->template->stacked = $this->stacked;
 		$this->template->closeConfirm = $this->closeConfirm;
 		$this->template->setFile(__DIR__ . '/SidePanelControl.latte');
 		$this->template->render();
@@ -54,11 +62,14 @@ class SidePanelControl extends Control
 			->setOnSuccess(function (Form $form) use ($baseForm) {
 				$this->getPresenter()->flashMessageSuccess('fcadmin.sidePanels.control.formSaved');
 				$snippets = $baseForm->getSnippetsToRedraw();
-				if ($this->getPresenter()->isAjax() && $snippets) {
+				if ($this->getPresenter()->isAjax() && ($snippets || $this->stacked)) {
 					foreach ($snippets as $snippet) {
 						$this->getPresenter()->redrawControl($snippet);
 					}
-					$this->getPresenter()->redrawControl('sidePanel');
+					if ($this->stacked) {
+						$this->getPresenter()->payload->sidePanelStackedResult = $this->getResult($form);
+					}
+					$this->getPresenter()->redrawControl($this->getSnippetName());
 					$this->getPresenter()->redrawControl('flashes');
 				} else {
 					$this->getPresenter()->redirect('this');
@@ -78,5 +89,70 @@ class SidePanelControl extends Control
 	{
 		$this->closeConfirm = $closeConfirm;
 		return $this;
+	}
+
+	public function setStacked(bool $stacked = true): static
+	{
+		$this->stacked = $stacked;
+		return $this;
+	}
+
+	public function isStacked(): bool
+	{
+		return $this->stacked;
+	}
+
+	/**
+	 * @param string $link odkaz na signál presenteru
+	 * @param string|null $title už přeložený popisek tlačítka (title a aria-label)
+	 * @param string $icon třídy ikony
+	 */
+	public static function createStackedButton(string $link, ?string $title = null, string $icon = 'fa-solid fa-plus'): Html
+	{
+		$button = Html::el('a')
+			->href($link)
+			->setAttribute('class', 'btn ajax')
+			->setAttribute('data-fancyadmin-side-panel-stacked', true)
+			->addHtml(Html::el('i')->setAttribute('class', $icon));
+
+		if ($title !== null) {
+			$button->setAttribute('title', $title)
+				->setAttribute('aria-label', $title);
+		}
+
+		return $button;
+	}
+
+	public function getSnippetName(): string
+	{
+		return $this->stacked ? 'sidePanelStacked' : 'sidePanel';
+	}
+
+	/**
+	 * @param callable(object): string $resultLabel
+	 */
+	public function setResultLabel(callable $resultLabel): static
+	{
+		$this->resultLabel = $resultLabel;
+		return $this;
+	}
+
+	/**
+	 * @return array{value: mixed, label: string}|null
+	 */
+	public function getResult(Form $form): ?array
+	{
+		$entity = $form->getEntity();
+		if (!is_object($entity) || !method_exists($entity, 'getId')) {
+			return null;
+		}
+
+		$label = match (true) {
+			$this->resultLabel !== null => ($this->resultLabel)($entity),
+			$entity instanceof Stringable => (string) $entity,
+			default => (string) $entity->getId(),
+		};
+
+		return ['value' => $entity->getId(), 'label' => $label];
 	}
 }
