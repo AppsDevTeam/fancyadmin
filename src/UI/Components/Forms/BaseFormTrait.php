@@ -29,6 +29,8 @@ trait BaseFormTrait
 	 */
 	public function onBeforeInitForm(Form $form): void
 	{
+		$this->registerCsrfProtection();
+
 		if ($this->getEntityClass() && !$this->disableAccountInput) {
 			$refClass = new \ReflectionClass($this->getEntityClass());
 
@@ -106,10 +108,49 @@ trait BaseFormTrait
 		$form->setTranslator($this->_translator);
 		$form->setEntityManager($this->_em);
 		$form->setRenderer(new BootstrapFormRenderer($form));
-		if ($this->csrfProtection) {
-			$form->addProtection('fcadmin.forms.errors.csrf');
-		}
+		$this->registerCsrfProtection();
 		return $form;
+	}
+
+	/**
+	 * Ochrana se vesi az na `onAfterInitForm`, protoze `Form::setMethod()` snese jen prazdny
+	 * formular: prvni prvek v nem spusti pri pripojeni k prezenteru `isSubmitted()`, tim se
+	 * nactou HTTP data a `setMethod()` uz vyhodi vyjimku. Pridana rovnou pri sestaveni
+	 * formulare proto rozbila kazdy formular, ktery si metodu meni.
+	 *
+	 * Registruje se na dvou mistech schvalne. Projekt casto prepisuje `createComponentForm()`
+	 * (stavi si vlastni Form), kdezto `onBeforeInitForm()` prepisuje malokdy - a naopak.
+	 * Samotne pridani ochrany je proto napsane tak, aby druhe volani uz nic neudelalo.
+	 */
+	protected function registerCsrfProtection(): void
+	{
+		$this->onAfterInitForm[] = function (Form $form): void {
+			$this->addCsrfProtection($form);
+		};
+	}
+
+	/**
+	 * Vynechava se ve dvou pripadech:
+	 *
+	 * - Formular odesilany GETem (filtry) - token by skoncil v adrese, tedy presne tam, odkud
+	 *   ho {@see \ADT\FancyAdmin\Core\SignalCsrfRouteList} uklizi. Takovy formular dal chrani
+	 *   token signalu (`_sec`).
+	 * - Neprihlaseny uzivatel - `addProtection()` uklada token do relace, takze by radek
+	 *   v tabulce sessions dostal kazdy navstevnik prihlasovaci stranky. Presne temu se
+	 *   vyhyba {@see \ADT\FancyAdmin\UI\Presenters\SignalCsrfProtection} i ReturnPath.
+	 */
+	protected function addCsrfProtection(Form $form): void
+	{
+		if (
+			!$this->csrfProtection
+			|| !$form->isMethod('post')
+			|| !$this->securityUser->isLoggedIn()
+			|| $form->getComponent(Form::ProtectorId, throw: false) !== null
+		) {
+			return;
+		}
+
+		$form->addProtection('fcadmin.forms.errors.csrf');
 	}
 
 	public function getSidePanelSize(): SidePanelSize

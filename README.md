@@ -875,11 +875,10 @@ Co je kolem toho potřeba vědět:
 - **Formuláře ho dostanou skrytým polem**, které do nich doplní `assets/js/signalCsrf.js`
   (je v `app.js`). Týž skript uklízí token i signál z adresního řádku po ajaxu.
 - **Formulář s vlastním `addProtection()` je z kontroly vyjmutý** a na JavaScriptu tedy
-  nezávisí. `BaseFormTrait` ho volá na každý formulář (`$csrfProtection = true`).
-  ⚠️ Pokud si projekt přepíše `createComponentForm()` a `addProtection()` v něm vynechá,
-  jeho formuláře o vlastní token přijdou a začnou záviset na tom, že se skript v prohlížeči
-  opravdu provedl. Filtry a hromadné akce gridů vlastní token nemají nikdy, ty na skriptu
-  závisí vždy.
+  nezávisí. `BaseFormTrait` ho přidává sám (`$csrfProtection = true`), ale až po `initForm()`
+  a jen formuláři, který se odesílá POSTem a patří přihlášenému uživateli — proč zrovna tak
+  je popsané u `BaseFormTrait::registerCsrfProtection()`. Formuláře odesílané GETem (filtry)
+  a hromadné akce gridů vlastní token nemají, ty na skriptu závisí vždy.
 
 ---
 
