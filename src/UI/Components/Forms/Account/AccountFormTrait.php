@@ -2,11 +2,14 @@
 
 namespace ADT\FancyAdmin\UI\Components\Forms\Account;
 
+use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\Forms\Form;
-use App\Model\Entities\Account;
 use Exception;
 
 /**
+ * Formular uctu. Tridu entity si projekt doplni sam v `getEntityClass()` (vyzaduje ji
+ * BaseFormTrait) - knihovna zna jen rozhrani Account a to se instancovat neda.
+ *
  * @property Account $entity
  */
 trait AccountFormTrait
@@ -20,11 +23,6 @@ trait AccountFormTrait
 			->setRequired();
 
 		$form->addSubmit('submit', 'fcadmin.forms.account.submit');
-	}
-
-	protected function getEntityClass(): ?string
-	{
-		return Account::class;
 	}
 
 	/**

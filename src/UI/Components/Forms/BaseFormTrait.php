@@ -10,7 +10,6 @@ use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\Forms\BootstrapFormRenderer;
-use App\UI\Portal\Components\Forms\Base\EntityForm;
 
 trait BaseFormTrait
 {

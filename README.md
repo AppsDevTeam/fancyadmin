@@ -40,6 +40,28 @@ Doplňkově doporučeno:
 composer require adt/doctrine-components:^3.2 adt/query-object-data-source:^3.0
 ```
 
+### Přechod na verzi, která neodkazuje na třídy projektu
+
+Knihovna dřív na několika místech počítala s konkrétními třídami projektu pod `App\…`
+(`App\Model\Entities\Identity`, `…\Account`, `App\Model\Security\SecurityUser`,
+`App\Model\Translator`). Teď pracuje jen se svými rozhraními. Co to znamená pro projekt:
+
+- **`CreatedBy` a `CreatedByInterface`** jsou typované na `ADT\FancyAdmin\Model\Entities\Identity`
+  a cíl relace je krátký název `'Identity'` — stejně jako u `UpdatedBy` a `CreatedByNullable`.
+  Pokud si projekt v potomkovi `CreatedByInterface` zužuje `setCreatedBy()`/`getCreatedBy()`
+  na svou Identity, musí to smazat: PHP zúžený parametr odmítne už při načtení třídy.
+  Entita s `CreatedBy` musí ležet ve stejném namespace jako Identity (jako u `UpdatedBy`).
+  Schéma databáze se nemění.
+- **`AccountFormTrait` už nemá `getEntityClass()`** — knihovna zná jen rozhraní `Account`
+  a to se instancovat nedá. Formulář v projektu si ho doplní:
+  `protected function getEntityClass(): ?string { return Account::class; }`
+- **Menu (`NavbarMenuFactory`, `UserMenuFactory`)** se hledají vedle presenterů modulu podle
+  namespace třídy presenteru, ne pod natvrdo zadaným `App\UI\Portal`. Pro obvyklé
+  rozložení se nic nemění.
+- `CreatedByListenerTrait` a `JsComponents::setTranslateConfig()` berou rozhraní
+  (`SecurityUser` z fancyadminu, resp. `TranslatorBagInterface` ze Symfony) — projekt nemusí
+  dělat nic.
+
 ---
 
 ## 2. BaseEntity

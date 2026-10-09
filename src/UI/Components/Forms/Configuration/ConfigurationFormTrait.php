@@ -8,7 +8,7 @@ use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
 use ADT\FancyAdmin\Model\Entities\File;
 use ADT\FancyAdmin\Model\FileUploadRules;
 use ADT\Forms\Form;
-use App\Model\Entities\Account;
+use ADT\FancyAdmin\Model\Entities\Account;
 use Nette\Http\FileUpload;
 use Nette\Utils\Json;
 use Nette\Utils\JsonException;

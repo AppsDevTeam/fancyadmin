@@ -23,7 +23,6 @@ use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Http\FileUpload;
 use Nette\Security\AuthenticationException;
-use App\Model\Entities\Enums\AclResourceNameEnum;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -300,9 +299,11 @@ trait AuthPresenterTrait
 	public function beforeRender(): void
 	{
 		parent::beforeRender();
-		$submodule = str_replace('Portal', '', explode(':', $this->getName())[0]);
-		$className = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\NavbarMenuFactory";
-		$userMenuClassName = "\\App\\UI\\Portal\\{$submodule}\\Presenters\\UserMenuFactory";
+		// Menu lezi vedle presenteru modulu (`<modul>\Presenters\NavbarMenuFactory`). Namespace
+		// se bere z tridy presenteru, ne natvrdo - projekt nemusi zit pod `App\UI\Portal`.
+		$presentersNamespace = substr(static::class, 0, strpos(static::class, '\\Presenters\\') + strlen('\\Presenters'));
+		$className = $presentersNamespace . '\\NavbarMenuFactory';
+		$userMenuClassName = $presentersNamespace . '\\UserMenuFactory';
 		/** @var NavbarMenuFactory $className */
 		$navbarMenuFactory = new $className();
 		/** @var UserMenuFactory $userMenuFactory */
