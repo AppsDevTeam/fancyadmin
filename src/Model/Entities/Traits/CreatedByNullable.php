@@ -12,7 +12,7 @@ trait CreatedByNullable
 {
 	#[ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
-	protected ?Identity $createdBy = null;
+	final protected ?Identity $createdBy = null;
 
 	public function setCreatedBy(?Identity $createdBy): static
 	{

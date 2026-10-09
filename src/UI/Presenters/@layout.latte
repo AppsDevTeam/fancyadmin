@@ -9,7 +9,7 @@
 	<title n:snippet="title">{ifset title}{include title|stripHtml} | {/ifset}{$projectName}</title>
 
 	{if !empty($keycloakSettingsJson ?? '')}
-		<script>window.__keycloakSettings = {$keycloakSettingsJson|noescape};</script>
+		<script n:nonce>window.__keycloakSettings = {$keycloakSettingsJson|noescape};</script>
 	{/if}
 	{block head}{/block}
 
@@ -138,6 +138,11 @@
 			{snippet sidePanel}{/snippet}
 			<button type="button" class="btn-close"></button>
 		</div>
+		<div class="side-panel-template-backdrop side-panel-template-backdrop--stacked"></div>
+		<div class="side-panel-template-container side-panel-template-container--stacked">
+			{snippet sidePanelStacked}{/snippet}
+			<button type="button" class="btn-close"></button>
+		</div>
 	{else}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">
@@ -154,16 +159,16 @@
 
 				{if !empty($showBackButton)}
 					{if	$presenter->getAction() !== 'default'}
-						<p class="text-center"><a n:href="default">{_'fcadmin.layout.links.back'}</a></p>
+						<p class="text-center"><a n:href="default" class="linkOnCard">{_'fcadmin.layout.links.back'}</a></p>
 					{else}
-						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()">{_'fcadmin.layout.links.backToHomepage'}</a></p>
+						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()" class="linkOnCard">{_'fcadmin.layout.links.backToHomepage'}</a></p>
 					{/if}
 				{/if}
 
 				{include content}
 
 				{if !$user->isLoggedIn() && !$presenter->isLinkCurrent(':Portal:Sign:in')}
-					<p class="text-center"><a n:href=":Portal:Sign:in">{_'fcadmin.layout.links.goToLogin'}</a></p>
+					<p class="text-center"><a n:href=":Portal:Sign:in" class="linkOnCard">{_'fcadmin.layout.links.goToLogin'}</a></p>
 				{/if}
 			</div>
 			{if $account?->getLogo()}
@@ -172,7 +177,7 @@
 		</div>
 	{/if}
 
-	<div n:snippet="flashes" class="snippet-flashes">
+	<div n:snippet="flashes" class="snippet-flashes" data-close-label="{_fcadmin.global.flashes.close}" data-sortable-error="{_fcadmin.global.flashes.sortableError}">
 		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type" data-close-duration={$flash->closeDuration}>
 			<div class="alert-text d-block">{$flash->message|noescape}</div>
 			<div class="alert-close-btn-wrapper">

@@ -5,28 +5,45 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
+use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use Doctrine\ORM\Mapping as ORM;
 
 trait SsoTrait
 {
+	/**
+	 * Zapojuje se instance do přihlašování?
+	 *
+	 * Silent SSO na přihlašovací stránce prochází všechny aktivní instance, takže vadná
+	 * konfigurace ovlivní login celé platformy. Deaktivace je způsob, jak takovou instanci
+	 * odstavit, aniž by se musela smazat - konfigurace i navázané identity zůstanou.
+	 * Viz KeycloakManager::getAllSsoRecords().
+	 */
+	use IsActive;
+
 	#[ORM\Column(unique: true, nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $name;
 
 	#[ORM\Column(nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $realm;
 
 	#[ORM\Column(nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $baseUrl;
 
 	#[ORM\Column(nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $hostUrl;
 
 	#[ORM\Column(nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $clientId;
 
 	#[ORM\Column(nullable: false)]
@@ -34,11 +51,13 @@ trait SsoTrait
 
 	#[ORM\Column(nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $frontendClientId;
 
 	#[ORM\ManyToOne(targetEntity: 'AclRole')]
 	#[ORM\JoinColumn(nullable: true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?AclRole $defaultRole = null;
 
 	public function getName(): string
@@ -128,4 +147,5 @@ trait SsoTrait
 		$this->defaultRole = $defaultRole;
 		return $this;
 	}
+
 }

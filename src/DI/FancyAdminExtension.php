@@ -6,32 +6,32 @@ namespace ADT\FancyAdmin\DI;
 
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
+use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
-use ADT\FancyAdmin\Model\Entities\AclResource;
-use ADT\FancyAdmin\Model\Entities\AclResourceTrait;
+use ADT\FancyAdmin\Model\Audit\AuditActor;
+use ADT\FancyAdmin\Model\Audit\AuditLogger;
+use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
-use ADT\FancyAdmin\Model\Entities\AclRole;
-use ADT\FancyAdmin\Model\Entities\AclRoleTrait;
 use ADT\FancyAdmin\Model\Entities\Identity;
-use ADT\FancyAdmin\Model\Entities\IdentityPasskeysTrait;
-use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
-use ADT\FancyAdmin\Model\Entities\Profile;
-use ADT\FancyAdmin\Model\Entities\ProfileTrait;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
+use ADT\FancyAdmin\Model\Security\ReturnPath;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
+use ADT\Forms\Controls\PasswordRevealInput;
+use ADT\LogSanitizer\SensitiveDataSanitizer;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Config\Loader;
 use Nette\DI\Definitions\Statement;
 use Nette\Loaders\RobotLoader;
+use Nette\PhpGenerator\ClassType;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
 use Nette\Schema\Schema;
@@ -61,17 +61,33 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
 			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
 			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
+			'personalDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
+			// Retence logů pro fancyadmin:purge-logs. Pořadí rozhoduje, mazání jde
+			// odshora dolů - záleží na něm tam, kde jsou tabulky svázané cizím klíčem.
+			// audit_log sem NEPATŘÍ, ten odváží a maže mover (adt/log-mover).
+			'purge' => Expect::listOf(Expect::structure([
+				'entity' => Expect::string()->required(),
+				// cokoliv, co bere DateTimeImmutable::modify(), např. '6 months'
+				'retention' => Expect::string()->required(),
+			])->castTo('array'))->default([]),
 			'keycloakEnabled' => Expect::bool()->default(false),
 			// Vypnutí validace TLS certifikátu Keycloak serveru — POUZE pro lokální vývoj (self-signed cert)
 			'keycloakVerifySsl' => Expect::bool()->default(true),
 			'passkeyEnabled' => Expect::bool()->default(false),
+			// Záchranná cesta při vynuceném 2FA: jednorázový kód na e-mail místo tvrdé zdi (README 19.9)
+			'passkeyEmailOtpEnabled' => Expect::bool()->default(true),
+			// Zamknout uživatele přihlášeného jednorázovým kódem na Profil, dokud si nepřidá klíč
+			'passkeyEnrollmentRequired' => Expect::bool()->default(false),
 			// WebAuthn Relying Party ID (doména) — když není nastaveno, odvodí se za běhu host z adminHostPath
 			'passkeyRpId' => Expect::string()->nullable()->default(null),
 			// WebAuthn Relying Party name — když není nastaveno, použije se projectName
 			'passkeyRpName' => Expect::string()->nullable()->default(null),
+			// Hosty, na ktere smi mirit verejna URL SSO instance - viz Model\Security\SsoHostAllowlist.
+			// Prazdny seznam nepousti nic, projekt se SSO si hosty vypsat musi.
+			'ssoAllowedHosts' => Expect::listOf('string')->default([]),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -132,13 +148,17 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'customerAclResource' => $this->config->customerAclResource,
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
+				'personalDataAclResource' => $this->config->personalDataAclResource,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
 				'keycloakEnabled' => $this->config->keycloakEnabled,
 				'passkeyEnabled' => $this->config->passkeyEnabled,
+				'passkeyEmailOtpEnabled' => $this->config->passkeyEmailOtpEnabled,
+				'passkeyEnrollmentRequired' => $this->config->passkeyEnrollmentRequired,
 				'passkeyRpId' => $this->config->passkeyRpId,
 				'passkeyRpName' => $this->config->passkeyRpName,
+				'ssoAllowedHosts' => $this->config->ssoAllowedHosts,
 			]);
 
 		$builder->addDefinition($this->prefix('jsComponents'))
@@ -147,14 +167,32 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('passkeyService'))
 			->setFactory(PasskeyService::class);
 
+		// Cíl "kam po přihlášení" v cookie, aby nepřihlášenému nevznikala session
+		$builder->addDefinition($this->prefix('returnPath'))
+			->setFactory(ReturnPath::class);
+
+		// Jednotny auditni stream (tabulka audit_log). Knihovny na fancyadminu
+		// nezavisi ani o nem nevedi - v neonu se na jeho log() jen odkazou
+		// callbackem, napr.:  exporter: auditLogger: [@fancyAdmin.auditLogger, log]
+		$builder->addDefinition($this->prefix('auditLogger'))
+			->setFactory(AuditLogger::class);
+
+		$builder->addDefinition($this->prefix('auditActor'))
+			->setFactory(AuditActor::class);
+
+		// Zmeny entit s atributem #[Audited] -> audit_log. Navesit v projektu, aby
+		// o tom rozhodoval ten, kdo zna poradi rozsireni:
+		//   doctrineLoggable: onLogEntry: [[@fancyAdmin.changeLogAuditSubscriber, logEntry]]
+		$builder->addDefinition($this->prefix('changeLogAuditSubscriber'))
+			->setFactory(ChangeLogAuditSubscriber::class);
+
+
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
 		if ($this->config->keycloakEnabled) {
 			$builder->addDefinition($this->prefix('keycloakManager'))
 				->setFactory(KeycloakManager::class)
 				->setArgument('verifySsl', $this->config->keycloakVerifySsl);
 		}
-
-		//$this->validateTraitInterfaceCompliance();
 
 		// command registration
 
@@ -168,6 +206,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			])
 			->setAutowired(false);
 
+		$defs[] = $builder->addDefinition($this->prefix('purgeLogs'))
+			->setFactory(PurgeLogsCommand::class, ['config' => $this->config->purge])
+			->setAutowired(false);
+
 		foreach ($defs as $_def) {
 			$_def->addSetup('setLocksDir', [$this->config->locksDir]);
 		}
@@ -176,9 +218,19 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	public function beforeCompile(): void
 	{
 		$builder = $this->getContainerBuilder();
+
+		// Sanitizer si projekty registruji samy, protoze si upravuji citliva pole
+		// i chovani pri nalezu PANu. Auditni subscriber ho ale potrebuje vzdy,
+		// takze projektu, ktery zadny nema, dame vychozi - jinak by mu kontejner
+		// prestal jit zkompilovat jen tim, ze si aktualizoval fancyadmin.
+		if ($builder->getByType(SensitiveDataSanitizer::class) === null) {
+			$builder->addDefinition($this->prefix('logSanitizer'))
+				->setFactory(SensitiveDataSanitizer::class);
+		}
 		$securityUserDef = $builder->getDefinitionByType(SecurityUser::class);
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
+		$securityUserDef->addSetup('setPersonalDataAclResource', [$this->config->personalDataAclResource]);
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
@@ -196,57 +248,94 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if ($this->config->passkeyEnabled && $builder->getByType(PasskeyQueryFactory::class) === null) {
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale v projektu chybí implementace ' . PasskeyQueryFactory::class . '. Vytvořte entitu Passkey, PasskeyQuery, PasskeyQueryFactory, PasskeyForm a PasskeyGrid podle README (sekce 19), nebo passkeys vypněte.');
 		}
+
+		// Bez známého rpId by WebAuthn ceremonie selhala až za běhu obecnou hláškou
+		// "přihlašovací klíče nejsou dostupné". Pozdější změna rpId navíc zneplatní všechny
+		// už registrované klíče, takže se vyplatí ho mít explicitně v konfiguraci.
+		if ($this->config->passkeyEnabled
+			&& ($this->config->passkeyRpId ?: PasskeyService::deriveRpId($this->config->adminHostPath)) === ''
+		) {
+			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale WebAuthn Relying Party ID není známé. Nastavte passkeyRpId na doménu adminu (bez schématu, cesty a portu), nebo doplňte adminHostPath. Pozor: pozdější změna rpId zneplatní všechny už registrované klíče.');
+		}
+
+		// PasskeyService stojí na HasPasskeys (user handle + inverzní kolekce klíčů). Projekt,
+		// který si kolekci passkeys namapoval ručně místo IdentityPasskeysTrait, projde
+		// i orm:validate-schema a chyba se projeví až jako 500 při registraci prvního klíče.
+		$appDir = $builder->parameters['appDir'] ?? null;
+
+		if ($this->config->passkeyEnabled
+			&& ($invalidIdentity = self::findIdentityWithoutPasskeys(
+				self::findProjectEntityClasses(is_string($appDir) ? $appDir : null, Identity::class)
+			)) !== null
+		) {
+			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale ' . $invalidIdentity . ' neimplementuje ' . HasPasskeys::class . '. Přidejte entitě `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19), nebo passkeys vypněte.');
+		}
 	}
 
-	private function validateTraitInterfaceCompliance(): void
+	/**
+	 * @param class-string[] $identityClasses projektové entity Identity
+	 * @return class-string|null první entita bez HasPasskeys, null když jsou všechny v pořádku
+	 */
+	public static function findIdentityWithoutPasskeys(array $identityClasses): ?string
 	{
-		$traitInterfaceMap = [
-			AclResourceTrait::class => AclResource::class,
-			AclRoleTrait::class => AclRole::class,
-			IdentityTrait::class => Identity::class,
-			IdentityPasskeysTrait::class => HasPasskeys::class,
-			ProfileTrait::class => Profile::class,
-		];
+		foreach ($identityClasses as $_identityClass) {
+			if (!is_a($_identityClass, HasPasskeys::class, true)) {
+				return $_identityClass;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Sken projektových entit v `%appDir%/Model/Entities` podle implementovaného rozhraní.
+	 *
+	 * Best-effort: když se appDir nepodaří určit nebo entity v konvenčním adresáři nejsou
+	 * (dev checkout, path repository), vrátí prázdno a volající kontrola se přeskočí —
+	 * nefunkční detekce cesty nesmí shodit kompilaci kontejneru. Přesně na tohle dojela
+	 * a proto byla odstraněna dřívější validateTraitInterfaceCompliance() (42899d7), která
+	 * si cestu k entitám skládala natvrdo relativně k tomuhle souboru.
+	 *
+	 * Spoléhá na to, že si projekt adresář autoloaduje (composer `autoload.psr-4` nad app/);
+	 * třídy, které se nepodaří načíst, se tiše přeskočí.
+	 *
+	 * @param string|null $appDir hodnota parametru appDir, null když není k dispozici
+	 * @param class-string $interface rozhraní, které musí entita implementovat
+	 * @return class-string[] instancovatelné entity projektu implementující $interface
+	 */
+	public static function findProjectEntityClasses(?string $appDir, string $interface): array
+	{
+		if ($appDir === null || !is_dir($entitiesDir = $appDir . '/Model/Entities')) {
+			return [];
+		}
 
 		$loader = new RobotLoader();
-		$loader->addDirectory(__DIR__ . '/../../../../../app/Model/Entities');
+		$loader->addDirectory($entitiesDir);
 		$loader->acceptFiles = ['*.php'];
 		$loader->rebuild();
 
-		foreach (array_keys($loader->getIndexedClasses()) as $class) {
-			if (!class_exists($class)) {
+		$entityClasses = [];
+		foreach (array_keys($loader->getIndexedClasses()) as $_class) {
+			if (!class_exists($_class)) {
 				continue;
 			}
 
-			$reflection = new ReflectionClass($class);
+			$reflection = new ReflectionClass($_class);
 
-			if (!$reflection->isInstantiable() || $reflection->isAbstract()) {
-				continue;
-			}
-
-			$usedTraits = $this->class_uses_recursive($class);
-
-			foreach ($traitInterfaceMap as $trait => $interface) {
-				if (in_array($trait, $usedTraits, true) && !$reflection->implementsInterface($interface)) {
-					throw new RuntimeException("Třída $class používá $trait, ale neimplementuje požadované rozhraní $interface.");
-				}
+			if ($reflection->isInstantiable() && $reflection->implementsInterface($interface)) {
+				$entityClasses[] = $_class;
 			}
 		}
+
+		return $entityClasses;
 	}
 
-	private function class_uses_recursive(string $class): array
+	public function afterCompile(ClassType $class): void
 	{
-		$results = [];
-
-		do {
-			$results += class_uses($class);
-		} while ($class = get_parent_class($class));
-
-		foreach ($results as $trait) {
-			$results += $this->class_uses_recursive($trait);
-		}
-
-		return array_unique($results);
+		// Formuláře fancyadminu používají $form->addPasswordReveal(), což je extension
+		// method - musí se zaregistrovat za běhu, jinak by ji každý projekt musel
+		// registrovat sám ve svém Bootstrapu.
+		$this->getInitialization()->addBody(PasswordRevealInput::class . '::register();');
 	}
 
 	public function getTranslationResources(): array

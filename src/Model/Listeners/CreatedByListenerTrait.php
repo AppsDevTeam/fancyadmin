@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\Model\Listeners;
 
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByInterface;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullableInterface;
+use ADT\FancyAdmin\Model\Entities\Traits\UpdatedByInterface;
 use App\Model\Security\SecurityUser;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;

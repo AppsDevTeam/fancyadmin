@@ -7,11 +7,14 @@ use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
+use ADT\FancyAdmin\DI\Injects\PasskeyServiceInject;
+use ADT\FancyAdmin\DI\Injects\ReturnPathInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\Model\Entities\File;
 use ADT\FancyAdmin\Model\FileUploadRules;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuFactory;
 use ADT\FancyAdmin\Model\Menu\UserMenuFactory;
+use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountForm;
 use ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountFormFactory;
 use Nette\Application\AbortException;
@@ -23,6 +26,7 @@ use Nette\Security\AuthenticationException;
 use App\Model\Entities\Enums\AclResourceNameEnum;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
 
 trait AuthPresenterTrait
 {
@@ -33,6 +37,10 @@ trait AuthPresenterTrait
 	use FancyAdminInject;
 	use AuthenticatorInject;
 	use SecurityUserInject;
+	use ReturnPathInject;
+	use PasskeyServiceInject;
+
+	const string SIGNAL_METHOD_PREFIX = 'handle';
 
 	#[Persistent]
 	public ?int $selectedAccount = null;
@@ -53,6 +61,11 @@ trait AuthPresenterTrait
 		if ($token = $this->getParameter('token')) {
 			try {
 				$this->_securityUser->login($token, context: $this->_fancyAdmin->getContext());
+
+				// Přihlášení odkazem není přihlášení klíčem (README 19.8)
+				$this->_passkeyService->clearPasskeySession();
+				$this->_passkeyService->clearTwoFactorSession();
+
 				$this->redirect('this');
 			} catch (AuthenticationException) {}
 		}
@@ -62,7 +75,18 @@ trait AuthPresenterTrait
 			unset($parameters['token']);
 
 			$this->getRequest()->setParameters(array_merge($this->getRequest()->getParameters()));
-			$this->redirect(':Portal:Sign:in', ['backlink' => $this->storeRequest()]);
+
+			// Kam se po přihlášení vrátit - vždycky do cookie, nikdy přes storeRequest().
+			// Nepřihlášený požadavek tím pádem na session nesáhne bez ohledu na metodu,
+			// takže session_storage nejde nafouknout requesty zvenčí.
+			//
+			// Cenou je, že se POST po přihlášení nezopakuje - uživatel skončí na cílové
+			// stránce a formulář odešle znovu. Zopakování POSTu stejně z velké části
+			// nefungovalo: CSRF token je `token ^ session ID`, takže když je uživatel
+			// nepřihlášený kvůli vypršelé session, po loginu dostane jiné session ID
+			// a replay na CSRF spadne.
+			$this->_returnPath->store($this->getHttpRequest()->getUrl());
+			$this->redirect(':Portal:Sign:in');
 		}
 
 		if ($this->getParameter('selectedAccount')) {
@@ -94,7 +118,64 @@ trait AuthPresenterTrait
 		// TODO delame kvuli ublaboo datagridu ktery potrebuje sessionu uz pri vykresleni
 		$this->getSession()->start();
 
+		// Až tady, kdy je dořešený selectedAccount — bez něj nejde vygenerovat routa
+		// PortalCustomer:Profile
+		$this->enforcePasskeyLogin();
+
 		$this->primaryTemplate = true;
+	}
+
+	/**
+	 * Vynucení přihlášení klíčem u identity s rolí `needs2fa` (README 19.8).
+	 * Při vypnutém `passkeyEnabled` no-op.
+	 *
+	 * Na pořadí záleží: session z jednorázového kódu je pro druhou kontrolu „heslová"
+	 * a bez první větve by ji rovnou odhlásila.
+	 *
+	 * @throws InvalidLinkException
+	 */
+	private function enforcePasskeyLogin(): void
+	{
+		$identity = $this->getUser()->getIdentity();
+
+		// Session z jednorázového kódu druhým faktorem prošla, takže se nesmí propadnout do
+		// kontroly níž, která by ji jako „heslovou" odhlásila. Na Profilu ji drží jen
+		// passkeyEnrollmentRequired (README 19.9).
+		if ($this->_passkeyService->isOtpSession()) {
+			if ($this->_passkeyService->isEnrollmentRequiredSession() && !$this->isProfilePresenter()) {
+				$this->flashMessageWarning('fcadmin.passkeys.twoFactor.enrollmentRequired');
+				$this->redirect('Profile:default');
+			}
+
+			return;
+		}
+
+		// Stará heslová session identity, která už klíč má: heslo je pro ni mrtvé
+		if (
+			$this->_passkeyService->isPasskeyRequired($identity)
+			&&
+			$this->_passkeyService->hasPasskeys($identity)
+			&&
+			!$this->_passkeyService->isPasskeySession()
+		) {
+			$this->flashMessageError('fcadmin.passkeys.errors.passwordSessionRevoked');
+			$this->getUser()->logout(true);
+			$this->redirect(':Portal:Sign:in');
+		}
+
+		// Bootstrap okno: dokud uživatel klíč nemá, pustíme ho jen na Profil, kde si ho
+		// zaregistruje (Profile presenter je proto vyjmutý i z ACL checku níž)
+		if ($this->_passkeyService->isEnrollmentPending($identity) && !$this->isProfilePresenter()) {
+			$this->flashMessageWarning('fcadmin.passkeys.messages.enrollmentRequired');
+			$this->redirect('Profile:default');
+		}
+	}
+
+	private function isProfilePresenter(): bool
+	{
+		$parts = explode(':', $this->getName());
+
+		return end($parts) === 'Profile';
 	}
 
 	/**
@@ -113,32 +194,43 @@ trait AuthPresenterTrait
 				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
 			}
 
-			if (!$this->validateSecurityAttributes()) {
+			if (!$this->validateSecurityAttributes($element)) {
 				$this->validatePresenterPermission();
 			}
 		}
 	}
 
 	/**
+	 *
+	 * @param ReflectionClass|ReflectionMethod $element
 	 * @throws ReflectionException
+	 * @throws ForbiddenRequestException
+	 * @return bool Whether a SecurityCheckAttribute was found and processed on the action method
+	 */
+	private function validateSecurityAttributes(ReflectionClass|ReflectionMethod $element): bool
+	{
+		$reflection = new ReflectionClass($this->getPresenter()::class);
+		$found = $this->validateSecurityAttributesOfMethod($reflection->getMethod(static::ActionKey . ucfirst($this->getAction())));
+
+		if ($element instanceof ReflectionMethod && str_starts_with($element->getName(), self::SIGNAL_METHOD_PREFIX)) {
+			$this->validateSecurityAttributesOfMethod($element);
+		}
+
+		return $found;
+	}
+
+	/**
 	 * @throws ForbiddenRequestException
 	 * @return bool Whether a SecurityCheckAttribute was found and processed
 	 */
-	private function validateSecurityAttributes(): bool
+	private function validateSecurityAttributesOfMethod(ReflectionMethod $reflectionMethod): bool
 	{
-		$reflection = new ReflectionClass($this->getPresenter()::class);
-		$reflectionMethod = $reflection->getMethod(static::ActionKey . ucfirst($this->getAction()));
-
 		$found = false;
-		foreach ($reflectionMethod->getAttributes() as $attribute) {
-			if ($attribute->getName() === SecurityCheckAttribute::class) {
-				$found = true;
-				$attributeInstance = $attribute->newInstance();
-				$aclResourceName = $attributeInstance->getResourceName();
+		foreach ($reflectionMethod->getAttributes(SecurityCheckAttribute::class) as $attribute) {
+			$found = true;
 
-				if (!$this->getUser()->isAllowed($aclResourceName)) {
-					throw new ForbiddenRequestException();
-				}
+			if (!$this->getUser()->isAllowed($attribute->newInstance()->getResourceName())) {
+				throw new ForbiddenRequestException();
 			}
 		}
 
@@ -150,6 +242,13 @@ trait AuthPresenterTrait
 	 */
 	private function validatePresenterPermission(): void
 	{
+		// Profil ukazuje vždy jen data přihlášeného uživatele a resource
+		// `portalBackoffice.profile` / `portalCustomer.profile` projekty typicky nemají —
+		// bez výjimky by neadmin skončil ve 403 místo u registrace klíče (README 19.8)
+		if ($this->isProfilePresenter()) {
+			return;
+		}
+
 		$parts = explode(':', $this->getName());
 		$resource = lcfirst($parts[0]) . '.' . lcfirst($parts[1]);
 
@@ -221,7 +320,9 @@ trait AuthPresenterTrait
 	 */
 	public function redrawSidePanel(?string $name = null): never
 	{
-		$this->getPresenter()->payload->snippets[$this->getSnippetId('sidePanel')] = $this[$name ? $name . ucfirst('sidePanel') : 'sidePanel']->renderToString();
+		$sidePanel = $this[$name ? $name . ucfirst('sidePanel') : 'sidePanel'];
+		$snippet = $sidePanel instanceof SidePanelControl ? $sidePanel->getSnippetName() : 'sidePanel';
+		$this->getPresenter()->payload->snippets[$this->getSnippetId($snippet)] = $sidePanel->renderToString();
 		$this->getPresenter()->sendPayload();
 	}
 

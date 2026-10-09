@@ -12,7 +12,7 @@ trait UpdatedAt
 {
 	#[Gedmo\Timestampable(on: 'update')]
 	#[ORM\Column]
-	protected DateTimeImmutable $updatedAt;
+	final protected DateTimeImmutable $updatedAt;
 
 	public function getUpdatedAt(): DateTimeImmutable
 	{

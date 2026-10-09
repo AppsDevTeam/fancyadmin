@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
@@ -36,6 +37,7 @@ trait ProfileTrait
 	#[JoinColumn(onDelete: "CASCADE")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected Collection $roles;
 
 	public function __construct()

@@ -14,6 +14,8 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Nette\Application\LinkGenerator;
 use Nette\Caching\Storage;
 use Nette\Http\Session;
+use Tracy\Debugger;
+use Tracy\ILogger;
 
 class KeycloakManager
 {
@@ -55,28 +57,46 @@ class KeycloakManager
 	 * Vrátí Keycloak instanci přiřazenou k dané identitě.
 	 * Identita musí mít nastavenou SSO vazbu (identity.sso) a zároveň
 	 * alespoň jedna její role musí mít needsSso = true.
+	 *
+	 * Neaktivní instance se s výchozím $activeOnly = true nevrací. Volající pak identitu
+	 * ZÁMĚRNĚ obslouží jako běžného uživatele s heslem: přihlášení heslem, lokální obnova
+	 * i změna hesla. Deaktivace instance je tedy zároveň nouzový režim, kdy se SSO
+	 * uživatelé dostanou do aplikace i bez Keycloaku (viz README 18.2 "Proč isActive").
+	 *
+	 * $activeOnly = false je pro ukončení něčeho, co už běží (odhlášení uživatele
+	 * přihlášeného před deaktivací), kde odstavená instance nesmí uživatele uvěznit.
 	 */
-	public function getInstanceForIdentity(Identity $identity): ?Keycloak
+	public function getInstanceForIdentity(Identity $identity, bool $activeOnly = true): ?Keycloak
 	{
-		$sso = $identity->getSso();
-		if ($sso === null) {
+		if (!$this->identityRequiresSso($identity)) {
 			return null;
 		}
 
-		// Zkontrolujeme, zda alespoň jedna role vyžaduje SSO
-		$needsSso = false;
-		foreach ($identity->getRoles() as $role) {
-			if ($role->getNeedsSso()) {
-				$needsSso = true;
-				break;
-			}
-		}
-
-		if (!$needsSso) {
+		$sso = $identity->getSso();
+		if ($activeOnly && !$sso->getIsActive()) {
 			return null;
 		}
 
 		return $this->getInstance($sso->getName());
+	}
+
+	/**
+	 * Má identita SSO vazbu a alespoň jednu roli s needsSso? Nezávisí na tom, zda je
+	 * instance aktivní.
+	 */
+	private function identityRequiresSso(Identity $identity): bool
+	{
+		if ($identity->getSso() === null) {
+			return false;
+		}
+
+		foreach ($identity->getRoles() as $role) {
+			if ($role->getNeedsSso()) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -135,11 +155,21 @@ class KeycloakManager
 	}
 
 	/**
+	 * Instance, které se zapojují do přihlašování.
+	 *
+	 * Neaktivní se vynechávají. Silent SSO na přihlašovací stránce prochází tenhle seznam,
+	 * takže jeden vadný záznam přesměruje login celé platformy - deaktivace je způsob, jak
+	 * ho odstavit, aniž by se musel smazat (což u instance s navázanými identitami nejde).
+	 *
+	 * Pozor: filtr je záměrně JEN tady, ne v getInstance(). Podle názvu se instance
+	 * dohledává i pro callback rozpracovaného requestu, odhlášení a backchannel logout -
+	 * kdyby filtrovala i ta, deaktivace by uvěznila už přihlášené uživatele.
+	 *
 	 * @return Sso[]
 	 */
 	private function getAllSsoRecords(): array
 	{
-		return $this->em->getRepository($this->getSsoClass())->findAll();
+		return $this->em->getRepository($this->getSsoClass())->findBy(['isActive' => true]);
 	}
 
 	private function findSso(string $name): ?Sso
@@ -155,8 +185,22 @@ class KeycloakManager
 		return $this->ssoClass;
 	}
 
-	private function createInstanceFromSso(Sso $sso): Keycloak
+	/**
+	 * Vraci null, kdyz verejna URL instance neni v allowlistu (nalez WEB-09). Kontrola
+	 * ve formulari plati jen pri ukladani, tady se zavira i radek, ktery uz v databazi je.
+	 * Volajici null uz obsluhuji - identita se chova jako bezny uzivatel s heslem.
+	 */
+	private function createInstanceFromSso(Sso $sso): ?Keycloak
 	{
+		if (!$this->fancyAdmin->getSsoHostAllowlist()->allows($sso->getHostUrl())) {
+			Debugger::log(
+				'Keycloak: SSO instance "' . $sso->getName() . '" ma verejnou URL mimo allowlist (' . $sso->getHostUrl() . '), nepouziva se.',
+				ILogger::CRITICAL
+			);
+
+			return null;
+		}
+
 		$instance = new Keycloak(
 			realm: $sso->getRealm(),
 			baseUrl: $sso->getBaseUrl(),

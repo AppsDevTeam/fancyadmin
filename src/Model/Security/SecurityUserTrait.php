@@ -9,6 +9,7 @@ use Nette\Security\AuthenticationException;
 use Nette\Security\Authorizator;
 use Nette\Security\IAuthenticator;
 use Nette\Security\IIdentity;
+use Nette\Security\Permission;
 use Nette\Security\Resource;
 use Nette\Security\UserStorage;
 use SensitiveParameter;
@@ -20,6 +21,7 @@ trait SecurityUserTrait
 
 	protected Resource $fullDataAclResource;
 	protected Resource $backofficeAclResource;
+	protected Resource $personalDataAclResource;
 
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool
 	{
@@ -73,5 +75,23 @@ trait SecurityUserTrait
 	public function isAllowedBackoffice(): bool
 	{
 		return $this->isAllowed($this->backofficeAclResource);
+	}
+
+	public function setPersonalDataAclResource(Resource $aclResource): void
+	{
+		$this->personalDataAclResource = $aclResource;
+	}
+
+	// Dokud neproběhla migrace balíčku, resource v authorizátoru chybí a isAllowed() by na
+	// něj vyhodil InvalidStateException - neznámý resource proto bereme jako povoleno.
+	public function isAllowedPersonalData(): bool
+	{
+		$authorizator = $this->getAuthorizator();
+
+		if ($authorizator instanceof Permission && !$authorizator->hasResource($this->personalDataAclResource->getResourceId())) {
+			return true;
+		}
+
+		return $this->isAllowed($this->personalDataAclResource);
 	}
 }

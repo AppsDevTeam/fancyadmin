@@ -14,6 +14,7 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Nette\Application\LinkGenerator;
 use Nette\Caching\Cache;
@@ -21,7 +22,10 @@ use Nette\Caching\Storage;
 use Nette\Http\Session;
 use Nette\Http\Url;
 use Nette\Utils\Json;
+use Nette\Utils\JsonException;
 use Psr\Http\Message\ResponseInterface;
+use Tracy\Debugger;
+use Tracy\ILogger;
 
 class Keycloak
 {
@@ -122,29 +126,11 @@ class Keycloak
 	 */
 	public function getLoginUrl(?string $backRedirect = null, ?string $loginHint = null, bool $autoFocusPassword = false): string
 	{
-		$redirectUri = $this->getAuthRedirectUri();
-
-		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
-
-		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
-
-		$url->setQueryParameter('state', $state);
-		$url->setQueryParameter('client_id', $this->clientId);
-		$url->setQueryParameter('response_type', 'code');
-		$url->setQueryParameter('redirect_uri', $redirectUri);
-		$url->setQueryParameter('scope', 'openid email profile');
-		$url->setQueryParameter('code_challenge', $codeChallenge);
-		$url->setQueryParameter('code_challenge_method', 'S256');
-
-		if (!empty($loginHint)) {
-			$url->setQueryParameter('login_hint', $loginHint);
-		}
-
-		if ($autoFocusPassword) {
-			$url->setQueryParameter('ui_locales', 'autofocus-password');
-		}
-
-		return (string) $url;
+		return $this->getAuthorizationUrl(
+			$backRedirect,
+			$loginHint,
+			$autoFocusPassword ? ['ui_locales' => 'autofocus-password'] : [],
+		);
 	}
 
 	/**
@@ -154,10 +140,59 @@ class Keycloak
 	 */
 	public function getUpdatePasswordUrl(?string $backRedirect = null, ?string $loginHint = null): string
 	{
-		$url = new Url($this->getLoginUrl($backRedirect, $loginHint));
-		$url->setQueryParameter('kc_action', 'UPDATE_PASSWORD');
+		return $this->getAuthorizationUrl($backRedirect, $loginHint, ['kc_action' => 'UPDATE_PASSWORD']);
+	}
 
-		return (string) $url;
+	/**
+	 * @param array<string, string> $extraParameters
+	 */
+	private function getAuthorizationUrl(?string $backRedirect, ?string $loginHint, array $extraParameters): string
+	{
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
+
+		$parameters = [
+			'state' => $state,
+			'client_id' => $this->clientId,
+			'response_type' => 'code',
+			'redirect_uri' => $this->getAuthRedirectUri(),
+			'scope' => 'openid email profile',
+			'code_challenge' => $codeChallenge,
+			'code_challenge_method' => 'S256',
+		] + $extraParameters;
+
+		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
+
+		if (
+			!empty($loginHint)
+			&& ($requestUri = $this->pushAuthorizationRequest($parameters + ['login_hint' => $loginHint])) !== null
+		) {
+			$parameters = ['client_id' => $this->clientId, 'request_uri' => $requestUri];
+		}
+
+		return (string) $url->setQuery($parameters);
+	}
+
+	/**
+	 * @param array<string, string> $parameters
+	 * @return string|null
+	 */
+	protected function pushAuthorizationRequest(array $parameters): ?string
+	{
+		try {
+			$response = $this->client->post(
+				$this->getOpenIdRealmUrl('ext/par/request'),
+				[
+					'form_params' => $parameters + ['client_secret' => $this->clientSecret],
+				]
+			);
+
+			$requestUri = Json::decode((string) $response->getBody(), true)['request_uri'] ?? null;
+		} catch (GuzzleException | JsonException $e) {
+			Debugger::log('Keycloak PAR (' . $this->instanceName . ') selhal: ' . $e->getMessage(), ILogger::WARNING);
+			return null;
+		}
+
+		return is_string($requestUri) && $requestUri !== '' ? $requestUri : null;
 	}
 
 	/**
@@ -202,11 +237,11 @@ class Keycloak
 	 * Sestaví URL pro silent login (prompt=none) — pro kontrolu, zda je uživatel v Keycloaku přihlášen.
 	 * Návratová URL putuje přes session (viz getLoginUrl), redirect_uri je statické.
 	 */
-	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null): string
+	public function getSilentLoginUrl(?string $backRedirect = null, ?string $action = null, bool $isTest = false): string
 	{
 		$redirectUrl = $this->getSilentRedirectUri($action);
 
-		[$state, $codeChallenge] = $this->createAuthState($backRedirect);
+		[$state, $codeChallenge] = $this->createAuthState($backRedirect, $isTest);
 
 		$url = new Url("$this->hostUrl/realms/$this->realm/protocol/openid-connect/auth");
 
@@ -253,7 +288,7 @@ class Keycloak
 	 *
 	 * @return array{string, string} [state, code_challenge]
 	 */
-	private function createAuthState(?string $backRedirect): array
+	private function createAuthState(?string $backRedirect, bool $isTest = false): array
 	{
 		$state = bin2hex(random_bytes(16));
 		$codeVerifier = self::base64UrlEncode(random_bytes(32));
@@ -270,6 +305,9 @@ class Keycloak
 			'backRedirect' => $backRedirect,
 			'instance' => $this->instanceName,
 			'time' => time(),
+			// Zkušební průchod z administrace - callback smí jen ohlásit výsledek, ne přihlásit.
+			// Drží se v session u state, ne v URL, aby to nešlo podvrhnout z venku.
+			'isTest' => $isTest,
 		];
 		$section->set(KeycloakSessionSection::AUTH_STATES, $states);
 
@@ -305,6 +343,35 @@ class Keycloak
 		}
 
 		return $entry;
+	}
+
+	/**
+	 * Query parametr, kterým KeycloakAuthPresenterTrait::finishSsoTest() předává výsledek
+	 * zkušebního průchodu zpět do SSO gridu (hodnota SSO_TEST_OK, nebo kód chyby od Keycloaku).
+	 */
+	public const string SSO_TEST_PARAM = 'ssoTest';
+	public const string SSO_TEST_OK = 'ok';
+
+	/**
+	 * Jde o zkušební průchod spuštěný z administrace?
+	 *
+	 * Stav se ZÁMĚRNĚ nekonzumuje - rozhoduje se podle něj jen větev zpracování callbacku
+	 * a spotřebovat ho musí až ta zvolená větev (consumeAuthState), aby zůstalo zachované
+	 * jednorázové použití state jako CSRF ochrany.
+	 */
+	public function isTestAuthState(?string $state): bool
+	{
+		if ($state === null || !$this->session->hasSection(KeycloakSessionSection::SECTION_NAME)) {
+			return false;
+		}
+
+		$section = $this->session->getSection(KeycloakSessionSection::SECTION_NAME);
+		$entry = ($section->get(KeycloakSessionSection::AUTH_STATES) ?? [])[$state] ?? null;
+
+		return $entry !== null
+			&& $entry['instance'] === $this->instanceName
+			&& $entry['time'] + self::AUTH_STATE_TTL_SECONDS > time()
+			&& ($entry['isTest'] ?? false) === true;
 	}
 
 	private static function base64UrlEncode(string $data): string
@@ -431,18 +498,35 @@ class Keycloak
 	 * Přihlásí uživatele na základě Keycloak autentizace.
 	 * Uživatel musí již existovat v lokální databázi.
 	 */
+	/**
+	 * Uživatele hledá **přednostně podle claimu `sub`**, teprve pak podle e-mailu.
+	 *
+	 * `sub` je u poskytovatele identity stabilní, kdežto e-mail je měnitelný na obou stranách
+	 * — jakmile se rozejdou, uživatel se nepřihlásí. Dokud ale `ssoSub` u identity nemáme
+	 * (uživatelé založení před jeho zavedením nebo mimo SSO), je e-mail jediné, podle čeho
+	 * jde spárovat. Po takovém přihlášení si `sub` rovnou uložíme, takže každá identita
+	 * přejde na stabilní párování při svém prvním přihlášení a e-mailová větev postupně
+	 * přestane být potřeba.
+	 */
 	public function loginUser(KeycloakAuthentication $keycloakAuthentication, bool $autoRegister = false): void
 	{
 		$userInfo = $keycloakAuthentication->getUserInfo();
+		$ssoSub = $userInfo['sub'] ?? null;
 		$email = $userInfo['email'] ?? null;
 
-		if (empty($email)) {
-			throw new \Nette\Security\AuthenticationException('Keycloak user has no email.');
-		}
+		$identity = $ssoSub
+			? $this->identityQueryFactory->create()->bySsoSub($ssoSub)->fetchOneOrNull()
+			: null;
 
-		$identity = $this->identityQueryFactory->create()
-			->byEmail($email)
-			->fetchOneOrNull();
+		if ($identity === null) {
+			if (empty($email)) {
+				throw new \Nette\Security\AuthenticationException('Keycloak user has neither a known sub nor an email.');
+			}
+
+			$identity = $this->identityQueryFactory->create()
+				->byEmail($email)
+				->fetchOneOrNull();
+		}
 
 		if ($identity === null) {
             if ($autoRegister) {
@@ -450,6 +534,10 @@ class Keycloak
             } else {
 			    throw new \Nette\Security\AuthenticationException('User not found in application.');
             }
+		} elseif ($ssoSub && $identity->getSsoSub() === null) {
+			// Spárováno e-mailem - `sub` doplníme, ať příští přihlášení jde stabilní cestou.
+			$identity->setSsoSub($ssoSub);
+			$this->em->flush();
 		}
 
 		if ($keycloakAuthentication->getIdToken()) {
@@ -483,6 +571,7 @@ class Keycloak
 		$identity->setEmail($userInfo['email']);
 		$identity->setFirstName($userInfo['given_name'] ?? null);
 		$identity->setLastName($userInfo['family_name'] ?? null);
+		$identity->setSsoSub($userInfo['sub'] ?? null);
 
 		// Přiřadit SSO instanci
 		$sso = $this->findSsoEntity();

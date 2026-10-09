@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
@@ -19,6 +20,7 @@ trait PasskeyTrait
 
 	#[ORM\Column(length: 64, nullable: false)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected string $name;
 
 	/** Raw binary credential ID (VARBINARY(255)); DBAL binary type může vracet stream, getter normalizuje. */

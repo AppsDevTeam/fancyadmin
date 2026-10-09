@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToMany;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use Nette\Security\Passwords;
 use Nette\Security\Resource;
 
@@ -41,10 +42,12 @@ trait IdentityTrait
 
 	#[ORM\Column(nullable:true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?string $email = null;
 
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?string $username = null;
 
 	#[ORM\Column(nullable: true)]
@@ -55,8 +58,14 @@ trait IdentityTrait
 	#[LoggableProperty]
 	protected ?string $phoneNumber = null;
 
+	/**
+	 * Loguje se ZMENA, ne hodnota. S hodnotou by change_log drzel historii hashu
+	 * vcetne davno neplatnych hesel - pri uniku dumpu material na offline lamani.
+	 * Atribut ale vynechat nejde: pak by se zmena hesla nezalogovala vubec a prave
+	 * ta je ta informace, o kterou jde.
+	 */
 	#[ORM\Column(nullable: true)]
-	#[LoggableProperty]
+	#[LoggableProperty(withValue: false)]
 	protected ?string $password = null;
 
 	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist", "remove"], orphanRemoval: true)]
@@ -69,21 +78,41 @@ trait IdentityTrait
 	#[ORM\ManyToOne(targetEntity: 'Sso')]
 	#[JoinColumn(nullable: true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?Sso $sso = null;
+
+	/**
+	 * Hodnota claimu `sub` z SSO — stabilní identifikátor uživatele u poskytovatele identity.
+	 *
+	 * Slouží k párování při přihlášení. Proti e-mailu je odolnější: e-mail je měnitelný na
+	 * obou stranách a jakmile se rozejdou, uživatel ztratí přístup.
+	 *
+	 * Nullable, protože uživatel nemusí přes SSO chodit vůbec. Unikátní záměrně globálně,
+	 * ne jen v rámci jedné SSO instance — dohledání podle `sub` se tím obejde bez filtru na
+	 * instanci a případná kolize mezi dvěma poskytovateli skončí hlasitě na constraintu,
+	 * místo aby tiše přihlásila k cizímu účtu.
+	 */
+	#[ORM\Column(unique: true, nullable: true)]
+	#[LoggableProperty]
+	#[AuditedValue]
+	protected ?string $ssoSub = null;
 
 	#[ManyToMany(targetEntity: 'AclRole')]
 	#[JoinColumn(onDelete: "CASCADE")]
 	#[InverseJoinColumn(onDelete: "RESTRICT")]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected Collection $roles;
 
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?DateTimeImmutable $anonymizedAt = null;
 
 	#[ORM\ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: true)]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?Identity $anonymizedBy = null;
 
 	protected string $authToken;
@@ -137,6 +166,17 @@ trait IdentityTrait
 	public function setEmail(?string $email): static
 	{
 		$this->email = $email;
+		return $this;
+	}
+
+	public function getSsoSub(): ?string
+	{
+		return $this->ssoSub;
+	}
+
+	public function setSsoSub(?string $ssoSub): static
+	{
+		$this->ssoSub = $ssoSub;
 		return $this;
 	}
 

@@ -14,7 +14,7 @@ trait ChangeLogsPresenterTrait
 
 	public function actionDefault(): void
 	{
-		$this->template->setFile(__DIR__ . '/default.latte');
+		$this->setPackageTemplateFile(__DIR__ . '/default.latte');
 	}
 
 	public function createComponentChangeLogGrid(ChangeLogGridFactory $factory): ChangeLogGrid

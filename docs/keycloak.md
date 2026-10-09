@@ -18,6 +18,7 @@ Návod na integraci na straně projektu je v [README.md](../README.md), sekce **
 8. [Frontend — správa session v prohlížeči](#8-frontend--správa-session-v-prohlížeči)
 9. [Admin API — správa uživatelů](#9-admin-api--správa-uživatelů)
 10. [Bezpečnostní mechanismy](#10-bezpečnostní-mechanismy)
+11. [Dvoufázové ověření WebAuthn klíčem](#11-dvoufázové-ověření-webauthn-klíčem)
 
 ---
 
@@ -42,6 +43,7 @@ Aplikace **nepoužívá**: Implicit Flow, Direct Access Grants (ROPC), offline t
 
 | Endpoint | Metoda | Účel |
 |---|---|---|
+| `/realms/{realm}/protocol/openid-connect/ext/par/request` | POST | Pushed Authorization Request (RFC 9126) - autorizační request s `login_hint`, vrací jednorázové `request_uri` |
 | `/realms/{realm}/protocol/openid-connect/token` | POST | Výměna authorization code za tokeny (`grant_type=authorization_code`); získání admin tokenu (`grant_type=client_credentials`) |
 | `/realms/{realm}/protocol/openid-connect/userinfo` | GET | Získání user claims (email, jméno) z access tokenu |
 | `/realms/{realm}/protocol/openid-connect/certs` | GET | JWKS — podpisové klíče realmu pro validaci backchannel logout tokenu (cachováno 1 h) |
@@ -63,6 +65,12 @@ Všechna Admin API volání jsou autentizována Bearer tokenem získaným přes 
 
 Autorizační request vždy obsahuje: `client_id`, `response_type=code`, `redirect_uri`, `scope=openid email profile`, `state` (náhodný CSRF token vázaný na session), `code_challenge` + `code_challenge_method=S256` (PKCE), volitelně `login_hint` (předvyplnění emailu), `ui_locales`, `kc_action`.
 
+**`login_hint` nikdy nejde v URL.** Request s ním se nejdřív pošle ze serveru na PAR endpoint (s `client_secret`) a prohlížeč dostane jen `client_id` a `request_uri`. Keycloak pak použije výhradně parametry z PAR, proto v nich jsou i `kc_action` a `ui_locales`. E-mail tak nekončí v historii prohlížeče, v access logu Keycloaku ani v hlavičce Referer (nález WEB-SSO-02). Když PAR selže (Keycloak nedostupný, PAR zakázaný), zaloguje se to jako warning a přihlášení pokračuje bez nápovědy - uživatel e-mail v Keycloaku napíše znovu. Requesty bez `login_hint` (silent check, přihlášení bez e-mailu) jdou přímo v URL, citlivé nic nenesou.
+
+`request_uri` platí v Keycloaku ve výchozím stavu 60 s (*Realm settings - Tokens - Pushed Authorization Request lifespan*), což stačí, protože aplikace na URL přesměrovává hned. PAR musí mít klient povolený (v Keycloaku je ve výchozím stavu povolený všem klientům, vynutit ho jde volbou *Pushed authorization request required*).
+
+AJAX kontrola, jestli se e-mail přihlašuje přes SSO (`signInForm-checkKeycloak`), posílá e-mail v těle POST, ne v adrese signálu, aby nekončil v access logu aplikace.
+
 Návratová URL se do Keycloaku neposílá — drží se v serverové session pod klíčem `state` a callback si ji vyzvedne po ověření state. `redirect_uri` jsou proto statická a v konfiguraci KC klienta se vyjmenovávají jako exact matches (bez wildcardů).
 
 ---
@@ -74,7 +82,7 @@ Všechny jsou v routě `keycloak-auth/*` resp. `keycloak-log/*`:
 | Endpoint | Metoda | Volá | Účel |
 |---|---|---|---|
 | `/keycloak-auth/callback?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | OAuth2 callback — ověření state proti session, výměna code za tokeny (s PKCE verifierem), přihlášení uživatele |
-| `/keycloak-auth/silent-check?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | Callback pro silent SSO check (`prompt=none`), stejná validace state/PKCE |
+| `/keycloak-auth/silent-check?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | Callback pro silent SSO check (`prompt=none`), stejná validace state/PKCE. Má i testovací režim (akce Vyzkoušet v SSO gridu) řízený příznakem `isTest` uloženým v session u `state`: nikoho nepřihlásí, `code` se za token nevymění, výsledek jen vrátí do gridu parametrem `ssoTest` v návratové URL ze session |
 | `/keycloak-auth/post-log-out?state=...` | GET | prohlížeč (redirect z KC) | Návrat po logoutu z KC, redirect na `state` |
 | `/keycloak-auth/backchannel-logout?instance={name}` | POST | **Keycloak server** | OIDC backchannel logout — přijímá `logout_token` (JWT) |
 | `/keycloak-auth/silent-check-sso` | GET | prohlížeč (iframe keycloak-js) | Stránka pro silent check iframe adapteru |
@@ -94,8 +102,14 @@ uživatel                 aplikace                        Keycloak
    │                        │ 2. lookup: má identita        │
    │                        │    (nebo její role) SSO?      │
    │                        │                               │
-   │ 3. redirect na /auth (login_hint=email, state=CSRF token,
-   │    code_challenge=S256; návratová URL zůstává v session)
+   │                        │ 2a. POST /ext/par/request     │
+   │                        │  (login_hint=email, state, PKCE, client_secret)
+   │                        │──────────────────────────────►│
+   │                        │◄──────────────────────────────│
+   │                        │  request_uri                  │
+   │                        │                               │
+   │ 3. redirect na /auth (client_id, request_uri; e-mail ani
+   │    návratová URL v adrese nejsou)
    │────────────────────────────────────────────────────────►
    │                        │                               │
    │ 4. přihlášení v KC     │                               │
@@ -127,6 +141,7 @@ Klíčové body:
 
 - **`state` je náhodný jednorázový CSRF token** — při startu flow se uloží do serverové session (spolu s PKCE code_verifierem a návratovou URL), callback ho ověří a zneplatní; neznámý/expirovaný state (TTL 10 min) flow ukončí. Podvržený callback s cizím authorization code tak nelze do session oběti injektovat.
 - **PKCE (S256)** — code_verifier drží serverová session, k token requestu se přikládá při výměně code za tokeny
+- **SSO uživatel se přihlašuje jen přes Keycloak**: identita s vazbou na SSO instanci (`identity.sso_id`) a rolí s `needs_sso` se lokálním heslem nepřihlásí; je-li její instance deaktivovaná (`sso.is_active = 0`), chová se záměrně jako běžný uživatel s heslem (přihlášení heslem, lokální obnova i změna hesla), aby se do aplikace dostala i při výpadku Keycloaku
 - **Párování uživatele probíhá podle emailu** — email z KC userinfo se hledá v lokální tabulce `identity`
 - Pokud lokální identita neexistuje a je zapnutá auto-registrace, vytvoří se s výchozí rolí z konfigurace SSO instance
 - Pokud `/userinfo` selže, claims se čtou fallbackem z `id_token` (bez validace podpisu — jde o data z přímé TLS-ověřené komunikace s KC, ne od uživatele)
@@ -184,6 +199,8 @@ Po přihlášení přes SSO běží v prohlížeči adapter `keycloak-js` (ofici
 
 Frontend tak zajišťuje, že platnost aplikační session je fakticky svázána s platností KC SSO session.
 
+**Prohlížeče blokující 3rd-party cookies (Safari, iOS včetně PWA na ploše):** oba iframy (silent check i session status) tam z principu nefungují a adapter je sám vypne. Ve výchozím nastavení by se `check-sso` degradoval na **plný redirect celého okna** na Keycloak s `redirect_uri` = aktuální URL stránky — a protože klient používá exact redirect URI matching, Keycloak takový request odmítne chybovou stránkou `Invalid parameter: redirect_uri`. Adapter se proto inicializuje s `silentCheckSsoFallback: false`, aby se `check-sso` v takovém prohlížeči jen tiše vzdal. Frontend monitoring session tam tedy neběží; ukončení KC session se do aplikace propíše přes backchannel logout (viz kapitola 6).
+
 ## 9. Admin API — správa uživatelů
 
 Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle využití v konkrétním projektu):
@@ -208,3 +225,34 @@ Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle 
 - **Ochrana proti open redirectu** — návratové URL pochází výhradně ze serverové session (generované aplikací); post-logout `state` se navíc validuje na shodu hostu s aplikací
 - **Backchannel logout** — `logout_token` se plně validuje podle OIDC spec (podpis proti JWKS, iss, aud, events, replay ochrana přes jti); identita uživatele se navíc ověřuje zpětným dotazem na KC Admin API (`sub` → uživatel → email)
 - **Žádné ukládání tokenů v DB** — `id_token` je pouze v serverové session (pro logout), access/refresh tokeny backend nedrží
+- **Deaktivace instance (`sso.is_active`)**: deaktivovanou instanci silent SSO vynechá a SSO uživatelé na ni navázaní se záměrně chovají jako běžní uživatelé s heslem (přihlášení heslem, lokální obnova i změna hesla), deaktivace je tedy i nouzový režim při výpadku Keycloaku; callback rozpracovaného requestu, odhlášení (včetně RP-initiated logoutu z KC) a backchannel logout fungují dál, aby deaktivace neuvěznila už přihlášené uživatele
+- **Testovací průchod (akce Vyzkoušet)**: příznak `isTest` je jen v serverové session u jednorázového `state`, ne v URL, takže ho nelze podvrhnout; `code` se v testovacím režimu za token nevymění a nikdo se nepřihlásí ani neprovisionuje; návrat vede výhradně na `backRedirect` ze session a kód chyby od KC se před zobrazením sanitizuje na `[a-z0-9_.-]` (max 64 znaků)
+- **Druhý faktor plně v KC** — WebAuthn ceremonie i credentials jsou na straně Keycloaku; aplikace klíče nevidí, neukládá a nijak s nimi nepracuje, jejich správa probíhá výhradně v Keycloaku (viz sekce 11)
+
+---
+
+## 11. Dvoufázové ověření WebAuthn klíčem
+
+Volitelný druhý faktor pro SSO uživatele, řešený čistě konfigurací Keycloak flow. Kdo si klíč nezaregistruje, přihlašuje se dál jen heslem — o volitelnost se stará conditional subflow v KC, ne aplikace. Aplikace do 2FA nijak nezasahuje; registraci i odebírání klíčů řeší administrátor v administraci Keycloaku.
+
+### Konfigurace realmu
+
+| Kde | Nastavení |
+|---|---|
+| Authentication → Policies → **WebAuthn Policy** | `Relying Party ID` = doména KC serveru (bez schématu a portu), `Require Resident Key` = `No`, `User Verification` = `preferred`, `Signature Algorithms` = `ES256` (+`RS256`) |
+| Authentication → Flows | kopie `browser` flow, do subflow `browser forms` za `Username Password Form` přidat **conditional subflow** s `Condition - user configured` + `WebAuthn Authenticator` (Required) |
+| Clients → confidential client → Advanced | `Authentication flow overrides → Browser Flow` = nový flow (omezí 2FA jen na tuto aplikaci) |
+| Authentication → Required Actions | `Webauthn Register`: `Enabled` = On, `Set as default action` = **Off** (jinak si klíč musí zaregistrovat každý nový uživatel a 2FA přestane být volitelná) |
+
+Provozní poznámky:
+
+- **`Relying Party ID` nelze později změnit** bez zneplatnění všech registrovaných klíčů. KC musí běžet na HTTPS (nebo `localhost`) — WebAuthn v nezabezpečeném kontextu nefunguje.
+- **Ztráta klíče = zablokovaný účet.** Doporučuje se povolit `Recovery Authentication Codes`, nebo dát `OTP Form` do conditional subflow jako *Alternative*. Bez záložního faktoru musí klíč odebrat administrátor v administraci Keycloaku.
+- Silent SSO (`prompt=none`) i backchannel logout fungují bez změny — druhý faktor se řeší jen při vytváření KC session.
+- CSP aplikace se nemění: WebAuthn ceremonie běží na doméně KC, ne na doméně aplikace.
+
+### Správa klíčů
+
+Registraci klíče spustí administrátor tak, že uživateli v administraci Keycloaku (detail uživatele → **Required user actions**) přiřadí akci `Webauthn Register`, uživatel si pak klíč zaregistruje při příštím přihlášení. Odebrání klíče provede administrátor tamtéž (detail uživatele → **Credentials**). Chce-li uživatel 2FA zapnout, vypnout nebo vyměnit klíč, obrací se na administrátora.
+
+Aplikace v tom nehraje žádnou roli: projekt nepotřebuje žádnou migraci, entitu ani další glue třídy a v databázi aplikace se o klíčích neukládá nic.

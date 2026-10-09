@@ -124,6 +124,25 @@ trait TMenuItemsTrait {
 		$menu->addMenuItem($navbarMenuItem);
 	}
 
+	public function addAuthLogsItem(
+		NavbarMenu|NavbarSubmenu $menu,
+		string $label = 'fcadmin.presenters.authLogs.title',
+		string $link = 'AuthLogs:default',
+		?string $faIcon = null,
+		?Resource $alcResource = null,
+	): void {
+		$navbarMenuItem = $this->createMenuItemEntity($menu)
+			->setLabel($label)
+			->setLink($link)
+			->setAclResource($alcResource);
+
+		if ($faIcon) {
+			$navbarMenuItem->setFaIcon($faIcon);
+		}
+
+		$menu->addMenuItem($navbarMenuItem);
+	}
+
 	/**
 	 * @param NavbarMenu|NavbarSubmenu $menu
 	 * @return ($menu is NavbarMenu ? NavbarMenuItem : NavbarSubmenuItem)

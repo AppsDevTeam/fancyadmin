@@ -65,7 +65,7 @@ trait ProfileFormTrait
 		$entity->setIdentity($identity);
 	}
 
-	public function isAllowedToEdit(): true
+	public function isAllowedToEdit(?Identity $identity): bool
 	{
 		return true;
 	}

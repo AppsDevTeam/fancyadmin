@@ -1,0 +1,110 @@
+{**
+ * @param array    $columns
+ * @param array    $actions
+ * @param Row[]    $rows
+ * @param Datagrid $control
+ * @param string   $originalTemplate
+ * @param string   $iconPrefix
+ *}
+
+{extends $originalTemplate}
+
+<div class="datagrid-tree-item-children datagrid-tree" n:snippet="tbody" n:block="data" {if $control->isSortable()}data-sortable-url="{plink $control->getSortableHandler()}" data-sortable-parent-path="{$control->getSortableParentPath()}"{/if}>
+	{snippetArea items}
+		<div class="datagrid-tree-item datagrid-tree-header" n:snippet="item-header">
+			<div class="datagrid-tree-item-content" data-has-children="">
+				<div class="datagrid-tree-item-left">
+					<span class="chevron chevron-placeholder"></span>
+					{foreach $columns as $key => $column}
+						<div>{include column-header, column => $column, key => $key}</div>
+						{breakIf true}
+					{/foreach}
+				</div>
+
+				<div class="datagrid-tree-item-right">
+					<div class="datagrid-tree-item-right-columns">
+						{foreach $columns as $key => $column}
+							{continueIf $iterator->isFirst()}
+							<div class="datagrid-tree-item-right-columns-column col-{$column->getColumnName()} text-{$column->hasAlign() ? $column->getAlign() : 'start'}">
+								<div>{include column-header, column => $column, key => $key}</div>
+							</div>
+						{/foreach}
+					</div>
+					{if $rows}
+						{include treeItemActions, row => reset($rows), isPlaceholder => true}
+					{/if}
+				</div>
+			</div>
+			<div class="datagrid-tree-header-divider"><div></div></div>
+		</div>
+
+		{foreach $rows as $row}
+			{var $hasChildren = $control->hasTreeViewChildrenCallback() ? $control->treeViewChildrenCallback($row->getItem()) : $row->getValue($treeViewHasChildrenColumn)}
+			{var $item = $row->getItem()}
+
+			<div n:class="$hasChildren ? has-children, 'datagrid-tree-item'" data-id="{$row->getId()}" n:snippet="item-{$row->getId()}">
+				<div n:class="datagrid-tree-item-content, $row->getControlClass()" data-id="{$row->getId()}" data-has-children="{$hasChildren ? true : false}">
+					<div class="datagrid-tree-item-left">
+						<a n:href="getChildren! parent => $row->getId()" data-toggle-tree="true" n:class="!$hasChildren ? hidden, 'chevron ajax'">
+							<i class="{$iconPrefix}chevron-right"></i>
+						</a>
+						{foreach $columns as $key => $column}
+							{php $column = $row->applyColumnCallback($key, clone $column)}
+							<div>{include column-value, column => $column, row => $row, key => $key}</div>
+							{breakIf true}
+						{/foreach}
+					</div>
+					<div class="datagrid-tree-item-right">
+						<div class="datagrid-tree-item-right-columns">
+							{foreach $columns as $key => $column}
+								{continueIf $iterator->isFirst()}
+								{php $column = $row->applyColumnCallback($key, clone $column)}
+
+								<div class="datagrid-tree-item-right-columns-column col-{$column->getColumnName()} text-{$column->hasAlign() ? $column->getAlign() : 'start'}">
+									<div>{include column-value, column => $column, row => $row, key => $key}</div>
+								</div>
+							{/foreach}
+						</div>
+						{include treeItemActions, row => $row}
+					</div>
+				</div>
+				<div class="datagrid-tree-item-children" {if $control->isSortable()}data-sortable-url="{plink $control->getSortableHandler()}"{/if}></div>
+			</div>
+		{/foreach}
+		{if !$rows}
+			<div class="datagrid-tree-no-items">{='ublaboo_datagrid.no_item_found'|translate}</div>
+		{/if}
+	{/snippetArea}
+</div>
+
+{define treeItemActions $row, $isPlaceholder = false}
+	{var $item = $row->getItem()}
+	{var $inlineActionKeys = array_filter(array_keys($actions), fn($key) => in_array($actions[$key]->getClass($row), ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key))}
+	{var $dropdownActionKeys = array_filter(array_keys($actions), fn($key) => !in_array($actions[$key]->getClass($row), ADT\Datagrid\Component\DataGrid::ACTION_NOT_DROPDOWN_ITEM, true) && $row->hasAction($key) && $actions[$key]->shouldBeRendered($row))}
+
+	<div class="datagrid-tree-item-right-actions dropdown" n:if="$actions || $control->isSortable()" n:attr="aria-hidden => $isPlaceholder ? 'true' : null">
+		<div class="datagrid-tree-item-right-actions-action">
+			{foreach $inlineActionKeys as $key}
+				{include action, action => $actions[$key], row => $row, item => $item}
+			{/foreach}
+
+			{if $dropdownActionKeys}
+				<button type="button" class="btn btn-sm" data-action="{reset($dropdownActionKeys)}" n:attr="data-bs-toggle => $isPlaceholder ? null : 'dropdown'">
+					<i class="{$iconPrefix}ellipsis-h"></i>
+				</button>
+
+				{if !$isPlaceholder}
+					<div class="dropdown-menu dropdown-menu-right">
+						{foreach $dropdownActionKeys as $key}
+							{include action, action => $actions[$key], row => $row, item => $item}
+						{/foreach}
+					</div>
+				{/if}
+			{/if}
+
+			<span class="handle-sort btn btn-xs btn-default" n:if="$control->isSortable()">
+				<i class="{$iconPrefix}arrows {$iconPrefix}arrows-alt"></i>
+			</span>
+		</div>
+	</div>
+{/define}

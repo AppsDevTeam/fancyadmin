@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedBy;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
@@ -23,11 +24,13 @@ trait AclTrait
 	#[ORM\ManyToOne(targetEntity: 'AclRole')]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected AclRole $role;
 
 	#[ORM\ManyToOne(targetEntity: 'AclResource')]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected AclResource $resource;
 
 	public function getRole(): AclRole

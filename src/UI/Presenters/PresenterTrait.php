@@ -21,8 +21,30 @@ trait PresenterTrait
 	abstract public function redirect(string $destination, $args = []): void;
 	abstract public function redrawControl(string $name): void;
 
-	abstract public function flashMessageError(string $message, ?int $autoCloseDuration = null): stdClass;
-	abstract public function flashMessageWarning(string $message, ?int $autoCloseDuration = null): stdClass;
-	abstract public function flashMessageSuccess(string $message, ?int $autoCloseDuration = null): stdClass;
-	abstract public function flashMessageInfo(string $message, ?int $autoCloseDuration = null): stdClass;
+	abstract public function flashMessageError(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+	abstract public function flashMessageWarning(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+	abstract public function flashMessageSuccess(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+	abstract public function flashMessageInfo(string $message, ?int $autoCloseDuration = null, array $parameters = []): stdClass;
+
+	/** @return string[] */
+	abstract public function formatTemplateFiles(): array;
+
+	/**
+	 * Nastaví šablonu z balíku, ale jen když si presenter nenese vlastní.
+	 *
+	 * Sekce z FancyAdminu si šablonu nastavují natvrdo, protože v projektu žádná vedle
+	 * presenteru neleží. Jakmile si ji projekt přidá - typicky aby sekci přejmenoval nebo
+	 * dal nadpis do vlastního slovníku - má vyhrát ta jeho, a ne aby kvůli tomu musel
+	 * přebíjet celé actionDefault().
+	 */
+	protected function setPackageTemplateFile(string $file): void
+	{
+		foreach ($this->formatTemplateFiles() as $_file) {
+			if (is_file($_file)) {
+				return;
+			}
+		}
+
+		$this->getTemplate()->setFile($file);
+	}
 }

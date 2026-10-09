@@ -1,0 +1,86 @@
+{define title}
+	{_fcadmin.presenters.profile.pageTitle}
+{/define}
+
+{block content}
+
+<div class="header">
+	<h1 class="header-title">
+		{_fcadmin.presenters.profile.header}
+	</h1>
+
+	<div class="header-actions">
+		<a n:href="changePassword!" class="btn btn-outline-primary ajax">{_fcadmin.presenters.profile.changePassword}</a>
+		<a n:if="$canEditPersonalData" n:href="editPersonalData!" class="btn btn-primary ajax">{_fcadmin.presenters.profile.editPersonalData}</a>
+	</div>
+</div>
+
+<div class="card">
+	<div class="card-body">
+		<table class="table table-borderless mb-0">
+			<tr>
+				<th>{_fcadmin.forms.personalData.labels.firstName}</th>
+				<td>{$identity->getFirstName()}</td>
+			</tr>
+			<tr>
+				<th>{_fcadmin.forms.personalData.labels.lastName}</th>
+				<td>{$identity->getLastName()}</td>
+			</tr>
+			<tr>
+				<th>{_fcadmin.presenters.profile.email}</th>
+				<td>{$identity->getEmail()}</td>
+			</tr>
+			<tr>
+				<th>{_fcadmin.forms.personalData.labels.phoneNumber}</th>
+				<td>{$identity->getPhoneNumber()}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+{if $isPasskeyEnabled}
+	<div class="header mt-4">
+		<h2 class="header-title">
+			{_fcadmin.passkeys.profile.title}
+		</h2>
+
+		<div class="header-actions">
+			<a n:href="addPasskey!" class="btn btn-primary ajax">{_fcadmin.passkeys.profile.add}</a>
+		</div>
+	</div>
+
+	{if $isPasskeyEnrollmentRequired}
+		<div class="alert alert-warning">
+			{_fcadmin.passkeys.twoFactor.enrollmentInfo}
+		</div>
+	{elseif $isPasskeyEnrollmentPending}
+		<div class="alert alert-warning">
+			{_fcadmin.passkeys.profile.enrollmentInfo}
+		</div>
+	{/if}
+
+	{control passkeyGrid}
+{/if}
+
+<div class="header mt-4">
+	<h2 class="header-title">
+		{_fcadmin.presenters.profile.sessions}
+	</h2>
+
+	<div class="header-actions">
+		<div class="dropdown">
+			<button class="btn btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+				<i class="fa-solid fa-ellipsis-vertical"></i>
+			</button>
+			<ul class="dropdown-menu dropdown-menu-end">
+				<li>
+					<a n:href="logoutAll!" class="dropdown-item text-danger" onclick="if(!confirm('{_fcadmin.presenters.profile.logoutAllConfirm}')){ event.preventDefault(); return false; }">
+						{_fcadmin.presenters.profile.logoutAll}
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+{control sessionGrid}

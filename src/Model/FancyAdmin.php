@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model;
 
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
+use ADT\FancyAdmin\Model\Security\SsoHostAllowlist;
 use Nette\Security\Resource;
 
 class FancyAdmin
@@ -25,14 +26,23 @@ class FancyAdmin
 		protected Resource $customerAclResource,
 		protected Resource $backofficeAclResource,
 		protected Resource $fullDataAclResource,
+		protected Resource $personalDataAclResource,
 		protected ?string $context,
 		protected array $jsComponentsConfig = [],
 		protected array $colors = [],
 		protected bool $keycloakEnabled = false,
 		protected bool $passkeyEnabled = false,
+		protected bool $passkeyEmailOtpEnabled = true,
+		protected bool $passkeyEnrollmentRequired = false,
 		protected ?string $passkeyRpId = null,
 		protected ?string $passkeyRpName = null,
+		protected array $ssoAllowedHosts = [],
 	) {}
+
+	public function getSsoHostAllowlist(): SsoHostAllowlist
+	{
+		return new SsoHostAllowlist($this->ssoAllowedHosts);
+	}
 
 	public function getProject(): string
 	{
@@ -109,6 +119,11 @@ class FancyAdmin
 		return $this->fullDataAclResource;
 	}
 
+	public function getPersonalDataAclResource(): Resource
+	{
+		return $this->personalDataAclResource;
+	}
+
 	public function getJsComponentsConfig(): array
 	{
 		return $this->jsComponentsConfig;
@@ -178,6 +193,18 @@ class FancyAdmin
 	public function isPasskeyEnabled(): bool
 	{
 		return $this->passkeyEnabled;
+	}
+
+	/** Záchranná cesta jednorázovým kódem na e-mail při vynuceném 2FA (README 19.9). */
+	public function isPasskeyEmailOtpEnabled(): bool
+	{
+		return $this->passkeyEnabled && $this->passkeyEmailOtpEnabled;
+	}
+
+	/** Má být uživatel přihlášený jednorázovým kódem zamčený na Profilu, dokud si nepřidá klíč? */
+	public function isPasskeyEnrollmentRequired(): bool
+	{
+		return $this->passkeyEnabled && $this->passkeyEnrollmentRequired;
 	}
 
 	public function getPasskeyRpId(): ?string

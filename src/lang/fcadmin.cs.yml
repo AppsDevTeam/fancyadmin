@@ -5,6 +5,7 @@ global:
 
   flashes:
     close: Beru na vědomí
+    sortableError: Nové pořadí se nepodařilo uložit. Obnovte prosím stránku a zkuste to znovu.
 
 layout:
   sideMenu:
@@ -37,6 +38,9 @@ mailer:
   passwordRecovery:
     text: 'pro nastavení nového hesla do aplikace <strong>%projectName%</strong> klikněte na odkaz níže. <strong>Pokud jste o nové heslo nežádali, e-mail ignorujte.</strong><br><br>'
 
+  twoFactorCode:
+    text: 'pro dokončení přihlášení do aplikace <strong>%projectName%</strong> opište tento jednorázový kód. Platí %validMinutes% minut a použít ho lze jen jednou. <strong>Pokud jste se právě nepřihlašovali, někdo zná vaše heslo - co nejdříve si ho změňte.</strong><br><br>'
+
 presenters:
   permissions:
     title: Oprávnění
@@ -55,11 +59,16 @@ presenters:
     pageTitle: Uživatelé
     header: Uživatelé
 
+  # Seznam účtů (tenantů) — presenter Accounts
   account:
     title: Účty
-    pageTitle: Můj účet
+    pageTitle: Účty
     header: Účty
-    myProfile: Můj profil
+
+  # Stránka Můj profil — presenter Profile
+  profile:
+    pageTitle: Můj profil
+    header: Můj profil
     editPersonalData: Upravit osobní údaje
     changePassword: Změnit heslo
     email: E-mail
@@ -72,6 +81,11 @@ presenters:
     title: Logy změn
     pageTitle: Logy změn
     header: Logy změn
+
+  authLogs:
+    title: Přihlašování
+    pageTitle: Přihlašování
+    header: Přihlašování
 
   configurations:
     title: Konfigurace
@@ -89,6 +103,23 @@ presenters:
       requireSpecialChar: Vyžadovat speciální znak
       sessionExpirationMinutes: Expirace session (minuty)
 
+  apiKeys:
+    title: API klíče
+    pageTitle: API klíče
+    header: API klíče
+    messages:
+      created: 'API klíč byl vytvořen, uložte si ho - už ho znovu nezobrazíme:<br><code>%key%</code>'
+    grid:
+      name: Název
+      fingerprint: Otisk klíče
+      account: Účet
+    form:
+      name: Název
+      submit: Uložit
+      errors:
+        nameRequired: Název je povinný
+        nameAlreadyExists: Klíč s tímto názvem už v tomto účtu existuje
+
   sso:
     title: SSO instance
     pageTitle: SSO instance
@@ -97,14 +128,20 @@ presenters:
       delete: Opravdu chcete smazat tuto SSO instanci?
     errors:
       cannotDeleteHasIdentities: Nelze smazat — existují uživatelé navázaní na tuto SSO instanci.
+      testNotFound: SSO instance nebyla nalezena.
+      testServerFailed: "Server se na Keycloak nedovolal. Zkontrolujte interní URL, realm, Client ID a Client Secret."
+      testFailed: "Zkušební přihlášení neprošlo, Keycloak vrátil chybu %error%. Zkontrolujte veřejnou URL a registrovaná redirect URI."
     messages:
       deleted: SSO instance byla smazána.
+      testOk: Zkouška prošla — Keycloak je dostupný a konfigurace instance je v pořádku.
     grid:
       name: Název
       realm: Realm
       hostUrl: URL
       clientId: Client ID
       defaultRole: Výchozí role
+      test: Vyzkoušet
+      isActive: Aktivní
       delete: Smazat
     form:
       name: Název
@@ -113,8 +150,10 @@ presenters:
       hostUrl: Veřejná URL
       clientId: Client ID
       clientSecret: Client Secret
+      clientSecretKeep: Ponechat stávající
       frontendClientId: Frontend Client ID
       defaultRole: Výchozí role pro nové uživatele
+      isActive: Aktivní
       submit: Uložit
       errors:
         nameRequired: Název je povinný
@@ -124,6 +163,10 @@ presenters:
         clientIdRequired: Client ID je povinný
         clientSecretRequired: Client Secret je povinný
         frontendClientIdRequired: Frontend Client ID je povinný
+        baseUrlInvalid: Interní URL musí být platná absolutní URL
+        hostUrlInvalid: Veřejná URL musí být platná absolutní URL
+        hostUrlNotAllowed: Veřejná URL musí mířit na povolený host (%s)
+        nameAlreadyExists: SSO instance s tímto názvem již existuje
 
   profiles:
     title: Uživatelé
@@ -131,6 +174,8 @@ presenters:
     header: Uživatelé
 
   sign:
+    twoFactor:
+      pageTitle: "Ověření přihlášení"
     errors:
       expiredLink: "Odkaz již není platný. Pro vygenerování nového odešlete znovu formulář."
 
@@ -163,7 +208,6 @@ forms:
       submit: Odeslat link pro obnovu
     messages:
       success: E-mail pro obnovu odeslán
-      error: Účet nebyl nalezen
     errors:
       emailRequired: E-mail je povinný
 
@@ -189,6 +233,8 @@ forms:
       requiredBranch: "Je nutné vyplnit pobočku"
       ssoRequired: "SSO instance je povinná pro vybranou roli"
       userAlreadyExists: "Uživatel již ve vybraném účtu existuje."
+    messages:
+      passwordMailSent: "Na e-mail %email% byl zaslán odkaz pro nastavení hesla."
 
   newPassword:
     labels:
@@ -204,6 +250,7 @@ forms:
       requireDigit: Heslo musí obsahovat alespoň jednu číslici
       requireSpecialChar: Heslo musí obsahovat alespoň jeden speciální znak
       breachedPassword: Toto heslo bylo nalezeno v databázi uniklých hesel. Zvolte prosím jiné heslo.
+      sameAsIdentifier: Heslo nesmí být shodné s e-mailem ani s uživatelským jménem
 
   changePassword:
     labels:
@@ -237,10 +284,20 @@ forms:
       identity: Identita
       profile: Profil
     isAdmin: Administrátor
+    needs2fa: Vyžaduje 2FA
     needsSso: Vyžaduje přihlášení přes SSO
+    passwordPolicyEnabled: Politika hesel aktivní
+    passwordMinLength: Minimální délka hesla
+    passwordRequireUppercase: Vyžadovat velké písmeno
+    passwordRequireLowercase: Vyžadovat malé písmeno
+    passwordRequireDigit: Vyžadovat číslici
+    passwordRequireSpecialChar: Vyžadovat speciální znak
+    sessionExpirationMinutes: Expirace session (minuty)
     submit: Odeslat
     errors:
       nameAlreadyExists: Role s tímto názvem již existuje
+      passwordMinLength: Minimální délka hesla musí být alespoň %d
+      sessionExpirationMinutes: Expirace session musí být alespoň %d minuta
 
   systemSelectCompany:
     options:
@@ -268,6 +325,21 @@ grids:
     fullName: Jméno
     phoneNumber: Telefon
 
+  authLog:
+    createdAt: Datum
+    type: Událost
+    identity: Přihlašovací jméno
+    ip: IP adresa
+    userAgent: Prohlížeč
+    reason: Důvod
+    types:
+      login: Přihlášení
+      login_failed: Neúspěšné přihlášení
+      login_blocked: Zablokovaný pokus
+      logout: Odhlášení
+      fraud_detected: Ukončení podezřelé session
+      invalid_token: Neplatný token
+
   changeLog:
     createdAt: Datum
     action: Akce
@@ -283,6 +355,8 @@ grids:
       uploaded: Nahrán nový soubor
       removed: Soubor odstraněn
       changed: Soubor změněn
+    # misto hodnoty u properties z getMaskedProperties() - hesla, tokeny, certifikaty
+    masked: (skryto)
 
   user:
     labels:
@@ -322,6 +396,9 @@ appGeneral:
   exceptions:
     userNotFound: "Uživatel nenalezen"
     wrongCredentials: "Neplatné přihlašovací údaje"
+    wrongCredentialsAttemptsLeft: '{1}Neplatné přihlašovací údaje. Zbývá 1 pokus, poté bude přihlášení dočasně zablokováno.|]1,4]Neplatné přihlašovací údaje. Zbývají %count% pokusy.|[5,Inf[Neplatné přihlašovací údaje. Zbývá %count% pokusů.'
+    signInBlocked: "Vyčerpali jste povolený počet pokusů, přihlášení je proto dočasně zablokováno. Zkusit to můžete znovu v %time%."
+    signInBlockedUnknownTime: "Vyčerpali jste povolený počet pokusů, přihlášení je proto dočasně zablokováno. Zkuste to prosím za chvíli znovu."
     noPermission: "Nemáte právo pro přihlášení"
     inactiveUser: "Neaktivní uživatel"
 
@@ -349,10 +426,23 @@ keycloak:
     loopDetected: Bylo detekováno opakované přesměrování. Zkuste to prosím znovu.
 
 passkeys:
-  loginButton: Přihlásit se přihlašovacím klíčem
-  account:
+  loginButton: Přihlásit se klíčem
+  profile:
     title: Přihlašovací klíče
     add: Přidat klíč
+    enrollmentInfo: Váš účet vyžaduje přihlášení přihlašovacím klíčem. Dokud si klíč nezaregistrujete, zůstanete na této stránce.
+  twoFactor:
+    loginWithCode: "Přihlásit se jednorázovým heslem z e-mailu"
+    codeLabel: Jednorázové heslo z e-mailu
+    codeRequired: Zadejte jednorázové heslo z e-mailu
+    codeSentInfo: 'Jednorázové heslo jsme odeslali na %email%. Platí 10 minut.'
+    codeSent: Jednorázové heslo jsme odeslali znovu.
+    resend: Poslat heslo znovu
+    resendIn: 'Nové heslo si můžete nechat poslat za %seconds% s.'
+    back: Zpět na výběr způsobu přihlášení
+    submit: Přihlásit
+    enrollmentRequired: Přihlásili jste se jednorázovým heslem. Než budete pokračovat, zaregistrujte si pro tento prohlížeč přihlašovací klíč.
+    enrollmentInfo: Přihlásili jste se jednorázovým heslem z e-mailu, ne přihlašovacím klíčem. Zaregistrujte si prosím přihlašovací klíč pro tento prohlížeč - dokud to neuděláte, zůstanete na této stránce.
   form:
     name: Název klíče
     namePlaceholder: Např. Pracovní notebook
@@ -370,22 +460,28 @@ passkeys:
   messages:
     added: Přihlašovací klíč byl přidán.
     deleted: Přihlašovací klíč byl smazán.
+    enrollmentRequired: Než budete pokračovat, zaregistrujte si prosím přihlašovací klíč.
   errors:
     unsupportedBrowser: Váš prohlížeč nepodporuje přihlašovací klíče (passkeys).
     unknownKey: Neplatný nebo neznámý přihlašovací klíč.
     invalidKey: Přihlašovací klíč se nepodařilo ověřit.
     alreadyRegistered: Tento přihlašovací klíč je již zaregistrován.
     expiredChallenge: Platnost výzvy vypršela. Zkuste to prosím znovu.
-    ssoAccount: Účet přihlašovaný přes SSO nemůže používat přihlašovací klíče.
     unavailable: Přihlašovací klíče nejsou momentálně dostupné.
     loginFailed: Přihlášení přihlašovacím klíčem se nezdařilo. Zkuste to prosím znovu.
     registrationFailed: Přihlašovací klíč se nepodařilo vytvořit. Zkuste to prosím znovu.
+    passwordDisabled: Váš účet vyžaduje přihlášení přihlašovacím klíčem. Heslem se přihlásit nelze.
+    invalidCode: Jednorázové heslo není platné. Zkontrolujte ho, nebo si nechte poslat nové.
+    tooManyCodeRequests: Jednorázové heslo jsme už poslali několikrát za sebou. Zkuste to prosím za chvíli.
+    resendTooSoon: Nové jednorázové heslo si můžete nechat poslat až za chvíli.
+    lastKeyRequired: Poslední přihlašovací klíč nelze smazat, váš účet vyžaduje přihlášení klíčem.
+    passwordSessionRevoked: Byli jste odhlášeni. Váš účet vyžaduje přihlášení přihlašovacím klíčem.
 
 modules:
   web:
     navbar:
-      account:
-        myAccount: "Můj účet"
+      profile:
+        myProfile: "Můj profil"
     presenters:
       sign:
         in:

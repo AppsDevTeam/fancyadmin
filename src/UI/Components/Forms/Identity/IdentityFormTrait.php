@@ -40,7 +40,7 @@ trait IdentityFormTrait
 		return $this->_em->findEntityClassByInterface(Identity::class);
 	}
 
-	public function isAllowedToEdit(): true
+	public function isAllowedToEdit(?Identity $identity): bool
 	{
 		return true;
 	}

@@ -31,13 +31,36 @@ trait AclRoleFormTrait
 				AclRoleTypeEnum::IDENTITY->value => 'fcadmin.forms.aclRole.types.identity',
 				AclRoleTypeEnum::PROFILE->value => 'fcadmin.forms.aclRole.types.profile',
 			])
+			->setPrompt('---')
 			->setRequired();
 
 		$form->addCheckbox('isAdmin', 'fcadmin.forms.aclRole.isAdmin');
 
+		if ($this->_fancyAdmin->isPasskeyEnabled()) {
+			$form->addCheckbox('needs2fa', 'fcadmin.forms.aclRole.needs2fa');
+		}
+
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
 			$form->addCheckbox('needsSso', 'fcadmin.forms.aclRole.needsSso');
 		}
+
+		// Politika hesel role. Identita jich muze mit vic, takze se pri nastavovani hesla
+		// uplatni nejprisnejsi z nich - viz Model\Security\PasswordPolicy::strictestOf().
+		$form->addCheckbox('passwordPolicyEnabled', 'fcadmin.forms.aclRole.passwordPolicyEnabled');
+
+		$form->addInteger('passwordMinLength', 'fcadmin.forms.aclRole.passwordMinLength')
+			->setNullable()
+			->addConditionOn($form['passwordPolicyEnabled'], $form::Equal, true)
+				->addRule($form::Min, 'fcadmin.forms.aclRole.errors.passwordMinLength', 1);
+
+		$form->addCheckbox('passwordRequireUppercase', 'fcadmin.forms.aclRole.passwordRequireUppercase');
+		$form->addCheckbox('passwordRequireLowercase', 'fcadmin.forms.aclRole.passwordRequireLowercase');
+		$form->addCheckbox('passwordRequireDigit', 'fcadmin.forms.aclRole.passwordRequireDigit');
+		$form->addCheckbox('passwordRequireSpecialChar', 'fcadmin.forms.aclRole.passwordRequireSpecialChar');
+
+		$form->addInteger('sessionExpirationMinutes', 'fcadmin.forms.aclRole.sessionExpirationMinutes')
+			->setNullable()
+			->addRule($form::Min, 'fcadmin.forms.aclRole.errors.sessionExpirationMinutes', 1);
 
 		$form->addSubmit('submit', 'fcadmin.forms.aclRole.submit');
 	}

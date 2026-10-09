@@ -1,6 +1,7 @@
 const run = (el) => {
     $(function () {
-        $(document).on('click', '[data-sign-in-as-identity-url]', function () {
+        $(document).on('click', '[data-sign-in-as-identity-url]', function (e) {
+            e.preventDefault();
             const buttonText  = $(this).attr('data-button-text');
 
             $.nette.ajax({

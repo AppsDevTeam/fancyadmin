@@ -10,6 +10,7 @@ use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
 use ADT\FancyAdmin\Model\Services\OnetimeTokenTypeEnum;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
+use Nette\Utils\Html;
 
 trait SignInAsIdentity
 {
@@ -25,14 +26,17 @@ trait SignInAsIdentity
 				$this['grid']
 					->addAction('signInAsIdentity', '')
 					->setRenderer(function ($item) {
-						return '
-							<a href="javascript:void(0);" class="noajax"
-								data-button-text="' . $this->_translator->translate('fcadmin.grids.user.actions.signAsIdentityOpenInIncognitoWindow') . '"
-								data-sign-in-as-identity-url="?do=' . $this->getName() . '-signInAsIdentity&' . $this->getName() . '-id=' . $item->getId() . '
-							">
-								<span class="fa fa-sign-in"></span>&nbsp;' . $this->_translator->translate('fcadmin.grids.user.actions.signAsIdentity') . '
-							</a>
-						';
+						// Adresa přes link(), ne ručně složené `?do=...` - to by zahodilo persistentní
+						// parametry presenteru (např. CSRF token signálů) a signál by se odmítl.
+						return Html::el('a', [
+							'href' => 'javascript:void(0);',
+							'class' => 'noajax',
+							'data-button-text' => $this->_translator->translate('fcadmin.grids.user.actions.signAsIdentityOpenInIncognitoWindow'),
+							'data-sign-in-as-identity-url' => $this->link('signInAsIdentity!', ['id' => $item->getId()]),
+						])
+							->addHtml(Html::el('span', ['class' => 'fa fa-sign-in']))
+							->addHtml('&nbsp;')
+							->addText($this->_translator->translate('fcadmin.grids.user.actions.signAsIdentity'));
 					});
 			}
 		};

@@ -1,3 +1,5 @@
+import { showSortableError } from './flashes';
+
 // Explicit global: ublaboo renders inline scripts that call datagridSortable().
 // ESM modules are strict, so the previous implicit global assignment threw.
 window.datagridSortable = function($el) {
@@ -35,7 +37,9 @@ window.datagridSortable = function($el) {
                 url: url,
                 data: data,
                 error: function(jqXHR, textStatus, errorThrown) {
-                    return alert(jqXHR.statusText);
+                    if (errorThrown !== 'abort') {
+                        showSortableError();
+                    }
                 }
             });
         },

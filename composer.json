@@ -3,12 +3,15 @@
   "type": "library",
   "description": "",
   "homepage": "https://www.appsdevteam.com",
-  "license": ["MIT"],
+  "license": [
+    "MIT"
+  ],
   "require": {
     "php": ">=8.4",
     "adt/ajax-select": "^4.0",
     "contributte/translation": "^2.0",
     "adt/doctrine-forms": "^2.0",
+    "adt/nette-forms-components": "^2.5.3",
     "adt/doctrine-authenticator": "^2.5",
     "nettrine/extensions-atlantic18": "^0.7.1",
     "adt/utils": "^2.0",
@@ -24,12 +27,20 @@
     "adt/datagrid-components": "^1.0",
     "nettrine/orm": "^0.10",
     "adt/route-port": "^3.0",
-    "adt/doctrine-loggable": "^3.0",
+    "adt/doctrine-loggable": "^4.2",
+    "adt/log-sanitizer": "^1.0",
     "lbuchs/webauthn": "^2.2"
   },
   "suggest": {
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
     "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
+  },
+  "require-dev": {
+    "nette/tester": "^2.5",
+    "guzzlehttp/guzzle": "^7.0"
+  },
+  "scripts": {
+    "test": "tester -C tests"
   },
   "autoload": {
     "psr-4": {

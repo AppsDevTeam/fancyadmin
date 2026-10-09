@@ -6,3 +6,4 @@
 .idea
 .env
 .yarnrc.yml
+/tests/output

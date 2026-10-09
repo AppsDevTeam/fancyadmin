@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
+use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
@@ -26,6 +27,7 @@ trait AccountTrait
 
 	#[ORM\ManyToOne(targetEntity: 'Account')]
 	#[LoggableProperty]
+	#[AuditedValue]
 	protected ?Account $parent = null;
 	
 	public function getName(): string

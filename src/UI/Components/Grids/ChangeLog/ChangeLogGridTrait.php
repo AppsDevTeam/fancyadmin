@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Grids\ChangeLog;
 
 use ADT\Datagrid\Component\DataGrid;
+use ADT\DoctrineLoggable\ChangeSet\Redacted;
 use ADT\DoctrineLoggable\ChangeSet\Scalar;
 use ADT\DoctrineLoggable\ChangeSet\ToMany;
 use ADT\DoctrineLoggable\ChangeSet\ToOne;
@@ -27,7 +28,9 @@ trait ChangeLogGridTrait
 
 		$grid->setDefaultSort(['createdAt' => 'DESC']);
 
-		$grid->addColumnDateTime('createdAt', 'fcadmin.grids.changeLog.createdAt');
+		// v logu se hleda skoro vzdycky "co se delo v ten a ten den"
+		$grid->addColumnDateTime('createdAt', 'fcadmin.grids.changeLog.createdAt')
+			->setFilterDateRange();
 
 		$grid->addColumnText('action', 'fcadmin.grids.changeLog.action')
 			->setRenderer(function (ChangeLog $changeLog) {
@@ -39,7 +42,8 @@ trait ChangeLogGridTrait
 				return $this->resolveEntityLabel($changeLog->getObjectClass());
 			});
 
-		$grid->addColumnText('objectId', 'fcadmin.grids.changeLog.objectId');
+		$grid->addColumnText('objectId', 'fcadmin.grids.changeLog.objectId')
+			->setFilterText();
 
 		$grid->addColumnText('identityId', 'fcadmin.grids.changeLog.identity')
 			->setRenderer(function (ChangeLog $changeLog) {
@@ -63,39 +67,63 @@ trait ChangeLogGridTrait
 			'edit' => $this->getTranslator()->translate('fcadmin.grids.changeLog.actions.edit'),
 			'delete' => $this->getTranslator()->translate('fcadmin.grids.changeLog.actions.delete'),
 		])->setPrompt('—');
+
+		$grid->addAdvancedFilteredSearch();
+		$grid->addExportExcel('Export', 'change-logs.xlsx');
+	}
+
+	/**
+	 * Properties, jejichž hodnotu grid nesmí vypsat - hashe hesel, tokeny, API klíče,
+	 * certifikáty. Že se property změnila, v logu zůstane; maskuje se stará a nová hodnota.
+	 *
+	 * Ve výchozím stavu prázdné: co je v daném projektu tajné, ví jen ten projekt.
+	 * Přepiš v komponentě, která traitu používá.
+	 *
+	 * @return list<string>
+	 */
+	protected function getMaskedProperties(): array
+	{
+		return [];
+	}
+
+	public function getIsMaskedProperty(string $property): bool
+	{
+		return in_array($property, $this->getMaskedProperties(), true);
 	}
 
 	protected function renderChangeSet(ChangeLog $changeLog): Html
 	{
-		$changeSet = $changeLog->getChangeSet();
 		$labels = $this->resolvePropertyLabels($changeLog->getObjectClass());
 		$container = Html::el('div')->setAttribute('style', 'font-size: 0.85em;');
 
-		foreach ($changeSet->getChangedProperties() as $propertyChangeSet) {
+		foreach ($changeLog->getChangeSet()->getChangedProperties() as $propertyChangeSet) {
 			if (!$propertyChangeSet->isChanged()) {
 				continue;
 			}
 
 			$propertyName = $propertyChangeSet->getName();
-			$label = $labels[$propertyName] ?? $propertyName;
-
 			$row = Html::el('div')->setAttribute('style', 'white-space: nowrap;');
+			$row->addHtml(Html::el('span')->setAttribute('class', 'text-muted')->setText(($labels[$propertyName] ?? $propertyName) . ' '));
 
-			if ($propertyChangeSet instanceof Scalar) {
-				$row->addHtml(Html::el('span')->setAttribute('class', 'text-muted')->setText($label . ' '));
+			// Redacted = hodnota se do logu vubec nezapsala (LoggableProperty::$withValue),
+			// maskovani = zapsala, ale grid ji vypsat nesmi. Navenek je to totez.
+			if ($propertyChangeSet instanceof Redacted || $this->getIsMaskedProperty($propertyName)) {
+				$row->addText($this->getTranslator()->translate('fcadmin.grids.changeLog.masked'));
+			} elseif ($propertyChangeSet instanceof Scalar) {
 				$row->addText($this->formatValue($propertyChangeSet->getOld()) . ' → ' . $this->formatValue($propertyChangeSet->getNew()));
 			} elseif ($propertyChangeSet instanceof ToOne) {
-				$row->addHtml(Html::el('span')->setAttribute('class', 'text-muted')->setText($label . ' '));
 				if ($this->isFileChange($propertyChangeSet)) {
 					$row->addText($this->formatFileChange($propertyChangeSet));
 				} else {
 					$row->addText($this->formatIdentification($propertyChangeSet->getOld()) . ' → ' . $this->formatIdentification($propertyChangeSet->getNew()));
 				}
 			} elseif ($propertyChangeSet instanceof ToMany) {
-				$row->addHtml(Html::el('span')->setAttribute('class', 'text-muted')->setText($label . ' '));
 				$removed = array_map(fn($id) => '− ' . $this->formatIdentification($id), $propertyChangeSet->getRemoved());
 				$added = array_map(fn($id) => '+ ' . $this->formatIdentification($id), $propertyChangeSet->getAdded());
 				$row->addText(implode(', ', array_merge($removed, $added)) ?: '—');
+			} else {
+				// neznamy typ zmeny - vypsat samotny popisek bez hodnoty nema smysl
+				continue;
 			}
 
 			$container->addHtml($row);

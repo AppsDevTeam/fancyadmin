@@ -43,8 +43,9 @@ async function handleEmailChange(event) {
 	if (submitButton) submitButton.disabled = true;
 
 	try {
-		const url = checkUrl.replace('__EMAIL__', encodeURIComponent(email));
-		const response = await fetch(url);
+		const body = new FormData();
+		body.append('email', email);
+		const response = await fetch(checkUrl, { method: 'POST', body });
 		const data = await response.json();
 
 		if (data.loginUrl) {

@@ -106,7 +106,7 @@ AdtJsComponents.init('translate', 'Translate');
 // import './netteForm';
 import './flashes';
 // import './userDropdown';
-// import './tableActionsShadow';
+import './tableActionsShadow';
 // import './_datagrid';
 // import './dateRange';
 // import '../../../vendor/ublaboo/datagrid/assets/datagrid';
@@ -119,4 +119,5 @@ import './flashes';
 import './sideMenu'
 import './datagrid/datagrid'
 import './datagrid'
+import './datagridInfiniteScroll'
 import './sidePanel'
