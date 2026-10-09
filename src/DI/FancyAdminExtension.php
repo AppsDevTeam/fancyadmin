@@ -8,6 +8,7 @@ use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
 use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
@@ -34,6 +35,7 @@ use Nette\Loaders\RobotLoader;
 use Nette\PhpGenerator\ClassType;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
+use Nette\Routing\Router;
 use Nette\Schema\Schema;
 use Nette\Security\Resource;
 use ReflectionClass;
@@ -219,6 +221,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	{
 		$builder = $this->getContainerBuilder();
 
+		$this->checkSignalCsrfRouter();
+
 		// Sanitizer si projekty registruji samy, protoze si upravuji citliva pole
 		// i chovani pri nalezu PANu. Auditni subscriber ho ale potrebuje vzdy,
 		// takze projektu, ktery zadny nema, dame vychozi - jinak by mu kontejner
@@ -271,6 +275,32 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale ' . $invalidIdentity . ' neimplementuje ' . HasPasskeys::class . '. Přidejte entitě `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19), nebo passkeys vypněte.');
 		}
 	}
+
+	/**
+	 * CSRF token signálů nemá končit v adresách, kde se neověřuje — kořenový router projektu
+	 * proto musí být {@see SignalCsrfRouteList}, který ho z nich odklidí.
+	 *
+	 * Hlídá se to při kompilaci kontejneru, protože jinak je to tichá chyba: aplikace běží dál,
+	 * jen se token vleče každou adresou — adresním řádkem, historií prohlížeče, hlavičkou
+	 * `Referer` i logy serveru. Router se zvenku neobaluje schválně: knihovny (například
+	 * `adt/utils` v ErrorPresenteru) i Tracy si strom rout procházejí a obal by jim ho schoval.
+	 */
+	private function checkSignalCsrfRouter(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$name = $builder->getByType(Router::class);
+
+		if ($name === null) {
+			return;
+		}
+
+		$type = $builder->getDefinition($name)->getType();
+
+		if ($type !== null && !is_a($type, SignalCsrfRouteList::class, true)) {
+			throw new RuntimeException('fancyadmin: kořenový router projektu musí být ' . SignalCsrfRouteList::class . ', teď je to ' . $type . '. V RouterFactory::create() vraťte `new ' . SignalCsrfRouteList::class . '()` místo RouteListu — jinak CSRF token signálů skončí v každé vygenerované adrese. Viz README (sekce 14, CSRF ochrana signálů).');
+		}
+	}
+
 
 	/**
 	 * @param class-string[] $identityClasses projektové entity Identity

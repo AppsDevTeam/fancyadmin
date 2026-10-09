@@ -662,13 +662,16 @@ declare(strict_types=1);
 namespace App\Core;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\Routing\RouteList;
 
 class RouterFactory
 {
-	public static function create(FancyAdminRouter $fancyAdminRouter): RouteList
+	public static function create(FancyAdminRouter $fancyAdminRouter): SignalCsrfRouteList
 	{
-		$router = new RouteList();
+		// Koren musi byt SignalCsrfRouteList, aby CSRF token signalu neskoncil v kazde
+		// vygenerovane adrese (viz sekce 14, CSRF ochrana signalu).
+		$router = new SignalCsrfRouteList();
 
 		// Fancyadmin routes (Sign:in, Sign:out, portal routes)
 		$router[] = $fancyAdminRouter->getRouteList();
@@ -855,6 +858,28 @@ class DownloadPresenter extends BasePresenter
 
 Cíl v cookie **není svázaný s identitou** (na rozdíl od session backlinku), takže se na
 něm nesmí stavět autorizace — cílová akce si musí právo přihlášeného uživatele ověřit sama.
+
+### CSRF ochrana signálů
+
+Stavové akce administrace se spouštějí signály (`?do=...`). SameSite cookie ani hlavička
+`Sec-Fetch-Site` nejsou plná náhrada tokenu (nález WEB-06), takže `BasePresenterTrait`
+přináší `SignalCsrfProtection`: přihlášený uživatel dostane token vázaný na relaci a signál
+bez něj skončí na 403. **Projekt nic nezapojuje a nekonfiguruje.**
+
+Co je kolem toho potřeba vědět:
+
+- **Token je jen v adresách signálů.** Stará se o to `SignalCsrfRouteList` — kořenový router
+  projektu z něj musí dědit (viz sekce 13). Že na to projekt nezapomněl, hlídá
+  `FancyAdminExtension` při kompilaci kontejneru. V ostatních adresách by token nic nechránil
+  a jen by se vlekl adresním řádkem, historií prohlížeče, hlavičkou `Referer` a logy serveru.
+- **Formuláře ho dostanou skrytým polem**, které do nich doplní `assets/js/signalCsrf.js`
+  (je v `app.js`). Týž skript uklízí token i signál z adresního řádku po ajaxu.
+- **Formulář s vlastním `addProtection()` je z kontroly vyjmutý** a na JavaScriptu tedy
+  nezávisí. `BaseFormTrait` ho volá na každý formulář (`$csrfProtection = true`).
+  ⚠️ Pokud si projekt přepíše `createComponentForm()` a `addProtection()` v něm vynechá,
+  jeho formuláře o vlastní token přijdou a začnou záviset na tom, že se skript v prohlížeči
+  opravdu provedl. Filtry a hromadné akce gridů vlastní token nemají nikdy, ty na skriptu
+  závisí vždy.
 
 ---
 

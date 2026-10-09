@@ -17,6 +17,7 @@ use stdClass;
 trait BasePresenterTrait
 {
 	use PresenterTrait;
+	use SignalCsrfProtection;
 	use FancyAdminInject;
 	use EntityManagerInject;
 	use TranslatorInject;
