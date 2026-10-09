@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Console;
 
 use ADT\FancyAdmin\UI\Presenters\AuthPresenter;
+use Doctrine\Migrations\DependencyFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Nette\Loaders\RobotLoader;
 use Nette\Security\Resource;
 use ReflectionClass;
 use ReflectionEnum;
+use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,9 +21,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'fancyadmin:generate-missing-acl-resources', description: 'Generate migration for missing ACL resources')]
 class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 {
+	/**
+	 * @param ?DependencyFactory $migrations konfigurace Doctrine Migrations, pokud ji projekt ma -
+	 *        z ni se bere, kam migraci zapsat. Balicek na doctrine/migrations nezavisi, proto
+	 *        je volitelna; zapojuje ji FancyAdminExtension::beforeCompile().
+	 */
 	public function __construct(
 		private readonly EntityManagerInterface $em,
 		private readonly string $appDir,
+		private readonly ?DependencyFactory $migrations = null,
 	) {
 		parent::__construct();
 	}
@@ -131,19 +139,27 @@ class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 	 *   → module parts: [Portal, Backoffice] → PortalBackoffice
 	 *   → presenter: Accounts
 	 *   → resource: portalBackoffice.accounts
+	 *
+	 * Moduly zacinaji za segmentem `UI` (adresarova konvence Nette), ne za pevnym poctem
+	 * segmentu - projekt nemusi zit pod `App`. Trida bez `UI` se preskoci.
 	 */
 	private function resolveResourceName(string $class): ?string
 	{
 		$parts = explode('\\', $class);
 
-		// Find the last 'Presenters' segment
-		$presentersIndex = array_search('Presenters', array_reverse($parts, true));
-		if ($presentersIndex === false) {
+		$uiIndex = array_search('UI', $parts, true);
+		if ($uiIndex === false) {
 			return null;
 		}
 
-		// Module: everything between 'App\UI\' and 'Presenters', joined
-		$moduleParts = array_slice($parts, 2, $presentersIndex - 2);
+		// Find the last 'Presenters' segment
+		$presentersIndex = array_search('Presenters', array_reverse($parts, true), true);
+		if ($presentersIndex === false || $presentersIndex <= $uiIndex) {
+			return null;
+		}
+
+		// Module: everything between 'UI' and the last 'Presenters', joined
+		$moduleParts = array_slice($parts, $uiIndex + 1, $presentersIndex - $uiIndex - 1);
 		if (empty($moduleParts)) {
 			return null;
 		}
@@ -175,9 +191,10 @@ class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 	 */
 	private function generateMigration(array $missingResources): string
 	{
+		[$namespace, $migrationsDir] = $this->getMigrationsTarget();
+
 		$timestamp = date('YmdHis');
 		$className = 'Version' . $timestamp;
-		$migrationsDir = $this->appDir . '/../migrations';
 
 		$sqlStatements = '';
 		foreach ($missingResources as $resource) {
@@ -190,7 +207,7 @@ class GenerateMissingAclResourcesCommand extends \ADT\FancyAdmin\Console\Command
 
 declare(strict_types=1);
 
-namespace App\Migrations;
+namespace $namespace;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
@@ -217,5 +234,25 @@ PHP;
 		file_put_contents($filePath, $content);
 
 		return $filePath;
+	}
+
+	/**
+	 * Kam migraci zapsat, se bere z konfigurace Doctrine Migrations - ta je zdrojem pravdy
+	 * o namespace i adresari, ne odhad podle `App\Migrations`. Pri vice adresarich vyhrava
+	 * prvni nakonfigurovany.
+	 *
+	 * @return array{string, string} namespace a adresar
+	 */
+	private function getMigrationsTarget(): array
+	{
+		$directories = $this->migrations?->getConfiguration()->getMigrationDirectories() ?? [];
+
+		if ($directories === []) {
+			throw new RuntimeException('Neni nakonfigurovane Doctrine Migrations (napr. nettrine/migrations s `directories`), takze neni kam migraci zapsat.');
+		}
+
+		$namespace = (string) array_key_first($directories);
+
+		return [$namespace, $directories[$namespace]];
 	}
 }

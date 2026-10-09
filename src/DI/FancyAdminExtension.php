@@ -28,6 +28,7 @@ use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\Forms\Controls\PasswordRevealInput;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
 use Contributte\Translation\DI\TranslationProviderInterface;
+use Doctrine\Migrations\DependencyFactory;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Config\Loader;
 use Nette\DI\Definitions\Statement;
@@ -205,6 +206,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$defs[] = $builder->addDefinition($this->prefix('generateMissingAclResources'))
 			->setFactory(GenerateMissingAclResourcesCommand::class, [
 				'appDir' => $builder->parameters['appDir'],
+				// zapoji se v beforeCompile(), az budou registrovane sluzby ostatnich rozsireni
+				'migrations' => null,
 			])
 			->setAutowired(false);
 
@@ -222,6 +225,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder = $this->getContainerBuilder();
 
 		$this->checkSignalCsrfRouter();
+
+		// Doctrine Migrations je volitelne - kdyz ho projekt ma, rekne prikazu, kam migraci zapsat.
+		if (
+			class_exists(DependencyFactory::class)
+			&& ($migrations = $builder->getByType(DependencyFactory::class)) !== null
+		) {
+			$builder->getDefinition($this->prefix('generateMissingAclResources'))
+				->setArgument('migrations', '@' . $migrations);
+		}
 
 		// Sanitizer si projekty registruji samy, protoze si upravuji citliva pole
 		// i chovani pri nalezu PANu. Auditni subscriber ho ale potrebuje vzdy,

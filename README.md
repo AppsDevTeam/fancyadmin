@@ -61,6 +61,11 @@ Knihovna dřív na několika místech počítala s konkrétními třídami proje
 - `CreatedByListenerTrait` a `JsComponents::setTranslateConfig()` berou rozhraní
   (`SecurityUser` z fancyadminu, resp. `TranslatorBagInterface` ze Symfony) — projekt nemusí
   dělat nic.
+- **`fancyadmin:generate-missing-acl-resources`** odvozuje modul od segmentu `UI` v namespace
+  presenteru (ne od pevného `App\UI\`) a namespace i adresář migrace bere z konfigurace
+  Doctrine Migrations (např. `nettrine.migrations: directories`). Bez ní příkaz skončí chybou
+  místo zápisu do odhadnutého `App\Migrations`.
+- Typové nápovědy `{varType}` v šablonách míří na rozhraní fancyadminu.
 
 ---
 

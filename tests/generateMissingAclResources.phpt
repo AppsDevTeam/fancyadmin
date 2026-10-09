@@ -67,13 +67,21 @@ test('trida bez segmentu Presenters se preskoci', function () {
 });
 
 
-test('POZOR: odvozeni pocita s prefixem App\\UI\\', function () {
-	// Modul se bere jako vse mezi druhym segmentem a "Presenters". U presenteru mimo
-	// App\UI\ proto vznikne nesmyslny nazev misto null - odpovida to dokumentaci metody,
-	// ale projekt s jinou strukturou to nepozna.
-	Assert::same('home.home', resolveResourceName('App\Presenters\Home\HomePresenter'));
+test('modul zacina za segmentem UI, ne za pevnym prefixem App', function () {
+	// Driv se modul bral od tretiho segmentu, takze projekt mimo `App\UI\` dostal spatne
+	// nazvy zdroju. Kotvou je adresarova konvence Nette `UI`, vendor prefix nehraje roli.
+	Assert::same(
+		'portalBackoffice.accounts',
+		resolveResourceName('Acme\Admin\UI\Portal\Backoffice\Presenters\Accounts\AccountsPresenter'),
+	);
+});
 
-	// Uplne kratky namespace uz na modul nezbyde.
+
+test('trida bez segmentu UI nebo bez modulu se preskoci', function () {
+	// Driv tu vznikal nesmyslny `home.home`.
+	Assert::null(resolveResourceName('App\Presenters\Home\HomePresenter'));
+
+	// Mezi UI a Presenters neni zadny modul.
 	Assert::null(resolveResourceName('App\UI\Presenters\Home\HomePresenter'));
 });
 
