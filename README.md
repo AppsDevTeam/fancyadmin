@@ -2621,4 +2621,4 @@ Vzhled přihlašovací stránky jde doladit CSS proměnnými bez přepisování 
 | Proměnná | Výchozí | Význam |
 |---|---|---|
 | `--loginLogoWidth` | `226px` | šířka loga nad formulářem (na mobilu max. 156px) |
-| `--loginLostPasswordAlign` | `start` | zarovnání odkazu na zapomenuté heslo pod heslem |
+| `--loginLostPasswordAlign` | `end` | zarovnání odkazu na zapomenuté heslo pod heslem |

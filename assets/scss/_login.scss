@@ -97,7 +97,7 @@ $login-lost-password-offset: 6px;
 
 	#lostPassword {
 		margin-top: calc(#{$login-lost-password-offset} - #{$login-inputs-gap});
-		text-align: var(--loginLostPasswordAlign, start);
+		text-align: var(--loginLostPasswordAlign, end);
 	}
 
 	.sign-in-buttons {
