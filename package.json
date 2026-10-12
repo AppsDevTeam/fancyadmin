@@ -36,7 +36,8 @@
     "nanoid": "3.3.18",
     "@grpc/grpc-js": "1.14.5",
     "brace-expansion@npm:^1.1.7": "1.1.21",
-    "brace-expansion@npm:^2.0.1": "2.1.7"
+    "brace-expansion@npm:^2.0.1": "2.1.7",
+    "source-map-js": "1.2.2"
   },
   "scripts": {
     "build": "vite build",
