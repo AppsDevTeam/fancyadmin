@@ -21,7 +21,7 @@ use ADT\FancyAdmin\Model\Entities\AuditLogTrait;
 use ADT\FancyAdmin\Model\Entities\Configuration;
 use ADT\FancyAdmin\Model\Entities\ConfigurationTrait;
 use ADT\FancyAdmin\Model\Entities\Enums\AclRoleTypeEnum;
-use ADT\FancyAdmin\Model\Entities\GridFilter;
+use ADT\FancyAdmin\Model\Entities\GridFilterTrait;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\IdentityPasskeysTrait;
 use ADT\FancyAdmin\Model\Entities\IdentityTrait;
@@ -331,7 +331,7 @@ final class TestRequestLog
 final class TestGridFilter
 {
 	use Identifier;
-	use GridFilter;
+	use GridFilterTrait;
 }
 
 /**

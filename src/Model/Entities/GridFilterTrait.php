@@ -9,10 +9,20 @@ use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\JoinColumn;
-use Doctrine\ORM\Mapping\UniqueConstraint;
 
-#[UniqueConstraint(fields: ["grid", "name"])]
-trait GridFilter
+/**
+ * Ulozeny filtr datagridu.
+ *
+ * Unikatnost nazvu si urci entita sama - atribut #[UniqueConstraint] na traitu Doctrine
+ * necte, bere jen atributy samotne tridy entity. Projekt s ucty ji chce v ramci uctu
+ * (grid, name, account), projekt bez nich globalne (grid, name).
+ *
+ * Ucet je nullable zamerne: v backoffice se identite vybrany ucet nuluje
+ * ({@see \ADT\FancyAdmin\UI\Presenters\AuthPresenterTrait::startup()}), takze filtr
+ * ulozeny nad backoffice gridem k zadnemu uctu nepatri a je spolecny pro vsechny
+ * backoffice uzivatele.
+ */
+trait GridFilterTrait
 {
 	use CreatedByNullable;
 	use CreatedAt;
