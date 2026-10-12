@@ -117,6 +117,7 @@ import './tableActionsShadow';
 // import 'forms-replicator';
 
 import './sideMenu'
+import './themeToggle'
 import './datagrid/datagrid'
 import './datagrid'
 import './datagridInfiniteScroll'

@@ -171,6 +171,18 @@ test('nepovinne barvy jdou doplnit', function () {
 });
 
 
+test('tmave barvy jsou nepovinne a jdou doplnit', function () {
+	$darkColors = process()->darkColors;
+
+	Assert::null($darkColors->primaryColor);
+	Assert::null($darkColors->textColor);
+
+	$darkColors = process(['colors' => REQUIRED_COLORS, 'darkColors' => ['primaryColor' => '#A8789A']])->darkColors;
+
+	Assert::same('#A8789A', $darkColors->primaryColor);
+});
+
+
 test('neznama polozka konfigurace se odmitne', function () {
 	// Preklep v neonu se ma poznat pri kompilaci, ne tim, ze nastaveni tise nefunguje.
 	Assert::exception(fn() => process(['neexistujiciVolba' => true]), ValidationException::class);

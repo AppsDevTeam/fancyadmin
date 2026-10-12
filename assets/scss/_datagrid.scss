@@ -99,9 +99,9 @@
 					position: absolute;
 					bottom: 0;
 					right: 0;
-					background: white;
+					background: $background;
 					padding-left: 0.5em;
-					color: black;
+					color: $black;
 				}
 			}
 
@@ -230,7 +230,7 @@
 				}
 
 				> :not(:first-child).datagrid-delete {
-					border-top: 1px solid black;
+					border-top: 1px solid $black;
 				}
 			}
 		}

@@ -33,7 +33,7 @@ $padding-input: 15px;
 $paddingTableRowY: 18px;
 $cardPadding: 30px;
 
-$input-color-focus: #F2F3F6;
+$input-color-focus: var(--fa-input-focus);
 
 @forward 'bootstrap/scss/bootstrap' with (
   $body-color: #333333 !default,
@@ -66,17 +66,20 @@ $secondary-darker: var(--secondaryColorDarker);
 $tertiary: var(--tertiaryColor);
 $tertiary-text: var(--tertiaryTextColor);
 
-$background: white;
-$background-dark: color.adjust($background, $lightness: -5%);
-$background-darker: color.adjust($background, $lightness: -10%);
+// Neutrální barvy jsou CSS proměnné (definice níže v :root), aby je tmavý
+// režim mohl přepsat - Sass hodnoty se zapečou při kompilaci.
+$background: var(--fa-surface);
+$background-dark: var(--fa-surface-hover);
+$background-darker: var(--fa-surface-active);
 
 $login-background: var(--loginBackground);
 
-$heading-color: #333333;
-$black: #333333;
-$text-primary: #333333;
-$xxx: #acacac;
-$color-light-gray: #E7E6E9;
+$heading-color: var(--fa-text);
+$black: var(--fa-text);
+$text-primary: var(--fa-text);
+$text-muted: var(--fa-text-muted);
+$xxx: var(--fa-text-faint);
+$color-light-gray: var(--fa-border);
 
 $success: rgb(40, 200, 133);
 $warning: rgb(249, 179, 0);
@@ -93,4 +96,55 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
 :root {
   --secondaryColorDark: white;
   --secondaryColorDarker: #e8e8e8;
+
+  // Neutrální paleta - plochy (karty, gridy, panely), text, rámečky
+  --fa-surface: #ffffff;
+  --fa-surface-hover: #f2f2f2;
+  --fa-surface-active: #e6e6e6;
+  --fa-text: #333333;
+  --fa-text-muted: #878787;
+  --fa-text-faint: #acacac;
+  --fa-border: #E7E6E9;
+  --fa-input-focus: #F2F3F6;
+  --fa-shadow-color: rgba(0, 0, 0, 0.15);
+  --fa-backdrop: rgba(0, 0, 0, 0.3);
+}
+
+// Tmavý režim - html[data-bs-theme=dark] nastavuje inline skript v @layout.latte.
+// Bootstrap 5.3 si podle atributu přebarví sám své komponenty, tady jsou plochy
+// fancyadminu a barvy, které projekt jinak posílá z configu (fancyadmin.colors) -
+// :root[...] má vyšší specificitu než inline :root z layoutu. Vlastní tmavé barvy
+// si projekt nastaví přes fancyadmin.darkColors.
+:root[data-bs-theme="dark"] {
+  color-scheme: dark;
+
+  --fa-surface: #1f1d22;
+  --fa-surface-hover: #29262d;
+  --fa-surface-active: #34303a;
+  --fa-text: #e6e3e8;
+  --fa-text-muted: #a39ca8;
+  --fa-text-faint: #7b7480;
+  --fa-border: #3a363f;
+  --fa-input-focus: #2b2830;
+  --fa-shadow-color: rgba(0, 0, 0, 0.5);
+  --fa-backdrop: rgba(0, 0, 0, 0.55);
+
+  --bs-body-bg: #17161a;
+  --bs-body-color: var(--fa-text);
+  --bs-heading-color: var(--fa-text);
+  --bs-border-color: var(--fa-border);
+
+  --backgroundColor: #17161a;
+  --secondaryColor: #26232a;
+  --secondaryColorDark: #2e2a33;
+  --secondaryColorDarker: #3a363f;
+  --inputBorder: 1px solid #3a363f;
+  --inputFocusBorder: 1px solid #4a4550;
+  --inputFocusBackground: #2e2a33;
+  --loginBackground: #1f1d22;
+  --loginBackgroundInput: #26232a;
+  --loginBackgroundInputFocus: #2e2a33;
+  --loginInputTextColor: var(--fa-text);
+  --loginPageBackground: #17161a;
+  --loginPageTextColor: var(--fa-text);
 }

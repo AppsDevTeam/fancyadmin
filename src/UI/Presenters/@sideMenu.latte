@@ -91,10 +91,17 @@
                 {/if}
             {/foreach}
 
-            <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}">
-                <i class="fa-solid fa-angles-left"></i>
-                <span class="side-panel-toggle-label">{_fcadmin.layout.sideMenu.collapse}</span>
-            </button>
+            <div class="side-panel-actions">
+                <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}">
+                    <i class="fa-solid fa-angles-left"></i>
+                    <span class="side-panel-toggle-label">{_fcadmin.layout.sideMenu.collapse}</span>
+                </button>
+                {* Rychlý přepínač barevného režimu (themeToggle.js), stejný jako v uživatelském menu *}
+                <button type="button" class="side-panel-theme-toggle" data-fancyadmin-theme-toggle role="switch" aria-checked="false" aria-label="{_fcadmin.layout.sideMenu.user.darkMode}" title="{_fcadmin.layout.sideMenu.user.darkMode}">
+                    <i class="fa-solid fa-moon side-panel-theme-icon-dark"></i>
+                    <i class="fa-solid fa-sun side-panel-theme-icon-light"></i>
+                </button>
+            </div>
         </div>
 
         <div class="side-panel-footer">

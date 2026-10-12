@@ -105,7 +105,7 @@ $select2MinWidth: 300px;
 			padding: 15px !important;
 			line-height: 15px !important;
 			font-size: 14px !important;
-			background-color: #fff !important;
+			background-color: $background !important;
 			text-wrap: nowrap;
 
 			&[data-select2-id$="settings"] {
@@ -220,7 +220,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
 }
 
 select[readonly].select2-hidden-accessible + .select2-container .select2-selection {
-	background: #eee;
+	background: $background-darker;
 	box-shadow: none;
 }
 
@@ -246,3 +246,37 @@ select[readonly].select2-hidden-accessible + .select2-container .select2-selecti
 	}
 }
 */
+
+// Tmavý režim - select2-bootstrap-5-theme se načítá jako hotové CSS se světlými
+// barvami zapečenými při kompilaci (#212529 text, #fff pozadí, #ced4da rámečky)
+:root[data-bs-theme="dark"] .select2-container--bootstrap-5 {
+	.select2-selection,
+	.select2-selection--single .select2-selection__rendered,
+	.select2-selection--multiple .select2-selection__rendered .select2-selection__choice,
+	.select2-dropdown .select2-results__options .select2-results__option[role=group] .select2-results__group {
+		color: var(--bs-body-color);
+	}
+
+	.select2-selection--single .select2-selection__rendered .select2-selection__placeholder,
+	.select2-selection--multiple .select2-selection__rendered .select2-selection__placeholder,
+	.select2-dropdown .select2-results__options .select2-results__option.select2-results__message {
+		color: var(--bs-secondary-color);
+	}
+
+	.select2-dropdown {
+		background-color: var(--fa-surface);
+		border-color: var(--fa-border);
+		color: var(--bs-body-color);
+
+		.select2-search .select2-search__field {
+			background-color: var(--fa-input-focus);
+			border-color: var(--fa-border);
+			color: var(--bs-body-color);
+		}
+
+		.select2-results__options .select2-results__option.select2-results__option--highlighted {
+			background-color: var(--fa-surface-hover);
+			color: var(--bs-body-color);
+		}
+	}
+}

@@ -927,7 +927,23 @@ fancyadmin:
 		inputBorder: '1px solid #c8c8c8'
 		inputFocusBorder: '0'
 		inputFocusBackground: '#f0f0f0'
+	# Nepovinné - jen barvy, které se v tmavém režimu mají lišit od výchozí palety
+	darkColors:
+		primaryColor: '#6fd3c3'
+		primaryColorDark: '#8adccf'
 ```
+
+### Tmavý režim
+
+Přepínač „Tmavý režim" je v uživatelském menu (`@userButton.latte`) a jako ikonka vedle tlačítka Sbalit v bočním menu (`@sideMenu.latte`), obsluha obou je `assets/js/themeToggle.js` (atribut `data-fancyadmin-theme-toggle`).
+Volba se ukládá do `localStorage` (`fancyadmin-theme`), bez ní se režim řídí systémem (`prefers-color-scheme`).
+Inline skript v hlavičce `@layout.latte` nastaví `<html data-bs-theme="dark|light">` ještě před načtením CSS,
+takže stránka světlou neproblikne. Projekt s CSP přes hashe (místo nonce) musí doplnit jeho hash do `script-src`.
+
+- Bootstrap 5.3 se podle `data-bs-theme` přebarví sám.
+- Plochy, text a rámečky fancyadminu jsou CSS proměnné `--fa-*` (`_variables.scss`), tmavé hodnoty jsou v bloku `:root[data-bs-theme="dark"]`.
+- Barvy z `fancyadmin.colors` mají v tmavém režimu výchozí neutrální paletu, vlastní hodnoty jdou nastavit přes `fancyadmin.darkColors` (stejné klíče, vše nepovinné).
+- Projektové styly navazují na `:root[data-bs-theme="dark"]` a JS může poslouchat událost `fancyadmin:theme-change` na `document`.
 
 ### common.neon — ORM mapping
 

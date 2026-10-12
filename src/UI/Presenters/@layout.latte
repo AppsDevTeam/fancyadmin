@@ -6,6 +6,20 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+	{* Barevný režim se musí nastavit dřív, než se načte CSS - jinak by stránka
+	   problikla světlou. Volba uživatele (light/dark) je v localStorage, bez ní
+	   se řídí systémem. Storage key sdílený s themeToggle.js/STORAGE_KEY. *}
+	<script n:nonce>
+		(function () {
+			var theme = null;
+			try { theme = localStorage.getItem('fancyadmin-theme'); } catch (e) {}
+			if (theme !== 'light' && theme !== 'dark') {
+				theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			}
+			document.documentElement.setAttribute('data-bs-theme', theme);
+		})();
+	</script>
+
 	<title n:snippet="title">{ifset title}{include title|stripHtml} | {/ifset}{$projectName}</title>
 
 	{if !empty($keycloakSettingsJson ?? '')}
@@ -59,6 +73,18 @@
 					{/if}
 				}
 			</style>
+			{* Přepisy pro tmavý režim (fancyadmin.darkColors). Specificita
+			   :root[data-bs-theme] přebije světlé :root výše i výchozí tmavou
+			   paletu z _variables.scss, která je načtená dřív. *}
+			<style n:if="!empty($darkColors ?? [])">
+				:root[data-bs-theme="dark"] {
+					{foreach $darkColors as $name => $value}
+						{foreach ['ternaryColor' => ['tertiaryColor'], 'ternaryTextColor' => ['tertiaryTextColor'], 'textColor' => ['bs-body-color', 'bs-heading-color']][$name] ?? [$name] as $cssVar}
+							--{$cssVar|noescape}: {$value|noescape};
+						{/foreach}
+					{/foreach}
+				}
+			</style>
 		{/if}
 	{/block}
 </head>
@@ -76,7 +102,7 @@
 {* Preload menu-collapsed z localStorage synchronně během HTML parse, aby se
    předešel FOUC - bez toho page vždy rendruje jako rozbalená a sideMenu.js
    ji sbalí až po DOM ready. Storage key sdílený s sideMenu.js/STORAGE_KEY. *}
-<script>
+<script n:nonce>
 	(function () {
 		try {
 			var s = JSON.parse(localStorage.getItem('fancyadmin-side-menu')) || {};

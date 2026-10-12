@@ -72,6 +72,23 @@
                     </div>
                 </a>
             {/foreach}
+            {* Přepínač barevného režimu (themeToggle.js) - klik dropdown nezavírá,
+               aby uživatel změnu hned viděl a mohl ji vrátit. *}
+            <li>
+                <button type="button" class="dropdown-item theme-toggle" data-fancyadmin-theme-toggle role="switch" aria-checked="false">
+                    <div>
+                        <div>
+                            <i class="fa-solid fa-moon"></i>
+                        </div>
+                        <div>
+                            {_fcadmin.layout.sideMenu.user.darkMode}
+                        </div>
+                    </div>
+                    <span class="form-check form-switch theme-toggle-switch">
+                        <input class="form-check-input" type="checkbox" tabindex="-1" aria-hidden="true">
+                    </span>
+                </button>
+            </li>
             <li><hr class="dropdown-divider"></li>
             <li class="logout-item">
                 <a class="dropdown-item" n:href=":Portal:Sign:out">

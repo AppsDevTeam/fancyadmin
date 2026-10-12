@@ -90,12 +90,15 @@ test('kazdy inline skript v sablonach balicku ma n:nonce', function () {
 
 
 test('sablony, ktere inline skript potrebuji, ho maji s n:nonce', function () {
-	// Pojistka, ze test vyse opravdu neco kontroluje - tyhle tri sablony inline skript maji.
-	foreach (['UI/Presenters/@layout.latte', 'UI/Presenters/Keycloak/out.latte', 'UI/Presenters/Keycloak/silentCheckSso.latte'] as $template) {
+	// Pojistka, ze test vyse opravdu neco kontroluje - tyhle sablony inline skripty maji.
+	// Layout: barevny rezim, Keycloak nastaveni a preload sbaleneho menu.
+	foreach (['UI/Presenters/@layout.latte' => 3, 'UI/Presenters/Keycloak/out.latte' => 1, 'UI/Presenters/Keycloak/silentCheckSso.latte' => 1] as $template => $count) {
 		$tags = inlineScriptTags((string) file_get_contents(SRC_DIR . '/' . $template));
 
-		Assert::count(1, $tags, $template);
-		Assert::contains('n:nonce', $tags[0], $template);
+		Assert::count($count, $tags, $template);
+		foreach ($tags as $tag) {
+			Assert::contains('n:nonce', $tag, $template);
+		}
 	}
 });
 

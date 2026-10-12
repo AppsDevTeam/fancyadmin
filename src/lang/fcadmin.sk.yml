@@ -12,6 +12,7 @@ layout:
     collapse: Zbaliť
     user:
       logout: Odhlásiť sa
+      darkMode: Tmavý režim
   profileMenu:
     profile:
       edit: Upraviť údaje

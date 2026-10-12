@@ -91,7 +91,7 @@ a {
 
 	.header-subtitle {
 		font-size: 18px;
-		color: #8A8A8A;
+		color: $text-muted;
 		font-weight: normal;
 	}
 }
@@ -99,7 +99,7 @@ a {
 .form-label {
 	font-size: 14px;
 	line-height: 18px;
-	color: var(--labelColor, #878787);
+	color: var(--labelColor, #{$text-muted});
 	margin-bottom: 6px;
 	padding-left: $padding-input + 1px;
 }
@@ -572,7 +572,7 @@ $bottomSubMenuHeight: 45px;
 
 	border-radius: 20px;
 	border: 1px solid $color-light-gray;
-	background: #FFF;
+	background: $background;
 
 	@include media-breakpoint-down(sm) {
 		padding: 20px;
@@ -635,7 +635,7 @@ $bottomSubMenuHeight: 45px;
 	gap: 10px;
 
 	border-radius: 100%;
-	background: white;
+	background: $background;
 	opacity: 1;
 
 	&:hover {
@@ -643,14 +643,14 @@ $bottomSubMenuHeight: 45px;
 	}
 
 	i {
-		color: rgb(var(--bs-dark-rgb));
+		color: $black;
 	}
 
 	&:hover, &.show, &:active {
-		background-color: white !important;
+		background-color: $background !important;
 
 		i {
-			color: rgb(var(--bs-dark-rgb)) !important;
+			color: $black !important;
 		}
 	}
 
@@ -844,12 +844,12 @@ $bottomSubMenuHeight: 45px;
 }
 
 #chart-tooltip {
-	background: #fff;
-	border: 1px solid #ccc;
+	background: $background;
+	border: 1px solid $color-light-gray;
 	border-radius: 5px;
 	padding: 10px;
 	font-size: 13px;
-	color: #333;
+	color: $black;
 	box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 	z-index: 1000;
 }
@@ -895,7 +895,7 @@ $bottomSubMenuHeight: 45px;
 
 	.smart-card-dashboard-grey {
 		.dashboard-card {
-			border-color: #e7e6e9 !important;
+			border-color: $color-light-gray !important;
 		}
 	}
 }
@@ -1173,7 +1173,7 @@ label.required {
 body:fullscreen {
 	#snippet--container {
 		z-index: 999;
-		background-color: white;
+		background-color: $background;
 		position: fixed !important;
 		top: 0 !important;
 		width: calc(100% - 50px) !important;
@@ -1583,7 +1583,7 @@ iframe {
 .primary-select,
 [data-adt-dashboard-filter] {
 	--inputBackground: var(--secondaryColorDarker);
-	--inputFocusBackground: white;
+	--inputFocusBackground: #{$background};
 	--inputBorder: 1px solid var(--secondaryColorDarker);
 	--inputFocusBorder: 1px solid var(--secondaryColorDarker);
 }
@@ -1629,7 +1629,7 @@ iframe {
 			border: solid 1px $secondary-darker;
 
 			&:hover {
-				background-color: white;
+				background-color: $background;
 				border-color: $secondary-darker;
 			}
 		}
@@ -1737,7 +1737,7 @@ select.is-invalid + .select2 {
 #canvas_cont #canvas {
 	background-image: linear-gradient(to right, $color-light-gray 1px, transparent 1px), linear-gradient(to bottom, $color-light-gray 1px, transparent 1px);
 	background-size: 100px 100px;
-	background-color: white;
+	background-color: $background;
 	border: 1px solid $color-light-gray;
 	border-radius: 10px;
 }
@@ -1797,7 +1797,7 @@ select.is-invalid + .select2 {
 }
 
 .replicator-item.bg-body-secondary .replicator-item {
-	background-color: #ffffff !important;
+	background-color: $background !important;
 	margin-bottom: 12px !important;
 	border: var(--inputBorder);
 }
@@ -1814,4 +1814,26 @@ select.is-invalid + .select2 {
 	bottom: 15px;
 	left: 15px;
 	height: 44px;
+}
+
+// Přepínač tmavého režimu v uživatelském menu (@userButton.latte) - <button>
+// místo odkazu, vzhledem stejný jako ostatní položky, switch vpravo
+.user-dropdown .theme-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	border: 0;
+	text-align: start;
+	font: inherit;
+
+	.theme-toggle-switch {
+		min-height: 0;
+		margin: 0;
+		pointer-events: none;
+
+		.form-check-input {
+			margin-top: 0;
+		}
+	}
 }

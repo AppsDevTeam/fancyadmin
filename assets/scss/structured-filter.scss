@@ -1,6 +1,6 @@
 @use 'variables' as *;
 
-$color_1: #555;
+$color_1: $black;
 $borderRadius: 4px;
 
 .structFilter {
@@ -10,7 +10,7 @@ $borderRadius: 4px;
 	align-items: center;
 	margin-bottom: 10px;
 
-	background-color: white;
+	background-color: $background;
 	border-radius: $borderRadius;
 	border: 1px solid $secondary-darker;
 
@@ -27,8 +27,8 @@ $borderRadius: 4px;
 				height: 25px;
 
 				> span {
-					background-color: #ececef;
-					color: #737278;
+					background-color: $background-darker;
+					color: $text-muted;
 					border-radius: 2px;
 					margin-right: 1px;
 					padding: 0 6px;
@@ -107,7 +107,7 @@ $borderRadius: 4px;
 		label {
 			width: 220px;
 			margin-right: 0;
-			background-color: #fff;
+			background-color: $background;
 			z-index: 1;
 			border-left: 1px solid $secondary-darker;
 			border-right: 1px solid $secondary-darker;
@@ -149,11 +149,11 @@ $borderRadius: 4px;
 	> select {
 		padding: 0 9px;
 		font-size: 14px;
-		color: #555;
+		color: $black;
 		border-top: 1px solid $secondary-darker;
 		border-bottom: 1px solid $secondary-darker;
 		height: $inputHeight;
-		background-color: #fff;
+		background-color: $background;
 
 		&:focus-visible {
 			outline: none;
@@ -164,7 +164,7 @@ $borderRadius: 4px;
 		display: inline-flex;
 		align-items: center;
 		height: $inputHeight;
-		background-color: white;
+		background-color: $background;
 		border-top: 1px solid $secondary-darker;
 		border-bottom: 1px solid $secondary-darker;
 
@@ -201,6 +201,6 @@ $borderRadius: 4px;
 		border-top: 1px solid $secondary-darker;
 		border-bottom: 1px solid $secondary-darker;
 		height: $inputHeight;
-		background-color: white;
+		background-color: $background;
 	}
 }

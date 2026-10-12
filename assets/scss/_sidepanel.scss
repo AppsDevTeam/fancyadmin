@@ -31,6 +31,15 @@ body.menu-wide {
 	--menu-wide-danger: #{$error};
 }
 
+// Tmavý režim - světlé odstíny palety výše by na tmavé ploše svítily
+:root[data-bs-theme="dark"] body.menu-wide {
+	--menu-wide-muted: var(--fa-text-muted);
+	--menu-wide-hover-bg: var(--fa-surface-hover);
+	--menu-wide-popover-border: var(--fa-border);
+	--menu-wide-popover-shadow: 0 8px 28px var(--fa-shadow-color);
+	--menu-wide-avatar-bg: var(--fa-surface-active);
+}
+
 body.menu-wide.menu-collapsed {
 	--side-panel-width: 84px;
 }
@@ -91,11 +100,10 @@ body.menu-wide .side-panel-wide {
 		}
 	}
 
-	// Toggle uvnitř .menu-body jako poslední položka: 16px margin-top zajistí
-	// viditelnou mezeru od poslední menu položky (bez auto by v dlouhém scrollovaném
-	// menu toggle sedělo těsně za posledním item). align-self: flex-start aby
-	// nezabíral celou šířku.
-	.side-panel-toggle {
+	// Tlačítka v .side-panel-actions (poslední řada .menu-body): Sbalit a ikonkový
+	// přepínač barevného režimu mají stejný vzhled.
+	.side-panel-toggle,
+	.side-panel-theme-toggle {
 		display: inline-flex;
 		align-self: flex-start;
 		align-items: center;
@@ -109,7 +117,6 @@ body.menu-wide .side-panel-wide {
 		cursor: pointer;
 		line-height: 1;
 		font-size: 0.8rem;
-		margin: 16px 10px;
 
 		&:hover {
 			background: var(--menu-wide-hover-bg);
@@ -123,6 +130,36 @@ body.menu-wide .side-panel-wide {
 
 		.side-panel-toggle-label {
 			font-weight: 500;
+		}
+	}
+
+	// Řada pod položkami menu: Sbalit + přepínač barevného režimu. 16px margin-top
+	// drží mezeru od poslední položky (bez auto by v dlouhém scrollovaném menu řada
+	// seděla těsně za ní), align-self: flex-start aby nezabírala celou šířku.
+	.side-panel-actions {
+		align-self: flex-start;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 16px 10px;
+	}
+
+	// Vzhledem stejný jako Sbalit, jen ikonka. V tmavém režimu ukazuje slunce
+	// (kam klik přepne), ve světlém měsíc.
+	.side-panel-theme-toggle {
+		.side-panel-theme-icon-light {
+			display: none;
+		}
+
+		// Zanořené kvůli specificitě - pravidlo výše má prefix body.menu-wide .side-panel-wide
+		:root[data-bs-theme="dark"] & {
+			.side-panel-theme-icon-dark {
+				display: none;
+			}
+
+			.side-panel-theme-icon-light {
+				display: inline;
+			}
 		}
 	}
 
@@ -360,12 +397,22 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu 
 	}
 }
 
+// Ve sbaleném módu pod sebou a dole v menu
+body.menu-wide.menu-collapsed .side-panel-wide .side-panel-actions {
+	flex-direction: column;
+	align-self: center;
+	margin: auto 0 12px;
+}
+
+body.menu-wide.menu-collapsed .side-panel-wide .side-panel-theme-toggle {
+	padding: 6px 8px;
+}
+
 // Ve sbaleném módu toggle jen ikonka bez textu Sbalit, centrovaná v šířce menu
 body.menu-wide.menu-collapsed .side-panel-wide .side-panel-toggle {
 	align-self: center;
 	justify-content: center;
 	padding: 6px 8px;
-	margin: auto 0 12px;
 
 	.side-panel-toggle-label {
 		display: none;

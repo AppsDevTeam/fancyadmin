@@ -30,6 +30,7 @@ class FancyAdmin
 		protected ?string $context,
 		protected array $jsComponentsConfig = [],
 		protected array $colors = [],
+		protected array $darkColors = [],
 		protected bool $keycloakEnabled = false,
 		protected bool $passkeyEnabled = false,
 		protected bool $passkeyEmailOtpEnabled = true,
@@ -171,6 +172,11 @@ class FancyAdmin
 	public function getColors(): array
 	{
 		return $this->colors;
+	}
+
+	public function getDarkColors(): array
+	{
+		return $this->darkColors;
 	}
 
 	protected ?KeycloakManager $keycloakManager = null;

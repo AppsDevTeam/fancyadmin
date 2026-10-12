@@ -113,6 +113,16 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'loginPageBackground' => Expect::string()->nullable()->default(null),
 				'loginPageTextColor' => Expect::string()->nullable()->default(null),
 			]),
+			// Barvy pro tmavý režim (html[data-bs-theme=dark]) - stejné klíče jako colors.
+			// Vše nepovinné: bez hodnoty platí výchozí tmavá paleta z _variables.scss,
+			// případně barva ze světlého režimu (typicky primaryColor).
+			'darkColors' => Expect::structure(array_fill_keys([
+				'backgroundColor', 'dashboardAccentColor', 'primaryColor', 'primaryColorDark', 'primaryColorDark20',
+				'secondaryColor', 'secondaryColorDark', 'secondaryColorDarker', 'ternaryColor', 'ternaryTextColor',
+				'loginBackground', 'loginInputTextColor', 'loginBackgroundInput', 'loginBackgroundInputFocus',
+				'inputBorder', 'inputFocusBorder', 'inputFocusBackground',
+				'sidePanelItemColor', 'textColor', 'loginPageBackground', 'loginPageTextColor',
+			], Expect::string()->nullable()->default(null))),
 		]);
 	}
 
@@ -152,6 +162,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
+				'darkColors' => array_filter((array) $this->config->darkColors, fn(?string $color) => $color !== null),
 				'keycloakEnabled' => $this->config->keycloakEnabled,
 				'passkeyEnabled' => $this->config->passkeyEnabled,
 				'passkeyEmailOtpEnabled' => $this->config->passkeyEmailOtpEnabled,

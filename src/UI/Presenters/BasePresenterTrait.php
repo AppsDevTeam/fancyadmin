@@ -41,6 +41,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->project = $this->_fancyAdmin->getProject();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
+		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
