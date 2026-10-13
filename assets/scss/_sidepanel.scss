@@ -241,11 +241,11 @@ body.menu-wide .side-panel-wide {
 			text-align: left;
 		}
 
-		// Zavřené podmenu = šipka doleva (chevron-down otočený o 90°), otevřené = dolů
+		// Zavřené podmenu = šipka doprava (chevron-down otočený o -90°), otevřené = dolů
 		.submenu-chevron {
 			font-size: 0.6rem;
 			color: var(--menu-wide-muted);
-			transform: rotate(90deg);
+			transform: rotate(-90deg);
 		}
 
 		&:hover {
@@ -377,17 +377,26 @@ body.menu-wide .side-panel-wide {
 // stavu .collapsed persistovaného z předchozí session v localStorage
 body.menu-wide:not(.menu-collapsed) .side-panel-wide .group.toggleable.collapsed {
 	.group-heading-chevron {
-		transform: rotate(90deg);
+		transform: rotate(-90deg);
 	}
 }
 
 // Rozbalování skupin a podmenu v rozbaleném menu - výška se animuje přes řádek gridu
-// 0fr/1fr (bez vnitřního wrapperu, height: auto animovat nejde). Zavřený obsah má
-// visibility: hidden, aby se na odkazy nedalo dostat tabulátorem.
+// 0fr/1fr (bez vnitřního wrapperu, height: auto animovat nejde). Řádek hlavičky je
+// min-content, ne auto: během přechodu je součet fr menší než 1 a grid by zbylé místo
+// natáhl do auto řádku - hlavička by narostla a podpoložky by poskočily dolů a zpět.
+// Zavřený obsah má visibility: hidden, aby se na odkazy nedalo dostat tabulátorem.
 body.menu-wide:not(.menu-collapsed) .side-panel-wide {
+	// Explicitní sloupec - implicitní auto se podle obsahu nemusí natáhnout na celou
+	// šířku a šipka u kratšího podmenu by pak seděla víc vlevo než u ostatních
+	.group.toggleable,
+	.item.has-submenu {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
 	.group.toggleable {
 		display: grid;
-		grid-template-rows: auto 1fr;
+		grid-template-rows: min-content 1fr;
 
 		.group-items {
 			min-height: 0;
@@ -395,7 +404,7 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide {
 		}
 
 		&.collapsed {
-			grid-template-rows: auto 0fr;
+			grid-template-rows: min-content 0fr;
 
 			.group-items {
 				visibility: hidden;
@@ -405,7 +414,7 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide {
 
 	.item.has-submenu {
 		display: grid;
-		grid-template-rows: auto 0fr;
+		grid-template-rows: min-content 0fr;
 
 		// Svislé marginy by grid započítal i do zavřeného řádku (mezera pod položkou)
 		.submenu {
@@ -418,7 +427,7 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide {
 		}
 
 		&.open {
-			grid-template-rows: auto 1fr;
+			grid-template-rows: min-content 1fr;
 
 			.submenu {
 				visibility: visible;
