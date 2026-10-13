@@ -159,8 +159,9 @@ $sidePanelTemplateAnimation: .4s;
   z-index: 9010;
 }
 
-body:has(.side-panel-template-container:not(.side-panel-template-container--stacked) form) .side-panel-template-backdrop:not(.side-panel-template-backdrop--stacked),
-body:has(.side-panel-template-container--stacked :is(form, .side-panel-loading)) .side-panel-template-backdrop--stacked {
+// Třídy --open a --covered nastavuje sidePanel.js podle obsahu panelů - přes :has()
+// by se změna v Chrome projevila naráz bez přechodu
+.side-panel-template-backdrop--open {
   pointer-events: all;
   background-color: var(--fa-backdrop);
 }
@@ -169,7 +170,11 @@ body:has(.side-panel-template-container--stacked :is(form, .side-panel-loading))
   position: fixed;
   width: 100vw;
   max-width: var(--width, 610px);
-  right: calc(var(--width, 610px) * -1);
+  // Zavřený panel je mimo obrazovku posunutý o celou svou šířku. Přes right o -610px
+  // by širší panel (lg, extreme) po otevření naráz vyčníval a vysunutí nebylo vidět.
+  // right drží jen odsazení spodního panelu pod vrstveným (viz níže).
+  right: 0;
+  transform: translateX(100%);
   top: 0;
   bottom: 0;
   padding: 40px;
@@ -179,10 +184,10 @@ body:has(.side-panel-template-container--stacked :is(form, .side-panel-loading))
   z-index: 9020;
   box-shadow: 0 0 0 0 black;
 
-  transition: right .4s ease;
+  transition: transform $sidePanelTemplateAnimation ease, right $sidePanelTemplateAnimation ease, max-width $sidePanelTemplateAnimation ease;
 
-  &:has(form, .side-panel-loading) {
-    right: 0;
+  &.side-panel-template-container--open {
+    transform: translateX(0);
     box-shadow: 0 0 45px -10px black;
   }
 
@@ -246,10 +251,8 @@ $sidePanelStackedOffset: 48px;
   z-index: 9024;
 }
 
-.side-panel-template-container:not(.side-panel-template-container--stacked):has(form) {
-  body:has(.side-panel-template-container--stacked :is(form, .side-panel-loading)) & {
-    right: $sidePanelStackedOffset;
-  }
+.side-panel-template-container--covered {
+  right: $sidePanelStackedOffset;
 }
 
 span.empty {
