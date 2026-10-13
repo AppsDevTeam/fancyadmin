@@ -2,7 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Entities\Traits;
 
-use App\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Entities\Identity;
 
 interface CreatedByInterface
 {

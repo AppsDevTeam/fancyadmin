@@ -17,6 +17,7 @@ use stdClass;
 trait BasePresenterTrait
 {
 	use PresenterTrait;
+	use SignalCsrfProtection;
 	use FancyAdminInject;
 	use EntityManagerInject;
 	use TranslatorInject;
@@ -107,7 +108,7 @@ trait BasePresenterTrait
 						'realm' => $keycloak->getRealm(),
 						'clientId' => $keycloak->getFrontendClientId(),
 						'url' => $keycloak->getHostUrl(),
-						'silentCheckSsoUrl' => $this->getPresenter()->link('//:Portal:KeycloakAuth:silentCheckSso'),
+						'silentCheckSsoUrl' => $keycloak->getSilentCheckSsoUri(),
 						'logoutUrl' => $this->getPresenter()->link('//:Portal:Sign:out'),
 					]);
 				}

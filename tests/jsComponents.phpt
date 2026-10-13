@@ -5,6 +5,9 @@ declare(strict_types=1);
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use Nette\Utils\Json;
 use Nette\Utils\Random;
+use Symfony\Component\Translation\MessageCatalogue;
+use Symfony\Component\Translation\MessageCatalogueInterface;
+use Symfony\Component\Translation\TranslatorBagInterface;
 use Tester\Assert;
 
 /**
@@ -89,11 +92,28 @@ test('vlastni komponenty se prilinaji k existujicim', function () {
 });
 
 
-test('POZOR: setTranslateConfig je navazany na tridu projektu', function () {
-	// Parametr je typovany na App\Model\Translator, coz je trida projektu, ne balicku.
-	// V balicku ta trida neexistuje, takze metodu nejde zavolat bez projektu.
-	$parameter = new ReflectionMethod(JsComponents::class, 'setTranslateConfig')->getParameters()[0];
+test('preklady pro JavaScript bere z libovolneho translatoru s katalogy', function () {
+	// Driv byl parametr typovany na App\Model\Translator - tridu projektu, ktera v balicku
+	// neexistuje, takze metodu nesel zavolat bez projektu. Staci rozhrani se `getCatalogue()`.
+	$catalogue = new MessageCatalogue('cs', ['appJs' => ['save' => 'Ulozit'], 'app' => ['other' => 'Jine']]);
+	$translator = new class ($catalogue) implements TranslatorBagInterface {
+		public function __construct(private readonly MessageCatalogue $catalogue)
+		{
+		}
 
-	Assert::same('App\Model\Translator', (string) $parameter->getType());
-	Assert::false(class_exists('App\Model\Translator'));
+		public function getCatalogue(?string $locale = null): MessageCatalogueInterface
+		{
+			return $this->catalogue;
+		}
+
+		public function getCatalogues(): array
+		{
+			return [$this->catalogue];
+		}
+	};
+
+	$components = new JsComponents();
+	$components->setTranslateConfig($translator);
+
+	Assert::same(['save' => 'Ulozit'], config($components)['translate']['all']);
 });

@@ -233,26 +233,27 @@ Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle 
 
 ## 11. Dvoufázové ověření WebAuthn klíčem
 
-Volitelný druhý faktor pro SSO uživatele, řešený čistě konfigurací Keycloak flow. Kdo si klíč nezaregistruje, přihlašuje se dál jen heslem — o volitelnost se stará conditional subflow v KC, ne aplikace. Aplikace do 2FA nijak nezasahuje; registraci i odebírání klíčů řeší administrátor v administraci Keycloaku.
+Povinný druhý faktor pro SSO uživatele, řešený čistě konfigurací Keycloak flow. Každý uživatel, který jde přes tento flow, se musí po zadání hesla ověřit WebAuthn klíčem. Kdo klíč ještě nemá, musí si ho zaregistrovat hned při přihlášení, jinak se dál nedostane. Aplikace do 2FA nijak nezasahuje, odebírání klíčů řeší administrátor v administraci Keycloaku.
 
 ### Konfigurace realmu
 
 | Kde | Nastavení |
 |---|---|
 | Authentication → Policies → **WebAuthn Policy** | `Relying Party ID` = doména KC serveru (bez schématu a portu), `Require Resident Key` = `No`, `User Verification` = `preferred`, `Signature Algorithms` = `ES256` (+`RS256`) |
-| Authentication → Flows | kopie `browser` flow, do subflow `browser forms` za `Username Password Form` přidat **conditional subflow** s `Condition - user configured` + `WebAuthn Authenticator` (Required) |
+| Authentication → Flows | kopie `browser` flow, v subflow `browser forms` za `Username Password Form` subflow pro 2FA s requirementem **Required** a v něm `WebAuthn Authenticator` (**Required**). `Condition - user configured` do něj nepatří: Keycloak podmínky vyhodnocuje jen v subflow typu *Conditional*, v *Required* je ignoruje. `OTP Form` a `Recovery Authentication Code Form` nechat **Disabled**. Pozor: subflow typu *Conditional* by z 2FA udělal volitelný faktor jen pro uživatele, kteří už klíč mají |
 | Clients → confidential client → Advanced | `Authentication flow overrides → Browser Flow` = nový flow (omezí 2FA jen na tuto aplikaci) |
-| Authentication → Required Actions | `Webauthn Register`: `Enabled` = On, `Set as default action` = **Off** (jinak si klíč musí zaregistrovat každý nový uživatel a 2FA přestane být volitelná) |
+| Authentication → Required Actions | `Webauthn Register`: `Enabled` = **On**. Přes ni Keycloak vynutí registraci klíče uživateli, který ho ještě nemá. Když je vypnutá, přihlášení takového uživatele skončí chybou. `Set as default action` může zůstat Off, registraci vynutí už samotný Required krok ve flow |
+| Authentication → Required Actions | `Delete Credential`: `Enabled` = **Off**. Jinak si uživatel může klíč smazat sám v Account Console (`/realms/{realm}/account` → Signing in, Keycloak to loguje jako `REMOVE_CREDENTIAL` s klientem `account-console`). Účet by pak do dalšího přihlášení chránilo jen heslo a kdokoli s heslem by si zaregistroval vlastní klíč |
 
 Provozní poznámky:
 
 - **`Relying Party ID` nelze později změnit** bez zneplatnění všech registrovaných klíčů. KC musí běžet na HTTPS (nebo `localhost`) — WebAuthn v nezabezpečeném kontextu nefunguje.
-- **Ztráta klíče = zablokovaný účet.** Doporučuje se povolit `Recovery Authentication Codes`, nebo dát `OTP Form` do conditional subflow jako *Alternative*. Bez záložního faktoru musí klíč odebrat administrátor v administraci Keycloaku.
+- **Ztráta klíče.** Bez klíče se uživatel nepřihlásí. Administrátor mu klíč odebere (detail uživatele → **Credentials**) a uživatel si při dalším přihlášení heslem zaregistruje nový. Do té doby chrání účet jen heslo, proto má odebrání klíče předcházet ověření identity uživatele.
 - Silent SSO (`prompt=none`) i backchannel logout fungují bez změny — druhý faktor se řeší jen při vytváření KC session.
 - CSP aplikace se nemění: WebAuthn ceremonie běží na doméně KC, ne na doméně aplikace.
 
 ### Správa klíčů
 
-Registraci klíče spustí administrátor tak, že uživateli v administraci Keycloaku (detail uživatele → **Required user actions**) přiřadí akci `Webauthn Register`, uživatel si pak klíč zaregistruje při příštím přihlášení. Odebrání klíče provede administrátor tamtéž (detail uživatele → **Credentials**). Chce-li uživatel 2FA zapnout, vypnout nebo vyměnit klíč, obrací se na administrátora.
+První klíč si uživatel zaregistruje sám při prvním přihlášení po zapnutí flow, administrátor nic přiřazovat nemusí. Další klíč (např. záložní) si může přidat, když mu administrátor v detailu uživatele → **Required user actions** přiřadí akci `Webauthn Register`. Odebrání klíče provádí jen administrátor (detail uživatele → **Credentials**). Chce-li uživatel klíč vyměnit, obrací se na administrátora. 2FA vypnout nejde.
 
 Aplikace v tom nehraje žádnou roli: projekt nepotřebuje žádnou migraci, entitu ani další glue třídy a v databázi aplikace se o klíčích neukládá nic.

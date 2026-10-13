@@ -40,6 +40,33 @@ Doplňkově doporučeno:
 composer require adt/doctrine-components:^3.2 adt/query-object-data-source:^3.0
 ```
 
+### Přechod na verzi, která neodkazuje na třídy projektu
+
+Knihovna dřív na několika místech počítala s konkrétními třídami projektu pod `App\…`
+(`App\Model\Entities\Identity`, `…\Account`, `App\Model\Security\SecurityUser`,
+`App\Model\Translator`). Teď pracuje jen se svými rozhraními. Co to znamená pro projekt:
+
+- **`CreatedBy` a `CreatedByInterface`** jsou typované na `ADT\FancyAdmin\Model\Entities\Identity`
+  a cíl relace je krátký název `'Identity'` — stejně jako u `UpdatedBy` a `CreatedByNullable`.
+  Pokud si projekt v potomkovi `CreatedByInterface` zužuje `setCreatedBy()`/`getCreatedBy()`
+  na svou Identity, musí to smazat: PHP zúžený parametr odmítne už při načtení třídy.
+  Entita s `CreatedBy` musí ležet ve stejném namespace jako Identity (jako u `UpdatedBy`).
+  Schéma databáze se nemění.
+- **`AccountFormTrait` už nemá `getEntityClass()`** — knihovna zná jen rozhraní `Account`
+  a to se instancovat nedá. Formulář v projektu si ho doplní:
+  `protected function getEntityClass(): ?string { return Account::class; }`
+- **Menu (`NavbarMenuFactory`, `UserMenuFactory`)** se hledají vedle presenterů modulu podle
+  namespace třídy presenteru, ne pod natvrdo zadaným `App\UI\Portal`. Pro obvyklé
+  rozložení se nic nemění.
+- `CreatedByListenerTrait` a `JsComponents::setTranslateConfig()` berou rozhraní
+  (`SecurityUser` z fancyadminu, resp. `TranslatorBagInterface` ze Symfony) — projekt nemusí
+  dělat nic.
+- **`fancyadmin:generate-missing-acl-resources`** odvozuje modul od segmentu `UI` v namespace
+  presenteru (ne od pevného `App\UI\`) a namespace i adresář migrace bere z konfigurace
+  Doctrine Migrations (např. `nettrine.migrations: directories`). Bez ní příkaz skončí chybou
+  místo zápisu do odhadnutého `App\Migrations`.
+- Typové nápovědy `{varType}` v šablonách míří na rozhraní fancyadminu.
+
 ---
 
 ## 2. BaseEntity
@@ -662,13 +689,16 @@ declare(strict_types=1);
 namespace App\Core;
 
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\Routing\RouteList;
 
 class RouterFactory
 {
-	public static function create(FancyAdminRouter $fancyAdminRouter): RouteList
+	public static function create(FancyAdminRouter $fancyAdminRouter): SignalCsrfRouteList
 	{
-		$router = new RouteList();
+		// Koren musi byt SignalCsrfRouteList, aby CSRF token signalu neskoncil v kazde
+		// vygenerovane adrese (viz sekce 14, CSRF ochrana signalu).
+		$router = new SignalCsrfRouteList();
 
 		// Fancyadmin routes (Sign:in, Sign:out, portal routes)
 		$router[] = $fancyAdminRouter->getRouteList();
@@ -855,6 +885,27 @@ class DownloadPresenter extends BasePresenter
 
 Cíl v cookie **není svázaný s identitou** (na rozdíl od session backlinku), takže se na
 něm nesmí stavět autorizace — cílová akce si musí právo přihlášeného uživatele ověřit sama.
+
+### CSRF ochrana signálů
+
+Stavové akce administrace se spouštějí signály (`?do=...`). SameSite cookie ani hlavička
+`Sec-Fetch-Site` nejsou plná náhrada tokenu (nález WEB-06), takže `BasePresenterTrait`
+přináší `SignalCsrfProtection`: přihlášený uživatel dostane token vázaný na relaci a signál
+bez něj skončí na 403. **Projekt nic nezapojuje a nekonfiguruje.**
+
+Co je kolem toho potřeba vědět:
+
+- **Token je jen v adresách signálů.** Stará se o to `SignalCsrfRouteList` — kořenový router
+  projektu z něj musí dědit (viz sekce 13). Že na to projekt nezapomněl, hlídá
+  `FancyAdminExtension` při kompilaci kontejneru. V ostatních adresách by token nic nechránil
+  a jen by se vlekl adresním řádkem, historií prohlížeče, hlavičkou `Referer` a logy serveru.
+- **Formuláře ho dostanou skrytým polem**, které do nich doplní `assets/js/signalCsrf.js`
+  (je v `app.js`). Týž skript uklízí token i signál z adresního řádku po ajaxu.
+- **Formulář s vlastním `addProtection()` je z kontroly vyjmutý** a na JavaScriptu tedy
+  nezávisí. `BaseFormTrait` ho přidává sám (`$csrfProtection = true`), ale až po `initForm()`
+  a jen formuláři, který se odesílá POSTem a patří přihlášenému uživateli — proč zrovna tak
+  je popsané u `BaseFormTrait::registerCsrfProtection()`. Formuláře odesílané GETem (filtry)
+  a hromadné akce gridů vlastní token nemají, ty na skriptu závisí vždy.
 
 ---
 
@@ -2586,4 +2637,4 @@ Vzhled přihlašovací stránky jde doladit CSS proměnnými bez přepisování 
 | Proměnná | Výchozí | Význam |
 |---|---|---|
 | `--loginLogoWidth` | `226px` | šířka loga nad formulářem (na mobilu max. 156px) |
-| `--loginLostPasswordAlign` | `start` | zarovnání odkazu na zapomenuté heslo pod heslem |
+| `--loginLostPasswordAlign` | `end` | zarovnání odkazu na zapomenuté heslo pod heslem |
