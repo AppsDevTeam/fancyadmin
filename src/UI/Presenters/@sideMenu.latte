@@ -24,8 +24,8 @@
                             <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
                         {else}
                             {var $link = $presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}
+                            {* Podpoložky jsou bez ikonek - stačí jim odsazení pod rodičem *}
                             <a n:if="$subMenuItem->isVisible($user, $presenter)" n:class="item, $subMenuItem->isCurrent($presenter) ? active" href="{$link}">
-                                <div class="icon"><i class="fa-solid fa-{$subMenuItem->getFaIcon()}"></i></div>
                                 <div class="item-title">{_$subMenuItem->getLabel()}</div>
                             </a>
                         {/if}
@@ -90,22 +90,14 @@
                     {/foreach}
                 {/if}
             {/foreach}
-
-            <div class="side-panel-actions">
-                <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}">
-                    <i class="fa-solid fa-angles-left"></i>
-                    <span class="side-panel-toggle-label">{_fcadmin.layout.sideMenu.collapse}</span>
-                </button>
-                {* Rychlý přepínač barevného režimu (themeToggle.js), stejný jako v uživatelském menu *}
-                <button type="button" class="side-panel-theme-toggle" data-fancyadmin-theme-toggle role="switch" aria-checked="false" aria-label="{_fcadmin.layout.sideMenu.user.darkMode}" title="{_fcadmin.layout.sideMenu.user.darkMode}">
-                    <i class="fa-solid fa-moon side-panel-theme-icon-dark"></i>
-                    <i class="fa-solid fa-sun side-panel-theme-icon-light"></i>
-                </button>
-            </div>
         </div>
 
         <div class="side-panel-footer">
             {include @userButton.latte}
+            {* Sbalení menu - jen ikonka vedle uživatele, popis nese aria-label/title *}
+            <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}" title="{_fcadmin.layout.sideMenu.collapse}">
+                <i class="fa-solid fa-arrow-left-from-line"></i>
+            </button>
         </div>
     </div>
 </div>

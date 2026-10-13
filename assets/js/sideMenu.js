@@ -27,7 +27,9 @@ function applyState() {
 	// Chrome bug: po toggle body třídy sidebar width ani descendant styly (item
 	// layout, group heading, submenu popovery) se nezinvalidují - uživatel musí
 	// F5. Fix má dvě části:
-	//   1) inline width na sidebar (hodnoty duplikují --side-panel-width z SCSS)
+	//   1) inline width na sidebar - odkazem na --side-panel-width, ne natvrdo v px,
+	//      jinak by se v JS duplikovala šířka ze SCSS (ve sbaleném režimu se počítá
+	//      z velikosti čtvercové položky) a po toggle by sidebar držel starou hodnotu
 	//   2) detach + immediate reattach sidebar elementu ve stejném JS turnu -
 	//      vynutí full style recalc descendantů bez viditelného flashe (browser
 	//      nemaluje mid-turn). Bez detach zůstane item layout ve staré verzi.
@@ -36,7 +38,7 @@ function applyState() {
 	// jednoframový flash sidebar zmizení.
 	const sidebar = document.querySelector('.side-panel-wide');
 	if (sidebar && wasCollapsed !== collapsed) {
-		sidebar.style.width = collapsed ? '84px' : '200px';
+		sidebar.style.width = 'var(--side-panel-width)';
 		if (sidebar.parentElement) {
 			const parent = sidebar.parentElement;
 			const next = sidebar.nextSibling;
@@ -73,6 +75,38 @@ function applyState() {
 	});
 
 	positionPopovers();
+	updateScrollState();
+}
+
+// Čára mezi menu a footerem dává smysl jen když se menu scrolluje (jinak by visela
+// nad prázdným místem). 1px tolerance kvůli subpixelovému zaokrouhlení výšek.
+function updateScrollState() {
+	const menuBody = document.querySelector('.side-panel-wide .menu-body');
+	if (!menuBody) {
+		return;
+	}
+	menuBody.classList.toggle('scrollable', menuBody.scrollHeight - menuBody.clientHeight > 1);
+}
+
+// Rozbalení skupiny/submenu roste postupně (transition grid-template-rows), takže
+// jednorázový přepočet po kliku vidí ještě starou výšku. Samotná .menu-body je
+// flex: 1 a velikost nemění - sledujeme proto její položky a reagujeme na jejich růst.
+let menuBodyObserver = null;
+
+function observeMenuBody() {
+	if (typeof ResizeObserver === 'undefined') {
+		return;
+	}
+	const menuBody = document.querySelector('.side-panel-wide .menu-body');
+	if (!menuBody) {
+		return;
+	}
+	if (menuBodyObserver) {
+		menuBodyObserver.disconnect();
+	}
+	menuBodyObserver = new ResizeObserver(updateScrollState);
+	menuBodyObserver.observe(menuBody);
+	Array.from(menuBody.children).forEach(child => menuBodyObserver.observe(child));
 }
 
 // Popover je position: fixed → potřebuje inline top nastavený podle Y kotvy (heading skupiny
@@ -148,13 +182,19 @@ $(document).on('click', '.side-panel-wide .item.has-submenu > .item-header', fun
 
 $(function () {
 	applyState();
+	observeMenuBody();
 });
 
 // při resize okna přepočítáme pozice popoverů (šířka sidebaru by mohla ovlivnit offsety)
-$(window).on('resize', positionPopovers);
+$(window).on('resize', function () {
+	positionPopovers();
+	updateScrollState();
+});
 
 if ($.nette && $.nette.ext('live')) {
 	$.nette.ext('live').after(function () {
 		applyState();
+		// menu se mohlo překreslit - observer visí na starých elementech
+		observeMenuBody();
 	});
 }

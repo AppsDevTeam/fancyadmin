@@ -1,7 +1,7 @@
 @use 'variables' as *;
 
 // === Boční menu — wide layout ===
-// Sidebar má dva režimy: rozbaleno (--side-panel-width: 200px) a sbaleno (84px).
+// Sidebar má dva režimy: rozbaleno (--side-panel-width: 200px) a sbaleno (80px).
 // Rozbaleno: item = ikonka vlevo + text vpravo, skupiny s uppercase heading, level 3 inline pod parent itemem.
 // Sbaleno: item = stacked ikonka nahoře + text dole, level 2 v popoveru vpravo od skupiny (hover), level 3 pod subheadingem.
 //
@@ -10,10 +10,27 @@
 
 body.menu-wide {
 	--side-panel-width: 200px;
+	--menu-wide-padding: 6px;
+	// Rozestup mezi položkami menu (stejný v rozbaleném i sbaleném režimu)
+	--menu-wide-item-gap: 6px;
+
+	// Logo má kolem sebe stejnou mezeru, jakou má obsah stránky od horní lišty
+	// (1rem) - odstup první položky menu od loga pak sedí s odstupem obsahu od lišty.
+	// Pás pro logo se z těch dvou čísel dopočítá, aby se zarovnání nerozsypalo při
+	// ladění paddingů uvnitř hlavičky.
+	--menu-wide-logo-height: 40px;
+	--menu-wide-logo-gap: 18px;
 
 	// Palette (projekt může přepsat na vlastní design tokeny)
 	--menu-wide-bg: #{$background};
+	// Vnější okraj sidebaru
 	--menu-wide-border: #{$color-light-gray};
+	// Vnitřní předěly (pod logem, nad uživatelem, čára u submenu, divider v user menu).
+	// Záměrně se počítají z barev menu a ne z --menu-wide-border: projekty ten token
+	// typicky mapují na svůj "jemný oddělovač", který na podkladu menu zanikne. Takhle
+	// má čára zaručený kontrast v jakémkoli tématu i v tmavém režimu (text a bg se
+	// prohodí, mix zůstane čitelný). Projekt může přepsat, když chce jinou.
+	--menu-wide-divider: color-mix(in srgb, var(--menu-wide-text) 15%, var(--menu-wide-bg));
 	--menu-wide-text: #{$text-primary};
 	--menu-wide-muted: #878787;
 	--menu-wide-text-strong: #{$heading-color};
@@ -41,7 +58,10 @@ body.menu-wide {
 }
 
 body.menu-wide.menu-collapsed {
-	--side-panel-width: 84px;
+	--side-panel-width: 76px;
+	--menu-wide-collapsed-item-height: 56px;
+	// Menší logo, mezera kolem něj zůstává stejná - pás nad položkami je proto nižší
+	--menu-wide-logo-height: 24px;
 }
 
 body.menu-wide .side-panel-wide {
@@ -74,18 +94,21 @@ body.menu-wide .side-panel-wide {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		padding: 8px;
+		padding: var(--menu-wide-padding);
 	}
 
+	// Pás s logem = logo + mezera nad a pod. Výška pásu, ne padding + border + margin:
+	// ta tři čísla se při každém ladění rozcházela a posouvala start menu.
 	.side-panel-header {
 		flex: 0 0 auto;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: center;
 		gap: 10px;
-		padding: 16px 0;
-		border-bottom: 1px solid var(--menu-wide-border);
-		margin-bottom: 8px;
+		height: calc(var(--menu-wide-logo-height) + 2 * var(--menu-wide-logo-gap));
+		padding: 0;
+		margin: 0;
 
 		.logo {
 			display: inline-flex;
@@ -93,26 +116,24 @@ body.menu-wide .side-panel-wide {
 
 			img,
 			svg {
-				max-height: 40px;
+				max-height: var(--menu-wide-logo-height);
 				width: auto;
 				transition: max-height 180ms ease;
 			}
 		}
 	}
 
-	// Tlačítka v .side-panel-actions (poslední řada .menu-body): Sbalit a ikonkový
-	// přepínač barevného režimu mají stejný vzhled.
-	.side-panel-toggle,
-	.side-panel-theme-toggle {
+	// Ikonka sbalení menu ve footeru vedle uživatele - stejný hover jako user button,
+	// aby ta dvojice ve footeru působila jako jedna řada.
+	.side-panel-toggle {
 		display: inline-flex;
-		align-self: flex-start;
+		flex: 0 0 auto;
 		align-items: center;
-		gap: 8px;
+		justify-content: center;
 		background: transparent;
 		border: 0;
-		box-shadow: inset 0 0 0 1px var(--menu-wide-border);
 		color: var(--menu-wide-muted);
-		padding: 10px 14px;
+		padding: 8px;
 		border-radius: var(--menu-wide-item-radius);
 		cursor: pointer;
 		line-height: 1;
@@ -121,45 +142,10 @@ body.menu-wide .side-panel-wide {
 		&:hover {
 			background: var(--menu-wide-hover-bg);
 			color: var(--menu-wide-text);
-			box-shadow: inset 0 0 0 1px var(--menu-wide-active-bg);
 		}
 
 		i {
 			transition: transform 180ms ease;
-		}
-
-		.side-panel-toggle-label {
-			font-weight: 500;
-		}
-	}
-
-	// Řada pod položkami menu: Sbalit + přepínač barevného režimu. 16px margin-top
-	// drží mezeru od poslední položky (bez auto by v dlouhém scrollovaném menu řada
-	// seděla těsně za ní), align-self: flex-start aby nezabírala celou šířku.
-	.side-panel-actions {
-		align-self: flex-start;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin: 16px 10px;
-	}
-
-	// Vzhledem stejný jako Sbalit, jen ikonka. V tmavém režimu ukazuje slunce
-	// (kam klik přepne), ve světlém měsíc.
-	.side-panel-theme-toggle {
-		.side-panel-theme-icon-light {
-			display: none;
-		}
-
-		// Zanořené kvůli specificitě - pravidlo výše má prefix body.menu-wide .side-panel-wide
-		:root[data-bs-theme="dark"] & {
-			.side-panel-theme-icon-dark {
-				display: none;
-			}
-
-			.side-panel-theme-icon-light {
-				display: inline;
-			}
 		}
 	}
 
@@ -170,18 +156,42 @@ body.menu-wide .side-panel-wide {
 		flex: 1 1 auto;
 		display: flex;
 		flex-direction: column;
+		gap: var(--menu-wide-item-gap);
 		overflow-y: auto;
 		scrollbar-width: none;
 		&::-webkit-scrollbar {
 			display: none;
 		}
+
+		// Bez tohohle flex při nízkém okně položky smrskne (height je pro flex item
+		// jen preferovaná velikost) - horní boxíky by byly nižší než spodní.
+		// Místo zmenšování chceme scroll, ten zajišťuje overflow-y výše.
+		> * {
+			flex-shrink: 0;
+		}
 	}
 
+	// Footer = user button + ikonka sbalení menu v jedné řadě. Čára nad footerem
+	// se ukáže jen když menu opravdu scrolluje (.scrollable nastavuje sideMenu.js) -
+	// jinak by visela nad prázdným místem pod poslední položkou.
 	.side-panel-footer {
 		flex: 0 0 auto;
-		border-top: 1px solid var(--menu-wide-border);
-		margin-top: 8px;
+		display: flex;
+		// stretch, ne center: podsvícení šipky má být stejně vysoké jako u user buttonu
+		// vedle ní (ikonka sama je nižší, výšku řady určuje avatar + jméno)
+		align-items: stretch;
+		gap: 4px;
+		margin-top: 0;
 		padding-top: 8px;
+
+		.bottom-menu {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+	}
+
+	.menu-body.scrollable + .side-panel-footer {
+		border-top: 1px solid var(--menu-wide-divider);
 	}
 
 	.group {
@@ -341,12 +351,6 @@ body.menu-wide .side-panel-wide {
 					background: transparent;
 					color: var(--menu-wide-text);
 
-					.icon {
-						display: inline-flex;
-						width: 20px;
-						color: var(--menu-wide-muted);
-					}
-
 					.item-title {
 						flex: 1;
 					}
@@ -392,6 +396,16 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide {
 	.group.toggleable,
 	.item.has-submenu {
 		grid-template-columns: minmax(0, 1fr);
+	}
+
+	// Položky uvnitř skupiny mají stejný rozestup jako položky přímo v .menu-body.
+	// Gap je na .group-items, ne na .group: na skupině (grid) by se mezera mezi hlavičkou
+	// a položkami počítala i ve sbaleném stavu a pod zavřenou skupinou by zůstala díra.
+	// Ve sbaleném režimu je .group-items popover, proto jen tady.
+	.group-items {
+		display: flex;
+		flex-direction: column;
+		gap: var(--menu-wide-item-gap);
 	}
 
 	.group.toggleable {
@@ -469,36 +483,22 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide {
 // Čára je zarovnaná pod střed ikonky rodiče (item-header padding 14px + polovina 20px ikonky).
 body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu {
 	margin-left: 23px;
-	padding: 0 0 0 6px;
-	border-left: 1px solid var(--menu-wide-border);
+	padding: 0 0 0 14px;
+	//border-left: 1px solid var(--menu-wide-divider);
 
 	.item {
 		padding: 8px 10px;
 	}
 }
 
-// Ve sbaleném módu pod sebou a dole v menu
-body.menu-wide.menu-collapsed .side-panel-wide .side-panel-actions {
-	flex-direction: column;
-	align-self: center;
-	margin: auto 0 12px;
-}
+// Ve sbaleném módu se footer nevejde na šířku - ikonka rozbalení nad avatarem
+// (column-reverse drží pořadí v markupu, kde uživatel patří první). Šipka se otáčí,
+// protože klik menu naopak rozbalí - z arrow-left-from-line se stane right-from-line.
+body.menu-wide.menu-collapsed .side-panel-wide .side-panel-footer {
+	flex-direction: column-reverse;
+	gap: 6px;
 
-body.menu-wide.menu-collapsed .side-panel-wide .side-panel-theme-toggle {
-	padding: 6px 8px;
-}
-
-// Ve sbaleném módu toggle jen ikonka bez textu Sbalit, centrovaná v šířce menu
-body.menu-wide.menu-collapsed .side-panel-wide .side-panel-toggle {
-	align-self: center;
-	justify-content: center;
-	padding: 6px 8px;
-
-	.side-panel-toggle-label {
-		display: none;
-	}
-
-	i {
+	.side-panel-toggle i {
 		transform: rotate(180deg);
 	}
 }
@@ -508,15 +508,6 @@ body.menu-wide.menu-collapsed .side-panel-wide .side-panel-toggle {
 // Položky (level 2) se ukazují v popoveru vpravo od menu při hoveru na skupině.
 // Podmenu (level 3) jsou inline v popoveru jako subheading + items (ne nested popover).
 body.menu-wide.menu-collapsed .side-panel-wide {
-	.side-panel-header {
-		padding: 12px 4px;
-
-		.logo img,
-		.logo svg {
-			max-height: 24px;
-		}
-	}
-
 	// Stacked layout (ikona nahoře, text dole) pro:
 	// - .group-heading - hlavička skupiny
 	// - .menu-body > .item - top-level linky bez podmenu
@@ -528,8 +519,8 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		align-items: center;
 		justify-content: center;
 		gap: 4px;
-		padding: 10px 4px;
-		height: 60px;
+		padding: 6px 4px;
+		height: var(--menu-wide-collapsed-item-height);
 		text-transform: none;
 		letter-spacing: 0;
 		font-size: 0.625rem;
@@ -577,12 +568,12 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			padding: 8px;
 			z-index: 1500;
 
-			// Bridge překlene mezeru mezi item a popoverem (jen na výšku itemu = 60px)
+			// Bridge překlene mezeru mezi item a popoverem (jen na výšku itemu)
 			&::before {
 				content: '';
 				position: absolute;
 				top: 0;
-				height: 60px;
+				height: var(--menu-wide-collapsed-item-height);
 				left: calc(-1 * var(--side-panel-width));
 				width: var(--side-panel-width);
 			}
@@ -595,7 +586,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
 				color: var(--menu-wide-muted);
-				padding: 12px 12px 4px;
+				padding: 12px 9px 4px;
 			}
 
 			.item {
@@ -611,13 +602,6 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 				height: auto;
 				gap: 12px;
 
-				.icon {
-					display: inline-flex;
-					width: 20px;
-					color: var(--menu-wide-muted);
-					font-size: 0.9rem;
-				}
-
 				.item-title {
 					flex: 1;
 					font-size: 0.9rem;
@@ -632,10 +616,6 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 				&.active {
 					background: var(--menu-wide-active-bg);
 					color: var(--menu-wide-active-text);
-
-					.icon {
-						color: var(--menu-wide-active-text);
-					}
 				}
 			}
 		}
@@ -711,13 +691,13 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		z-index: 1500;
 
 		// Bridge překlene mezeru mezi group heading a popoverem. Musí být jen na výšku
-		// heading (60px), NE přes celou výšku popoveru - jinak by kryl sidebar oblast nižších
+		// heading, NE přes celou výšku popoveru - jinak by kryl sidebar oblast nižších
 		// skupin a blokoval jejich hover.
 		&::before {
 			content: '';
 			position: absolute;
 			top: 0;
-			height: 60px;
+			height: var(--menu-wide-collapsed-item-height);
 			left: calc(-1 * var(--side-panel-width));
 			width: var(--side-panel-width);
 		}
@@ -785,11 +765,6 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 				color: var(--menu-wide-text);
 				cursor: pointer;
 
-				.icon {
-					display: inline-flex;
-					width: 20px;
-				}
-
 				.item-title {
 					flex: 1;
 					font-size: 0.9rem;
@@ -803,10 +778,6 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 				&.active {
 					background: var(--menu-wide-active-bg);
 					color: var(--menu-wide-active-text);
-
-					.icon {
-						color: var(--menu-wide-active-text);
-					}
 				}
 			}
 		}
@@ -967,7 +938,7 @@ body.menu-wide .user-dropdown {
 	}
 
 	.dropdown-divider {
-		border-color: var(--menu-wide-border);
+		border-color: var(--menu-wide-divider);
 		opacity: 1;
 	}
 
