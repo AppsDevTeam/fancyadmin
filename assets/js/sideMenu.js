@@ -180,6 +180,45 @@ $(document).on('click', '.side-panel-wide .item.has-submenu > .item-header', fun
 	applyState();
 });
 
+const HOVER_HOLD_CLASS = 'menu-hover-hold';
+const HOVER_HOLD_MS = 400;
+const HOVER_HOLD_OWNERS = '.side-panel-wide .menu-body > .item.has-submenu, .side-panel-wide .group';
+let hoverHoldTimer = null;
+
+function releaseHoverHold(except = null) {
+	document.querySelectorAll('.' + HOVER_HOLD_CLASS).forEach(element => {
+		if (element !== except) {
+			element.classList.remove(HOVER_HOLD_CLASS);
+		}
+	});
+}
+
+document.addEventListener('mouseover', function (event) {
+	const owner = event.target.closest(HOVER_HOLD_OWNERS);
+
+	if (owner) {
+		clearTimeout(hoverHoldTimer);
+		releaseHoverHold(owner);
+	} else if (event.target.closest('.side-panel-wide .menu-body > .item, .side-panel-wide .side-panel-header')) {
+		releaseHoverHold();
+	} else if (event.target.closest('.side-panel-wide')) {
+		clearTimeout(hoverHoldTimer);
+	}
+});
+
+document.addEventListener('mouseout', function (event) {
+	const owner = event.target.closest(HOVER_HOLD_OWNERS);
+
+	if (owner && !owner.contains(event.relatedTarget)) {
+		owner.classList.add(HOVER_HOLD_CLASS);
+	}
+
+	if (event.target.closest('.side-panel-wide') && !event.relatedTarget?.closest?.('.side-panel-wide')) {
+		clearTimeout(hoverHoldTimer);
+		hoverHoldTimer = setTimeout(() => releaseHoverHold(), HOVER_HOLD_MS);
+	}
+});
+
 $(function () {
 	applyState();
 	observeMenuBody();

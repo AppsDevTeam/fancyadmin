@@ -622,6 +622,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 
 		// Popover se otevírá na hover; .open z JS (rozbalený režim) se ve sbaleném ignoruje
 		&:hover .submenu,
+		&.menu-hover-hold .submenu,
 		.submenu:hover {
 			display: block;
 		}
@@ -704,6 +705,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 	}
 
 	.group:hover .group-items,
+	.group.menu-hover-hold .group-items,
 	.group-items:hover {
 		display: block;
 	}
