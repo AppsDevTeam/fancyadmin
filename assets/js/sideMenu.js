@@ -90,13 +90,21 @@ function positionPopovers() {
 }
 
 $(document).on('click', '.side-panel-toggle', function () {
+	// Přepnutí šířky menu mění layout skupin a podmenu - nemá se animovat
+	$('.side-panel-wide').removeClass('menu-animate');
 	const state = readState();
 	state.collapsed = !$('body').hasClass('menu-collapsed');
 	writeState(state);
 	applyState();
 });
 
+// Animace rozbalování jen po kliku uživatele, ne při načtení stránky (viz _sidepanel.scss)
+function enableMenuAnimation() {
+	$('.side-panel-wide').addClass('menu-animate');
+}
+
 $(document).on('click', '.side-panel-wide .group.toggleable .group-heading', function () {
+	enableMenuAnimation();
 	const key = $(this).closest('.group').data('heading');
 	const state = readState();
 	const collapsed = state.collapsedHeadings || [];
@@ -121,6 +129,7 @@ $(document).on('click', '.side-panel-wide .item.has-submenu > .item-header', fun
 		e.preventDefault();
 		e.stopPropagation();
 	}
+	enableMenuAnimation();
 	const $item = $(this).closest('.item.has-submenu');
 	const label = $item.find('.title').text().trim();
 	const isCurrentlyOpen = $item.hasClass('open');

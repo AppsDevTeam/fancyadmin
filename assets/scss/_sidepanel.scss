@@ -211,7 +211,6 @@ body.menu-wide .side-panel-wide {
 
 		.group-heading-chevron {
 			font-size: 0.6rem;
-			transition: transform 180ms ease;
 		}
 	}
 
@@ -242,10 +241,11 @@ body.menu-wide .side-panel-wide {
 			text-align: left;
 		}
 
+		// Zavřené podmenu = šipka doleva (chevron-down otočený o 90°), otevřené = dolů
 		.submenu-chevron {
 			font-size: 0.6rem;
 			color: var(--menu-wide-muted);
-			transition: transform 180ms ease;
+			transform: rotate(90deg);
 		}
 
 		&:hover {
@@ -321,7 +321,7 @@ body.menu-wide .side-panel-wide {
 			}
 
 			&.open .submenu-chevron {
-				transform: rotate(180deg);
+				transform: rotate(0deg);
 			}
 
 			.submenu {
@@ -377,18 +377,89 @@ body.menu-wide .side-panel-wide {
 // stavu .collapsed persistovaného z předchozí session v localStorage
 body.menu-wide:not(.menu-collapsed) .side-panel-wide .group.toggleable.collapsed {
 	.group-heading-chevron {
-		transform: rotate(-90deg);
+		transform: rotate(90deg);
+	}
+}
+
+// Rozbalování skupin a podmenu v rozbaleném menu - výška se animuje přes řádek gridu
+// 0fr/1fr (bez vnitřního wrapperu, height: auto animovat nejde). Zavřený obsah má
+// visibility: hidden, aby se na odkazy nedalo dostat tabulátorem.
+body.menu-wide:not(.menu-collapsed) .side-panel-wide {
+	.group.toggleable {
+		display: grid;
+		grid-template-rows: auto 1fr;
+
+		.group-items {
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		&.collapsed {
+			grid-template-rows: auto 0fr;
+
+			.group-items {
+				visibility: hidden;
+			}
+		}
 	}
 
-	.group-items {
-		display: none;
+	.item.has-submenu {
+		display: grid;
+		grid-template-rows: auto 0fr;
+
+		// Svislé marginy by grid započítal i do zavřeného řádku (mezera pod položkou)
+		.submenu {
+			display: block;
+			min-height: 0;
+			overflow: hidden;
+			visibility: hidden;
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+
+		&.open {
+			grid-template-rows: auto 1fr;
+
+			.submenu {
+				visibility: visible;
+				margin-top: 4px;
+				margin-bottom: 8px;
+			}
+		}
+	}
+
+	// Přechody jen po kliknutí uživatele (sideMenu.js přidá .menu-animate) - stav
+	// z localStorage se nastavuje až po načtení stránky a nemá se animovat
+	&.menu-animate {
+		.group.toggleable,
+		.item.has-submenu {
+			transition: grid-template-rows 200ms ease;
+		}
+
+		.group-heading-chevron,
+		.submenu-chevron {
+			transition: transform 200ms ease;
+		}
+
+		.item.has-submenu .submenu {
+			transition: margin 200ms ease;
+		}
+
+		// Při zavírání se obsah schová až po doběhnutí animace
+		.group.toggleable.collapsed .group-items {
+			transition: visibility 0s linear 200ms;
+		}
+
+		.item.has-submenu:not(.open) .submenu {
+			transition: margin 200ms ease, visibility 0s linear 200ms;
+		}
 	}
 }
 
 // Svislá čára vlevo od podpoložek (jen v rozbaleném módu, ve sbaleném je submenu popover).
 // Čára je zarovnaná pod střed ikonky rodiče (item-header padding 14px + polovina 20px ikonky).
 body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu {
-	margin: 4px 0 8px 23px;
+	margin-left: 23px;
 	padding: 0 0 0 6px;
 	border-left: 1px solid var(--menu-wide-border);
 
