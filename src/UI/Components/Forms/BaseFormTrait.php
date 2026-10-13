@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\UI\Components\Forms;
 use ADT\DoctrineForms\Form;
 use ADT\FancyAdmin\DI\Injects\AccountQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
@@ -17,6 +18,7 @@ trait BaseFormTrait
 	use EntityManagerInject;
 	use TranslatorInject;
 	use AccountQueryFactoryInject;
+	use SecurityUserInject;
 
 	protected bool $disableAccountInput = false;
 	protected bool $csrfProtection = true;
@@ -37,7 +39,7 @@ trait BaseFormTrait
 				// Bez účtu v URL jsme v backoffice - AuthPresenterTrait::startup() tam
 				// identitě vybraný účet nuluje. Výběr by nabízel všechny účty v systému,
 				// což u backoffice záznamu nedává smysl; účet doplní AccountFieldListener.
-				$selectedAccount = $this->securityUser->getIdentity()?->getSelectedAccount();
+				$selectedAccount = $this->_securityUser->getIdentity()?->getSelectedAccount();
 				if (!$selectedAccount) {
 					return;
 				}
@@ -143,7 +145,7 @@ trait BaseFormTrait
 		if (
 			!$this->csrfProtection
 			|| !$form->isMethod('post')
-			|| !$this->securityUser->isLoggedIn()
+			|| !$this->_securityUser->isLoggedIn()
 			|| $form->getComponent(Form::ProtectorId, throw: false) !== null
 		) {
 			return;

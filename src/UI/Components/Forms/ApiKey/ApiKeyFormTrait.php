@@ -73,7 +73,7 @@ trait ApiKeyFormTrait
 		}
 
 		return $entity?->getAccount()?->getId()
-			?? $this->securityUser->getIdentity()?->getSelectedAccount()?->getId();
+			?? $this->_securityUser->getIdentity()?->getSelectedAccount()?->getId();
 	}
 
 	public function processForm(ApiKey $entity): void
