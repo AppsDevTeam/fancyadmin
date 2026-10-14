@@ -2508,6 +2508,31 @@ Retenci si řídí projekt — tabulka patří do `purge` (viz sekce 22), ne do 
 do odděleného úložiště by znamenalo, že v administraci nebude vidět, což je přesně to, kvůli
 čemu je tady.
 
+### Razítko posledního přihlášení
+
+`Identity::$lastLoginAt` drží čas posledního úspěšného přihlášení. Typicky ho chce
+bezpečnostní politika zákazníka, která ukládá blokovat účty nepoužité N dní — z logů se to
+sice dá vyčíst taky, ale jen do jejich retence a ne jedním dotazem nad účty.
+
+```neon
+security.authenticator:
+	setup:
+		- '$onAuthEvent[]' = [@ADT\FancyAdmin\Model\Security\LastLoginSubscriber, authEvent]
+```
+
+Razítkuje se z autentizační události, ne z přihlašovacích míst: cest dovnitř má projekt víc
+(administrace, mobilní aplikace, odkaz s jednorázovým tokenem, SSO) a každá by na to musela
+myslet zvlášť. Posouvá ho jen **úspěšné** přihlášení — neúspěšný pokus by jinak dělal
+z opuštěného účtu používaný. Zapisuje se přes DBAL, aby razítko neprotáhlo `flush()` cizí
+rozdělané změny visící v entity manageru.
+
+Auditní stopu přihlašování **nenahrazuje**: ta drží každou událost zvlášť v `audit_log`,
+tohle je poslední hodnota určená k filtrování nad seznamem účtů.
+
+Projekt si k tomu vygeneruje migraci. Existující účty zůstanou s `NULL` — doplňovat razítko
+zpětně z logů nemá smysl, jejich retence je kratší než život účtu a u starších účtů by z toho
+vyšlo prázdné razítko vypadající jako „nikdy se nepřihlásil".
+
 ---
 
 ## Shrnutí
