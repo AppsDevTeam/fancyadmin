@@ -33,6 +33,9 @@ $.nette.ext('live').after(function (el) {
 		$(window).on('resize', () => {
 			//$tableOuter.find('.table-bottom-scroll').css({width: $tableOuter.width()});
 			$tableOuter.find('.table-bottom-scroll-inner').css({width: $tableOuter.find('table, .datagrid-tree').first().width() - 20});
+
+			const responsive = $tableOuter.find('.table-responsive').get(0);
+			$tableOuter.find('.table-bottom-scroll').toggleClass('d-none', !responsive || responsive.scrollWidth <= responsive.clientWidth + 1);
 		}).trigger('resize');
 
 		$tableOuter.find('.table-responsive').on('scroll', function() {
