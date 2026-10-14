@@ -2515,10 +2515,13 @@ bezpečnostní politika zákazníka, která ukládá blokovat účty nepoužité
 sice dá vyčíst taky, ale jen do jejich retence a ne jedním dotazem nad účty.
 
 ```neon
-security.authenticator:
-	setup:
-		- '$onAuthEvent[]' = [@ADT\FancyAdmin\Model\Security\LastLoginSubscriber, authEvent]
+fancyAdmin:
+	lastLoginEnabled: true
 ```
+
+Víc není potřeba — rozšíření si subscriber zaregistruje a navěsí na autentikátor samo.
+**Zapni to až s migrací**, která sloupec přidá: výchozí stav je vypnuto právě proto, aby
+projektu po aktualizaci balíčku nespadlo každé přihlášení na chybějícím sloupci.
 
 Razítkuje se z autentizační události, ne z přihlašovacích míst: cest dovnitř má projekt víc
 (administrace, mobilní aplikace, odkaz s jednorázovým tokenem, SSO) a každá by na to musela
