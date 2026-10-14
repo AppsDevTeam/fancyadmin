@@ -93,11 +93,13 @@
         </div>
 
         <div class="side-panel-footer">
-            {include @userButton.latte}
-            {* Sbalení menu - jen ikonka vedle uživatele, popis nese aria-label/title *}
+            {* Sbalení menu - vlastní řádek nad uživatelem. V rozbaleném režimu i s popiskem,
+               ve sbaleném zůstane jen ikonka a popis nese aria-label/title. *}
             <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}" title="{_fcadmin.layout.sideMenu.collapse}">
                 <i class="fa-solid fa-arrow-left-from-line"></i>
+                <span class="side-panel-toggle-label">{_fcadmin.layout.sideMenu.collapse}</span>
             </button>
+            {include @userButton.latte}
         </div>
     </div>
 </div>

@@ -45,6 +45,9 @@ body.menu-wide {
 	--menu-wide-popover-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
 	--menu-wide-avatar-bg: #f4e1f8;
 	--menu-wide-avatar-icon: var(--primaryColor);
+	// Stín nad footerem, když menu scrolluje
+	--menu-wide-scrim: rgba(5, 5, 6, 0.08);
+	--menu-wide-scrim-height: 24px;
 	--menu-wide-danger: #{$error};
 }
 
@@ -55,6 +58,8 @@ body.menu-wide {
 	--menu-wide-popover-border: var(--fa-border);
 	--menu-wide-popover-shadow: 0 8px 28px var(--fa-shadow-color);
 	--menu-wide-avatar-bg: var(--fa-surface-active);
+	// 8 % černé na tmavém podkladu není vidět
+	--menu-wide-scrim: rgba(0, 0, 0, 0.35);
 }
 
 body.menu-wide.menu-collapsed {
@@ -123,21 +128,20 @@ body.menu-wide .side-panel-wide {
 		}
 	}
 
-	// Ikonka sbalení menu ve footeru vedle uživatele - stejný hover jako user button,
-	// aby ta dvojice ve footeru působila jako jedna řada.
+	// Padding, gap i šířka ikony shodné s .item výše, aby to sedělo do sloupce menu
 	.side-panel-toggle {
-		display: inline-flex;
-		flex: 0 0 auto;
+		display: flex;
 		align-items: center;
-		justify-content: center;
+		gap: 12px;
+		width: 100%;
 		background: transparent;
 		border: 0;
 		color: var(--menu-wide-muted);
-		padding: 8px;
+		padding: 10px 14px;
 		border-radius: var(--menu-wide-item-radius);
 		cursor: pointer;
 		line-height: 1;
-		font-size: 0.8rem;
+		text-align: left;
 
 		&:hover {
 			background: var(--menu-wide-hover-bg);
@@ -145,8 +149,20 @@ body.menu-wide .side-panel-wide {
 		}
 
 		i {
+			flex: 0 0 auto;
+			width: 20px;
+			text-align: center;
+			font-size: 0.8rem;
 			transition: transform 180ms ease;
 		}
+	}
+
+	.side-panel-toggle-label {
+		min-width: 0;
+		font-size: 0.85rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	// Prostor s položkami menu (mezi headerem a footerem). Overflow-y auto zajistí,
@@ -171,27 +187,36 @@ body.menu-wide .side-panel-wide {
 		}
 	}
 
-	// Footer = user button + ikonka sbalení menu v jedné řadě. Čára nad footerem
-	// se ukáže jen když menu opravdu scrolluje (.scrollable nastavuje sideMenu.js) -
-	// jinak by visela nad prázdným místem pod poslední položkou.
 	.side-panel-footer {
 		flex: 0 0 auto;
 		display: flex;
-		// stretch, ne center: podsvícení šipky má být stejně vysoké jako u user buttonu
-		// vedle ní (ikonka sama je nižší, výšku řady určuje avatar + jméno)
-		align-items: stretch;
+		flex-direction: column;
 		gap: 4px;
 		margin-top: 0;
 		padding-top: 8px;
 
 		.bottom-menu {
-			flex: 1 1 auto;
 			min-width: 0;
 		}
 	}
 
+	// Čára i stín jen když menu scrolluje (.scrollable nastavuje sideMenu.js),
+	// jinak by visely nad prázdným místem pod poslední položkou
 	.menu-body.scrollable + .side-panel-footer {
+		position: relative;
 		border-top: 1px solid var(--menu-wide-divider);
+
+		// bottom o 1px výš, aby gradient skončil nad čárou a nepřekryl ji
+		&::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: calc(100% + 1px);
+			height: var(--menu-wide-scrim-height);
+			pointer-events: none;
+			background: linear-gradient(180deg, transparent 0%, var(--menu-wide-scrim) 100%);
+		}
 	}
 
 	.group {
@@ -220,7 +245,7 @@ body.menu-wide .side-panel-wide {
 		user-select: none;
 
 		.group-heading-chevron {
-			font-size: 0.6rem;
+			font-size: 0.8rem;
 		}
 	}
 
@@ -253,7 +278,7 @@ body.menu-wide .side-panel-wide {
 
 		// Zavřené podmenu = šipka doprava (chevron-down otočený o -90°), otevřené = dolů
 		.submenu-chevron {
-			font-size: 0.6rem;
+			font-size: 0.8rem;
 			color: var(--menu-wide-muted);
 			transform: rotate(-90deg);
 		}
@@ -296,7 +321,9 @@ body.menu-wide .side-panel-wide {
 				border-radius: var(--menu-wide-item-radius);
 			}
 
-			&:hover > .item-header {
+			// Ne &:hover > .item-header - to platí i při přejezdu přes submenu uvnitř
+			// wrapperu a podsvítilo by rodiče zároveň s podpoložkou
+			> .item-header:hover {
 				background: var(--menu-wide-hover-bg);
 				color: var(--menu-wide-hover-text);
 
@@ -479,26 +506,59 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide {
 	}
 }
 
-// Svislá čára vlevo od podpoložek (jen v rozbaleném módu, ve sbaleném je submenu popover).
-// Čára je zarovnaná pod střed ikonky rodiče (item-header padding 14px + polovina 20px ikonky).
+// Podpoložky v rozbaleném módu (ve sbaleném je submenu popover). Jdou přes celou šířku
+// menu, odsazený je jen text - 46px = padding 14px + ikonka 20px + gap 12px u rodiče,
+// takže popisky lícují s popiskem položky nad nimi.
 body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu {
-	margin-left: 23px;
-	padding: 0 0 0 14px;
-	//border-left: 1px solid var(--menu-wide-divider);
+	margin-left: 0;
+	padding: 0;
+
+	.submenu-heading,
+	.item {
+		padding-left: 46px;
+		padding-right: 14px;
+	}
 
 	.item {
-		padding: 8px 10px;
+		padding-top: 8px;
+		padding-bottom: 8px;
+	}
+
+	// Podnadpis je tu inline schovaný (viz výše), rozměry si drží pro projekty,
+	// které si ho zobrazí - ty pak řeší jen display a typografii
+	.submenu-heading {
+		padding-top: 10px;
+		padding-bottom: 4px;
+	}
+
+	// Po položkách předchozí sekce o --menu-wide-item-gap víc, ať je vidět předěl.
+	// První podnadpis navazuje rovnou na rodiče a odsazení navíc nechce.
+	.item + .submenu-heading {
+		padding-top: 16px;
 	}
 }
 
-// Ve sbaleném módu se footer nevejde na šířku - ikonka rozbalení nad avatarem
-// (column-reverse drží pořadí v markupu, kde uživatel patří první). Šipka se otáčí,
+// Ve sbaleném módu zůstane jen ikonka, popis nese aria-label/title. Šipka se otáčí,
 // protože klik menu naopak rozbalí - z arrow-left-from-line se stane right-from-line.
 body.menu-wide.menu-collapsed .side-panel-wide .side-panel-footer {
-	flex-direction: column-reverse;
-	gap: 6px;
+	.side-panel-toggle {
+		justify-content: center;
+		// Zužuje se jen vodorovně; svislý padding musí zůstat, jinak footer poskočí
+		padding-left: 4px;
+		padding-right: 4px;
+		gap: 0;
+	}
+
+	// Ne display: none - popisek zůstane v layoutu s nulovou šířkou a drží řádku
+	// výšku, takže footer při přepínání režimu neposkakuje
+	.side-panel-toggle-label {
+		flex: 0 0 0;
+		width: 0;
+		overflow: hidden;
+	}
 
 	.side-panel-toggle i {
+		width: auto;
 		transform: rotate(180deg);
 	}
 }
@@ -650,6 +710,17 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 
 		.icon {
 			color: var(--menu-wide-active-text);
+		}
+	}
+
+	// Tady rodič podsvícený zůstat má i při přejezdu do popoveru (na rozdíl od
+	// rozbaleného režimu výš) - popover je vedle menu a jinak není vidět, čí je
+	.menu-body > .item.has-submenu:not(.active):hover > .item-header {
+		background: var(--menu-wide-hover-bg);
+		color: var(--menu-wide-hover-text);
+
+		.icon {
+			color: var(--menu-wide-hover-text);
 		}
 	}
 
@@ -823,13 +894,14 @@ body.menu-wide .side-panel-wide .user-button {
 	}
 }
 
+// Stejná velikost v obou režimech, ať avatar při přepnutí neposkočí
 body.menu-wide .side-panel-wide .btn-avatar {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	width: 42px;
-	height: 42px;
+	width: 36px;
+	height: 36px;
 	margin: 0;
 	border-radius: 50%;
 	background: var(--menu-wide-avatar-bg);
@@ -838,7 +910,7 @@ body.menu-wide .side-panel-wide .btn-avatar {
 
 	i {
 		color: var(--menu-wide-avatar-icon);
-		font-size: 18px;
+		font-size: 14px;
 	}
 
 	img {
@@ -878,20 +950,16 @@ body.menu-wide .side-panel-wide .user-button-info {
 body.menu-wide.menu-collapsed .side-panel-wide {
 	.user-button {
 		justify-content: center;
-		padding: 8px 4px;
+		padding-left: 4px;
+		padding-right: 4px;
+		gap: 0;
 	}
 
+	// Nulová šířka místo display: none, stejně jako u popisku sbalení výš
 	.user-button-info {
-		display: none;
-	}
-
-	.btn-avatar {
-		width: 36px;
-		height: 36px;
-
-		i {
-			font-size: 14px;
-		}
+		flex: 0 0 0;
+		width: 0;
+		overflow: hidden;
 	}
 }
 

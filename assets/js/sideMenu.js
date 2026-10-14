@@ -199,10 +199,11 @@ document.addEventListener('mouseover', function (event) {
 	if (owner) {
 		clearTimeout(hoverHoldTimer);
 		releaseHoverHold(owner);
-	} else if (event.target.closest('.side-panel-wide .menu-body > .item, .side-panel-wide .side-panel-header')) {
-		releaseHoverHold();
 	} else if (event.target.closest('.side-panel-wide')) {
+		// Hold pouští i prázdné místo pod položkami a footer, jinak by popover
+		// poslední položky zůstal viset při sjetí myši dolů mimo položky
 		clearTimeout(hoverHoldTimer);
+		releaseHoverHold();
 	}
 });
 
