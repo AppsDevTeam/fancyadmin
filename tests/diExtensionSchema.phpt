@@ -105,6 +105,13 @@ test('Keycloak je vypnuty, ale validace certifikatu zapnuta', function () {
 });
 
 
+test('razitko posledniho prihlaseni je vypnute', function () {
+	// Zapina ho az projekt, ktery ma odpovidajici migraci - jinak by mu po aktualizaci
+	// baliku spadlo kazde prihlaseni na chybejicim sloupci.
+	Assert::false(process()->lastLoginEnabled);
+});
+
+
 test('passkeys jsou vypnute a rpId se odvozuje', function () {
 	$config = process();
 
@@ -182,7 +189,7 @@ test('neznama polozka konfigurace se odmitne', function () {
 
 
 test('logicke volby prijmou jen bool', function () {
-	foreach (['lostPasswordEnabled', 'hmr', 'keycloakEnabled', 'keycloakVerifySsl', 'passkeyEnabled'] as $option) {
+	foreach (['lostPasswordEnabled', 'hmr', 'keycloakEnabled', 'keycloakVerifySsl', 'passkeyEnabled', 'lastLoginEnabled'] as $option) {
 		Assert::exception(fn() => process([$option => 'ano']), ValidationException::class, null, null, $option);
 	}
 });
