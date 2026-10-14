@@ -55,7 +55,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'defaultCustomerRoute' => Expect::string()->default(':PortalCustomer:Home:'),
 			'defaultBackofficeRoute' => Expect::string()->default(':PortalBackoffice:Home:'),
 			'lostPasswordEnabled' => Expect::bool()->default(true),
-			'lastLoginEnabled' => Expect::bool()->default(false),
 			'logoPublicPath' => Expect::string()->default(null),
 			'logoMenuPath' => Expect::string()->default(null),
 			'loginPageLogoPath' => Expect::string()->default(null),
@@ -192,14 +191,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('changeLogAuditSubscriber'))
 			->setFactory(ChangeLogAuditSubscriber::class);
 
-		// Razitko posledniho prihlaseni na identite. Navesuje se samo (viz beforeCompile),
-		// ale jen na vyzadani: sloupec `last_login_at` prinasi az migrace projektu, takze
-		// zapnout to ve vychozim stavu by znamenalo, ze projektu po aktualizaci baliku
-		// spadne kazde prihlaseni na chybejicim sloupci.
-		if ($this->config->lastLoginEnabled) {
-			$builder->addDefinition($this->prefix('lastLoginSubscriber'))
-				->setFactory(LastLoginSubscriber::class);
-		}
+		// Razitko posledniho prihlaseni na identite - navesuje se samo, viz beforeCompile.
+		// Prepinac k tomu zadny neni zamerne: sloupec `last_login_at` je soucast
+		// IdentityTrait, takze ho Doctrine vybira v kazdem dotazu na identitu a projekt,
+		// ktery po aktualizaci baliku nespusti migraci, je rozbity i bez tohohle zapisu.
+		$builder->addDefinition($this->prefix('lastLoginSubscriber'))
+			->setFactory(LastLoginSubscriber::class);
 
 
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
@@ -275,11 +272,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// ma projekt vic (administrace, mobilni aplikace, odkaz s jednorazovym tokenem, SSO)
 		// a udalost je jedine misto, kudy projdou vsechny. Navesuje se tady, aby to projekt
 		// nemusel opisovat do neonu.
-		if ($this->config->lastLoginEnabled) {
-			if (($authenticator = $builder->getByType(DoctrineAuthenticator::class)) === null) {
-				throw new RuntimeException('fancyadmin: lastLoginEnabled je zapnuté, ale v projektu není služba typu ' . DoctrineAuthenticator::class . ', na kterou by se razítko navěsilo. Zaregistrujte autentikátor (security.authenticator), nebo volbu vypněte.');
-			}
-
+		//
+		// Bez autentikatoru se nic nedeje: kde se neni kam prihlasit, neni co razitkovat -
+		// padat kvuli tomu pri kompilaci by projekt trestalo za neco, co neudelal.
+		if (($authenticator = $builder->getByType(DoctrineAuthenticator::class)) !== null) {
 			$builder->getDefinition($authenticator)
 				->addSetup('$onAuthEvent[]', [[$this->prefix('@lastLoginSubscriber'), 'authEvent']]);
 		}

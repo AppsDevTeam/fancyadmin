@@ -2514,14 +2514,10 @@ do odděleného úložiště by znamenalo, že v administraci nebude vidět, co�
 bezpečnostní politika zákazníka, která ukládá blokovat účty nepoužité N dní — z logů se to
 sice dá vyčíst taky, ale jen do jejich retence a ne jedním dotazem nad účty.
 
-```neon
-fancyAdmin:
-	lastLoginEnabled: true
-```
-
-Víc není potřeba — rozšíření si subscriber zaregistruje a navěsí na autentikátor samo.
-**Zapni to až s migrací**, která sloupec přidá: výchozí stav je vypnuto právě proto, aby
-projektu po aktualizaci balíčku nespadlo každé přihlášení na chybějícím sloupci.
+Nic se nezapíná — rozšíření si subscriber zaregistruje a navěsí na autentikátor samo.
+Projekt si jen **vygeneruje migraci**, která sloupec přidá; dokud ji nespustí, rozbité to
+má stejně, protože `last_login_at` je součást `IdentityTrait` a Doctrine ho vybírá v každém
+dotazu na identitu.
 
 Razítkuje se z autentizační události, ne z přihlašovacích míst: cest dovnitř má projekt víc
 (administrace, mobilní aplikace, odkaz s jednorázovým tokenem, SSO) a každá by na to musela
