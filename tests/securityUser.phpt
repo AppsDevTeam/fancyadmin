@@ -151,6 +151,20 @@ test('staci opravneni do jedne z casti', function () {
 });
 
 
+test('pravo do portalu posuzuje FancyAdmin pro vsechny cesty prihlaseni stejne', function () {
+	$fancyAdmin = FancyAdminFactory::create();
+
+	Assert::false($fancyAdmin->canSignIn(new TestIdentity()->addRole(new TestAclRole('nikam'))));
+	Assert::true($fancyAdmin->canSignIn(new TestIdentity()->addRole(
+		new TestAclRole('zakaznik')->allowResource(new TestAclResource(AclResourceNameEnum::CUSTOMER_DASHBOARD->value)),
+	)));
+	Assert::true($fancyAdmin->canSignIn(new TestIdentity()->addRole(
+		new TestAclRole('operator')->allowResource(new TestAclResource(AclResourceNameEnum::BACKOFFICE_DASHBOARD->value)),
+	)));
+	Assert::true($fancyAdmin->canSignIn(new TestIdentity()->addRole(new TestAclRole('admin', isAdmin: true))));
+});
+
+
 test('admin projde vzdy', function () {
 	$authenticator = new TestAuthenticator();
 	$authenticator->setFancyAdmin(FancyAdminFactory::create());

@@ -356,6 +356,37 @@ trait IdentityTrait
 	}
 
 	/**
+	 * Ucty, ke kterym ma identita aktivni profil. Na rozdil od getAccounts(), ktera vraci
+	 * ucty ze vsech profilu - i tech, ve kterych byl uzivatel deaktivovan.
+	 *
+	 * @return Account[]
+	 */
+	public function getActiveAccounts(): array
+	{
+		$accounts = [];
+		foreach ($this->getProfiles() as $_profile) {
+			if ($_profile->getIsActive()) {
+				$accounts[] = $_profile->getAccount();
+			}
+		}
+		return $accounts;
+	}
+
+	/**
+	 * Subucty uctu s aktivnim profilem - majitel holdingu ma profil jen na nadrazenem uctu.
+	 *
+	 * @return Account[]
+	 */
+	public function getActiveSubaccounts(): array
+	{
+		$subaccounts = [];
+		foreach ($this->getActiveAccounts() as $_account) {
+			$subaccounts = array_merge($subaccounts, $_account->getSubaccounts());
+		}
+		return $subaccounts;
+	}
+
+	/**
 	 * @return AclRole[]
 	 */
 	public function getRoles(): array

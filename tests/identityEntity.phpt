@@ -278,6 +278,35 @@ test('podrizene ucty se sesbiraji ze vsech uctu', function () {
 });
 
 
+test('aktivni ucty vynechavaji deaktivovane profily', function () {
+	// getAccounts() je vraci vsechny - podle nich se v ucte dobihaji uz otevrene session
+	$identity = new TestIdentity();
+	$firma = new TestAccount('Firma');
+	$jina = new TestAccount('Jina');
+	new TestProfile($identity, $firma)->setIsActive(false);
+	new TestProfile($identity, $jina);
+
+	Assert::same([$firma, $jina], $identity->getAccounts());
+	Assert::same([$jina], $identity->getActiveAccounts());
+});
+
+
+test('aktivni podrizene ucty jen z uctu s aktivnim profilem', function () {
+	$identity = new TestIdentity();
+	$firma = new TestAccount('Firma');
+	$pobocka = new TestAccount('Pobocka');
+	$jina = new TestAccount('Jina');
+	$sklad = new TestAccount('Sklad');
+	$firma->addSubaccount($pobocka);
+	$jina->addSubaccount($sklad);
+	new TestProfile($identity, $firma);
+	new TestProfile($identity, $jina)->setIsActive(false);
+
+	Assert::same([$pobocka, $sklad], $identity->getSubaccounts());
+	Assert::same([$pobocka], $identity->getActiveSubaccounts());
+});
+
+
 test('zvoleny ucet, SSO a kontext jsou nepovinne', function () {
 	$identity = new TestIdentity();
 	$account = new TestAccount('Firma');

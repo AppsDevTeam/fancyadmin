@@ -59,7 +59,8 @@ trait SelectAccountFormTrait
 
 			$accounts = $query->fetch();
 		} else {
-			$accounts = array_merge($this->_securityUser->getIdentity()->getAccounts(), $this->_securityUser->getIdentity()->getSubaccounts());
+			// Jen ucty s aktivnim profilem - na ostatni by uzivatele SelectAccountListener stejne nepustil
+			$accounts = array_merge($this->_securityUser->getIdentity()->getActiveAccounts(), $this->_securityUser->getIdentity()->getActiveSubaccounts());
 		}
 
 		$accountPairs = [];

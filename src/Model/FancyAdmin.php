@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model;
 
+use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\SsoHostAllowlist;
 use Nette\Security\Resource;
@@ -114,6 +115,16 @@ class FancyAdmin
 		return $this->backofficeAclResource;
 	}
 	
+	/**
+	 * Smi se identita prihlasit do portalu - potrebuje opravneni do zakaznicke casti nebo do
+	 * Backoffice. Jedina kontrola pro vsechny cesty do portalu (heslo, druhy faktor, passkey,
+	 * jednorazovy token).
+	 */
+	public function canSignIn(Identity $identity): bool
+	{
+		return $identity->isAllowed($this->customerAclResource) || $identity->isAllowed($this->backofficeAclResource);
+	}
+
 	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;

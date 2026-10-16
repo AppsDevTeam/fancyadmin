@@ -61,6 +61,14 @@ trait AuthPresenterTrait
 			try {
 				$this->_securityUser->login($token, context: $this->_fancyAdmin->getContext());
 
+				// Token vydava i API pokladny, kam se prihlasi i obsluha bez prava do portalu.
+				// Autentizator to nehlida, viz AuthenticatorTrait::validateIdentity().
+				if (!$this->_fancyAdmin->canSignIn($this->getUser()->getIdentity())) {
+					$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
+					$this->getUser()->logout(true);
+					$this->redirect(':Portal:Sign:in');
+				}
+
 				// Přihlášení odkazem není přihlášení klíčem (README 19.8)
 				$this->_passkeyService->clearPasskeySession();
 				$this->_passkeyService->clearTwoFactorSession();
@@ -108,9 +116,9 @@ trait AuthPresenterTrait
 		} else {
 			// TODO odstranit
 			try {
-				$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+				$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
 			} catch (InvalidLinkException) {
-				$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+				$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
 			}
 		}
 
@@ -170,6 +178,25 @@ trait AuthPresenterTrait
 		}
 	}
 
+	/**
+	 * Ucet, na ktery presmerovat uzivatele bez vybraneho uctu. Musi mit aktivni profil -
+	 * na ucet s deaktivovanym profilem by ho SelectAccountListener stejne nepustil.
+	 *
+	 * Bez aktivniho profilu uzivatel v portalu nema co delat, odhlasi se.
+	 *
+	 * @throws AbortException
+	 */
+	private function getFirstActiveAccountId(): int
+	{
+		if ($account = $this->getUser()->getIdentity()->getActiveAccounts()[0] ?? null) {
+			return $account->getId();
+		}
+
+		$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
+		$this->getUser()->logout(true);
+		$this->redirect(':Portal:Sign:in');
+	}
+
 	private function isProfilePresenter(): bool
 	{
 		$parts = explode(':', $this->getName());
@@ -190,7 +217,7 @@ trait AuthPresenterTrait
 				&&
 				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
 			) {
-				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getFirstActiveAccountId()]);
 			}
 
 			if (!$this->validateSecurityAttributes($element)) {

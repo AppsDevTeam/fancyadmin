@@ -519,6 +519,15 @@ class Authenticator extends OnetimeTokenAuthenticator
 
 `OnetimeTokenAuthenticator` rozšiřuje `DoctrineAuthenticator` a přidává OTP podporu. `AuthenticatorTrait` přidává `validateIdentity()` kontrolu ACL.
 
+Právo do portálu (customer nebo backoffice resource) posuzuje `FancyAdmin::canSignIn()` a volá ho
+každá cesta do portálu sama — heslo, druhý faktor, passkey i jednorázový token (`?token=`).
+Na `validateIdentity()` portál nestojí: projekt, který stejným autentizátorem přihlašuje i jinam
+(např. API pokladny s obsluhou bez práva do portálu), si ji přepíše.
+
+`Identity::getActiveAccounts()` / `getActiveSubaccounts()` vrací jen účty s aktivním profilem —
+z nich se nabízí přepínač účtů a vybírá účet po přihlášení. `getAccounts()` vrací účty všech
+profilů (používá je account filtr, aby už otevřené session po deaktivaci profilu doběhly).
+
 **Poznámka:** Pokud nepotřebujete OTP, můžete rozšiřovat přímo `DoctrineAuthenticator` a implementovat `verifyCredentials()`.
 
 ---
