@@ -989,6 +989,9 @@ fancyadmin:
 		inputFocusBackground: '#f0f0f0'
 ```
 
+Projekt bez účtů, nebo s databází pro každého zákazníka, přidá `multiTenant: false` — viz
+sekce 26 (Single-tenant režim).
+
 ### common.neon — ORM mapping
 
 ```neon
@@ -2655,3 +2658,41 @@ Vzhled přihlašovací stránky jde doladit CSS proměnnými bez přepisování 
 |---|---|---|
 | `--loginLogoWidth` | `226px` | šířka loga nad formulářem (na mobilu max. 156px) |
 | `--loginLostPasswordAlign` | `end` | zarovnání odkazu na zapomenuté heslo pod heslem |
+
+---
+
+## 26. Single-tenant režim (volitelné)
+
+Fancyadmin ve výchozím stavu počítá s více účty (tenanty) v jedné databázi: data se oddělují
+podle účtu, uživatel si účet vybírá v navigaci a zákaznický portál stojí na vybraném účtu
+v URL (`<selectedAccount>/...`). Projekt, který účty nemá nebo má databázi pro každého
+zákazníka, to vypne:
+
+```neon
+fancyadmin:
+	multiTenant: false
+```
+
+| Oblast | Více tenantů (výchozí) | Single-tenant |
+|---|---|---|
+| Security filtr dotazů (`DefaultFilters`) | uživatel bez `fullDataAclResource` vidí jen data svých účtů (join na `account`) | bez omezení podle účtu, zůstává jen pojistka „nepřihlášený nevidí nic" — entity vazbu na účet mít nemusí |
+| Účtový filtr (`BaseQuery::ACCOUNT_FILTER`) | filtruje podle vybraného účtu | nefiltruje, ani když identitě vybraný účet v databázi zůstal |
+| Výběr účtu | formulář v navigaci, `SelectAccountListener`, parametr `selectedAccount` v routě | formulář se nevykreslí (ručně odeslaný signál jen přesměruje na `defaultBackofficeRoute`), listener ani routa účet nenastaví, `AuthPresenter` identitě vybraný účet vynuluje |
+| Přihlášení (`FancyAdmin::canSignIn()`) | stačí customer nebo backoffice resource | jen backoffice resource; session, které právo do backoffice odebrali až po přihlášení, se odhlásí |
+| Formulář identity | role identity + profily (role v rámci účtu) | jen role identity (povinné), profily se nenabízí |
+| Gridy | sloupec účtů u identit, sloupec účtu u API klíčů | bez těchto sloupců |
+
+Oddělení tenantů v single-tenant režimu drží databáze, přístup k sekcím ACL.
+
+Poznámky:
+
+- Entity a třídy kolem účtů (`Account`, `Profile`, `SelectAccountForm`, …) projekt dodává dál —
+  fancyadmin je potřebuje k sestavení, jen se nepoužívají.
+- Přepnutí existujícího projektu nepotřebuje migraci: účet, který identitám zůstal vybraný
+  z dřívějška, dotazy ignorují a `AuthPresenter` ho při dalším požadavku vynuluje. Profily
+  v databázi zůstanou, jen se nepoužívají.
+- Přepínač čtou `FancyAdmin::isMultiTenant()` a `SecurityUser::isMultiTenant()` (query objekty
+  znají jen `SecurityUser`). Do `SecurityUser` ho nastavuje `FancyAdminExtension` přes
+  `setMultiTenant()`; `SecurityUser` sestavený mimo DI (testy, konzole) se chová jako dřív,
+  tedy jako více tenantů. Vlastní implementace rozhraní `SecurityUser` bez `SecurityUserTrait`
+  musí `isMultiTenant()` doplnit.

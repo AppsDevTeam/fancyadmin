@@ -96,7 +96,9 @@ trait AuthPresenterTrait
 			$this->redirect(':Portal:Sign:in');
 		}
 
-		if ($this->getParameter('selectedAccount')) {
+		if (!$this->_fancyAdmin->isMultiTenant()) {
+			$this->startupSingleTenant();
+		} elseif ($this->getParameter('selectedAccount')) {
 			if ($this->getUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
 				$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
 				$this->_em->flush();
@@ -130,6 +132,21 @@ trait AuthPresenterTrait
 		$this->enforcePasskeyLogin();
 
 		$this->primaryTemplate = true;
+	}
+
+	/**
+	 * Single-tenant: účet se nevybírá, identita ho mít nemá.
+	 */
+	private function startupSingleTenant(): void
+	{
+		$identity = $this->getUser()->getIdentity();
+
+		// Účet vybraný z doby před přepnutím do single-tenant režimu - dotazy ho sice
+		// ignorují, ale formuláře a šablony se na něj ptají (pole účtu, barvy účtu)
+		if ($identity->getSelectedAccount()) {
+			$identity->setSelectedAccount(null);
+			$this->_em->flush();
+		}
 	}
 
 	/**
@@ -212,7 +229,24 @@ trait AuthPresenterTrait
 	{
 		parent::checkRequirements($element);
 		if ($this->getUser()->isLoggedIn()) {
+			// Single-tenant nemá zákaznický portál (stojí na vybraném účtu v URL), takže se
+			// sem smí jen s přístupem do backoffice. Přihlášení bez něj odmítne už
+			// FancyAdmin::canSignIn(); tohle je session, které právo odebrali až po přihlášení.
+			// Odhlásit, ne 403 - z chybové stránky by se uživatel neměl jak dostat ven.
+			// Tady, ne ve startup(): checkRequirements() běží dřív.
 			if (
+				!$this->_fancyAdmin->isMultiTenant()
+				&&
+				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+			) {
+				$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
+				$this->getUser()->logout(true);
+				$this->redirect(':Portal:Sign:in');
+			}
+
+			if (
+				$this->_fancyAdmin->isMultiTenant()
+				&&
 				$this->isLinkCurrent($this->_fancyAdmin->getDefaultBackofficeRoute())
 				&&
 				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())

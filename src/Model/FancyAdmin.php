@@ -38,7 +38,18 @@ class FancyAdmin
 		protected ?string $passkeyRpId = null,
 		protected ?string $passkeyRpName = null,
 		protected array $ssoAllowedHosts = [],
+		protected bool $multiTenant = true,
 	) {}
+
+	/**
+	 * Více účtů v jedné databázi (výchozí). Při false je projekt single-tenant:
+	 * dotazy se nefiltrují podle účtu, účet se nevybírá a zákaznický portál
+	 * (routy s `<selectedAccount>`) se nepoužívá.
+	 */
+	public function isMultiTenant(): bool
+	{
+		return $this->multiTenant;
+	}
 
 	public function getSsoHostAllowlist(): SsoHostAllowlist
 	{
@@ -122,6 +133,12 @@ class FancyAdmin
 	 */
 	public function canSignIn(Identity $identity): bool
 	{
+		// Single-tenant nemá zákaznický portál - ten stojí na vybraném účtu v URL
+		// (<selectedAccount>/...). Kdo nemá backoffice, neměl by kam přijít.
+		if (!$this->multiTenant) {
+			return $identity->isAllowed($this->backofficeAclResource);
+		}
+
 		return $identity->isAllowed($this->customerAclResource) || $identity->isAllowed($this->backofficeAclResource);
 	}
 

@@ -23,6 +23,13 @@ trait DefaultFilters
 				return;
 			}
 
+			// Single-tenant: data v databázi patří jedinému tenantovi a entity vazbu na účet
+			// mít nemusí (join na `account` by spadl na DQL chybě). Oddělení tenantů drží
+			// databáze, přístup k sekcím ACL - zůstává jen pojistka pro nepřihlášeného výše.
+			if (!$this->getSecurityUser()->isMultiTenant()) {
+				return;
+			}
+
 			if (! $this->getSecurityUser()->isAllowedFullDataAclResource()) {
 				if ($this->getPrimaryEntityAlias()) {
 					if ($this->getPrimaryEntityAlias() !== 'e') {

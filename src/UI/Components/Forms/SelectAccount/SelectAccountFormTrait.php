@@ -94,6 +94,12 @@ trait SelectAccountFormTrait
 	 */
 	public function processForm(array $values): never
 	{
+		// Single-tenant formulář nevykresluje, ale signál jde odeslat ručně - účet
+		// by se identitě nastavil a AccountFieldListener by ho vepisoval do nových záznamů
+		if (!$this->_fancyAdmin->isMultiTenant()) {
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute());
+		}
+
 		if ($values['account'] === 'settings') {
 			// Pokud mame cloveka s global companies, tam se nastavi company jako null
 			$this->_securityUser->getIdentity()->setSelectedAccount(null);

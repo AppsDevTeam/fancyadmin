@@ -67,6 +67,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
 			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
 			'personalDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
+			// Více účtů (tenantů) v jedné databázi - data se oddělují podle účtu a uživatel
+			// si účet vybírá. false = jeden tenant na databázi (projekt bez účtů, nebo
+			// s databází pro každého zákazníka): bez filtrů podle účtu, výběru účtu
+			// a zákaznického portálu. Viz README, sekce 26 (Single-tenant režim).
+			'multiTenant' => Expect::bool()->default(true),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
@@ -154,6 +159,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'personalDataAclResource' => $this->config->personalDataAclResource,
+				'multiTenant' => $this->config->multiTenant,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
@@ -256,6 +262,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
 		$securityUserDef->addSetup('setPersonalDataAclResource', [$this->config->personalDataAclResource]);
+		// Query objekty znají jen SecurityUser - podle něj se rozhodují, jestli filtrovat podle účtu
+		$securityUserDef->addSetup('setMultiTenant', [$this->config->multiTenant]);
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);

@@ -84,6 +84,9 @@ final class OrderQuery extends QueryObjectStub
 {
 	use BaseQueryTrait;
 
+	/** @var list<Account> */
+	public array $accountFilterCalls = [];
+
 	protected function applySecurityFilter(): void
 	{
 		$this->filter['securityFilter'] = fn() => null;
@@ -91,6 +94,7 @@ final class OrderQuery extends QueryObjectStub
 
 	protected function applyAccountFilter(QueryBuilder $qb, Account $account): void
 	{
+		$this->accountFilterCalls[] = $account;
 	}
 }
 

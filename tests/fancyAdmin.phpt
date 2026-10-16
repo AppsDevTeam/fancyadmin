@@ -50,6 +50,12 @@ test('vychozi routy', function () {
 });
 
 
+test('vice tenantu v jedne databazi je vychozi rezim', function () {
+	Assert::true(FancyAdminFactory::create()->isMultiTenant());
+	Assert::false(FancyAdminFactory::create(['multiTenant' => false])->isMultiTenant());
+});
+
+
 test('ACL zdroje pro jednotlive casti administrace', function () {
 	$fancyAdmin = FancyAdminFactory::create();
 
