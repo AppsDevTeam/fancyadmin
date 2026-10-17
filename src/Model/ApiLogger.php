@@ -23,7 +23,9 @@ use Throwable;
  * Selhání zápisu se polyká: logování nesmí shodit operaci, o které vypovídá.
  *
  * Obsah se sanitizuje - do cizího rozhraní i zpátky můžou téct údaje, které se do logu
- * uložit nesmí (viz SensitiveDataSanitizer).
+ * uložit nesmí (viz SensitiveDataSanitizer). Na nemaskované číslo karty se upozorňuje jen
+ * u toho, co přišlo zpátky: request skládá aplikace sama, takže by se v něm PAN ocitl jen
+ * tak, že předtím přišel některým vstupem - a ten už se kontroloval.
  */
 final class ApiLogger
 {
@@ -62,7 +64,7 @@ final class ApiLogger
 				'type' => $type,
 				'environment' => $environment,
 				'endpoint_url' => $endpointUrl,
-				'request' => $this->sanitize($request),
+				'request' => $request === null ? null : $this->sanitizer->withoutCardNumberAlert()->sanitize($request),
 				'response' => $this->sanitize($response),
 				'http_status_code' => $httpStatusCode,
 				'error_message' => $this->sanitize($errorMessage),

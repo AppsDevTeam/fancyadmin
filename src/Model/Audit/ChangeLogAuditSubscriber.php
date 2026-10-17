@@ -131,7 +131,9 @@ final class ChangeLogAuditSubscriber
 			// historie spojí, a opakované ohlášení téhož řádku je poznat
 			correlationId: (string) $logEntry->getId(),
 			actor: $this->auditActor->create(),
-			payload: (array) $this->sanitizer->sanitize($payload),
+			// bez upozornění na číslo karty: hodnoty do entit přišly requestem
+			// a ten už se kontroloval, tady by šlo jen o duplicitní poplach
+			payload: (array) $this->sanitizer->withoutCardNumberAlert()->sanitize($payload),
 		);
 	}
 

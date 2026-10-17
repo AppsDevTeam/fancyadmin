@@ -40,7 +40,7 @@ require __DIR__ . '/bootstrap.php';
 
 
 /** @return array{0: ChangeLogAuditSubscriber, 1: TestConnection} */
-function createSubscriber(): array
+function createSubscriber(?SensitiveDataSanitizer $sanitizer = null): array
 {
 	$em = new TestEntityManager([TestAuditLog::class]);
 	$metadata = $em->getClassMetadata(TestAuditLog::class);
@@ -60,7 +60,7 @@ function createSubscriber(): array
 	);
 
 	return [
-		new ChangeLogAuditSubscriber(new AuditLogger($em), $actor, new SensitiveDataSanitizer()),
+		new ChangeLogAuditSubscriber(new AuditLogger($em), $actor, $sanitizer ?? new SensitiveDataSanitizer()),
 		$em->getConnection(),
 	];
 }
@@ -239,6 +239,25 @@ test('citliva hodnota se do auditu nedostane v otevrene podobe', function () {
 	$payload = $connection->getLastInsert()['data']['payload'];
 	Assert::contains('password', $payload['properties']);
 	Assert::notContains('stare-heslo', json_encode($payload, JSON_THROW_ON_ERROR));
+});
+
+
+test('cislo karty v auditu se zamaskuje, ale neupozorni', function () {
+	// Hodnoty do entit prisly requestem a ten uz se kontroloval -
+	// upozorneni z auditu by bylo jen duplicitnim poplachem.
+	$alerts = [];
+	$sanitizer = new SensitiveDataSanitizer()
+		->onCardNumberDetected(function (string $scheme) use (&$alerts): void {
+			$alerts[] = $scheme;
+		});
+	[$subscriber, $connection] = createSubscriber($sanitizer);
+
+	$changeSet = createChangeSet([new Scalar('state', 'active', '4111111111111111')]);
+	$subscriber->logEntry(createChangeLog(TestAuditedEntity::class, $changeSet), new TestAuditedEntity(), false);
+
+	$values = $connection->getLastInsert()['data']['payload']['values'];
+	Assert::same('************1111', $values['state']['new']);
+	Assert::same([], $alerts);
 });
 
 
