@@ -123,13 +123,13 @@ test('nazev Relying Party se bere z nazvu projektu', function () {
 
 
 test('web manifest nese nazev projektu a ikony z appIconsDir', function () {
-	$manifest = FancyAdminFactory::create(['projectName' => 'T-Pokladna', 'appIconsDir' => 'favicon/tmobile'])->createWebManifest();
+	$manifest = FancyAdminFactory::create(['projectName' => 'Test App', 'appIconsDir' => 'favicon/testproject'])->createWebManifest();
 
-	Assert::same('T-Pokladna', $manifest['name']);
-	Assert::same('T-Pokladna', $manifest['short_name']);
+	Assert::same('Test App', $manifest['name']);
+	Assert::same('Test App', $manifest['short_name']);
 	Assert::same('standalone', $manifest['display']);
 	Assert::same(
-		['/favicon/tmobile/icon-192.png', '/favicon/tmobile/icon-512.png'],
+		['/favicon/testproject/icon-192.png', '/favicon/testproject/icon-512.png'],
 		array_column($manifest['icons'], 'src'),
 	);
 	Assert::same(['192x192', '512x512'], array_column($manifest['icons'], 'sizes'));
