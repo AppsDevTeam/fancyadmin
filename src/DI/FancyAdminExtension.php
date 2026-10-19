@@ -62,6 +62,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'emailBackgroundColor' => Expect::string()->default(null),
 			'faviconFileNamePng' => Expect::string()->nullable()->default(null),
 			'faviconFileNameSvg' => Expect::string()->nullable()->default(null),
+			// Adresar (relativne k webrootu) s icon-192.png, icon-512.png a apple-touch-icon.png -
+			// ikona a nazev aplikace pridane na plochu / domovskou obrazovku (web manifest)
+			'appIconsDir' => Expect::string()->nullable()->default(null),
 			'hmr' => Expect::bool()->default(false),
 			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
 			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
@@ -139,6 +142,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'project' => $this->config->project,
 				'projectName' => $this->config->projectName,
 				'adminHostPath' => $this->config->adminHostPath,
+				'appIconsDir' => $this->config->appIconsDir,
 				'logoPublicPath' => $this->config->logoPublicPath,
 				'logoMenuPath' => $this->config->logoMenuPath,
 				'loginPageLogoPath' => $this->config->loginPageLogoPath,
