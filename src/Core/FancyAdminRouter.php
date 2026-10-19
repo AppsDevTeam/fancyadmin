@@ -113,6 +113,12 @@ class FancyAdminRouter
 				$this->accountQueryFactory
 			);
 
+			// Verejny (bez prihlaseni) - prohlizec si manifest stahuje bez cookies
+			$this->portalRouteList->addRoute('manifest.webmanifest', [
+				'presenter' => 'Manifest',
+				'action' => 'default',
+			]);
+
 			$this->portalRouteList->addRoute('sign/in', [
 				'presenter' => 'Sign',
 				'action' => 'in',
