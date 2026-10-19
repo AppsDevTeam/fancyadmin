@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Grids\Identity;
 
 use ADT\Datagrid\Component\DataGrid;
+use ADT\FancyAdmin\Model\Entities\Enums\IdentityScopeEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Queries\IdentityQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\AnonymizeIdentity\AnonymizeIdentity;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
@@ -20,6 +22,9 @@ trait IdentityGridTrait
 	use SignInAsIdentity;
 	use IdentityData;
 	use AnonymizeIdentity;
+
+	/** null = seznam se nedeli a zobrazuje vsechny uzivatele. */
+	public ?IdentityScopeEnum $scope = null;
 
 	public function initGrid(DataGrid $grid): void
 	{
@@ -43,6 +48,13 @@ trait IdentityGridTrait
 			->setRenderer(function (Identity $identity) {
 				return implode(', ', array_map(fn($account) => $account->getName(), $identity->getAccounts()));
 			});
+	}
+
+	protected function initQueryObject($queryObject): void
+	{
+		if ($this->scope && $queryObject instanceof IdentityQuery) {
+			$queryObject->byScope($this->scope);
+		}
 	}
 
 	protected function getQueryObjectFactoryClass(): string

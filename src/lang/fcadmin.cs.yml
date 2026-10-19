@@ -57,6 +57,16 @@ presenters:
     title: Uživatelé
     pageTitle: Uživatelé
     header: Uživatelé
+    # Volitelne rozdeleni seznamu uzivatelu - viz IdentityScopeEnum
+    scope:
+      profile:
+        title: Uživatelé
+        pageTitle: Uživatelé
+        header: Uživatelé
+      staff:
+        title: Správci
+        pageTitle: Správci
+        header: Správci
 
   # Seznam účtů (tenantů) — presenter Accounts
   account:
