@@ -1,0 +1,569 @@
+@use 'flatpickr/dist/flatpickr.css';
+@use 'variables' as *;
+
+// Vzhled kalendáře flatpickru (používá ho adt-js-components/DateInput i projekty
+// přímo). Základní CSS flatpickru je potřeba načíst PŘED tímhle souborem —
+// přebíjíme ho stejnou nebo vyšší specificitou a spoléháme na pořadí ve zdroji.
+//
+// Barvy se berou z palety balíčku, takže kalendář automaticky sedí k projektu
+// i k tmavému režimu. Text na primární barvě jde přenastavit přes --onPrimaryColor
+// (výchozí bílá) — projekt se světlou primární barvou by na bílé neměl kontrast.
+
+$fp-day-size: 34px;
+$fp-gap: 3px;
+$fp-radius-day: 9px;
+$fp-radius-control: 8px;
+// Výška ovládacích prvků v hlavičce (měsíc, rok, šipky) a šířka pole s časem
+$fp-control-size: 28px;
+$fp-time-field-width: 56px;
+// Sloupec se šipkami nahoru/dolů u hodin a minut
+$fp-arrow-width: 14px;
+
+// Podbarvení dnů uvnitx vybraného rozsahu
+$fp-range-tint: color-mix(in srgb, var(--primaryColor) 14%, transparent);
+
+// Šipka rozbalovacího měsíce. Barva je napevno (střední šedá) — v data URI nejde
+// použít currentColor a na světlé i tmavé ploše drží čitelnost stejně.
+// Všechny rozbalovací seznamy v kalendáři (měsíc, rok, hodiny, minuty) sdílejí
+// jeden vzhled — seznam roku i času vyrábějí pluginy, ale uživatel v nich nemá
+// poznat rozdíl proti měsíci, který kreslí sám flatpickr.
+$fp-select: '.flatpickr-monthDropdown-months, .flatpickr-yearDropdown-years, .flatpickr-timeDropdown';
+
+$fp-chevron-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 10l4-4 4 4'/%3E%3C/svg%3E");
+$fp-chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+$fp-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23908f95' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.5l4 4 4-4'/%3E%3C/svg%3E");
+
+.flatpickr-calendar {
+	// Vlastní šířka: dny si drží svoji pevnou (flatpickr ji počítá v procentech),
+	// odsazení tedy musí přidat kontejner, jinak by se dny zúžily.
+	width: auto;
+	padding: 8px;
+	background: $background;
+	border: 1px solid $color-light-gray;
+	border-radius: $br-grid;
+	box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+	font-family: inherit;
+	font-size: 14px;
+	color: $black;
+
+	// Špička mířící na input: s měkkým stínem působí jako artefakt a u okraje
+	// obrazovky se rozchází s posunutým kalendářem.
+	&::before,
+	&::after {
+		display: none;
+	}
+
+	// Kalendář lepí flatpickr natěsno k inputu; mezera ho odlepí jako samostatnou
+	// plovoucí vrstvu. Směr posunu se řídí tím, na kterou stranu se otevřel.
+	&.arrowTop {
+		margin-top: 4px;
+	}
+
+	&.arrowBottom {
+		margin-top: -4px;
+	}
+
+	&.inline {
+		margin-top: 0;
+		box-shadow: none;
+	}
+
+	.flatpickr-innerContainer,
+	.flatpickr-rContainer,
+	.flatpickr-days {
+		border: 0;
+		background: transparent;
+	}
+
+	/* ---- Hlavička s měsícem ---- */
+
+	.flatpickr-months {
+		align-items: center;
+		padding-bottom: 6px;
+
+		.flatpickr-month {
+			height: auto;
+			background: transparent;
+			color: $black;
+			fill: $black;
+		}
+
+		.flatpickr-prev-month,
+		.flatpickr-next-month {
+			position: static;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: 0 0 auto;
+			width: $fp-control-size;
+			height: $fp-control-size;
+			padding: 0;
+			border-radius: $br-element;
+			color: $text-muted;
+			fill: $text-muted;
+			transition: background-color .15s, color .15s;
+
+			&:hover {
+				background: $background-dark;
+				color: $black;
+				fill: $black;
+
+				svg path {
+					fill: currentColor;
+				}
+			}
+
+			svg {
+				width: 14px;
+				height: 14px;
+			}
+		}
+	}
+
+	.flatpickr-current-month {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+		position: static;
+		width: auto;
+		height: auto;
+		padding: 0;
+		font-size: 15px;
+		font-weight: 600;
+
+		// Rozbalovací měsíc i rok vypadají jako text, dokud na ně uživatel nenajede —
+		// ovládací prvek v hlavičce by jinak konkuroval mřížce dnů. Hover barví jen
+		// background-color: zkrácený zápis by u měsíce smazal šipku z background-image.
+		// Oba prvky jsou stejně vysoké jako šipky měsíců vedle nich, aby hlavička
+		// držela jednu výškovou linku a hover nebyl placatý proužek kolem textu.
+		#{$fp-select},
+		.numInputWrapper {
+			height: $fp-control-size;
+			border-radius: $fp-radius-control;
+			transition: background-color .15s;
+
+			&:hover {
+				background-color: $background-dark;
+			}
+		}
+
+		// Rok nahrazuje plugin flatpickrYearSelect selectem; původní číselný input
+		// zůstává v DOM schovaný, flatpickr do něj dál zapisuje.
+		.numInputWrapper.flatpickr-yearInput-replaced {
+			display: none;
+		}
+
+
+		// Šířka musí počítat se čtyřmístným rokem i se šipkami vpravo, jinak šipky
+		// leží na číslicích (flatpickr je pozicuje absolutně k pravému okraji).
+		.numInputWrapper {
+			display: inline-flex;
+			align-items: center;
+			// Pevně v pixelech: v ch se šířka počítá z číslice „0", ale polotučné
+			// číslice jsou širší a rok se ořezával („202" + kus šestky).
+			width: 68px;
+
+			input.cur-year {
+				width: 100%;
+				height: 100%;
+				padding: 0;
+				text-align: center;
+				font-size: inherit;
+				font-weight: inherit;
+				color: inherit;
+			}
+
+			// Šipky nahoru/dolů pryč: flatpickr je pozicuje absolutně k pravému okraji,
+			// takže rok nešel mít opticky na střed — buď kolem sebe měl stejné mezery
+			// a šipky mu seděly na číslicích, nebo se jim uhnul doleva. Platí jen bez
+			// pluginu flatpickrYearSelect; s ním je celé pole schované a rok je seznam.
+			span.arrowUp,
+			span.arrowDown {
+				display: none;
+			}
+		}
+	}
+
+	// Společný vzhled pro všechny seznamy v kalendáři. Výčet rodičů tu musí být:
+	// základní CSS flatpickru cílí na `.flatpickr-current-month .flatpickr-monthDropdown-months`,
+	// takže bez něj by naše pravidla měla nižší specificitu a prohrála by (šipka
+	// i odsazení položek by spadly zpátky na vendor hodnoty).
+	.flatpickr-current-month,
+	.flatpickr-time .numInputWrapper {
+		#{$fp-select} {
+			appearance: none;
+			// Ovládací prvek v hlavičce má vypadat jako text, dokud na něj uživatel
+			// nenajede (podbarvení hoveru řeší pravidlo výš). Bez vynulování svítí
+			// na podkladu kalendáře bílá plocha selectu s rámečkem.
+			border: 0;
+			background-color: transparent;
+			// Select se sám roztahuje na šířku nejdelšího měsíce („Listopad"), takže
+			// u krátkých názvů zůstávala mezera mezi textem a šipkou. field-sizing
+			// ho sesadí na aktuální hodnotu (Chrome); prohlížeče bez podpory spadnou
+			// zpět na původní šířku a vycentrovaný text mezeru rozdělí na obě strany.
+			// Vpravo je rezerva na vlastní šipku — bez ní nejde poznat, že jde o select.
+			field-sizing: content;
+			padding: 0 24px 0 12px;
+			text-align: center;
+			background-image: $fp-select-caret;
+			background-repeat: no-repeat;
+			background-position: right 8px center;
+			background-size: 12px;
+			font-size: inherit;
+			font-weight: inherit;
+			line-height: $fp-control-size;
+			color: inherit;
+			// Měsíc dostává kurzor ze základního CSS flatpickru, seznamy z pluginů ne
+			cursor: pointer;
+
+			.flatpickr-monthDropdown-month {
+				background: $background;
+				color: $black;
+			}
+
+			// Rozbalený seznam nekreslí prohlížeč, ale panel .flatpickr-dropdown
+			// (flatpickrDropdown.js) — viz jeho hlavička. Nativní seznam zbývá jen
+			// pro klávesnici (Enter/mezera na selectu).
+			option {
+				background: $background;
+				color: $black;
+			}
+		}
+	}
+
+	// Panel se seznamem (měsíc, rok, hodiny, minuty). Pozici počítá JS a předává
+	// ji v proměnných, protože vychází z polohy pole v okně; zbytek je na CSS.
+	// Vzhled položek odpovídá rozbalenému seznamu Select2 (_select2.scss).
+	.flatpickr-dropdown {
+		position: absolute;
+		top: var(--dropdown-top, 0);
+		left: var(--dropdown-left, 0);
+		z-index: 10;
+		min-width: var(--dropdown-min-width, 150px);
+		// Dvanáct měsíců ani 24 hodin nemá přerůst kalendář
+		max-height: 260px;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		scrollbar-width: thin;
+		border: 1px solid $color-light-gray;
+		border-radius: $br-grid;
+		background: $background;
+		box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+		text-align: center;
+
+		.flatpickr-dropdown-option {
+			padding: 15px;
+			font-size: 14px;
+			line-height: 14px;
+			font-weight: 400;
+			color: $black;
+			cursor: pointer;
+
+			&:hover {
+				background: $background-dark;
+			}
+
+			&.selected {
+				color: $primary;
+				font-weight: 600;
+			}
+		}
+	}
+
+	/* ---- Mřížka ---- */
+
+	// Flatpickr skládá dny flexem na procentuální šířky, takže mezi buňkami nejde
+	// udělat mezeru. Grid se stejnými sloupci pro hlavičku i dny je drží zarovnané
+	// a mezery vyřeší gap.
+	.flatpickr-days {
+		width: auto;
+	}
+
+	.flatpickr-weekdays {
+		width: auto;
+		height: auto;
+		padding-bottom: 4px;
+	}
+
+	.flatpickr-weekdaycontainer,
+	.dayContainer {
+		display: grid;
+		grid-template-columns: repeat(7, $fp-day-size);
+		gap: $fp-gap;
+		width: auto;
+		min-width: 0;
+		max-width: none;
+	}
+
+	/* ---- Dny v týdnu ---- */
+
+	span.flatpickr-weekday {
+		// Vyšší řádkování kvůli diakritice — flatpickr má line-height 1 a řádek
+		// s přetékajícím obsahem ořezává, takže z „ÚT" a „ČT" zbyly holé verzálky.
+		line-height: 18px;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: .04em;
+		text-transform: uppercase;
+		color: $xxx;
+		background: transparent;
+	}
+
+	/* ---- Mřížka dnů ---- */
+
+	.flatpickr-day {
+		width: auto;
+		max-width: none;
+		flex-basis: auto;
+		height: $fp-day-size;
+		line-height: $fp-day-size - 2px;
+		border: 1px solid transparent;
+		border-radius: $fp-radius-day;
+		color: $black;
+		transition: background-color .12s, color .12s;
+
+		&:hover {
+			background: $background-dark;
+			border-color: transparent;
+		}
+
+		// Dnešek je jen orámovaný — vybraný den musí zůstat jediná plná plocha
+		&.today {
+			border-color: $primary;
+			color: $primary;
+			font-weight: 600;
+		}
+
+		&.selected,
+		&.startRange,
+		&.endRange {
+			background: $primary;
+			border-color: $primary;
+			color: var(--onPrimaryColor, #fff);
+			font-weight: 600;
+		}
+
+		// Dny mezi krajními body výběru: jen podbarvení, ať je vidět, kde rozsah
+		// začíná a končí. Vnitřek rozsahu drží hranaté rohy, krajní dny zaoblené.
+		// Stín do stran přelije mezeru mezi buňkami, aby byl pruh souvislý; na
+		// začátku a konci řádku se přelévá jen dovnitř.
+		&.inRange {
+			background: $fp-range-tint;
+			border-color: transparent;
+			border-radius: 0;
+			color: $black;
+			box-shadow: (-$fp-gap) 0 0 $fp-range-tint, $fp-gap 0 0 $fp-range-tint;
+
+			&:nth-child(7n + 1) {
+				box-shadow: $fp-gap 0 0 $fp-range-tint;
+			}
+
+			&:nth-child(7n) {
+				box-shadow: (-$fp-gap) 0 0 $fp-range-tint;
+			}
+		}
+
+		&.startRange:not(.endRange) {
+			border-radius: $fp-radius-day 0 0 $fp-radius-day;
+			box-shadow: $fp-gap 0 0 $fp-range-tint;
+
+			&:nth-child(7n) {
+				box-shadow: none;
+			}
+		}
+
+		&.endRange:not(.startRange) {
+			border-radius: 0 $fp-radius-day $fp-radius-day 0;
+			box-shadow: (-$fp-gap) 0 0 $fp-range-tint;
+
+			&:nth-child(7n + 1) {
+				box-shadow: none;
+			}
+		}
+
+		&.prevMonthDay,
+		&.nextMonthDay {
+			color: $xxx;
+		}
+
+		&.flatpickr-disabled,
+		&.flatpickr-disabled:hover {
+			background: transparent;
+			color: $xxx;
+			text-decoration: line-through;
+			text-decoration-thickness: 1px;
+		}
+
+		&:focus-visible {
+			outline: 2px solid $primary;
+			outline-offset: -2px;
+		}
+	}
+
+	/* ---- Čas ---- */
+
+	&.hasTime .flatpickr-time {
+		height: 44px;
+		max-height: 44px;
+		margin-top: 6px;
+		padding-top: 6px;
+		border-top: 1px solid $color-light-gray;
+	}
+
+	// Hodiny a minuty jsou dvě stejně široká pole kolem dvojtečky, ne dvě poloviny
+	// řádku — podbarvení hoveru pak nesahá až k zaobleným rohům karty.
+	// Mřížka místo centrovaného flexu: dvojtečka drží střed karty a hodiny s minutami
+	// se o něj opírají z obou stran. Flex by se dal rozhodit čímkoli, co se do řádku
+	// připlete (skrytý prvek, pseudoelement) — mřížka má pozice dané sloupci.
+	.flatpickr-time {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		column-gap: 4px;
+		padding-left: 0;
+		padding-right: 0;
+		border-radius: 0;
+
+		.numInputWrapper {
+			display: grid;
+			grid-template-columns: 1fr;
+			grid-template-rows: 1fr 1fr;
+			width: $fp-time-field-width;
+
+			&:first-of-type {
+				justify-self: end;
+			}
+
+			&:last-of-type {
+				justify-self: start;
+			}
+			height: $fp-control-size;
+			border-radius: $fp-radius-control;
+			transition: background-color .15s;
+
+			&:hover {
+				background-color: $background-dark;
+			}
+		}
+
+		input {
+			// Přes obě řádky mřížky, tedy přes celé pole — číslo je na středu
+			// a šipky se na něj překládají až v pravém okraji
+			grid-area: 1 / 1 / 3 / 2;
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			text-align: center;
+			font-size: 15px;
+			font-weight: 600;
+			color: $black;
+
+			// Podbarvení drží obal, jinak by se překrývaly dvě plochy s různým rádiusem
+			&:hover,
+			&:focus {
+				background: transparent;
+			}
+		}
+
+		// Hodiny a minuty doplňuje plugin flatpickrTimeSelect o seznam. Číselné pole
+		// flatpickru zůstává vidět a jde do něj psát ručně (čas mimo krok seznamu),
+		// seznam se otevírá šipkou vpravo. Šipky nahoru/dolů jsou skryté — krokování
+		// po jedné přebral seznam a kolečko myši nad polem funguje dál.
+		.numInputWrapper.flatpickr-timeInput-replaced {
+			> span.arrowUp,
+			> span.arrowDown {
+				display: none;
+			}
+
+			// Číslo ustoupí doleva o šířku šipky, aby na ní neleželo
+			> input {
+				padding-right: $fp-arrow-width;
+			}
+
+			.flatpickr-timeDropdown {
+				// Podbarvení drží pole, ne seznam. V režimu appearance: base-select si
+				// prohlížeč kreslí vlastní pozadí, které se uvnitř pilulky pole objeví
+				// jako druhý, menší obdélník — proto ho tady vypínáme (jen barvu,
+				// obrázek na pozadí nese šipku).
+				&,
+				&:hover,
+				&:active,
+				&:focus-visible {
+					background-color: transparent;
+				}
+
+				// Z celého selectu je vidět jen šipka u pravého okraje pole: vybranou
+				// hodnotu ukazuje číselné pole pod ním, v tlačítku by se zdvojila.
+				grid-area: 1 / 1 / 3 / 2;
+				justify-self: end;
+				// Číselné pole má ve výchozím CSS position: relative, takže by jinak
+				// leželo nad šipkou a bralo jí kliknutí
+				position: relative;
+				field-sizing: auto;
+				width: $fp-arrow-width + 6px;
+				height: 100%;
+				padding: 0;
+				color: transparent;
+				background-position: center;
+			}
+		}
+
+		// Šipky mají vlastní sloupec v pravé části pole a číslo zůstává přes celou
+		// šířku na středu — proto mřížka, ne absolutní pozicování jako ve výchozím
+		// CSS, kde šipky končily na číslicích. Výchozí trojúhelníčky z borderů
+		// nahrazuje maskovaný chevron, aby měly stejný tah jako ostatní ikony.
+		span.arrowUp,
+		span.arrowDown {
+			position: static;
+			grid-column: 1;
+			justify-self: end;
+			width: $fp-arrow-width;
+			height: 100%;
+			padding: 0;
+			border: 0;
+			color: $text-muted;
+			background-color: currentColor;
+			-webkit-mask-repeat: no-repeat;
+			mask-repeat: no-repeat;
+			-webkit-mask-position: center;
+			mask-position: center;
+			-webkit-mask-size: 9px;
+			mask-size: 9px;
+
+			&:hover {
+				background-color: currentColor;
+				color: $black;
+			}
+
+			// Výchozí trojúhelník skládaný z borderů
+			&:after {
+				display: none;
+			}
+		}
+
+		span.arrowUp {
+			grid-row: 1;
+			-webkit-mask-image: $fp-chevron-up;
+			mask-image: $fp-chevron-up;
+		}
+
+		span.arrowDown {
+			grid-row: 2;
+			-webkit-mask-image: $fp-chevron-down;
+			mask-image: $fp-chevron-down;
+		}
+
+		// Dvojtečka má v základním CSS šířku 2 % řádku, takže flex počítá s jiným
+		// číslem, než co se nakreslí, a dvojice se posune mimo osu karty.
+		.flatpickr-time-separator {
+			width: auto;
+			color: $text-muted;
+		}
+
+		.flatpickr-am-pm {
+			color: $text-muted;
+		}
+	}
+}
