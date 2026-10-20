@@ -127,6 +127,40 @@ $(function () {
 		}
 	});
 
+	// Spodní lišta panelu: [přepínač] ....... [Uložit]. Renderer vypisuje tlačítko
+	// a přepínač nad ním jako samostatné bloky na konci formuláře, takže u delších
+	// formulářů odjedou pod přehyb. Složíme je do jednoho pruhu, zbytek dělá CSS.
+	function buildFormActions(container) {
+		container.querySelectorAll('[id^="snippet--sidePanel"] form').forEach((form) => {
+			if (form.querySelector(':scope > .side-panel-actions')) return;
+
+			// Poslední blok s viditelným tlačítkem - podle šablony je to tlačítko samo
+			// nebo obal, který mu dala. Skrytý submit je jen nosič signálu.
+			const visible = '[type="submit"]:not([hidden])';
+			const blocks = Array.from(form.children).filter((el) => el.matches(visible) || el.querySelector(visible));
+			const submit = blocks[blocks.length - 1];
+			if (!submit) return;
+
+			// Stav záznamu bereme do lišty, jen když stojí těsně nad tlačítkem; jinde ve
+			// formuláři patří ke kontextu okolních polí. V liště ho kreslíme jako přepínač
+			// (form-switch je bootstrapí třída pro vzhled, na odesílaná data nemá vliv).
+			const above = submit.previousElementSibling;
+			const toggle = above && above.querySelector('input[name="isActive"]') ? above : null;
+
+			const actions = document.createElement('div');
+			actions.className = 'side-panel-actions';
+			submit.before(actions);
+
+			if (toggle) {
+				toggle.classList.add('side-panel-actions-toggle');
+				toggle.querySelector('.form-check').classList.add('form-switch');
+				actions.append(toggle);
+			}
+			submit.classList.add('side-panel-actions-submit');
+			actions.append(submit);
+		});
+	}
+
 	// Otevřený stav panelů jako třídy - CSS se podle nich vysouvá a ztmavuje pozadí.
 	// Přes :has(form) se změna v Chrome projeví naráz a přechod neproběhne. Třída se
 	// nastavuje až o dva snímky později: vložený obsah přepočítá :has() pravidla
@@ -142,6 +176,7 @@ $(function () {
 		[[main, mainOpen], [stacked, stackedOpen]].forEach(([container, open]) => {
 			if (!container) return;
 			if (open) {
+				buildFormActions(container);
 				// Šířku určuje velikost z obsahu (:has v CSS), zapamatujeme ji pro zavírání
 				container.style.removeProperty('--width');
 				container.dataset.openWidth = getComputedStyle(container).maxWidth;

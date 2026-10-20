@@ -2638,3 +2638,37 @@ Vzhled přihlašovací stránky jde doladit CSS proměnnými bez přepisování 
 |---|---|---|
 | `--loginLogoWidth` | `226px` | šířka loga nad formulářem (na mobilu max. 156px) |
 | `--loginLostPasswordAlign` | `end` | zarovnání odkazu na zapomenuté heslo pod heslem |
+
+## 26. Spodní lišta ve vyjíždějícím panelu
+
+Formulář v side panelu má tlačítko na konci, takže u delších formulářů odjelo pod přehyb
+a uživatel k němu musel odrolovat. `sidePanel.js` proto z konce formuláře složí lištu
+`.side-panel-actions` a CSS ji přilepí na spodní hranu panelu (`position: sticky`). Děje
+se to automaticky, šablona ani formulář nic přidávat nemusí. Panel bez formuláře (vlastní
+obsah přes blok `body`) zůstává beze změny - pravidla visí na `:has(.side-panel-actions)`.
+
+Lišta sedí u spodní hrany i u krátkého formuláře: panel se přepne na flex sloupec,
+formulář se natáhne přes jeho výšku a lišta se odsune dolů (`margin-top: auto`).
+
+### Rozložení
+
+Lišta je flex se `space-between`: přepínač vlevo, hlavní akce vpravo. Bez přepínače
+zůstane v liště jen tlačítko. Projekt si rozložení přenastaví na
+`.side-panel-template-container .side-panel-actions` (vendor selektor má dvě třídy,
+slabší by neprošel). Barvy i rozměry tlačítka jdou z `.btn` a tokenů - lišta si žádné
+vlastní nedrží.
+
+### Stav záznamu v liště
+
+Do lišty se vedle tlačítka vezme i zaškrtávátko `isActive`, pokud stojí **hned nad
+tlačítkem**; v liště se kreslí jako přepínač. Jinde ve formuláři se nechává být, tam patří
+ke kontextu okolních polí. Pokud ho tedy chcete mít v liště, vypište ho v šabloně těsně
+před tlačítko:
+
+```latte
+{formPair $form['isActive']}
+{input $form['submit'], class => 'btn btn-primary'}
+```
+
+Formulář se kvůli tomu nemění - je to jen přeskládání a nastylování toho, co už renderer
+vypsal. Odesílaná data i název pole zůstávají stejné.

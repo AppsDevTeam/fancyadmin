@@ -214,6 +214,102 @@ $sidePanelTemplateAnimation: .4s;
     flex-direction: column;
   }
 
+  // Panel s lištou je flex sloupec až dolů k formuláři, aby se formulář natáhl přes
+  // celou výšku panelu. Lišta pak (margin-top: auto) sedí na spodní hraně i u krátkého
+  // formuláře - jinak by visela hned pod posledním polem a pod ní by zbyl prázdný pruh.
+  //
+  // Prostřední článek řetězu je snippet formuláře; vybíráme ho podle toho, že formulář
+  // obsahuje, protože jeho id se jmenuje podle komponenty. Položky rostou, ale nesmí se
+  // smrsknout - delší formulář má zůstat vysoký podle obsahu a panel se musí dát odrolovat.
+  &:has(.side-panel-actions) {
+    display: flex;
+    flex-direction: column;
+    // Spodní odsazení panelu dodává lišta svým paddingem
+    padding-bottom: 0;
+
+    > [id^="snippet--sidePanel"],
+    > [id^="snippet--sidePanel"] > :has(> form),
+    form {
+      flex: 1 0 auto;
+    }
+
+    > [id^="snippet--sidePanel"],
+    > [id^="snippet--sidePanel"] > :has(> form) {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  // Spodní lišta: [přepínač] ....... [Uložit]. Je poslední prvek formuláře, takže se při
+  // dorolování na konec kryje se svou normální pozicí a nikam neposkočí. Záporné vodorovné
+  // marginy vyruší odsazení panelu, aby pruh šel přes celou jeho šířku.
+  .side-panel-actions {
+    position: sticky;
+    bottom: 0;
+    // Nad obsahem formuláře, pod zavíracím křížkem v rohu panelu
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: auto (-$sidePanelPadding) 0;
+    padding: 16px $sidePanelPadding;
+    background-color: $background;
+    border-top: 1px solid $color-light-gray;
+  }
+
+  // Buňky lišty jsou původní bloky polí, takže si s sebou nesou odsazení, kterým se
+  // odděloval řádek formuláře (typicky utilita .mb-3). V liště je navíc a rozhodí svislé
+  // vystředění, protože flex pracuje s margin boxem položky. Bootstrap utility mají
+  // !important, takže se jinak než takhle přebít nedají.
+  .side-panel-actions-submit,
+  .side-panel-actions-toggle {
+    margin: 0 !important;
+    flex: 0 0 auto;
+  }
+
+  // Tlačítko drží u pravé hrany i bez přepínače - samotná položka by se jinak
+  // postavila doleva
+  .side-panel-actions-submit {
+    margin-left: auto !important;
+  }
+
+  // === Přepínač stavu záznamu ===
+  // Bootstrap kreslí dráhu jako pozadí prvku a puntík jako obrázek v něm. Rozměry puntíku
+  // proto řídíme background-size a odsazení od kraje background-position; přes
+  // "left/right center" by se lepil na okraj dráhy.
+  .side-panel-actions-toggle {
+    .form-check {
+      display: flex;
+      align-items: center;
+      min-height: 0;
+      padding-left: 0;
+    }
+
+    .form-check-input {
+      flex: 0 0 auto;
+      width: 40px;
+      height: 22px;
+      margin: 0 10px 0 0;
+      border-radius: 999px;
+      background-color: $color-light-gray;
+      background-image: $toggleKnob;
+      background-size: 16px 16px;
+      background-position: 3px center;
+      border: 0;
+
+      &:checked {
+        background-color: var(--primaryColor);
+        background-image: $toggleKnob;
+        background-position: calc(100% - 3px) center;
+      }
+    }
+
+    .form-check-label {
+      margin: 0;
+      cursor: pointer;
+    }
+  }
+
   &:has(.side-panel-config[data-size="sm"]) {
     --width: 520px;
   }
