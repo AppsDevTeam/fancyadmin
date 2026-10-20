@@ -75,38 +75,6 @@ function applyState() {
 	});
 
 	positionPopovers();
-	updateScrollState();
-}
-
-// Čára mezi menu a footerem dává smysl jen když se menu scrolluje (jinak by visela
-// nad prázdným místem). 1px tolerance kvůli subpixelovému zaokrouhlení výšek.
-function updateScrollState() {
-	const menuBody = document.querySelector('.side-panel-wide .menu-body');
-	if (!menuBody) {
-		return;
-	}
-	menuBody.classList.toggle('scrollable', menuBody.scrollHeight - menuBody.clientHeight > 1);
-}
-
-// Rozbalení skupiny/submenu roste postupně (transition grid-template-rows), takže
-// jednorázový přepočet po kliku vidí ještě starou výšku. Samotná .menu-body je
-// flex: 1 a velikost nemění - sledujeme proto její položky a reagujeme na jejich růst.
-let menuBodyObserver = null;
-
-function observeMenuBody() {
-	if (typeof ResizeObserver === 'undefined') {
-		return;
-	}
-	const menuBody = document.querySelector('.side-panel-wide .menu-body');
-	if (!menuBody) {
-		return;
-	}
-	if (menuBodyObserver) {
-		menuBodyObserver.disconnect();
-	}
-	menuBodyObserver = new ResizeObserver(updateScrollState);
-	menuBodyObserver.observe(menuBody);
-	Array.from(menuBody.children).forEach(child => menuBodyObserver.observe(child));
 }
 
 // Popover je position: fixed → potřebuje inline top nastavený podle Y kotvy (heading skupiny
@@ -222,19 +190,15 @@ document.addEventListener('mouseout', function (event) {
 
 $(function () {
 	applyState();
-	observeMenuBody();
 });
 
 // při resize okna přepočítáme pozice popoverů (šířka sidebaru by mohla ovlivnit offsety)
 $(window).on('resize', function () {
 	positionPopovers();
-	updateScrollState();
 });
 
 if ($.nette && $.nette.ext('live')) {
 	$.nette.ext('live').after(function () {
 		applyState();
-		// menu se mohlo překreslit - observer visí na starých elementech
-		observeMenuBody();
 	});
 }

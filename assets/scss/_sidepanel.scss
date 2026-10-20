@@ -45,9 +45,6 @@ body.menu-wide {
 	--menu-wide-popover-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
 	--menu-wide-avatar-bg: #f4e1f8;
 	--menu-wide-avatar-icon: var(--primaryColor);
-	// Stín nad footerem, když menu scrolluje
-	--menu-wide-scrim: rgba(5, 5, 6, 0.08);
-	--menu-wide-scrim-height: 24px;
 	--menu-wide-danger: #{$error};
 }
 
@@ -58,8 +55,6 @@ body.menu-wide {
 	--menu-wide-popover-border: var(--fa-border);
 	--menu-wide-popover-shadow: 0 8px 28px var(--fa-shadow-color);
 	--menu-wide-avatar-bg: var(--fa-surface-active);
-	// 8 % černé na tmavém podkladu není vidět
-	--menu-wide-scrim: rgba(0, 0, 0, 0.35);
 }
 
 body.menu-wide.menu-collapsed {
@@ -197,25 +192,6 @@ body.menu-wide .side-panel-wide {
 
 		.bottom-menu {
 			min-width: 0;
-		}
-	}
-
-	// Čára i stín jen když menu scrolluje (.scrollable nastavuje sideMenu.js),
-	// jinak by visely nad prázdným místem pod poslední položkou
-	.menu-body.scrollable + .side-panel-footer {
-		position: relative;
-		border-top: 1px solid var(--menu-wide-divider);
-
-		// bottom o 1px výš, aby gradient skončil nad čárou a nepřekryl ji
-		&::before {
-			content: '';
-			position: absolute;
-			left: 0;
-			right: 0;
-			bottom: calc(100% + 1px);
-			height: var(--menu-wide-scrim-height);
-			pointer-events: none;
-			background: linear-gradient(180deg, transparent 0%, var(--menu-wide-scrim) 100%);
 		}
 	}
 
