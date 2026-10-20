@@ -106,7 +106,7 @@ a {
 
 input[type="file"] {
 	border: 1px solid $secondary-darker;
-	border-radius: 20px;
+	border-radius: var(--control-radius, #{$control-radius});
 	padding: 6px 15px 6px 12px;
 	line-height: 35px;
 }
@@ -114,7 +114,7 @@ input[type="file"] {
 input[type="color"] {
 	padding: 0;
 	border: 1px solid $secondary-darker;
-	border-radius: 20px;
+	border-radius: var(--control-radius, #{$control-radius});
 	overflow: hidden;
 	cursor: pointer;
 
@@ -135,15 +135,22 @@ input[type="color"]::-webkit-color-swatch {
 	border: none;
 }
 
+// Rozměry ze škály --control-* (viz _variables.scss). Svislé zarovnání drží výška
+// prvku, ne dopočítaný padding — text sedí na střed při jakékoli velikosti.
 :not(.form-group-filter) .form-control,
 :not(.form-group-filter) .form-select {
+	--control-height: #{$control-height};
+	--control-radius: #{$control-radius};
+	--control-padding-x: #{$control-padding-x};
+	--control-font: #{$control-font};
+
 	border: 0;
-	height: 49px;
-	border-radius: 20px;
-	padding: 15px 15px 15px 15px;
-	font-size: 16px;
+	height: var(--control-height);
+	border-radius: var(--control-radius);
+	padding: 0 var(--control-padding-x);
+	font-size: var(--control-font);
 	font-weight: 400;
-	line-height: 18px;
+	line-height: normal;
 
 	&:focus {
 		box-shadow: none !important;
@@ -169,19 +176,60 @@ input[type="color"]::-webkit-color-swatch {
 	}
 }
 
-:not(.form-group-filter) .form-select {
-	padding-right: 2 * $padding-input + 16px;
-	background-position: right $padding-input center;
+// Menší a větší varianta. Specificita musí dosáhnout na základní pravidlo výše,
+// jinak by proměnné z modifikátoru prohrály — proto dvojice tříd.
+.form-control.form-control-sm,
+.form-select.form-select-sm {
+	--control-height: #{$control-height-sm};
+	--control-radius: #{$control-radius-sm};
+	--control-padding-x: #{$control-padding-x-sm};
+	--control-font: #{$control-font-sm};
 }
 
+// -lg je bootstrapí název téhož, ať funguje i markup psaný podle Bootstrapu
+.form-control.form-control-xl,
+.form-select.form-select-xl,
+.form-control.form-control-lg,
+.form-select.form-select-lg {
+	--control-height: #{$control-height-xl};
+	--control-radius: #{$control-radius-xl};
+	--control-padding-x: #{$control-padding-x-xl};
+	--control-font: #{$control-font-xl};
+}
+
+:not(.form-group-filter) .form-select {
+	// Místo vpravo na šipku: odsazení prvku plus její šířka
+	padding-right: calc(var(--control-padding-x) * 2 + 16px);
+	background-position: right var(--control-padding-x) center;
+}
+
+// Víceřádkové pole se neřídí výškou prvku, takže svislé odsazení musí dostat
+// zpátky — u jednořádkových ho nahrazuje height a svislé centrování.
 :not(.form-group-filter) textarea.form-control {
 	height: auto;
 	min-height: 120px;
+	padding-top: calc(var(--control-padding-x) * 0.75);
+	padding-bottom: calc(var(--control-padding-x) * 0.75);
 	line-height: 1.4;
 	resize: vertical;
 }
 
+// Skupina drží rozměr za prvky, které si ho samy nenastavují (tlačítko vedle pole).
+// Pole uvnitř má vlastní deklaraci, takže si svou velikost určuje dál samo.
 .input-group {
+	--control-height: #{$control-height};
+	--control-radius: #{$control-radius};
+
+	&:has(.form-control-sm, .form-select-sm) {
+		--control-height: #{$control-height-sm};
+		--control-radius: #{$control-radius-sm};
+	}
+
+	&:has(.form-control-xl, .form-select-xl, .form-control-lg, .form-select-lg) {
+		--control-height: #{$control-height-xl};
+		--control-radius: #{$control-radius-xl};
+	}
+
 	> .select2-container {
 		flex: 1 1 auto;
 		width: 1% !important;
@@ -201,14 +249,14 @@ input[type="color"]::-webkit-color-swatch {
 		align-items: center;
 		justify-content: center;
 		flex: 0 0 auto;
-		width: 49px;
-		height: 49px;
+		width: var(--control-height);
+		height: var(--control-height);
 		padding: 0;
 		margin-left: 0 !important;
 		background-color: var(--inputBackground);
 		border: var(--inputBorder);
 		border-left: 1px solid var(--secondaryColorDarker);
-		border-radius: 0 20px 20px 0 !important;
+		border-radius: 0 var(--control-radius) var(--control-radius) 0 !important;
 		color: var(--primaryColor);
 		box-shadow: none;
 
@@ -278,22 +326,30 @@ input[type="color"]::-webkit-color-swatch {
 	display: flex;
 }
 
-.form-group-filter:has(input[type="text"]) {
+// Pole s lupou. Ikona se zarovnává na střed pole a odsazuje se stejnou proměnnou
+// jako text, takže drží u jakékoli velikosti prvku — dřív visela na pevných 12px
+// od spodní hrany a při jiné výšce pole seděla mimo.
+.form-group-filter:has(input[type="text"], input[type="search"]) {
 	position: relative;
 
 	&::before {
-		content: "";
+		content: "";
 		font-family: "Font Awesome 6 Pro";
 		position: absolute;
-		bottom: 12px;
-		left: 20px;
+		top: 50%;
+		left: var(--control-padding-x, #{$control-padding-x});
+		transform: translateY(-50%);
+		font-size: var(--control-font, #{$control-font});
+		line-height: 1;
 		pointer-events: none;
 		z-index: 9;
 	}
 
-	input[type="text"] {
-		padding-left: 55px;
-		border-radius: 20px;
+	input[type="text"],
+	input[type="search"] {
+		// Místo vlevo na ikonu: odsazení textu plus její šířka (1em) a mezera
+		padding-left: calc(var(--control-padding-x, #{$control-padding-x}) * 2 + 1em);
+		border-radius: var(--control-radius, #{$control-radius});
 		border: none;
 		max-width: 100%;
 		background-color: $secondary;
@@ -317,7 +373,7 @@ input[type="color"]::-webkit-color-swatch {
 .dashboard-card {
 	padding: $cardPadding;
 	border: 1px solid $secondary-darker;
-	border-radius: 20px;
+	border-radius: $br-surface;
 	display: flex;
 	gap: 25px;
 	min-height: calc(100% - 1rem);
@@ -384,7 +440,7 @@ input[type="color"]::-webkit-color-swatch {
 		align-items: center;
 		border-bottom: 0;
 
-		border-radius: 20px 0 0 20px;
+		border-radius: var(--control-radius, #{$control-radius});
 		background: $secondary;
 
 	}
@@ -396,7 +452,7 @@ input[type="color"]::-webkit-color-swatch {
 		align-items: center;
 		color: white;
 
-		border-radius: 0 20px 20px 0;
+		border-radius: var(--control-radius, #{$control-radius});
 		background: $primary;
 
 		font-size: 16px;
@@ -570,7 +626,7 @@ $bottomSubMenuHeight: 45px;
 	align-items: flex-start;
 	gap: 16px;
 
-	border-radius: 20px;
+	border-radius: $br-surface;
 	border: 1px solid $color-light-gray;
 	background: $background;
 
@@ -705,7 +761,7 @@ $bottomSubMenuHeight: 45px;
 }
 
 .dropdown-menu {
-	--bs-border-radius: 20px;
+	--bs-border-radius: $br-surface-sm;
 	--bs-dropdown-padding-y: 0;
 	--bs-dropdown-spacer: 20px;
 	overflow: hidden;
@@ -729,7 +785,7 @@ $bottomSubMenuHeight: 45px;
 }
 
 .daterangepicker {
-	border-radius: 20px;
+	border-radius: $br-surface-sm;
 	overflow: hidden;
 	box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .15);
 	border: 0;
@@ -1037,7 +1093,7 @@ body:not(:has(.navbar)) #snippet--container {
 		font-family: "Font Awesome 6 Pro";
 		align-items: center;
 		justify-content: center;
-		border-radius: 20px;
+		border-radius: $control-radius-xl;
 		font-size: 18px !important;
 	}
 	&:has(.inactive) {
@@ -1096,7 +1152,7 @@ body:not(:has(.navbar)) #snippet--container {
 	}
 
 	.iOsA2HS_popup {
-		border-radius: 20px;
+		border-radius: $br-surface-sm;
 		z-index: 9999;
 		background: #f3f3f3;
 		position: fixed;
@@ -1403,7 +1459,7 @@ iframe {
 		z-index: 1;
 		display: flex;
 		height: 48px;
-		border-radius: 20px;
+		border-radius: var(--control-radius, #{$control-radius});
 		padding: 0 !important;
 		align-items: center;
 		justify-content: center;
@@ -1428,7 +1484,7 @@ iframe {
 			justify-content: center;
 			width: 48px;
 			height: 48px;
-			border-radius: 20px;
+			border-radius: $control-radius-xl;
 		}
 
 		.dropdown-selected-name-wrapper {
@@ -1573,7 +1629,7 @@ iframe {
 		}
 
 		a.btn {
-			border-radius: 20px;
+			border-radius: var(--control-radius, #{$control-radius});
 			border-right: solid 1px $secondary-darker !important;
 		}
 	}
@@ -1622,7 +1678,7 @@ iframe {
 			justify-content: center;
 			width: 48px;
 			height: 48px;
-			border-radius: 20px 0 0 20px;
+			border-radius: #{$control-radius-xl} 0 0 #{$control-radius-xl};
 
 			background-color: $secondary;
 			font-size: 18px;
@@ -1675,7 +1731,7 @@ select.is-invalid + .select2 {
 		width: 48px;
 		background-color: $secondary;
 		border: solid 1px $secondary-darker;
-		border-radius: 20px;
+		border-radius: var(--control-radius, #{$control-radius});
 		padding: 0 !important;
 		align-items: center;
 		justify-content: center;
@@ -1712,7 +1768,7 @@ select.is-invalid + .select2 {
 [data-adt-replicator-item] {
 	.input-group {
 		input[name$="[value]"] {
-			border-radius: 20px 0 0 20px;
+			border-radius: var(--control-radius, #{$control-radius});
 			border-right: solid 2px $secondary-darker;
 
 			&:focus, &:active {
@@ -1720,7 +1776,7 @@ select.is-invalid + .select2 {
 			}
 		}
 		input[name$="[value2]"] {
-			border-radius: 0 20px 20px 0;
+			border-radius: var(--control-radius, #{$control-radius});
 		}
 	}
 
@@ -1749,7 +1805,7 @@ select.is-invalid + .select2 {
 
 .light-gray-bordered-box {
 	border: 1px solid $color-light-gray;
-	border-radius: 20px;
+	border-radius: $br-surface-sm;
 }
 
 .table-bottom-scroll {
@@ -1765,13 +1821,13 @@ select.is-invalid + .select2 {
 	z-index: 9;
 
 	&::-webkit-scrollbar {
-		border-radius: 20px;
+		border-radius: 999px;
 		background: $secondary;
 		height: calc($height - calc($padding * 2));
 	}
 
 	&::-webkit-scrollbar-thumb {
-		border-radius: 20px;
+		border-radius: 999px;
 		background-color: $secondary-darker;
 		border: $padding solid $secondary;
 		cursor: pointer;

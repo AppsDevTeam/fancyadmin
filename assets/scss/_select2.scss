@@ -1,5 +1,9 @@
 @use 'variables' as *;
 
+// Křížek pro „odebrat" / „vymazat výběr“ — kreslený vektorem místo znaku × z písma
+$select2CloseSize: 14px;
+$select2CloseIcon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 4l8 8M12 4l-8 8'/%3E%3C/svg%3E");
+
 
 .select2 {
 	.select2-selection {
@@ -17,31 +21,84 @@
 	}
 }
 
-form {
-	.select2-selection:not(.select2-selection--multiple) {
-		padding: 6px 15px !important;
-		min-height: 49px !important;
+// Geometrie ovládacího prvku Select2. Rozměry jsou v proměnných, takže si je
+// projekt přenastaví na .select2-container (kompaktní filtr v liště apod.) a nemusí
+// přebíjet jednotlivá pravidla. !important tu zůstává jen jako štít proti theme
+// bootstrap-5, který si stejné vlastnosti nastavuje sám.
+//
+// Svislé zarovnání drží flex, ne dopočítané řádkování — text sedí na střed při
+// jakékoli výšce prvku a nedá se „minout" o pár pixelů.
+.select2-container {
+	--select2-height: #{$control-height};
+	--select2-radius: #{$control-radius};
+	--select2-padding-x: #{$control-padding-x};
+	--select2-padding-y: 4px;
+	--select2-tag-gap: 8px;
+}
+
+// Velikost se bere z původního selectu — Select2 ho nechává v DOMu hned před
+// svým kontejnerem, takže si ji nemusí nikdo nastavovat ručně podruhé.
+select.form-select-sm + .select2-container {
+	--select2-height: #{$control-height-sm};
+	--select2-radius: #{$control-radius-sm};
+	--select2-padding-x: #{$control-padding-x-sm};
+}
+
+select.form-select-xl + .select2-container,
+select.form-select-lg + .select2-container {
+	--select2-height: #{$control-height-xl};
+	--select2-radius: #{$control-radius-xl};
+	--select2-padding-x: #{$control-padding-x-xl};
+}
+
+// Select2 si při inicializaci změří původní select a výslednou šířku zapíše svému
+// kontejneru natvrdo inline (jeho výchozí width: 'resolve'). Jakmile se okolí pak
+// zvětší, prvek v té staré šířce zůstane - nejvíc je to vidět ve vyjíždějícím panelu,
+// kam obsah přijde dřív, než se panel roztáhne na velikost danou jeho obsahem: select
+// si uloží šířku užšího panelu a vedle textového pole pak vypadá uříznutě.
+//
+// Pole formuláře má jít přes celou šířku svého místa jako každý jiný input, takže
+// inline hodnotu přebíjíme (jinak než !important to proti inline stylu nejde).
+// Platí jen pro select vykreslený jako samostatné pole (přímo v obalu dvojice
+// popisek+prvek) - select v .input-group je zanořený hlouběji a o šířku se dělí
+// s tlačítkem vedle sebe, tomu do ní nemluvíme.
+.mb-3 > .select2-container {
+	width: 100% !important;
+}
+
+.select2-selection {
+	display: flex !important;
+	align-items: center;
+	// Theme bootstrap-5 si nastavuje vlastní velikost písma, takže prvek nedědí
+	// písmo okolí jako běžný input — vracíme dědění, ať kompaktní lišty nemusí
+	// velikost přepisovat na dvou místech.
+	font-size: inherit !important;
+	min-height: var(--select2-height) !important;
+	padding: 0 var(--select2-padding-x) !important;
+	border: var(--inputBorder) !important;
+	border-radius: var(--select2-radius) !important;
+	line-height: normal !important;
+
+	.select2-selection__rendered {
+		display: flex;
+		align-items: center;
+		flex: 1 1 auto;
+		min-width: 0;
+		padding: 0 !important;
+		line-height: normal !important;
 	}
 
-	.select2-selection {
-		border: var(--inputBorder) !important;
-		border-radius: 20px !important;
-		//height: 49px !important;
-		line-height: 49px !important;
+	// Vybrané položky se zalamují do dalšího řádku, prvek roste — svislé odsazení
+	// proto musí být na prvku, ne spočítané z výšky jednoho řádku.
+	&.select2-selection--multiple {
+		padding-top: var(--select2-padding-y) !important;
+		padding-bottom: var(--select2-padding-y) !important;
 
 		.select2-selection__rendered {
-			line-height: 37px !important;
-		}
-
-		&.select2-selection--multiple .select2-selection__rendered {
-			min-height: 39px;
+			flex-wrap: wrap;
+			gap: var(--select2-tag-gap);
 		}
 	}
-
-	ul > li:first-child.select2-search {
-		padding-left: 14px !important;
-	}
-
 }
 
 
@@ -76,9 +133,7 @@ nav {
 	}
 }
 
-.select2-selection--single {
-	height: auto !important;
-}
+
 
 $select2MinWidth: 300px;
 
@@ -89,7 +144,7 @@ $select2MinWidth: 300px;
 .select2-primary-dropdown {
 	margin-top: 20px;
 	border: 0 !important;
-	border-radius: 20px !important;
+	border-radius: $br-surface-sm;
 	z-index: 10056 !important;
 	width: fit-content !important;
 	min-width: $select2MinWidth;
@@ -135,36 +190,56 @@ $select2MinWidth: 300px;
 }
 
 
+// Rozbalený seznam je plovoucí vrstva nad stránkou — stejný jazyk jako karta
+// gridu a kalendář flatpickru: bílá plocha, vlasový rámeček, měkký stín a jen
+// malá mezera od ovládacího prvku (dřív 20px, což seznam opticky utrhlo).
 .select2-dropdown:not(.select2-primary-dropdown) {
-	border: 0 !important;
-	border-radius: 20px !important;
+	border: 1px solid $color-light-gray !important;
+	border-radius: $br-grid !important;
 	z-index: 10056 !important;
-	box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+	// Zaoblení musí ořezat první a poslední položku, jinak jim podbarvení vyčuhuje do rohů
+	overflow: hidden;
 
 	&:not(.select2-dropdown--above) {
-		margin-top: 20px;
+		margin-top: 4px;
 	}
 
 	&.select2-dropdown--above {
-		margin-bottom: 20px;
+		margin-bottom: 4px;
 	}
 
 	.select2-results {
-		background-color: $secondary;
+		background-color: $background;
 		color: $black;
 
 		.select2-results__option {
 			padding: 15px !important;
 			line-height: 14px !important;
 			font-size: 14px !important;
-			background-color: $secondary !important;
+			background-color: $background !important;
 			color: $black !important;
 		}
 
 		.select2-results__option--highlighted {
-			background-color: $secondary-dark !important;
+			background-color: $background-dark !important;
 			color: $black !important;
 		}
+	}
+}
+
+// Vyhledávací pole v rozbaleném seznamu je malý input jako každý jiný — theme
+// bootstrap-5 mu dává vlastní 4px roh, který mezi 12/16px okolím působí cize.
+// !important je štít proti themu, který si tyhle vlastnosti nastavuje sám.
+.select2-dropdown .select2-search {
+	padding: 8px !important;
+
+	.select2-search__field {
+		height: $control-height-sm !important;
+		padding: 0 $control-padding-x-sm !important;
+		border: var(--inputBorder) !important;
+		border-radius: $control-radius-sm !important;
+		font-size: $control-font-sm !important;
 	}
 }
 
@@ -182,27 +257,51 @@ $select2MinWidth: 300px;
 	border-color: $secondary-darker !important;
 }
 
+// Křížky „odebrat položku" a „vymazat výběr" kreslí Select2 znakem × z písma
+// projektu. Každý řez ho má jinak velký a leckterý i s ozdobným zakončením tahu,
+// takže ikona vypadá pokaždé jinak. Nahrazujeme ji vektorem obtaženým přes masku
+// — barvu bere z currentColor, takže se sama přizpůsobí i tmavému režimu.
+// Maska je podmínkou: bez podpory by ze čtverečku pozadí zbyl plný obdélník,
+// tak v takovém prohlížeči necháváme původní znak.
+@supports ((mask-image: none) or (-webkit-mask-image: none)) {
+.select2-selection__choice__remove,
+.select2-selection__clear {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	width: $select2CloseSize;
+	height: $select2CloseSize;
+	// Vlastní znak × zůstává kvůli čtečkám i klikací ploše, jen se nevykreslí
+	font-size: 0 !important;
+	color: $text-muted;
+	background-color: currentColor !important;
+	background-image: none !important;
+	border: 0 !important;
+	-webkit-mask: $select2CloseIcon no-repeat center / #{$select2CloseSize - 4px};
+	mask: $select2CloseIcon no-repeat center / #{$select2CloseSize - 4px};
+	transition: color .15s;
+
+	&:hover {
+		color: $black;
+	}
+}
+}
+
+// Vyhledávací pole uvnitř multiselectu je jen další položka v řádku — výšku
+// ani odsazení si nesmí určovat samo, jinak rozhodí zarovnání vybraných položek.
 .select2-search--inline {
 	width: auto !important;
 	height: auto !important;
+	margin: 0 !important;
 
 	> input {
 		margin: 0 !important;
-		height: 100% !important;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
+		height: auto !important;
+		line-height: normal !important;
 	}
 }
 
-.select2-selection--multiple {
-	min-height: 100%;
-	padding: 6px !important;
 
-	.select2-selection__rendered {
-		gap: 8px;
-	}
-}
 
 .select2-multiselect-dropdown {
 	[aria-selected=true] {

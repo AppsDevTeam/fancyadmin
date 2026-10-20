@@ -1,9 +1,15 @@
+@use 'sass:math';
 @use 'variables' as *;
 
 $treeChevronWidth: 22px;
 $treeIndent: 24px;
 $treeFirstColumnWidth: 300px;
 $treeColumnMinWidth: 15rem;
+
+// Šipka rozbalení visí nalevo od textu, takže první sloupec začíná o její šířku
+// dřív než ostatní buňky. Při odsazení menším než šipka by vyšlo záporné číslo —
+// pak šipka sedí rovnou na kraji a text se posune o její šířku.
+$treeTextIndent: math.max($paddingTableRowX - $treeChevronWidth, 0px);
 
 .datagrid .datagrid-tree {
 	width: max-content;
@@ -12,9 +18,8 @@ $treeColumnMinWidth: 15rem;
 	--actionShadowWidthRight: 0px;
 
 	padding-left: 0;
-	padding-bottom: $cardPadding - $paddingTableRowY;
 	background-color: $background;
-	font-size: 16px;
+	font-size: $gridFontSize;
 	font-weight: 400;
 	line-height: 18px;
 
@@ -32,16 +37,15 @@ $treeColumnMinWidth: 15rem;
 	> .datagrid-tree-header.datagrid-tree-item .datagrid-tree-item-content {
 		font-weight: 500;
 
-		.datagrid-tree-item-left {
-			padding-top: $cardPadding;
+		// Hlavička stromu drží stejnou výšku jako hlavička tabulkového gridu
+		.datagrid-tree-item-left,
+		.datagrid-tree-item-right .datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column,
+		.datagrid-tree-item-right .datagrid-tree-item-right-actions {
+			padding-top: $paddingTableHeadY;
+			padding-bottom: $paddingTableHeadY;
 		}
 
 		.datagrid-tree-item-right {
-			.datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column,
-			.datagrid-tree-item-right-actions {
-				padding-top: $cardPadding;
-			}
-
 			.datagrid-tree-item-right-actions .datagrid-tree-item-right-actions-action {
 				opacity: 0;
 				pointer-events: none;
@@ -50,7 +54,7 @@ $treeColumnMinWidth: 15rem;
 	}
 
 	.datagrid-tree-header-divider {
-		padding: 0 $cardPadding;
+		padding: 0 $paddingTableRowX;
 		background-color: $background;
 
 		> div {
@@ -60,7 +64,7 @@ $treeColumnMinWidth: 15rem;
 	}
 
 	.datagrid-tree-no-items {
-		padding: $paddingTableRowY $cardPadding;
+		padding: $paddingTableRowY $paddingTableRowX;
 	}
 
 	.datagrid-tree-item .datagrid-tree-item-content {
@@ -70,10 +74,10 @@ $treeColumnMinWidth: 15rem;
 		background-color: $background;
 
 		.datagrid-tree-item-left {
-			flex: 0 0 min(calc(30vw + #{2 * $cardPadding}), #{$treeFirstColumnWidth + 2 * $cardPadding});
-			max-width: min(calc(30vw + #{2 * $cardPadding}), #{$treeFirstColumnWidth + 2 * $cardPadding});
+			flex: 0 0 min(calc(30vw + #{2 * $paddingTableRowX}), #{$treeFirstColumnWidth + 2 * $paddingTableRowX});
+			max-width: min(calc(30vw + #{2 * $paddingTableRowX}), #{$treeFirstColumnWidth + 2 * $paddingTableRowX});
 			align-items: center;
-			padding: $paddingTableRowY $cardPadding $paddingTableRowY $cardPadding - $treeChevronWidth;
+			padding: $paddingTableRowY $paddingTableRowX $paddingTableRowY $treeTextIndent;
 			white-space: normal;
 			position: sticky;
 			left: 0;
@@ -128,7 +132,7 @@ $treeColumnMinWidth: 15rem;
 				.datagrid-tree-item-right-columns-column {
 					flex: 1 1 0;
 					min-width: $treeColumnMinWidth;
-					padding: $paddingTableRowY $cardPadding;
+					padding: $paddingTableRowY $paddingTableRowX;
 
 					> div {
 						overflow: hidden;
@@ -140,7 +144,7 @@ $treeColumnMinWidth: 15rem;
 			.datagrid-tree-item-right-actions {
 				flex: 0 0 auto;
 				margin-left: auto;
-				padding: $paddingTableRowY $cardPadding;
+				padding: $paddingTableRowY $paddingTableRowX;
 				position: sticky;
 				right: 0;
 				z-index: 1;
@@ -169,7 +173,8 @@ $treeColumnMinWidth: 15rem;
 						align-items: center;
 					}
 
-					.fa {
+					#{$faIcon} {
+						font-size: $gridActionIconSize;
 						color: $primary;
 
 						&:hover {
@@ -213,7 +218,7 @@ $treeColumnMinWidth: 15rem;
 						}
 
 						> .datagrid-delete {
-							.fa {
+							#{$faIcon} {
 								color: $red;
 							}
 
@@ -247,21 +252,21 @@ $treeColumnMinWidth: 15rem;
 		}
 
 		#{$children} .datagrid-tree-item-content .datagrid-tree-item-left {
-			padding-left: $cardPadding - $treeChevronWidth + $treeIndent * $level;
+			padding-left: $treeTextIndent + $treeIndent * $level;
 		}
 	}
 
 	@include media-breakpoint-down(sm) {
 		.datagrid-tree-item .datagrid-tree-item-content {
 			.datagrid-tree-item-left {
-				padding: 15px 20px 15px 0;
+				padding: $paddingTableRowY $paddingTableRowX $paddingTableRowY 0;
 				position: initial;
 			}
 
 			.datagrid-tree-item-right {
 				.datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column,
 				.datagrid-tree-item-right-actions {
-					padding: 15px 20px;
+					padding: $paddingTableRowY $paddingTableRowX;
 				}
 
 				.datagrid-tree-item-right-actions {

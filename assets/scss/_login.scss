@@ -120,8 +120,15 @@ $login-lost-password-offset: 6px;
 		}
 
 		.form-control {
+			// Přihlašovací pole jsou záměrně velká (dřív jediná velikost v celém
+			// balíčku), takže si drží variantu xl; svislé odsazení tu dává padding,
+			// ne výška prvku.
+			--control-height: #{$control-height-xl};
+			--control-radius: #{$control-radius-xl};
+
 			width: 100%;
 			display: flex;
+			height: auto;
 			padding: $padding-input;
 			align-items: center;
 			gap: 10px;

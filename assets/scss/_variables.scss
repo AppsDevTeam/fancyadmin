@@ -30,7 +30,73 @@ $br-thumbnail: 3px;
 // inputs
 $padding-input: 15px;
 
-$paddingTableRowY: 18px;
+/* --------------------
+ *  Velikosti ovládacích prvků
+ *
+ *  Inputy, selecty a Select2 mají tři velikosti. Poměr poloměru k výšce drží
+ *  kolem 0,4 (12/32 = 0,38, 16/40 = 0,40, 20/48 = 0,42), takže všechny tři
+ *  působí jako jedna rodina — oblost se vnímá relativně k výšce, ne absolutně.
+ *  Výšky i odsazení sedí na čtyřpixelové mřížce.
+ *
+ *  Prvky si rozměry čtou z CSS proměnných --control-*, takže je projekt nebo
+ *  konkrétní kontext (lišta, panel) přenastaví bez přebíjení jednotlivých
+ *  vlastností. Třídy: výchozí / .form-control-sm / .form-control-xl.
+ * -------------------- */
+
+$control-height-sm: 32px;
+$control-radius-sm: 12px;
+$control-padding-x-sm: 12px;
+$control-font-sm: 14px;
+
+$control-height: 40px;
+$control-radius: 16px;
+$control-padding-x: 16px;
+$control-font: 16px;
+
+// xl odpovídá rozměrům, které měly prvky dřív jako jediné (49px/20px); výška
+// je srovnaná na 48px, ať nevypadává z mřížky — rozdíl není okem postřehnutelný.
+$control-height-xl: 48px;
+$control-radius-xl: 20px;
+$control-padding-x-xl: 20px;
+$control-font-xl: 16px;
+
+// Buňky gridu i hlavičky mají odsazení ze všech stran stejné a nezávislé na odsazení
+// karty ($cardPadding) — drží tím jeden rytmus i v užších kartách a panelech.
+$paddingTableRowY: 12px;
+$paddingTableRowX: 12px;
+$paddingTableHeadY: 12px;
+
+/* --------------------
+ *  Zaoblení ploch
+ *
+ *  Plochy (podklady) mají vlastní žebříček, nezávislý na ovládacích prvcích:
+ *  velká plocha s malým rohem působí hranatě, malá vrstva s velkým rozteklá.
+ *  Stupně jdou po 8, aby se daly skládat soustředně (vnitřní = vnější − odsazení).
+ * -------------------- */
+
+$br-surface-sm: 16px;   // plovoucí vrstvy a menší karty - dropdown, kalendář, grid
+$br-surface: 24px;      // karty, panely, modaly
+$br-surface-lg: 36px;   // velké stránkové karty
+
+// Karta gridu má stupeň menší plochy; projekt si ji pro konkrétní kontext (např.
+// grid vnořený v panelu) přenastaví proměnnou --datagridRadius na .datagrid —
+// drží se tím i přilepená hlavička a podklad jejích rohů.
+$br-grid: $br-surface-sm;
+
+// Ikony Font Awesome se v šablonách píšou několika způsoby (.fa, .fas, .fa-solid,
+// .fa-regular…), samotné .fa je proto nechytí všechny. Vybíráme je podle libovolné
+// fa- třídy; :is() drží specificitu na úrovni jedné třídy, takže se pravidla chovají
+// stejně jako dřív s .fa.
+$faIcon: ':is(.fa, [class*="fa-"])';
+
+// Písmo v gridu je menší než v běžném textu — tabulka je hustý obsah a menší
+// stupeň pustí do stejné šířky víc sloupců. Výšku řádku neovlivní, tu drží
+// odsazení buňky a řádkování.
+$gridFontSize: 15px;
+
+// Ikony akcí v řádku gridu (tabulkového i stromového) — menší než text řádku,
+// jsou to ovládací prvky, ne obsah.
+$gridActionIconSize: 15px;
 $cardPadding: 30px;
 
 $input-color-focus: var(--fa-input-focus);

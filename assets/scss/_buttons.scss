@@ -6,14 +6,25 @@
 	initial-value: #fff;
 }
 
+// Tlačítko je ovládací prvek jako input, takže bere rozměry ze stejné škály
+// (--control-*). Dřív mělo napevno 49px/20px, tedy o stupeň víc než pole vedle něj.
 .btn {
+	--control-height: #{$control-height};
+	--control-radius: #{$control-radius};
+	--control-font: #{$control-font};
+
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
 	border: none;
-	border-radius: 20px;
-	height: 49px;
-	font-size: 16px;
+	border-radius: var(--control-radius);
+	// min-height, ne height: tlačítko s delším popiskem se musí umět zalomit,
+	// jednořádkové vyjde na přesnou výšku stupně
+	height: auto;
+	min-height: var(--control-height);
+	padding-top: 8px;
+	padding-bottom: 8px;
+	font-size: var(--control-font);
 
 	&.btn-primary {
 		--button-primary-color: var(--primaryColor);
@@ -43,7 +54,7 @@
 	&.btn-secondary {
 		color: $black;
 		background-color: transparent;
-		border-radius: 20px;
+		border-radius: var(--control-radius);
 		border: 1px solid var(--buttonSecondaryBorder, #D1E4E4);
 
 		&:active,
@@ -61,4 +72,20 @@
 			background-color: $bg-danger-dark-10;
 		}
 	}
+}
+// Velikostní varianty tlačítka. Specificita musí dosáhnout na .btn výše, proto
+// dvojice tříd; -lg je bootstrapí název pro totéž co -xl.
+.btn.btn-sm {
+	--control-height: #{$control-height-sm};
+	--control-radius: #{$control-radius-sm};
+	--control-font: #{$control-font-sm};
+
+	padding: 0 16px;
+}
+
+.btn.btn-xl,
+.btn.btn-lg {
+	--control-height: #{$control-height-xl};
+	--control-radius: #{$control-radius-xl};
+	--control-font: #{$control-font-xl};
 }
