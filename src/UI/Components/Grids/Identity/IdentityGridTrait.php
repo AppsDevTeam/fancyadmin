@@ -44,6 +44,11 @@ trait IdentityGridTrait
 				return implode(', ', $roles);
 			});
 
+		// Single-tenant: účty nejsou
+		if (!$this->_securityUser->isMultiTenant()) {
+			return;
+		}
+
 		$grid->addColumnText('accounts', 'fcadmin.grids.user.labels.accounts')
 			->setRenderer(function (Identity $identity) {
 				return implode(', ', array_map(fn($account) => $account->getName(), $identity->getAccounts()));

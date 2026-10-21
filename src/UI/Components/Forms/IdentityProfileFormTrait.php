@@ -67,35 +67,41 @@ trait IdentityProfileFormTrait
 				}
 
 				if (!$isProfile) {
-					$this->addRoles($form, $this->getIdentityRoles($this->_fancyAdmin->getContext()), required: !$this->getProfileRoles($this->_fancyAdmin->getContext()));
+					// Single-tenant: profily (role v rámci účtu) nejsou, role identity je jediná
+					$multiTenant = $this->_fancyAdmin->isMultiTenant();
+					$this->addRoles($form, $this->getIdentityRoles($this->_fancyAdmin->getContext()), required: !$multiTenant || !$this->getProfileRoles($this->_fancyAdmin->getContext()));
 
-					$form->addDynamicContainer(
-						'profiles',
-						function (StaticContainer $container) use ($form, $entity, $submittedBySearch) {
-							$_profile = $entity?->getProfiles()[$container->getName()] ?? null;
+					if ($multiTenant) {
+						$form->addDynamicContainer(
+							'profiles',
+							function (StaticContainer $container) use ($form, $entity, $submittedBySearch) {
+								$_profile = $entity?->getProfiles()[$container->getName()] ?? null;
 
-							$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
-							if ($submittedBySearch) {
-								$container['isActive']->setValue(true);
+								$container->addCheckbox('isActive', 'fcadmin.forms.user.labels.isActive');
+								if ($submittedBySearch) {
+									$container['isActive']->setValue(true);
+								}
+								$this->addRoles($container, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
+								$container->addSelect('account', 'fcadmin.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->orById($_profile?->getAccount()->getId())->fetchPairs('fullName'))
+									->setPrompt('---');
+								$container->addSection(function () use ($form, $container, $entity, $_profile) {
+									$form->mapToForm();
+									$this->addProfileFields($container, $_profile, $container['roles']->getValue());
+								}, 'account', watchForRedraw: [$container['account'], $container['roles']]);
 							}
-							$this->addRoles($container, $this->getProfileRoles($this->_fancyAdmin->getContext()), required: true);
-							$container->addSelect('account', 'fcadmin.forms.user.labels.company', $this->_accountQueryFactory->create()->disableAccountFilter()->orById($_profile?->getAccount()->getId())->fetchPairs('fullName'))
-								->setPrompt('---');
-							$container->addSection(function () use ($form, $container, $entity, $_profile) {
-								$form->mapToForm();
-								$this->addProfileFields($container, $_profile, $container['roles']->getValue());
-							}, 'account', watchForRedraw: [$container['account'], $container['roles']]);
-						}
-					);
+						);
+					}
 
 					$form->mapToForm();
 
 					$roleControls = [$form['roles']];
-					if (!$form->isSubmitted()) {
-						$roleControls[] = $form['profiles'][DynamicContainer::NEW_PREFIX]['roles'];
-					}
-					foreach ($form['profiles']->getContainers() as $_profileContainer) {
-						$roleControls[] = $_profileContainer['roles'];
+					if ($multiTenant) {
+						if (!$form->isSubmitted()) {
+							$roleControls[] = $form['profiles'][DynamicContainer::NEW_PREFIX]['roles'];
+						}
+						foreach ($form['profiles']->getContainers() as $_profileContainer) {
+							$roleControls[] = $_profileContainer['roles'];
+						}
 					}
 
 					// SSO select — zobrazí se jen pokud vybraná role vyžaduje SSO
@@ -124,7 +130,7 @@ trait IdentityProfileFormTrait
 
 					$form->addSection(function () use ($form, $entity) {
 						$roleIds = $form['roles']->getValue();
-						foreach ($form['profiles']->getContainers() as $_profileContainer) {
+						foreach (isset($form['profiles']) ? $form['profiles']->getContainers() : [] as $_profileContainer) {
 							$roleIds = array_merge($roleIds, $_profileContainer['roles']->getValue());
 						}
 						$roles = $this->_aclRoleQueryFactory->create()->byId($roleIds)->fetch();

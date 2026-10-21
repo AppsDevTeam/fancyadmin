@@ -91,6 +91,11 @@ namespace ADT\FancyAdmin\Tests\Fixtures {
 			return true;
 		}
 
+		public function isMultiTenant(): bool
+		{
+			return true;
+		}
+
 		public function isLoggedIn(): bool
 		{
 			return $this->isLoggedIn;

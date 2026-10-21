@@ -172,7 +172,10 @@ class FancyAdminRouter
 		if ($this->routeList === null) {
 			$this->routeList = new RouteList();
 			$this->routeList->add($this->getPortalRouteList());
-			$this->routeList->add($this->getCustomerRouteList());
+			// Single-tenant nemá zákaznický portál (stojí na vybraném účtu v URL)
+			if ($this->administration->isMultiTenant()) {
+				$this->routeList->add($this->getCustomerRouteList());
+			}
 			$this->routeList->add($this->getBackofficeRouteList());
 		}
 

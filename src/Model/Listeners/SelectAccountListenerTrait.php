@@ -28,7 +28,8 @@ trait SelectAccountListenerTrait
 
 	public function onFlushCallback(OnFlushEventArgs $args): void
 	{
-		if (!$this->securityUser->isLoggedIn()) {
+		// Single-tenant: účet se nevybírá - jinak by identitě s profilem účet znovu nastavil
+		if (!$this->fancyAdmin->isMultiTenant() || !$this->securityUser->isLoggedIn()) {
 			return;
 		}
 

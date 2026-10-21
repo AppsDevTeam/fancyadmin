@@ -5,10 +5,12 @@ declare(strict_types=1);
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Menu\StringResource;
 use ADT\FancyAdmin\Tests\Fixtures\FancyAdminFactory;
+use ADT\FancyAdmin\Tests\Fixtures\TestAccount;
 use ADT\FancyAdmin\Tests\Fixtures\TestAclResource;
 use ADT\FancyAdmin\Tests\Fixtures\TestAclRole;
 use ADT\FancyAdmin\Tests\Fixtures\TestAuthenticator;
 use ADT\FancyAdmin\Tests\Fixtures\TestIdentity;
+use ADT\FancyAdmin\Tests\Fixtures\TestProfile;
 use ADT\FancyAdmin\Tests\Fixtures\TestSecurityUserTraitHost;
 use Nette\Security\AuthenticationException;
 use Nette\Security\Permission;
@@ -162,6 +164,63 @@ test('pravo do portalu posuzuje FancyAdmin pro vsechny cesty prihlaseni stejne',
 		new TestAclRole('operator')->allowResource(new TestAclResource(AclResourceNameEnum::BACKOFFICE_DASHBOARD->value)),
 	)));
 	Assert::true($fancyAdmin->canSignIn(new TestIdentity()->addRole(new TestAclRole('admin', isAdmin: true))));
+});
+
+
+test('single-tenant pusti do portalu jen s pravem do backoffice', function () {
+	// Zakaznicky portal stoji na vybranem uctu v URL - single-tenant zadny ucet nevybira
+	$fancyAdmin = FancyAdminFactory::create(['multiTenant' => false]);
+
+	Assert::false($fancyAdmin->canSignIn(new TestIdentity()->addRole(
+		new TestAclRole('zakaznik')->allowResource(new TestAclResource(AclResourceNameEnum::CUSTOMER_DASHBOARD->value)),
+	)));
+	Assert::true($fancyAdmin->canSignIn(new TestIdentity()->addRole(
+		new TestAclRole('operator')->allowResource(new TestAclResource(AclResourceNameEnum::BACKOFFICE_DASHBOARD->value)),
+	)));
+	Assert::true($fancyAdmin->canSignIn(new TestIdentity()->addRole(new TestAclRole('admin', isAdmin: true))));
+});
+
+
+test('single-tenant nepocita role profilu na uctu vybranem pred prepnutim', function () {
+	// Profil na uctu dava pravo do backoffice, ale single-tenant ucet nevybira
+	$identity = new TestIdentity();
+	$account = new TestAccount('Firma');
+	new TestProfile($identity, $account)->addRole(
+		new TestAclRole('operator')->allowResource(new TestAclResource(AclResourceNameEnum::BACKOFFICE_DASHBOARD->value)),
+	);
+	$identity->setSelectedAccount($account);
+
+	Assert::true(FancyAdminFactory::create()->canSignIn($identity));
+	Assert::same($account, $identity->getSelectedAccount());
+
+	Assert::false(FancyAdminFactory::create(['multiTenant' => false])->canSignIn($identity));
+	Assert::null($identity->getSelectedAccount());
+});
+
+
+test('single-tenant odmitne zakaznika uz v autentizatoru', function () {
+	$authenticator = new TestAuthenticator();
+	$authenticator->setFancyAdmin(FancyAdminFactory::create(['multiTenant' => false]));
+
+	$zakaznik = new TestIdentity()->addRole(
+		new TestAclRole('zakaznik')->allowResource(new TestAclResource(AclResourceNameEnum::CUSTOMER_DASHBOARD->value)),
+	);
+
+	Assert::exception(
+		fn() => $authenticator->callValidateIdentity($zakaznik),
+		AuthenticationException::class,
+		'Nemáte oprávnění pro přihlášení',
+	);
+});
+
+
+test('rezim tenantu se uzivateli nastavuje zvenci, vychozi je vice tenantu', function () {
+	// SecurityUser sestaveny mimo DI (testy, konzole) se chova jako pred zavedenim prepinace
+	$user = new TestSecurityUserTraitHost();
+	Assert::true($user->isMultiTenant());
+
+	$user->setMultiTenant(false);
+	Assert::false($user->isMultiTenant());
 });
 
 
