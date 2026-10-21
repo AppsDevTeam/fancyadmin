@@ -33,7 +33,12 @@ trait BaseQueryTrait
 		}
 
 		$this->filter[BaseQuery::ACCOUNT_FILTER] = function (QueryBuilder $qb) {
+			// Single-tenant: vybraný účet neexistuje; kontrola i tady, aby filtr nesáhl
+			// na účet, který identitě zůstal v databázi z doby před přepnutím režimu.
+			// Až za běhu dotazu - init() běží v konstruktoru, dřív než setSecurityUser().
 			if (
+				$this->securityUser->isMultiTenant()
+				&&
 				$this->securityUser->isLoggedIn()
 				&&
 				($account = $this->securityUser->getIdentity()->getSelectedAccount())

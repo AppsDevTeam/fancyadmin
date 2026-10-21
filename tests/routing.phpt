@@ -95,6 +95,7 @@ test('routy prihlaseni', function () {
 	$masks = masks(createRouter()->getPortalRouteList());
 
 	Assert::same([
+		'https://admin.example.com/manifest.webmanifest',
 		'https://admin.example.com/sign/in',
 		'https://admin.example.com/sign/out',
 		'https://admin.example.com/sign/two-factor',
@@ -110,7 +111,7 @@ test('vypnuta obnova hesla routu nepridava', function () {
 	$masks = masks(createRouter(['lostPasswordEnabled' => false])->getPortalRouteList());
 
 	Assert::notContains('https://admin.example.com/sign/lost-password', $masks);
-	Assert::count(5, $masks);
+	Assert::count(6, $masks);
 });
 
 
@@ -191,6 +192,17 @@ test('slozeny route list ma poradi portal, zakaznik, backoffice', function () {
 		$router->getCustomerRouteList(),
 		$router->getBackofficeRouteList(),
 	], $routeList->getRouters());
+});
+
+
+test('single-tenant nema zakaznickou cast', function () {
+	// Zakaznicke routy stoji na vybranem uctu v URL (<selectedAccount>/...)
+	$router = createRouter(['multiTenant' => false]);
+
+	Assert::same([
+		$router->getPortalRouteList(),
+		$router->getBackofficeRouteList(),
+	], $router->getRouteList()->getRouters());
 });
 
 

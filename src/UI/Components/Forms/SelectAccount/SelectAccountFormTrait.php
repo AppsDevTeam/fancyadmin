@@ -59,7 +59,8 @@ trait SelectAccountFormTrait
 
 			$accounts = $query->fetch();
 		} else {
-			$accounts = array_merge($this->_securityUser->getIdentity()->getAccounts(), $this->_securityUser->getIdentity()->getSubaccounts());
+			// Jen ucty s aktivnim profilem - na ostatni by uzivatele SelectAccountListener stejne nepustil
+			$accounts = array_merge($this->_securityUser->getIdentity()->getActiveAccounts(), $this->_securityUser->getIdentity()->getActiveSubaccounts());
 		}
 
 		$accountPairs = [];
@@ -93,6 +94,12 @@ trait SelectAccountFormTrait
 	 */
 	public function processForm(array $values): never
 	{
+		// Single-tenant formulář nevykresluje, ale signál jde odeslat ručně - účet
+		// by se identitě nastavil a AccountFieldListener by ho vepisoval do nových záznamů
+		if (!$this->_fancyAdmin->isMultiTenant()) {
+			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute());
+		}
+
 		if ($values['account'] === 'settings') {
 			// Pokud mame cloveka s global companies, tam se nastavi company jako null
 			$this->_securityUser->getIdentity()->setSelectedAccount(null);

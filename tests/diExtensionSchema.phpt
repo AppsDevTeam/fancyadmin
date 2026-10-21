@@ -72,6 +72,7 @@ test('vychozi hodnoty konfigurace', function () {
 	Assert::same([], $config->jsComponentsConfig);
 	Assert::null($config->faviconFileNamePng);
 	Assert::null($config->faviconFileNameSvg);
+	Assert::true($config->multiTenant);
 });
 
 
@@ -194,7 +195,7 @@ test('neznama polozka konfigurace se odmitne', function () {
 
 
 test('logicke volby prijmou jen bool', function () {
-	foreach (['lostPasswordEnabled', 'hmr', 'keycloakEnabled', 'keycloakVerifySsl', 'passkeyEnabled'] as $option) {
+	foreach (['lostPasswordEnabled', 'hmr', 'keycloakEnabled', 'keycloakVerifySsl', 'passkeyEnabled', 'multiTenant'] as $option) {
 		Assert::exception(fn() => process([$option => 'ano']), ValidationException::class, null, null, $option);
 	}
 });

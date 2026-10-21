@@ -50,6 +50,12 @@ test('vychozi routy', function () {
 });
 
 
+test('vice tenantu v jedne databazi je vychozi rezim', function () {
+	Assert::true(FancyAdminFactory::create()->isMultiTenant());
+	Assert::false(FancyAdminFactory::create(['multiTenant' => false])->isMultiTenant());
+});
+
+
 test('ACL zdroje pro jednotlive casti administrace', function () {
 	$fancyAdmin = FancyAdminFactory::create();
 
@@ -119,4 +125,26 @@ test('passkeys jsou ve vychozim stavu vypnute', function () {
 test('nazev Relying Party se bere z nazvu projektu', function () {
 	Assert::same('Test Project', FancyAdminFactory::create()->getPasskeyRpName());
 	Assert::same('Muj admin', FancyAdminFactory::create(['passkeyRpName' => 'Muj admin'])->getPasskeyRpName());
+});
+
+
+test('web manifest nese nazev projektu a ikony z appIconsDir', function () {
+	$manifest = FancyAdminFactory::create(['projectName' => 'Test App', 'appIconsDir' => 'favicon/testproject'])->createWebManifest();
+
+	Assert::same('Test App', $manifest['name']);
+	Assert::same('Test App', $manifest['short_name']);
+	Assert::same('standalone', $manifest['display']);
+	Assert::same(
+		['/favicon/testproject/icon-192.png', '/favicon/testproject/icon-512.png'],
+		array_column($manifest['icons'], 'src'),
+	);
+	Assert::same(['192x192', '512x512'], array_column($manifest['icons'], 'sizes'));
+});
+
+
+test('web manifest bez appIconsDir vznika bez ikon', function () {
+	$manifest = FancyAdminFactory::create(['projectName' => 'Test'])->createWebManifest();
+
+	Assert::same('Test', $manifest['name']);
+	Assert::false(isset($manifest['icons']));
 });

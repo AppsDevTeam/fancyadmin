@@ -22,7 +22,8 @@ class FancyAdminCustomerRouteList extends FancyAdminRouteList
 							// nette vse natvrdo pretypovava na string
 							$selectedAccount = (int) $selectedAccount;
 
-							if ($this->securityUser->isLoggedIn()) {
+							// Single-tenant účet nevybírá - adresa ho identitě nesmí podstrčit
+							if ($this->administration->isMultiTenant() && $this->securityUser->isLoggedIn()) {
 								try {
 									if ($this->securityUser->getIdentity()->getSelectedAccount()?->getId() !== $selectedAccount) {
 										/** @var Account $account */

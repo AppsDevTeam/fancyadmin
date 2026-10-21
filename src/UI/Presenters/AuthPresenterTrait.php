@@ -61,6 +61,14 @@ trait AuthPresenterTrait
 			try {
 				$this->_securityUser->login($token, context: $this->_fancyAdmin->getContext());
 
+				// Token vydava i API pokladny, kam se prihlasi i obsluha bez prava do portalu.
+				// Autentizator to nehlida, viz AuthenticatorTrait::validateIdentity().
+				if (!$this->_fancyAdmin->canSignIn($this->getUser()->getIdentity())) {
+					$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
+					$this->getUser()->logout(true);
+					$this->redirect(':Portal:Sign:in');
+				}
+
 				// Přihlášení odkazem není přihlášení klíčem (README 19.8)
 				$this->_passkeyService->clearPasskeySession();
 				$this->_passkeyService->clearTwoFactorSession();
@@ -88,29 +96,32 @@ trait AuthPresenterTrait
 			$this->redirect(':Portal:Sign:in');
 		}
 
-		if ($this->getParameter('selectedAccount')) {
-			if ($this->getUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
-				$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
-				$this->_em->flush();
-			}
-		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			if ($this->getUser()->getIdentity()->getSelectedAccount()) {
-				$this->getUser()->getIdentity()->setSelectedAccount(null);
-				$this->_em->flush();
-			}
-		} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
-			// TODO odstranit
-			try {
-				$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
-			} catch (InvalidLinkException) {
-				$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
-			}
-		} else {
-			// TODO odstranit
-			try {
-				$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
-			} catch (InvalidLinkException) {
-				$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+		// Single-tenant účet nevybírá, vynuloval ho už checkRequirements()
+		if ($this->_fancyAdmin->isMultiTenant()) {
+			if ($this->getParameter('selectedAccount')) {
+				if ($this->getUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
+					$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
+					$this->_em->flush();
+				}
+			} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+				if ($this->getUser()->getIdentity()->getSelectedAccount()) {
+					$this->getUser()->getIdentity()->setSelectedAccount(null);
+					$this->_em->flush();
+				}
+			} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
+				// TODO odstranit
+				try {
+					$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+				} catch (InvalidLinkException) {
+					$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+				}
+			} else {
+				// TODO odstranit
+				try {
+					$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
+				} catch (InvalidLinkException) {
+					$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
+				}
 			}
 		}
 
@@ -122,6 +133,21 @@ trait AuthPresenterTrait
 		$this->enforcePasskeyLogin();
 
 		$this->primaryTemplate = true;
+	}
+
+	/**
+	 * Single-tenant: účet se nevybírá, identita ho mít nemá.
+	 */
+	private function clearSelectedAccount(): void
+	{
+		$identity = $this->getUser()->getIdentity();
+
+		// Účet vybraný z doby před přepnutím do single-tenant režimu - dotazy ho sice
+		// ignorují, ale formuláře a šablony se na něj ptají (pole účtu, barvy účtu)
+		if ($identity->getSelectedAccount()) {
+			$identity->setSelectedAccount(null);
+			$this->_em->flush();
+		}
 	}
 
 	/**
@@ -170,6 +196,25 @@ trait AuthPresenterTrait
 		}
 	}
 
+	/**
+	 * Ucet, na ktery presmerovat uzivatele bez vybraneho uctu. Musi mit aktivni profil -
+	 * na ucet s deaktivovanym profilem by ho SelectAccountListener stejne nepustil.
+	 *
+	 * Bez aktivniho profilu uzivatel v portalu nema co delat, odhlasi se.
+	 *
+	 * @throws AbortException
+	 */
+	private function getFirstActiveAccountId(): int
+	{
+		if ($account = $this->getUser()->getIdentity()->getActiveAccounts()[0] ?? null) {
+			return $account->getId();
+		}
+
+		$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
+		$this->getUser()->logout(true);
+		$this->redirect(':Portal:Sign:in');
+	}
+
 	private function isProfilePresenter(): bool
 	{
 		$parts = explode(':', $this->getName());
@@ -185,12 +230,34 @@ trait AuthPresenterTrait
 	{
 		parent::checkRequirements($element);
 		if ($this->getUser()->isLoggedIn()) {
+			// Dřív než se kontrolují práva - role profilu na vybraném účtu by se do nich započítaly
+			if (!$this->_fancyAdmin->isMultiTenant()) {
+				$this->clearSelectedAccount();
+			}
+
+			// Single-tenant nemá zákaznický portál (stojí na vybraném účtu v URL), takže se
+			// sem smí jen s přístupem do backoffice. Přihlášení bez něj odmítne už
+			// FancyAdmin::canSignIn(); tohle je session, které právo odebrali až po přihlášení.
+			// Odhlásit, ne 403 - z chybové stránky by se uživatel neměl jak dostat ven.
+			// Tady, ne ve startup(): checkRequirements() běží dřív.
 			if (
+				!$this->_fancyAdmin->isMultiTenant()
+				&&
+				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+			) {
+				$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
+				$this->getUser()->logout(true);
+				$this->redirect(':Portal:Sign:in');
+			}
+
+			if (
+				$this->_fancyAdmin->isMultiTenant()
+				&&
 				$this->isLinkCurrent($this->_fancyAdmin->getDefaultBackofficeRoute())
 				&&
 				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
 			) {
-				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getUser()->getIdentity()->getAccounts()[0]->getId()]);
+				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getFirstActiveAccountId()]);
 			}
 
 			if (!$this->validateSecurityAttributes($element)) {

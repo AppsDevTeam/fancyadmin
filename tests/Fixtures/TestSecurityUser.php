@@ -26,6 +26,7 @@ final class TestSecurityUser implements SecurityUser
 		private readonly bool $isAdmin = false,
 		private readonly bool $isLoggedIn = true,
 		private readonly ?Identity $identity = null,
+		private readonly bool $isMultiTenant = true,
 	) {
 	}
 
@@ -55,6 +56,11 @@ final class TestSecurityUser implements SecurityUser
 	public function isAllowedBackoffice(): bool
 	{
 		return $this->isAllowed('portalBackoffice.dashboard');
+	}
+
+	public function isMultiTenant(): bool
+	{
+		return $this->isMultiTenant;
 	}
 
 	public function isLoggedIn(): bool

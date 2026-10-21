@@ -115,6 +115,21 @@ trait IdentityTrait
 	#[AuditedValue]
 	protected ?Identity $anonymizedBy = null;
 
+	/**
+	 * Posledni uspesne prihlaseni. Razitkuje ho LastLoginSubscriber z autentizacni
+	 * udalosti, ne prihlasovaci kod - cest dovnitr ma projekt vic (administrace,
+	 * mobilni aplikace, odkaz s jednorazovym tokenem, SSO) a kazda by na to musela
+	 * myslet zvlast.
+	 *
+	 * Je to podklad pro revizi neaktivnich uctu. Auditni stopu prihlasovani
+	 * nenahrazuje - ta drzi kazdou udalost zvlast v audit_log, tohle je posledni.
+	 *
+	 * Zamerne bez #[LoggableProperty] a #[AuditedValue]: razitko se meni pri kazdem
+	 * prihlaseni a do historie zmen ani do auditu nepatri, ten uz tu udalost ma.
+	 */
+	#[ORM\Column(nullable: true)]
+	protected ?DateTimeImmutable $lastLoginAt = null;
+
 	protected string $authToken;
 
 	public function __construct()
@@ -341,6 +356,37 @@ trait IdentityTrait
 	}
 
 	/**
+	 * Ucty, ke kterym ma identita aktivni profil. Na rozdil od getAccounts(), ktera vraci
+	 * ucty ze vsech profilu - i tech, ve kterych byl uzivatel deaktivovan.
+	 *
+	 * @return Account[]
+	 */
+	public function getActiveAccounts(): array
+	{
+		$accounts = [];
+		foreach ($this->getProfiles() as $_profile) {
+			if ($_profile->getIsActive()) {
+				$accounts[] = $_profile->getAccount();
+			}
+		}
+		return $accounts;
+	}
+
+	/**
+	 * Subucty uctu s aktivnim profilem - majitel holdingu ma profil jen na nadrazenem uctu.
+	 *
+	 * @return Account[]
+	 */
+	public function getActiveSubaccounts(): array
+	{
+		$subaccounts = [];
+		foreach ($this->getActiveAccounts() as $_account) {
+			$subaccounts = array_merge($subaccounts, $_account->getSubaccounts());
+		}
+		return $subaccounts;
+	}
+
+	/**
 	 * @return AclRole[]
 	 */
 	public function getRoles(): array
@@ -354,6 +400,17 @@ trait IdentityTrait
 			return $this;
 		}
 		$this->roles->add($role);
+		return $this;
+	}
+
+	public function getLastLoginAt(): ?DateTimeImmutable
+	{
+		return $this->lastLoginAt;
+	}
+
+	public function setLastLoginAt(?DateTimeImmutable $lastLoginAt): static
+	{
+		$this->lastLoginAt = $lastLoginAt;
 		return $this;
 	}
 

@@ -116,11 +116,7 @@ trait SignInFormTrait
 		try {
 			$this->_identity = $this->_authenticator->authenticate($values['email'], $values['password'], $this->_fancyAdmin->getContext());
 
-			if (
-				!$this->_identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
-				&&
-				!$this->_identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
-			) {
+			if (!$this->_fancyAdmin->canSignIn($this->_identity)) {
 				$form->addError('fcadmin.appGeneral.exceptions.noPermission');
 				return;
 			}

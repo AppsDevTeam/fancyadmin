@@ -21,7 +21,9 @@ trait AclTrait
 	use UpdatedAt;
 	use UpdatedBy;
 
-	#[ORM\ManyToOne(targetEntity: 'AclRole')]
+	// inversedBy kvuli AclRoleTrait::$acls - bez nej je vztah obousmerny jen na jedne
+	// strane a orm:validate-schema to hlasi jako chybu mapovani.
+	#[ORM\ManyToOne(targetEntity: 'AclRole', inversedBy: 'acls')]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	#[LoggableProperty]
 	#[AuditedValue]

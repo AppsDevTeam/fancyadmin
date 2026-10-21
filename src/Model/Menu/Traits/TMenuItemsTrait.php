@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model\Menu\Traits;
 
+use ADT\FancyAdmin\Model\Entities\Enums\IdentityScopeEnum;
 use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuItem;
 use ADT\FancyAdmin\Model\Menu\NavbarSubmenu;
@@ -48,17 +49,27 @@ trait TMenuItemsTrait {
 		$menu->addMenuItem($navbarMenuItem);
 	}
 
+	/**
+	 * Se $scope odkazuje jen na cast seznamu uzivatelu (bezni uzivatele / spravci),
+	 * takze polozka muze byt v menu dvakrat - viz IdentityScopeEnum. Bez nej miri
+	 * na cely seznam.
+	 */
 	public function addIdentitiesItem(
 		NavbarMenu|NavbarSubmenu $menu,
-		string $label = 'fcadmin.presenters.identity.title',
+		?string $label = null,
 		string $link = 'Identities:default',
 		?string $faIcon = null,
 		?Resource $alcResource = null,
+		?IdentityScopeEnum $scope = null,
 	): void {
 		$navbarMenuItem = $this->createMenuItemEntity($menu)
-			->setLabel($label)
+			->setLabel($label ?? $scope?->titleKey() ?? 'fcadmin.presenters.identity.title')
 			->setLink($link)
 			->setAclResource($alcResource);
+
+		if ($scope) {
+			$navbarMenuItem->setLinkArgs(['scope' => $scope->value]);
+		}
 
 		if ($faIcon) {
 			$navbarMenuItem->setFaIcon($faIcon);

@@ -10,6 +10,7 @@ use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
+use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
 use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
@@ -19,6 +20,7 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
+use ADT\FancyAdmin\Model\Security\LastLoginSubscriber;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\Model\Security\ReturnPath;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
@@ -61,11 +63,19 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'emailBackgroundColor' => Expect::string()->default(null),
 			'faviconFileNamePng' => Expect::string()->nullable()->default(null),
 			'faviconFileNameSvg' => Expect::string()->nullable()->default(null),
+			// Adresar (relativne k webrootu) s icon-192.png, icon-512.png a apple-touch-icon.png -
+			// ikona a nazev aplikace pridane na plochu / domovskou obrazovku (web manifest)
+			'appIconsDir' => Expect::string()->nullable()->default(null),
 			'hmr' => Expect::bool()->default(false),
 			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
 			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
 			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
 			'personalDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
+			// Více účtů (tenantů) v jedné databázi - data se oddělují podle účtu a uživatel
+			// si účet vybírá. false = jeden tenant na databázi (projekt bez účtů, nebo
+			// s databází pro každého zákazníka): bez filtrů podle účtu, výběru účtu
+			// a zákaznického portálu. Viz README, sekce 26 (Single-tenant režim).
+			'multiTenant' => Expect::bool()->default(true),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
@@ -148,6 +158,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'project' => $this->config->project,
 				'projectName' => $this->config->projectName,
 				'adminHostPath' => $this->config->adminHostPath,
+				'appIconsDir' => $this->config->appIconsDir,
 				'logoPublicPath' => $this->config->logoPublicPath,
 				'logoMenuPath' => $this->config->logoMenuPath,
 				'loginPageLogoPath' => $this->config->loginPageLogoPath,
@@ -163,6 +174,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'personalDataAclResource' => $this->config->personalDataAclResource,
+				'multiTenant' => $this->config->multiTenant,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
@@ -200,6 +212,13 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		//   doctrineLoggable: onLogEntry: [[@fancyAdmin.changeLogAuditSubscriber, logEntry]]
 		$builder->addDefinition($this->prefix('changeLogAuditSubscriber'))
 			->setFactory(ChangeLogAuditSubscriber::class);
+
+		// Razitko posledniho prihlaseni na identite - navesuje se samo, viz beforeCompile.
+		// Prepinac k tomu zadny neni zamerne: sloupec `last_login_at` je soucast
+		// IdentityTrait, takze ho Doctrine vybira v kazdem dotazu na identitu a projekt,
+		// ktery po aktualizaci baliku nespusti migraci, je rozbity i bez tohohle zapisu.
+		$builder->addDefinition($this->prefix('lastLoginSubscriber'))
+			->setFactory(LastLoginSubscriber::class);
 
 
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
@@ -259,6 +278,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
 		$securityUserDef->addSetup('setPersonalDataAclResource', [$this->config->personalDataAclResource]);
+		// Query objekty znají jen SecurityUser - podle něj se rozhodují, jestli filtrovat podle účtu
+		$securityUserDef->addSetup('setMultiTenant', [$this->config->multiTenant]);
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
@@ -269,6 +290,18 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if ($this->config->keycloakEnabled) {
 			$fancyAdminDef = $builder->getDefinition($this->prefix('administration'));
 			$fancyAdminDef->addSetup('setKeycloakManager', [$this->prefix('@keycloakManager')]);
+		}
+
+		// Razitko posledniho prihlaseni visi na autentizacni udalosti, protoze cest dovnitr
+		// ma projekt vic (administrace, mobilni aplikace, odkaz s jednorazovym tokenem, SSO)
+		// a udalost je jedine misto, kudy projdou vsechny. Navesuje se tady, aby to projekt
+		// nemusel opisovat do neonu.
+		//
+		// Bez autentikatoru se nic nedeje: kde se neni kam prihlasit, neni co razitkovat -
+		// padat kvuli tomu pri kompilaci by projekt trestalo za neco, co neudelal.
+		if (($authenticator = $builder->getByType(DoctrineAuthenticator::class)) !== null) {
+			$builder->getDefinition($authenticator)
+				->addSetup('$onAuthEvent[]', [[$this->prefix('@lastLoginSubscriber'), 'authEvent']]);
 		}
 
 		// passkeyEnabled vyžaduje passkey infrastrukturu v projektu — srozumitelná chyba

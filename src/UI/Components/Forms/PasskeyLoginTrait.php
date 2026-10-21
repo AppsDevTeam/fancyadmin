@@ -76,12 +76,7 @@ trait PasskeyLoginTrait
 				$this->getPresenter()->sendJson(['redirect' => $keycloakLoginUrl]);
 			}
 
-			// Stejný ACL check jako AuthenticatorTrait::validateIdentity()
-			if (
-				!$identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
-				&&
-				!$identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
-			) {
+			if (!$this->_fancyAdmin->canSignIn($identity)) {
 				throw new PasskeyException($this->_translator->translate('fcadmin.appGeneral.exceptions.noPermission'));
 			}
 

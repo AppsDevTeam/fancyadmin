@@ -519,6 +519,15 @@ class Authenticator extends OnetimeTokenAuthenticator
 
 `OnetimeTokenAuthenticator` rozšiřuje `DoctrineAuthenticator` a přidává OTP podporu. `AuthenticatorTrait` přidává `validateIdentity()` kontrolu ACL.
 
+Právo do portálu (customer nebo backoffice resource) posuzuje `FancyAdmin::canSignIn()` a volá ho
+každá cesta do portálu sama — heslo, druhý faktor, passkey i jednorázový token (`?token=`).
+Na `validateIdentity()` portál nestojí: projekt, který stejným autentizátorem přihlašuje i jinam
+(např. API pokladny s obsluhou bez práva do portálu), si ji přepíše.
+
+`Identity::getActiveAccounts()` / `getActiveSubaccounts()` vrací jen účty s aktivním profilem —
+z nich se nabízí přepínač účtů a vybírá účet po přihlášení. `getAccounts()` vrací účty všech
+profilů (používá je account filtr, aby už otevřené session po deaktivaci profilu doběhly).
+
 **Poznámka:** Pokud nepotřebujete OTP, můžete rozšiřovat přímo `DoctrineAuthenticator` a implementovat `verifyCredentials()`.
 
 ---
@@ -983,6 +992,9 @@ fancyadmin:
 		primaryColor: '#6fd3c3'
 		primaryColorDark: '#8adccf'
 ```
+
+Projekt bez účtů, nebo s databází pro každého zákazníka, přidá `multiTenant: false` — viz
+sekce 27 (Single-tenant režim).
 
 ### Tmavý režim
 
@@ -2524,6 +2536,30 @@ Retenci si řídí projekt — tabulka patří do `purge` (viz sekce 22), ne do 
 do odděleného úložiště by znamenalo, že v administraci nebude vidět, což je přesně to, kvůli
 čemu je tady.
 
+### Razítko posledního přihlášení
+
+`Identity::$lastLoginAt` drží čas posledního úspěšného přihlášení. Typicky ho chce
+bezpečnostní politika zákazníka, která ukládá blokovat účty nepoužité N dní — z logů se to
+sice dá vyčíst taky, ale jen do jejich retence a ne jedním dotazem nad účty.
+
+Nic se nezapíná — rozšíření si subscriber zaregistruje a navěsí na autentikátor samo.
+Projekt si jen **vygeneruje migraci**, která sloupec přidá; dokud ji nespustí, rozbité to
+má stejně, protože `last_login_at` je součást `IdentityTrait` a Doctrine ho vybírá v každém
+dotazu na identitu.
+
+Razítkuje se z autentizační události, ne z přihlašovacích míst: cest dovnitř má projekt víc
+(administrace, mobilní aplikace, odkaz s jednorázovým tokenem, SSO) a každá by na to musela
+myslet zvlášť. Posouvá ho jen **úspěšné** přihlášení — neúspěšný pokus by jinak dělal
+z opuštěného účtu používaný. Zapisuje se přes DBAL, aby razítko neprotáhlo `flush()` cizí
+rozdělané změny visící v entity manageru.
+
+Auditní stopu přihlašování **nenahrazuje**: ta drží každou událost zvlášť v `audit_log`,
+tohle je poslední hodnota určená k filtrování nad seznamem účtů.
+
+Projekt si k tomu vygeneruje migraci. Existující účty zůstanou s `NULL` — doplňovat razítko
+zpětně z logů nemá smysl, jejich retence je kratší než život účtu a u starších účtů by z toho
+vyšlo prázdné razítko vypadající jako „nikdy se nepřihlásil".
+
 ---
 
 ## Shrnutí
@@ -2672,3 +2708,41 @@ před tlačítko:
 
 Formulář se kvůli tomu nemění - je to jen přeskládání a nastylování toho, co už renderer
 vypsal. Odesílaná data i název pole zůstávají stejné.
+
+---
+
+## 27. Single-tenant režim (volitelné)
+
+Fancyadmin ve výchozím stavu počítá s více účty (tenanty) v jedné databázi: data se oddělují
+podle účtu, uživatel si účet vybírá v navigaci a zákaznický portál stojí na vybraném účtu
+v URL (`<selectedAccount>/...`). Projekt, který účty nemá nebo má databázi pro každého
+zákazníka, to vypne:
+
+```neon
+fancyadmin:
+	multiTenant: false
+```
+
+| Oblast | Více tenantů (výchozí) | Single-tenant |
+|---|---|---|
+| Security filtr dotazů (`DefaultFilters`) | uživatel bez `fullDataAclResource` vidí jen data svých účtů (join na `account`) | bez omezení podle účtu, zůstává jen pojistka „nepřihlášený nevidí nic" — entity vazbu na účet mít nemusí |
+| Účtový filtr (`BaseQuery::ACCOUNT_FILTER`) | filtruje podle vybraného účtu | nefiltruje, ani když identitě vybraný účet v databázi zůstal |
+| Výběr účtu | formulář v navigaci, `SelectAccountListener`, parametr `selectedAccount` v routě | formulář se nevykreslí (ručně odeslaný signál jen přesměruje na `defaultBackofficeRoute`), listener ani routa účet nenastaví, `AuthPresenter` identitě vybraný účet vynuluje |
+| Přihlášení (`FancyAdmin::canSignIn()`) | stačí customer nebo backoffice resource | jen backoffice resource; session, které právo do backoffice odebrali až po přihlášení, se odhlásí |
+| Formulář identity | role identity + profily (role v rámci účtu) | jen role identity (povinné), profily se nenabízí |
+| Gridy | sloupec účtů u identit, sloupec účtu u API klíčů | bez těchto sloupců |
+
+Oddělení tenantů v single-tenant režimu drží databáze, přístup k sekcím ACL.
+
+Poznámky:
+
+- Entity a třídy kolem účtů (`Account`, `Profile`, `SelectAccountForm`, …) projekt dodává dál —
+  fancyadmin je potřebuje k sestavení, jen se nepoužívají.
+- Přepnutí existujícího projektu nepotřebuje migraci: účet, který identitám zůstal vybraný
+  z dřívějška, dotazy ignorují a `AuthPresenter` ho při dalším požadavku vynuluje. Profily
+  v databázi zůstanou, jen se nepoužívají.
+- Přepínač čtou `FancyAdmin::isMultiTenant()` a `SecurityUser::isMultiTenant()` (query objekty
+  znají jen `SecurityUser`). Do `SecurityUser` ho nastavuje `FancyAdminExtension` přes
+  `setMultiTenant()`; `SecurityUser` sestavený mimo DI (testy, konzole) se chová jako dřív,
+  tedy jako více tenantů. Vlastní implementace rozhraní `SecurityUser` bez `SecurityUserTrait`
+  musí `isMultiTenant()` doplnit.
