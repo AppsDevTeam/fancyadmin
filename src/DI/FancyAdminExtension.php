@@ -27,6 +27,7 @@ use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\Forms\Controls\PasswordRevealInput;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
+use Contributte\Datagrid\Datagrid;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Doctrine\Migrations\DependencyFactory;
 use Nette\DI\CompilerExtension;
@@ -389,6 +390,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// method - musí se zaregistrovat za běhu, jinak by ji každý projekt musel
 		// registrovat sám ve svém Bootstrapu.
 		$this->getInitialization()->addBody(PasswordRevealInput::class . '::register();');
+
+		// Datagrid má výchozí solid ('fas fa-'), UI fancyadminu používá obrysové ikony
+		$this->getInitialization()->addBody(Datagrid::class . '::$iconPrefix = ?;', ['fa-regular fa-']);
 	}
 
 	public function getTranslationResources(): array

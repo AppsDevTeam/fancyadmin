@@ -5,16 +5,16 @@
     {if $menuItem->getLink()}
         {var $link = $presenter->link($menuItem->getLink(), $menuItem->getLinkArgs())}
         <a n:if="$menuItem->isVisible($user, $presenter)" href="{$link}" n:class="item, $menuItem->isCurrent($presenter) ? active">
-            <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
+            <div class="icon"><i class="fa-regular fa-{$menuItem->getFaIcon()}"></i></div>
             <div class="title">{_$menuItem->getLabel()}</div>
         </a>
     {else}
         <span n:if="$menuItem->isEnabledSubmenu($user, $presenter)" n:class="item, has-submenu, $menuItem->isCurrent($presenter) ? active" data-submenu-parent>
             {* Header řádek jako samostatný wrapper - active bg jde jen sem, ne na submenu *}
             <span class="item-header" role="button" tabindex="0" aria-label="{_$menuItem->getLabel()}">
-                <div class="icon"><i class="fa-solid fa-{$menuItem->getFaIcon()}"></i></div>
+                <div class="icon"><i class="fa-regular fa-{$menuItem->getFaIcon()}"></i></div>
                 <div class="title">{_$menuItem->getLabel()}</div>
-                <i class="fa-solid fa-chevron-down submenu-chevron"></i>
+                <i class="fa-regular fa-chevron-down submenu-chevron"></i>
             </span>
             {if $menuItem->getSubmenu()}
                 {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
@@ -73,9 +73,9 @@
                 {if $heading}
                     <div n:class="group, $heading->isToggleable() ? toggleable, $isActiveGroup ? active-child" data-heading="{$heading->getLabel()|webalize}">
                         <div class="group-heading" role="button" tabindex="0" aria-label="{_$heading->getLabel()}">
-                            <div n:if="$heading->getFaIcon()" class="icon"><i class="fa-solid fa-{$heading->getFaIcon()}"></i></div>
+                            <div n:if="$heading->getFaIcon()" class="icon"><i class="fa-regular fa-{$heading->getFaIcon()}"></i></div>
                             <span class="group-heading-label">{_$heading->getLabel()}</span>
-                            <i n:if="$heading->isToggleable()" class="fa-solid fa-chevron-down group-heading-chevron"></i>
+                            <i n:if="$heading->isToggleable()" class="fa-regular fa-chevron-down group-heading-chevron"></i>
                         </div>
                         <div class="group-items">
                             {foreach $group['items'] as $menuItem}
@@ -96,7 +96,7 @@
             {* Sbalení menu - vlastní řádek nad uživatelem. V rozbaleném režimu i s popiskem,
                ve sbaleném zůstane jen ikonka a popis nese aria-label/title. *}
             <button type="button" class="side-panel-toggle" aria-label="{_fcadmin.layout.sideMenu.collapse}" title="{_fcadmin.layout.sideMenu.collapse}">
-                <i class="fa-solid fa-arrow-left-from-line"></i>
+                <i class="fa-regular fa-arrow-left-from-line"></i>
                 <span class="side-panel-toggle-label">{_fcadmin.layout.sideMenu.collapse}</span>
             </button>
             {include @userButton.latte}

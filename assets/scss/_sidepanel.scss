@@ -973,7 +973,7 @@ body.menu-wide .user-dropdown {
 		}
 	}
 
-	.dropdown-item:not(.user-item-wrapper):has(i.fa-solid) > div {
+	.dropdown-item:not(.user-item-wrapper):has(i#{$faIcon}) > div {
 		> div:first-child {
 			color: var(--menu-wide-muted);
 		}

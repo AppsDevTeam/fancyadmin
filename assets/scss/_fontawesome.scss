@@ -3,5 +3,8 @@
 $fa-font-path: '../webfonts' !default;
 
 @use '@fortawesome/fontawesome-pro/scss/fontawesome' with ($fa-font-path: $fa-font-path);
+// Regular (nevyplněný obrys) je pro UI ikony v tabulkách a tlačítkách klidnější než
+// solid; solid zůstává pro vyplněné stavy, stavové tečky a výstrahy.
+@use '@fortawesome/fontawesome-pro/scss/regular' with ($fa-font-path: $fa-font-path);
 @use '@fortawesome/fontawesome-pro/scss/solid' with ($fa-font-path: $fa-font-path);
 @use '@fortawesome/fontawesome-pro/scss/sharp-solid' with ($fa-font-path: $fa-font-path);

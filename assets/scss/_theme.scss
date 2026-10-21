@@ -333,7 +333,9 @@ input[type="color"]::-webkit-color-swatch {
 	position: relative;
 
 	&::before {
-		content: "";
+		// fa-magnifying-glass. Zapsáno escapem, ne literálním znakem ze soukromé
+		// zóny Unicode — ten se odsud už jednou poztrácel a lupa pak byla neviditelná.
+		content: "\f002";
 		font-family: "Font Awesome 6 Pro";
 		position: absolute;
 		top: 50%;
@@ -1394,7 +1396,7 @@ iframe {
 		}
 	}
 
-	.dropdown-item:not(.user-item-wrapper):has(i.fa-solid) {
+	.dropdown-item:not(.user-item-wrapper):has(i#{$faIcon}) {
 		--bs-dropdown-link-hover-bg: rgba(255, 255, 255, 0.1);
 
 		> div {
