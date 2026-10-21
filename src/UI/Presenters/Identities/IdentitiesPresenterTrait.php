@@ -6,6 +6,7 @@ use ADT\DoctrineForms\BaseFormInterface;
 use ADT\DoctrineComponents\Entities\Entity;
 use ADT\FancyAdmin\DI\Injects\IdentityFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\IdentityQueryFactoryInject;
+use ADT\FancyAdmin\Model\Entities\Enums\IdentityScopeEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelSize;
@@ -21,8 +22,23 @@ trait IdentitiesPresenterTrait
 	use IdentityFormFactoryInject;
 	use IdentityQueryFactoryInject;
 
-	public function actionDefault(): void
+	/** null = seznam se nedeli a zobrazuje vsechny uzivatele. */
+	protected ?IdentityScopeEnum $scope = null;
+
+	/**
+	 * Seznam uzivatelu se da rozdelit na bezne uzivatele a spravce - viz
+	 * IdentityScopeEnum. Bez parametru zustava nerozdeleny.
+	 */
+	public function actionDefault(?string $scope = null): void
 	{
+		if ($scope !== null) {
+			$this->scope = IdentityScopeEnum::tryFrom($scope);
+			if ($this->scope === null) {
+				$this->error();
+			}
+		}
+
+		$this->template->scope = $this->scope;
 		$this->template->setFile(__DIR__ . '/default.latte');
 	}
 
@@ -39,7 +55,9 @@ trait IdentitiesPresenterTrait
 
 	public function createComponentUserGrid(IdentityGridFactory $factory): IdentityGrid
 	{
-		return $factory->create();
+		$grid = $factory->create();
+		$grid->scope = $this->scope;
+		return $grid;
 	}
 
 	protected function getEntity(): Entity|callable|null

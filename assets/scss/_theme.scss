@@ -308,6 +308,46 @@ input[type="color"]::-webkit-color-swatch {
 	}
 }
 
+// Fulltext gridu (adt/datagrid-components >= 1.9, blok filter-search): input je
+// zabaleny v __field spolu s krizkem pro smazani. Bez tohohle se wrapper ve flexu
+// .form-group-filter nenatahne, krizek spadne pod pole a lupa z ::before ujede dolu.
+.grid-filter-search {
+	.grid-filter-search__field {
+		position: relative;
+		display: flex;
+		align-items: center;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	input[type="text"] {
+		width: 100%;
+		padding-right: 42px;
+	}
+
+	.grid-filter-search__clear {
+		display: none;
+		position: absolute;
+		top: 0;
+		right: 16px;
+		bottom: 0;
+		align-items: center;
+		z-index: 10;
+		line-height: 1;
+		color: #878787;
+		text-decoration: none;
+
+		&:hover {
+			color: $body-color;
+		}
+	}
+
+	// krizek jen kdyz je co mazat
+	input[type="text"]:not(:placeholder-shown) ~ .grid-filter-search__clear {
+		display: flex;
+	}
+}
+
 .vertical-divider {
 	background-color: #FFFFFF4D;
 	width: 1px;

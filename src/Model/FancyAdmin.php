@@ -38,6 +38,7 @@ class FancyAdmin
 		protected ?string $passkeyRpId = null,
 		protected ?string $passkeyRpName = null,
 		protected array $ssoAllowedHosts = [],
+		protected ?string $appIconsDir = null,
 		protected bool $multiTenant = true,
 	) {}
 
@@ -189,6 +190,44 @@ class FancyAdmin
 	{
 		$this->faviconFileNamePng = $faviconFileNamePng;
 		return $this;
+	}
+
+	/**
+	 * Adresar (relativne k webrootu) s ikonami aplikace pro manifest: icon-192.png,
+	 * icon-512.png a apple-touch-icon.png. Null = manifest vznika bez ikon.
+	 */
+	public function getAppIconsDir(): ?string
+	{
+		return $this->appIconsDir;
+	}
+
+	/**
+	 * Obsah web manifestu: nazev a ikona aplikace pridane na plochu / domovskou obrazovku.
+	 */
+	public function createWebManifest(): array
+	{
+		$manifest = [
+			'name' => $this->projectName,
+			'short_name' => $this->projectName,
+			'start_url' => '/',
+			'display' => 'standalone',
+			'lang' => 'cs-CZ',
+			'dir' => 'auto',
+		];
+
+		if ($this->appIconsDir !== null) {
+			$manifest['icons'] = [];
+			foreach ([192, 512] as $size) {
+				$manifest['icons'][] = [
+					'src' => '/' . $this->appIconsDir . '/icon-' . $size . '.png',
+					'sizes' => $size . 'x' . $size,
+					'type' => 'image/png',
+					'purpose' => 'any',
+				];
+			}
+		}
+
+		return $manifest;
 	}
 
 	public function getFaviconFileNameSvg(): ?string
