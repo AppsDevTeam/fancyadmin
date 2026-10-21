@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use ADT\FancyAdmin\Model\Entities\Enums\IdentityScopeEnum;
 use ADT\FancyAdmin\Model\Menu\NavbarMenu;
 use ADT\FancyAdmin\Model\Menu\NavbarMenuItem;
 use ADT\FancyAdmin\Model\Menu\NavbarSubmenu;
@@ -35,10 +36,26 @@ function defaults(string $method): array
 test('vychozi polozky miri na obrazovky balicku', function () {
 	Assert::same(['fcadmin.presenters.permissions.title', 'Acl:default'], defaults('addAclItem'));
 	Assert::same(['fcadmin.presenters.roles.title', 'AclRoles:default'], defaults('addAclRolesItem'));
-	Assert::same(['fcadmin.presenters.identity.title', 'Identities:default'], defaults('addIdentitiesItem'));
+	// Popisek uzivatelu zavisi na casti seznamu ($scope), sklada se az pri pridani
+	Assert::same([null, 'Identities:default'], defaults('addIdentitiesItem'));
 	Assert::same(['fcadmin.presenters.account.title', 'Accounts:default'], defaults('addAccountsItem'));
 	Assert::same(['fcadmin.presenters.configurations.title', 'Configurations:default'], defaults('addConfigurationsItem'));
 	Assert::same(['fcadmin.presenters.changeLogs.title', 'ChangeLogs:default'], defaults('addChangeLogsItem'));
+});
+
+
+test('polozka uzivatelu muze mirit jen na cast seznamu', function () {
+	$factory = new MenuFactoryWithTrait();
+	$menu = new NavbarMenu();
+
+	$factory->addIdentitiesItem($menu, scope: IdentityScopeEnum::STAFF);
+	$factory->addIdentitiesItem($menu, 'vlastni.popisek', scope: IdentityScopeEnum::PROFILE);
+
+	[$staff, $profile] = $menu->getMenuItems();
+	Assert::same('fcadmin.presenters.identity.scope.staff.title', $staff->getLabel());
+	Assert::same(['scope' => 'staff'], $staff->getLinkArgs());
+	Assert::same('vlastni.popisek', $profile->getLabel());
+	Assert::same(['scope' => 'profile'], $profile->getLinkArgs());
 });
 
 
