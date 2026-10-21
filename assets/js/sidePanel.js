@@ -134,12 +134,23 @@ $(function () {
 		container.querySelectorAll('[id^="snippet--sidePanel"] form').forEach((form) => {
 			if (form.querySelector(':scope > .side-panel-actions')) return;
 
-			// Poslední blok s viditelným tlačítkem - podle šablony je to tlačítko samo
-			// nebo obal, který mu dala. Skrytý submit je jen nosič signálu.
-			const visible = '[type="submit"]:not([hidden])';
-			const blocks = Array.from(form.children).filter((el) => el.matches(visible) || el.querySelector(visible));
-			const submit = blocks[blocks.length - 1];
-			if (!submit) return;
+			// Skrytý submit je jen nosič signálu
+			const buttons = form.querySelectorAll('[type="submit"]:not([hidden])');
+			const button = buttons[buttons.length - 1];
+			if (!button) return;
+
+			// Tlačítko i s obalem, ale bez polí - sekce může obalit celý formulář (identita)
+			const fields = ':is(input:not([type="hidden"], [type="submit"], [type="button"], [type="reset"], [type="image"]), select, textarea)';
+			let submit = button;
+			while (submit.parentElement !== form && !submit.parentElement.querySelector(fields)) {
+				submit = submit.parentElement;
+			}
+
+			// Lišta musí být přímo ve formuláři, jinak ji CSS nedotlačí dolů
+			let anchor = submit;
+			while (anchor.parentElement !== form) {
+				anchor = anchor.parentElement;
+			}
 
 			// Stav záznamu bereme do lišty, jen když stojí těsně nad tlačítkem; jinde ve
 			// formuláři patří ke kontextu okolních polí. V liště ho kreslíme jako přepínač
@@ -149,7 +160,11 @@ $(function () {
 
 			const actions = document.createElement('div');
 			actions.className = 'side-panel-actions';
-			submit.before(actions);
+			if (anchor === submit) {
+				submit.before(actions);
+			} else {
+				anchor.after(actions);
+			}
 
 			if (toggle) {
 				toggle.classList.add('side-panel-actions-toggle');
