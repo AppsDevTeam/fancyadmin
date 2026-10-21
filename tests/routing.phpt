@@ -194,6 +194,17 @@ test('slozeny route list ma poradi portal, zakaznik, backoffice', function () {
 });
 
 
+test('single-tenant nema zakaznickou cast', function () {
+	// Zakaznicke routy stoji na vybranem uctu v URL (<selectedAccount>/...)
+	$router = createRouter(['multiTenant' => false]);
+
+	Assert::same([
+		$router->getPortalRouteList(),
+		$router->getBackofficeRouteList(),
+	], $router->getRouteList()->getRouters());
+});
+
+
 test('filtr podle query objektu prevede entitu na id a zpet', function () {
 	$router = createRouter();
 	$entity = new ADT\FancyAdmin\Tests\Fixtures\TestAccount('Firma')->setId(42);
