@@ -6,6 +6,7 @@ use ADT\DoctrineComponents\Entities\Entity;
 use ADT\DoctrineForms\BaseFormInterface;
 use ADT\FancyAdmin\DI\Injects\AccountFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\AccountQueryFactoryInject;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordForm;
@@ -22,9 +23,15 @@ trait AccountsPresenterTrait
 	use PresenterTrait;
 	use AccountFormFactoryInject;
 	use AccountQueryFactoryInject;
+	use FancyAdminInject;
 
 	public function actionDefault(): void
 	{
+		// Single-tenant účty nepoužívá. Akce běží před signály, takže to platí i pro ně.
+		if (!$this->_fancyAdmin->isMultiTenant()) {
+			$this->error();
+		}
+
 		$this->getTemplate()->setFile(__DIR__ . '/default.latte');
 	}
 

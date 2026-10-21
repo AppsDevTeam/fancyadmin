@@ -149,7 +149,7 @@
 					{if	$presenter->getAction() !== 'default'}
 						<p class="text-center"><a n:href="default" class="linkOnCard">{_'fcadmin.layout.links.back'}</a></p>
 					{else}
-						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()->getId()" class="linkOnCard">{_'fcadmin.layout.links.backToHomepage'}</a></p>
+						<p class="text-center"><a n:href="Home: selectedAccount => $user->getIdentity()->getSelectedAccount()?->getId()" class="linkOnCard">{_'fcadmin.layout.links.backToHomepage'}</a></p>
 					{/if}
 				{/if}
 

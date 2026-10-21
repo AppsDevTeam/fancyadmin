@@ -96,31 +96,32 @@ trait AuthPresenterTrait
 			$this->redirect(':Portal:Sign:in');
 		}
 
-		if (!$this->_fancyAdmin->isMultiTenant()) {
-			$this->startupSingleTenant();
-		} elseif ($this->getParameter('selectedAccount')) {
-			if ($this->getUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
-				$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
-				$this->_em->flush();
-			}
-		} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-			if ($this->getUser()->getIdentity()->getSelectedAccount()) {
-				$this->getUser()->getIdentity()->setSelectedAccount(null);
-				$this->_em->flush();
-			}
-		} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
-			// TODO odstranit
-			try {
-				$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
-			} catch (InvalidLinkException) {
-				$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
-			}
-		} else {
-			// TODO odstranit
-			try {
-				$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
-			} catch (InvalidLinkException) {
-				$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
+		// Single-tenant účet nevybírá, vynuloval ho už checkRequirements()
+		if ($this->_fancyAdmin->isMultiTenant()) {
+			if ($this->getParameter('selectedAccount')) {
+				if ($this->getUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
+					$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
+					$this->_em->flush();
+				}
+			} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+				if ($this->getUser()->getIdentity()->getSelectedAccount()) {
+					$this->getUser()->getIdentity()->setSelectedAccount(null);
+					$this->_em->flush();
+				}
+			} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
+				// TODO odstranit
+				try {
+					$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+				} catch (InvalidLinkException) {
+					$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+				}
+			} else {
+				// TODO odstranit
+				try {
+					$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
+				} catch (InvalidLinkException) {
+					$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getFirstActiveAccountId()]);
+				}
 			}
 		}
 
@@ -137,7 +138,7 @@ trait AuthPresenterTrait
 	/**
 	 * Single-tenant: účet se nevybírá, identita ho mít nemá.
 	 */
-	private function startupSingleTenant(): void
+	private function clearSelectedAccount(): void
 	{
 		$identity = $this->getUser()->getIdentity();
 
@@ -229,6 +230,11 @@ trait AuthPresenterTrait
 	{
 		parent::checkRequirements($element);
 		if ($this->getUser()->isLoggedIn()) {
+			// Dřív než se kontrolují práva - role profilu na vybraném účtu by se do nich započítaly
+			if (!$this->_fancyAdmin->isMultiTenant()) {
+				$this->clearSelectedAccount();
+			}
+
 			// Single-tenant nemá zákaznický portál (stojí na vybraném účtu v URL), takže se
 			// sem smí jen s přístupem do backoffice. Přihlášení bez něj odmítne už
 			// FancyAdmin::canSignIn(); tohle je session, které právo odebrali až po přihlášení.
