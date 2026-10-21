@@ -1851,13 +1851,15 @@ select.is-invalid + .select2 {
 }
 
 .table-bottom-scroll {
-	$padding: 3px;
-	$height: 20px;
+	$padding: 1px;
+	$height: 8px;
+	// Lišta leží ve spodním odsazení posledního řádku, nad text nesmí
+	$offset: $height + 4px;
 
 	background-color: transparent;
 	position: sticky;
 	bottom: 15px;
-	margin: -30px 10px 30px;
+	margin: (-$offset) 10px $offset;
 	height: calc($height + 1px);
 	overflow-x: auto;
 	z-index: 9;
@@ -1865,7 +1867,7 @@ select.is-invalid + .select2 {
 	&::-webkit-scrollbar {
 		border-radius: 999px;
 		background: $secondary;
-		height: calc($height - calc($padding * 2));
+		height: $height;
 	}
 
 	&::-webkit-scrollbar-thumb {
