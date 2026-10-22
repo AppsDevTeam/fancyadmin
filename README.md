@@ -1212,14 +1212,13 @@ Kam smí mířit se needituje, to je věc administrátora.
 
 #### Proč `isActive`
 
-Silent SSO na přihlašovací stránce projde **všechny aktivní** instance a na každou udělá
-jeden `prompt=none` check. Vadná konfigurace tedy ovlivní login celé platformy — deaktivace
-je způsob, jak takovou instanci odstavit, aniž by se musela smazat: konfigurace i identity
-na ni navázané zůstanou zachované. Smazat ji ostatně nejde, dokud na ní visí identity.
+Vadná konfigurace instance nebo výpadek jejího Keycloaku znemožní přihlášení SSO
+uživatelům na ni navázaným. Deaktivace je způsob, jak takovou instanci odstavit, aniž by
+se musela smazat: konfigurace i identity na ni navázané zůstanou zachované. Smazat ji
+ostatně nejde, dokud na ní visí identity.
 
 Co deaktivace ovlivní:
 
-- **Silent SSO** instanci vynechá, `prompt=none` check se na ni neposílá.
 - **SSO uživatelé navázaní na instanci** (identita se `sso_id` a alespoň jednou rolí
   s `needs_sso`) se chovají jako **běžní uživatelé s heslem**: přihlásí se lokálním heslem,
   lost password i reset hesla z gridu uživatelů pošlou lokální recovery mail a na Profilu
@@ -1273,6 +1272,22 @@ ohlásí výsledek. Přijatý `code` se za token nevymění. Bez toho by se admi
 cizí identitou, případně by se přes `defaultRole` provisionovala nová.
 
 Používá se existující `silent-check` redirect URI, takže se v Keycloaku **nic nepřidává**.
+
+#### Automatický silent SSO na přihlašovací stránce není
+
+Přihlašovací stránka nepřihlášeného návštěvníka na Keycloak sama nepřesměrovává. SSO
+uživatele tam pošle až e-mailové směrování: po zadání e-mailu (AJAX `checkKeycloak`, bez JS
+při odeslání formuláře) se podle identity najde její instance. Pokud má uživatel v Keycloaku
+aktivní session, vrátí se rovnou přihlášený bez hesla. Při přechodu mezi aplikacemi
+ve stejném realmu tedy uživatel zadá v další aplikaci jen e-mail.
+
+Dřívější automatický `prompt=none` check pro všechny aktivní instance byl zrušený:
+
+- přesměrovával přes Keycloak každého nepřihlášeného návštěvníka, i uživatele s heslem,
+- při výpadku Keycloaku nikdo neviděl přihlašovací formulář,
+- klienty bez cookies (monitoring, boti) posílal do smyčky redirectů.
+
+Endpoint `silent-check` zůstává jen pro zkušební průchod (viz výše) a nikoho nepřihlásí.
 
 ### 18.3 NEON konfigurace
 

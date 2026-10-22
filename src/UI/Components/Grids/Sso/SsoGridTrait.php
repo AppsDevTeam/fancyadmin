@@ -61,7 +61,7 @@ trait SsoGridTrait
 	 *     clientId i clientSecret. Nepotřebuje prohlížeč, takže když spadne, končíme tady.
 	 *  2. zkušební průchod - admina pošleme reálným silent checkem na hostUrl. Jen tohle
 	 *     ověří veřejnou URL, registrované redirect_uri a to, že se tam prohlížeč dostane,
-	 *     tedy přesně tu chybu, která po aktivaci rozbije přihlašování všem.
+	 *     tedy přesně tu chybu, která po aktivaci rozbije přihlašování navázaným SSO uživatelům.
 	 *
 	 * Průchod se vyhodnotí v KeycloakAuthPresenterTrait::finishSsoTest() a nikoho nepřihlásí.
 	 */

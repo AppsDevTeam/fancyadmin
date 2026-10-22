@@ -222,8 +222,7 @@ test('neznama instance v session nic nevrati', function () {
 
 
 test('do prihlasovani vstupuji jen aktivni instance', function () {
-	// Silent SSO na prihlasovaci strance prochazi tenhle seznam, takze jeden vadny zaznam
-	// by presmeroval login cele platformy.
+	// Neaktivni instance se do prihlasovani nezapoji, navazani uzivatele se prihlasuji heslem.
 	[$manager, , $repository] = createManager([
 		new TestSso('produkce'),
 		new TestSso('archiv', isActive: false),

@@ -15,11 +15,6 @@ class KeycloakSessionSection
 	const string AUTH_ATTEMPT_COUNT        = 'authAttemptCount';
 	const string AUTH_ATTEMPT_LAST_TIME    = 'authAttemptLastTime';
 	const string SSO_INSTANCE_NAME         = 'ssoInstanceName';
-	// Názvy SSO instancí, u kterých už v této session proběhl automatický silent SSO pokus
-	const string SSO_SILENT_TRIED          = 'ssoSilentTried';
-	// Po explicitním odhlášení potlačí jeden následující automatický silent SSO pokus,
-	// aby uživatele hned znovu nepřihlásilo (a nešlo se odhlásit)
-	const string SSO_SUPPRESS_SILENT       = 'ssoSuppressSilent';
 	// Rozpracované autorizační requesty: state (CSRF token) => [verifier, backRedirect, instance, time].
 	// State se v callbacku ověřuje proti session (one-time use), verifier je PKCE code_verifier.
 	const string AUTH_STATES               = 'authStates';
@@ -34,8 +29,6 @@ class KeycloakSessionSection
 			self::AUTH_ATTEMPT_COUNT,
 			self::AUTH_ATTEMPT_LAST_TIME,
 			self::SSO_INSTANCE_NAME,
-			self::SSO_SILENT_TRIED,
-			self::SSO_SUPPRESS_SILENT,
 			self::AUTH_STATES,
 		];
 	}

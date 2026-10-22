@@ -123,8 +123,6 @@ test('nazvy klicu v session se nesmi zmenit', function () {
 		'authAttemptCount',
 		'authAttemptLastTime',
 		'ssoInstanceName',
-		'ssoSilentTried',
-		'ssoSuppressSilent',
 		'authStates',
 	], new KeycloakSessionSection()->getSessionKeys());
 });
