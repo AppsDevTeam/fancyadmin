@@ -7,8 +7,10 @@ use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use ADT\FancyAdmin\Tests\Fixtures\Queries\InvoiceQuery;
 use ADT\FancyAdmin\Tests\Fixtures\Queries\OrderQuery;
+use ADT\FancyAdmin\Tests\Fixtures\TestAccount;
 use ADT\FancyAdmin\Tests\Fixtures\TestIdentity;
 use ADT\FancyAdmin\Tests\Fixtures\TestSecurityUser;
+use Doctrine\ORM\QueryBuilder;
 use Tester\Assert;
 
 /**
@@ -146,6 +148,27 @@ test('vlastni filtr jde pridat pojmenovany i anonymni', function () {
 test('vychozi parovani je id => name', function () {
 	Assert::same(['value' => 'name', 'key' => 'id'], createQuery()->fetchPairs());
 	Assert::same(['value' => 'title', 'key' => 'uuid'], createQuery()->fetchPairs('title', 'uuid'));
+});
+
+
+test('uctovy filtr filtruje podle vybraneho uctu jen pri vice tenantech', function () {
+	// Single-tenant ucet nevybira - identite ale muze zustat v databazi z doby pred
+	// prepnutim rezimu a filtr na nej nesmi sahnout
+	$account = new TestAccount('Firma');
+	$qb = new ReflectionClass(QueryBuilder::class)->newInstanceWithoutConstructor();
+
+	foreach ([[true, [$account]], [false, []]] as [$isMultiTenant, $expectedCalls]) {
+		$query = new OrderQuery();
+		$query->setSecurityUser(new TestSecurityUser(
+			identity: new TestIdentity()->setSelectedAccount($account),
+			isMultiTenant: $isMultiTenant,
+		));
+		$query->init();
+
+		($query->filter[BaseQuery::ACCOUNT_FILTER])($qb);
+
+		Assert::same($expectedCalls, $query->accountFilterCalls);
+	}
 });
 
 

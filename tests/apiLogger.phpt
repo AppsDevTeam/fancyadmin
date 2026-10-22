@@ -91,6 +91,24 @@ test('obsah se sanitizuje', function () {
 });
 
 
+test('na cislo karty upozorni jen to, co prislo zpatky', function () {
+	// Request sklada aplikace sama - PAN by v nem byl jen tak, ze predtim prisel
+	// nekterym vstupem, a ten uz se kontroloval.
+	$connection = createApiLogTable();
+	$alerts = [];
+	$sanitizer = new SensitiveDataSanitizer()
+		->onCardNumberDetected(function (string $scheme) use (&$alerts): void {
+			$alerts[] = $scheme;
+		});
+
+	new ApiLogger(apiLogDbParams(), $sanitizer)
+		->log('eet_submission', null, null, '<Trzba ean="30569309025904"/>', '<Odpoved>4111111111111111</Odpoved>', null, null);
+
+	Assert::same(['Visa'], $alerts);
+	Assert::notContains('30569309025904', $connection->fetchOne('SELECT request FROM api_log'), 'request se dal maskuje');
+});
+
+
 test('projekt si muze pridat vlastni sloupec', function () {
 	$connection = createApiLogTable();
 

@@ -31,7 +31,7 @@ trait ApiKeyGridTrait
 				? mb_substr($apiKey->getKey(), 0, $this->keyFingerprintLength) . '…'
 				: '');
 
-		if ($this->_securityUser->isAllowedFullDataAclResource()) {
+		if ($this->_securityUser->isMultiTenant() && $this->_securityUser->isAllowedFullDataAclResource()) {
 			$grid->addColumnText('account', 'fcadmin.presenters.apiKeys.grid.account')
 				->setRenderer(fn(ApiKey $apiKey) => $apiKey->getAccount()?->getName() ?? '');
 		}

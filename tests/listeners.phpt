@@ -16,6 +16,7 @@ use ADT\FancyAdmin\Tests\Fixtures\TestProfile;
 use ADT\FancyAdmin\Tests\Fixtures\TestSecurityUser;
 use ADT\FancyAdmin\Tests\Fixtures\TestSelectAccountListener;
 use ADT\FancyAdmin\Tests\Fixtures\TestTimestampedEntity;
+use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
@@ -160,6 +161,21 @@ test('posluchac vyberu uctu se veze na onFlush', function () {
 	$listener = new TestSelectAccountListener(new TestSecurityUser(), FancyAdminFactory::create());
 
 	Assert::same([Events::onFlush], $listener->getSubscribedEvents());
+});
+
+
+test('single-tenant ucet nevybira', function () {
+	// Jinak by identite s profilem pri kazdem flushi ucet znovu nastavil. Testovaci
+	// EntityManager nema UnitOfWork, takze se pozna, jestli se posluchac dostal ke zmenam.
+	$identity = new TestIdentity();
+	$args = new OnFlushEventArgs(new TestEntityManager());
+
+	$singleTenant = new TestSelectAccountListener(new TestSecurityUser(identity: $identity), FancyAdminFactory::create(['multiTenant' => false]));
+	Assert::noError(fn() => $singleTenant->onFlushCallback($args));
+	Assert::same([], $singleTenant->entitiesToRecompute);
+
+	$multiTenant = new TestSelectAccountListener(new TestSecurityUser(identity: $identity), FancyAdminFactory::create());
+	Assert::exception(fn() => $multiTenant->onFlushCallback($args), Error::class);
 });
 
 

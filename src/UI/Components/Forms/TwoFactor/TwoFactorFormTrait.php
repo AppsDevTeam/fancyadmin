@@ -154,12 +154,7 @@ trait TwoFactorFormTrait
 			$this->getPresenter()->redirect(':Portal:Sign:in');
 		}
 
-		// Stejný ACL check jako AuthenticatorTrait::validateIdentity()
-		if (
-			!$identity->isAllowed($this->_fancyAdmin->getCustomerAclResource())
-			&&
-			!$identity->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
-		) {
+		if (!$this->_fancyAdmin->canSignIn($identity)) {
 			$this->_passkeyService->clearPendingTwoFactor();
 			$this->getPresenter()->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
 			$this->getPresenter()->redirect(':Portal:Sign:in');

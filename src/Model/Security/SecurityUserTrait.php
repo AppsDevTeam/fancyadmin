@@ -23,6 +23,9 @@ trait SecurityUserTrait
 	protected Resource $backofficeAclResource;
 	protected Resource $personalDataAclResource;
 
+	// Výchozí true, aby se SecurityUser sestavený mimo DI (testy, konzole) choval jako dřív
+	protected bool $multiTenant = true;
+
 	public function isAllowed($resource = Authorizator::All, $privilege = Authorizator::All): bool
 	{
 		return array_any(
@@ -93,5 +96,20 @@ trait SecurityUserTrait
 		}
 
 		return $this->isAllowed($this->personalDataAclResource);
+	}
+
+	public function setMultiTenant(bool $multiTenant): void
+	{
+		$this->multiTenant = $multiTenant;
+	}
+
+	/**
+	 * Více účtů v jedné databázi - query objekty podle toho přidávají filtry
+	 * podle účtu (DefaultFilters, BaseQueryTrait). Nastavuje FancyAdminExtension
+	 * z konfigurace `multiTenant`.
+	 */
+	public function isMultiTenant(): bool
+	{
+		return $this->multiTenant;
 	}
 }

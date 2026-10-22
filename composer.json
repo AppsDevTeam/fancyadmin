@@ -28,12 +28,13 @@
     "nettrine/orm": "^0.10",
     "adt/route-port": "^3.0",
     "adt/doctrine-loggable": "^4.2",
-    "adt/log-sanitizer": "^1.0",
+    "adt/log-sanitizer": "^1.2",
     "lbuchs/webauthn": "^2.2"
   },
   "suggest": {
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
-    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)"
+    "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)",
+    "doctrine/migrations": "Used by fancyadmin:generate-missing-acl-resources to find the migrations namespace and directory"
   },
   "require-dev": {
     "nette/tester": "^2.5",

@@ -2,6 +2,7 @@
 
 namespace ADT\FancyAdmin\Model;
 
+use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\SsoHostAllowlist;
 use Nette\Security\Resource;
@@ -37,7 +38,19 @@ class FancyAdmin
 		protected ?string $passkeyRpId = null,
 		protected ?string $passkeyRpName = null,
 		protected array $ssoAllowedHosts = [],
+		protected ?string $appIconsDir = null,
+		protected bool $multiTenant = true,
 	) {}
+
+	/**
+	 * Více účtů v jedné databázi (výchozí). Při false je projekt single-tenant:
+	 * dotazy se nefiltrují podle účtu, účet se nevybírá a zákaznický portál
+	 * (routy s `<selectedAccount>`) se nepoužívá.
+	 */
+	public function isMultiTenant(): bool
+	{
+		return $this->multiTenant;
+	}
 
 	public function getSsoHostAllowlist(): SsoHostAllowlist
 	{
@@ -114,6 +127,28 @@ class FancyAdmin
 		return $this->backofficeAclResource;
 	}
 	
+	/**
+	 * Smi se identita prihlasit do portalu - potrebuje opravneni do zakaznicke casti nebo do
+	 * Backoffice. Jedina kontrola pro vsechny cesty do portalu (heslo, druhy faktor, passkey,
+	 * jednorazovy token).
+	 */
+	public function canSignIn(Identity $identity): bool
+	{
+		// Single-tenant účet nevybírá. Účet vybraný z doby před přepnutím by do práv
+		// započítal role profilu na tom účtu (Identity::getRoles()).
+		if (!$this->multiTenant && $identity->getSelectedAccount()) {
+			$identity->setSelectedAccount(null);
+		}
+
+		// Single-tenant nemá zákaznický portál - ten stojí na vybraném účtu v URL
+		// (<selectedAccount>/...). Kdo nemá backoffice, neměl by kam přijít.
+		if (!$this->multiTenant) {
+			return $identity->isAllowed($this->backofficeAclResource);
+		}
+
+		return $identity->isAllowed($this->customerAclResource) || $identity->isAllowed($this->backofficeAclResource);
+	}
+
 	public function getFullDataAclResource(): Resource
 	{
 		return $this->fullDataAclResource;
@@ -155,6 +190,44 @@ class FancyAdmin
 	{
 		$this->faviconFileNamePng = $faviconFileNamePng;
 		return $this;
+	}
+
+	/**
+	 * Adresar (relativne k webrootu) s ikonami aplikace pro manifest: icon-192.png,
+	 * icon-512.png a apple-touch-icon.png. Null = manifest vznika bez ikon.
+	 */
+	public function getAppIconsDir(): ?string
+	{
+		return $this->appIconsDir;
+	}
+
+	/**
+	 * Obsah web manifestu: nazev a ikona aplikace pridane na plochu / domovskou obrazovku.
+	 */
+	public function createWebManifest(): array
+	{
+		$manifest = [
+			'name' => $this->projectName,
+			'short_name' => $this->projectName,
+			'start_url' => '/',
+			'display' => 'standalone',
+			'lang' => 'cs-CZ',
+			'dir' => 'auto',
+		];
+
+		if ($this->appIconsDir !== null) {
+			$manifest['icons'] = [];
+			foreach ([192, 512] as $size) {
+				$manifest['icons'][] = [
+					'src' => '/' . $this->appIconsDir . '/icon-' . $size . '.png',
+					'sizes' => $size . 'x' . $size,
+					'type' => 'image/png',
+					'purpose' => 'any',
+				];
+			}
+		}
+
+		return $manifest;
 	}
 
 	public function getFaviconFileNameSvg(): ?string

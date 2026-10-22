@@ -8,7 +8,9 @@ use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
+use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
+use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
 use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
@@ -18,6 +20,7 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
+use ADT\FancyAdmin\Model\Security\LastLoginSubscriber;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\Model\Security\ReturnPath;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
@@ -27,6 +30,7 @@ use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\Forms\Controls\PasswordRevealInput;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
 use Contributte\Translation\DI\TranslationProviderInterface;
+use Doctrine\Migrations\DependencyFactory;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Config\Loader;
 use Nette\DI\Definitions\Statement;
@@ -34,6 +38,7 @@ use Nette\Loaders\RobotLoader;
 use Nette\PhpGenerator\ClassType;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
+use Nette\Routing\Router;
 use Nette\Schema\Schema;
 use Nette\Security\Resource;
 use ReflectionClass;
@@ -57,11 +62,19 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			'emailBackgroundColor' => Expect::string()->default(null),
 			'faviconFileNamePng' => Expect::string()->nullable()->default(null),
 			'faviconFileNameSvg' => Expect::string()->nullable()->default(null),
+			// Adresar (relativne k webrootu) s icon-192.png, icon-512.png a apple-touch-icon.png -
+			// ikona a nazev aplikace pridane na plochu / domovskou obrazovku (web manifest)
+			'appIconsDir' => Expect::string()->nullable()->default(null),
 			'hmr' => Expect::bool()->default(false),
 			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
 			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
 			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
 			'personalDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
+			// Více účtů (tenantů) v jedné databázi - data se oddělují podle účtu a uživatel
+			// si účet vybírá. false = jeden tenant na databázi (projekt bez účtů, nebo
+			// s databází pro každého zákazníka): bez filtrů podle účtu, výběru účtu
+			// a zákaznického portálu. Viz README, sekce 26 (Single-tenant režim).
+			'multiTenant' => Expect::bool()->default(true),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),
 			'locksDir' => Expect::string()->required(),
@@ -134,6 +147,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'project' => $this->config->project,
 				'projectName' => $this->config->projectName,
 				'adminHostPath' => $this->config->adminHostPath,
+				'appIconsDir' => $this->config->appIconsDir,
 				'logoPublicPath' => $this->config->logoPublicPath,
 				'logoMenuPath' => $this->config->logoMenuPath,
 				'loginPageLogoPath' => $this->config->loginPageLogoPath,
@@ -149,6 +163,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'backofficeAclResource' => $this->config->backofficeAclResource,
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'personalDataAclResource' => $this->config->personalDataAclResource,
+				'multiTenant' => $this->config->multiTenant,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,
@@ -186,6 +201,13 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('changeLogAuditSubscriber'))
 			->setFactory(ChangeLogAuditSubscriber::class);
 
+		// Razitko posledniho prihlaseni na identite - navesuje se samo, viz beforeCompile.
+		// Prepinac k tomu zadny neni zamerne: sloupec `last_login_at` je soucast
+		// IdentityTrait, takze ho Doctrine vybira v kazdem dotazu na identitu a projekt,
+		// ktery po aktualizaci baliku nespusti migraci, je rozbity i bez tohohle zapisu.
+		$builder->addDefinition($this->prefix('lastLoginSubscriber'))
+			->setFactory(LastLoginSubscriber::class);
+
 
 		// Keycloak — registrace KeycloakManager (instance se vytváří lazy z DB)
 		if ($this->config->keycloakEnabled) {
@@ -203,6 +225,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$defs[] = $builder->addDefinition($this->prefix('generateMissingAclResources'))
 			->setFactory(GenerateMissingAclResourcesCommand::class, [
 				'appDir' => $builder->parameters['appDir'],
+				// zapoji se v beforeCompile(), az budou registrovane sluzby ostatnich rozsireni
+				'migrations' => null,
 			])
 			->setAutowired(false);
 
@@ -219,6 +243,17 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	{
 		$builder = $this->getContainerBuilder();
 
+		$this->checkSignalCsrfRouter();
+
+		// Doctrine Migrations je volitelne - kdyz ho projekt ma, rekne prikazu, kam migraci zapsat.
+		if (
+			class_exists(DependencyFactory::class)
+			&& ($migrations = $builder->getByType(DependencyFactory::class)) !== null
+		) {
+			$builder->getDefinition($this->prefix('generateMissingAclResources'))
+				->setArgument('migrations', '@' . $migrations);
+		}
+
 		// Sanitizer si projekty registruji samy, protoze si upravuji citliva pole
 		// i chovani pri nalezu PANu. Auditni subscriber ho ale potrebuje vzdy,
 		// takze projektu, ktery zadny nema, dame vychozi - jinak by mu kontejner
@@ -231,6 +266,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$securityUserDef->addSetup('setFullDataAclResource', [$this->config->fullDataAclResource]);
 		$securityUserDef->addSetup('setBackofficeAclResource', [$this->config->backofficeAclResource]);
 		$securityUserDef->addSetup('setPersonalDataAclResource', [$this->config->personalDataAclResource]);
+		// Query objekty znají jen SecurityUser - podle něj se rozhodují, jestli filtrovat podle účtu
+		$securityUserDef->addSetup('setMultiTenant', [$this->config->multiTenant]);
 
 		$authenticatorDef = $builder->getDefinitionByType(Authenticator::class);
 		$authenticatorDef->addSetup('setFancyAdmin', [$this->prefix('@administration')]);
@@ -241,6 +278,18 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if ($this->config->keycloakEnabled) {
 			$fancyAdminDef = $builder->getDefinition($this->prefix('administration'));
 			$fancyAdminDef->addSetup('setKeycloakManager', [$this->prefix('@keycloakManager')]);
+		}
+
+		// Razitko posledniho prihlaseni visi na autentizacni udalosti, protoze cest dovnitr
+		// ma projekt vic (administrace, mobilni aplikace, odkaz s jednorazovym tokenem, SSO)
+		// a udalost je jedine misto, kudy projdou vsechny. Navesuje se tady, aby to projekt
+		// nemusel opisovat do neonu.
+		//
+		// Bez autentikatoru se nic nedeje: kde se neni kam prihlasit, neni co razitkovat -
+		// padat kvuli tomu pri kompilaci by projekt trestalo za neco, co neudelal.
+		if (($authenticator = $builder->getByType(DoctrineAuthenticator::class)) !== null) {
+			$builder->getDefinition($authenticator)
+				->addSetup('$onAuthEvent[]', [[$this->prefix('@lastLoginSubscriber'), 'authEvent']]);
 		}
 
 		// passkeyEnabled vyžaduje passkey infrastrukturu v projektu — srozumitelná chyba
@@ -271,6 +320,32 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale ' . $invalidIdentity . ' neimplementuje ' . HasPasskeys::class . '. Přidejte entitě `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19), nebo passkeys vypněte.');
 		}
 	}
+
+	/**
+	 * CSRF token signálů nemá končit v adresách, kde se neověřuje — kořenový router projektu
+	 * proto musí být {@see SignalCsrfRouteList}, který ho z nich odklidí.
+	 *
+	 * Hlídá se to při kompilaci kontejneru, protože jinak je to tichá chyba: aplikace běží dál,
+	 * jen se token vleče každou adresou — adresním řádkem, historií prohlížeče, hlavičkou
+	 * `Referer` i logy serveru. Router se zvenku neobaluje schválně: knihovny (například
+	 * `adt/utils` v ErrorPresenteru) i Tracy si strom rout procházejí a obal by jim ho schoval.
+	 */
+	private function checkSignalCsrfRouter(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$name = $builder->getByType(Router::class);
+
+		if ($name === null) {
+			return;
+		}
+
+		$type = $builder->getDefinition($name)->getType();
+
+		if ($type !== null && !is_a($type, SignalCsrfRouteList::class, true)) {
+			throw new RuntimeException('fancyadmin: kořenový router projektu musí být ' . SignalCsrfRouteList::class . ', teď je to ' . $type . '. V RouterFactory::create() vraťte `new ' . SignalCsrfRouteList::class . '()` místo RouteListu — jinak CSRF token signálů skončí v každé vygenerované adrese. Viz README (sekce 14, CSRF ochrana signálů).');
+		}
+	}
+
 
 	/**
 	 * @param class-string[] $identityClasses projektové entity Identity

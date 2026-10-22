@@ -17,6 +17,7 @@ use stdClass;
 trait BasePresenterTrait
 {
 	use PresenterTrait;
+	use SignalCsrfProtection;
 	use FancyAdminInject;
 	use EntityManagerInject;
 	use TranslatorInject;
@@ -35,6 +36,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
 		$this->getTemplate()->faviconFileNamePng = $this->_fancyAdmin->getFaviconFileNamePng();
 		$this->getTemplate()->faviconFileNameSvg = $this->_fancyAdmin->getFaviconFileNameSvg();
+		$this->getTemplate()->appIconsDir = $this->_fancyAdmin->getAppIconsDir();
 		$this->getTemplate()->icon = $this->_fancyAdmin->getLogoMenuPath();
 		$this->getTemplate()->loginPageLogoPath = $this->_fancyAdmin->getLoginPageLogoPath();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();

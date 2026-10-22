@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\Model\Queries;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Entities\AclRole;
+use ADT\FancyAdmin\Model\Entities\Enums\IdentityScopeEnum;
 use ADT\FancyAdmin\Model\Entities\Profile;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 use Doctrine\ORM\QueryBuilder;
@@ -60,6 +61,18 @@ trait IdentityQueryTrait
 	public function bySelectedAccount(Account $account): static
 	{
 		return $this->by('selectedAccount', $account);
+	}
+
+	/**
+	 * Spravci jsou ti, kdo maji roli primo na identite - viz IdentityScopeEnum.
+	 */
+	public function byScope(IdentityScopeEnum $scope): static
+	{
+		$this->filter[] = function (QueryBuilder $qb) use ($scope) {
+			$qb->andWhere($scope->isStaff() ? 'e.roles IS NOT EMPTY' : 'e.roles IS EMPTY');
+		};
+
+		return $this;
 	}
 
 	public function byContext(?string $context): static

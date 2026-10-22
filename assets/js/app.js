@@ -5,6 +5,12 @@
 import $ from './_jquery-global';
 
 //
+// CSRF token pro signaly — doplnuje ho do formularu a uklizi z adresniho radku.
+// Driv nez cokoliv, co odesila formulare nebo meni historii prohlizece.
+//
+import './signalCsrf';
+
+//
 // Register FancyAdmin's own JS components (before the init() calls below).
 //
 import './_registerFancyadminComponents';

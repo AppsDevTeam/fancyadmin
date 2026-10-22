@@ -33,7 +33,7 @@ trait RedirectAfterLoginTrait
 			$this->getPresenter()->redirectUrl($returnUrl);
 		}
 
-		if ($selectedAccount = $this->_securityUser->getIdentity()->getSelectedAccount()) {
+		if ($this->_fancyAdmin->isMultiTenant() && ($selectedAccount = $this->_securityUser->getIdentity()->getSelectedAccount())) {
 			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $selectedAccount->getId()]);
 		} else {
 			$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultBackofficeRoute());

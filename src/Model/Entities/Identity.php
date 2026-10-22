@@ -64,6 +64,8 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	public function getGravatar(): string;
 	public function getAccounts(): array;
 	public function getSubaccounts(): array;
+	public function getActiveAccounts(): array;
+	public function getActiveSubaccounts(): array;
 
 	// Auth
 	public function isAllowed(Resource $aclResource): bool;
@@ -77,6 +79,9 @@ interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Ent
 	 */
 	public function getProfiles(): array;
 	public function addProfile(Profile $profile): static;
+
+	public function getLastLoginAt(): ?DateTimeImmutable;
+	public function setLastLoginAt(?DateTimeImmutable $lastLoginAt): static;
 
 	// Anonymized
 	public function getAnonymizedAt(): ?DateTimeImmutable;

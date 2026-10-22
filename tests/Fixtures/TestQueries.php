@@ -8,6 +8,7 @@ use ADT\DoctrineComponents\QueryObject\Filters\IsActiveFilter;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\FancyAdmin\Model\Entities\Account;
 use ADT\FancyAdmin\Model\Queries\Abstract\BaseQueryTrait;
+use ADT\FancyAdmin\Model\Queries\Filters\DefaultFilters;
 use Doctrine\ORM\QueryBuilder;
 
 /**
@@ -84,6 +85,9 @@ final class OrderQuery extends QueryObjectStub
 {
 	use BaseQueryTrait;
 
+	/** @var list<Account> */
+	public array $accountFilterCalls = [];
+
 	protected function applySecurityFilter(): void
 	{
 		$this->filter['securityFilter'] = fn() => null;
@@ -91,6 +95,7 @@ final class OrderQuery extends QueryObjectStub
 
 	protected function applyAccountFilter(QueryBuilder $qb, Account $account): void
 	{
+		$this->accountFilterCalls[] = $account;
 	}
 }
 
@@ -105,5 +110,26 @@ final class InvoiceQuery extends QueryObjectStub implements IsActiveFilter
 
 	protected function applyAccountFilter(QueryBuilder $qb, Account $account): void
 	{
+	}
+}
+
+/** Dotaz s výchozími filtry balíčku - joiny si zapisuje, aby šlo ověřit, kam filtr sáhl. */
+final class ShipmentQuery extends QueryObjectStub
+{
+	use BaseQueryTrait;
+	use DefaultFilters;
+
+	/** @var list<string> */
+	public array $joins = [];
+
+	protected function innerJoin(QueryBuilder $qb, string $join, string $alias, ?string $conditionType = null, ?string $condition = null, ?string $indexBy = null): static
+	{
+		$this->joins[] = $join;
+		return $this;
+	}
+
+	protected function getPrimaryEntityAlias(): ?string
+	{
+		return 'e';
 	}
 }

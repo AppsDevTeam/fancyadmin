@@ -2,13 +2,15 @@
 
 namespace ADT\FancyAdmin\Model\Entities\Traits;
 
-use App\Model\Entities\Identity;
+use ADT\FancyAdmin\Model\Entities\Identity;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 
 trait CreatedBy
 {
-	#[ManyToOne(targetEntity: Identity::class)]
+	// Cil je zamerne kratky nazev, ne trida: Doctrine ho dohleda v namespace entity, ktera
+	// trait pouziva, tedy u projektove Identity. Stejne to delaji UpdatedBy a CreatedByNullable.
+	#[ManyToOne(targetEntity: 'Identity')]
 	#[JoinColumn(nullable: false)]
 	final protected Identity $createdBy;
 
