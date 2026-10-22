@@ -14,7 +14,8 @@ services:
 
 session:
 	autoStart: false
-	cookieSecure: auto
+	# cookieSecure se tu nenastavuje: nette/http 3.4 hodnotu 'auto' u session nezná a bere ji
+	# jako true, takže PHPSESSID dostane Secure i na http. Řídí ho http.cookieSecure (auto).
 	cookieHttponly: true
 	cookieSamesite: Lax
 
