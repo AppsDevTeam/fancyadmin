@@ -700,12 +700,15 @@ $bottomSubMenuHeight: 45px;
 	}
 }
 
+// Plusko je ikona jako ostatní v tlačítku: řez regular, velikost ze stupně, mezera přes gap
 .btn-new {
+	gap: 8px;
+
 	&:before {
 		font-family: "Font Awesome 6 Pro";
-		font-weight: 900;
+		font-weight: 400;
+		font-size: calc(var(--control-height, #{$control-height}) * 0.4);
 		content: "+";
-		margin-right: 10px;
 	}
 }
 
