@@ -6,6 +6,11 @@
 	}
 }
 
+// Jedno zaoblení všech plovoucích vrstev (dropdowny, Select2, kalendář, popovery)
+:root {
+	--overlay-radius: #{$br-surface-sm};
+}
+
 
 /* ====================
  *  Universal classes

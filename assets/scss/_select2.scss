@@ -144,7 +144,7 @@ $select2MinWidth: 300px;
 .select2-primary-dropdown {
 	margin-top: 20px;
 	border: 0 !important;
-	border-radius: $br-surface-sm;
+	border-radius: var(--overlay-radius);
 	z-index: 10056 !important;
 	width: fit-content !important;
 	min-width: $select2MinWidth;
@@ -195,7 +195,7 @@ $select2MinWidth: 300px;
 // malá mezera od ovládacího prvku (dřív 20px, což seznam opticky utrhlo).
 .select2-dropdown:not(.select2-primary-dropdown) {
 	border: 1px solid $color-light-gray !important;
-	border-radius: $br-grid !important;
+	border-radius: var(--overlay-radius) !important;
 	z-index: 10056 !important;
 	box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
 	// Zaoblení musí ořezat první a poslední položku, jinak jim podbarvení vyčuhuje do rohů

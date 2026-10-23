@@ -802,8 +802,13 @@ $bottomSubMenuHeight: 45px;
 	}
 }
 
+.popover {
+	--bs-popover-border-radius: var(--overlay-radius);
+	--bs-popover-inner-border-radius: calc(var(--overlay-radius) - 1px);
+}
+
 .dropdown-menu {
-	--bs-border-radius: $br-surface-sm;
+	--bs-dropdown-border-radius: var(--overlay-radius);
 	--bs-dropdown-padding-y: 0;
 	--bs-dropdown-spacer: 20px;
 	overflow: hidden;
@@ -827,7 +832,7 @@ $bottomSubMenuHeight: 45px;
 }
 
 .daterangepicker {
-	border-radius: $br-surface-sm;
+	border-radius: var(--overlay-radius);
 	overflow: hidden;
 	box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .15);
 	border: 0;
@@ -1084,16 +1089,10 @@ body:not(:has(.navbar)) #snippet--container {
 	}
 }
 
+// Rozměry má z velikostní škály v _buttons.scss
 .btn-icon {
-	width: 48px;
-	height: 48px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
 	border: 1px solid $secondary-darker;
-	border-radius: 10px;
 	background-color: $secondary;
-	font-size: 18px !important;
 
 	&:not(.loading) {
 		.spinner-border {
@@ -1129,14 +1128,12 @@ body:not(:has(.navbar)) #snippet--container {
 
 	.icon {
 		content: "";
-		width: 48px;
-		height: 48px;
+		@include control-square;
 		display: flex;
 		font-family: "Font Awesome 6 Pro";
 		align-items: center;
 		justify-content: center;
-		border-radius: $control-radius-xl;
-		font-size: 18px !important;
+		border-radius: var(--control-radius, #{$control-radius});
 	}
 	&:has(.inactive) {
 		.icon {
@@ -1500,7 +1497,7 @@ iframe {
 		--bs-border-width: 0;
 		z-index: 1;
 		display: flex;
-		height: 48px;
+		height: var(--control-height, #{$control-height});
 		border-radius: var(--control-radius, #{$control-radius});
 		padding: 0 !important;
 		align-items: center;
@@ -1524,9 +1521,9 @@ iframe {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			width: 48px;
-			height: 48px;
-			border-radius: $control-radius-xl;
+			width: var(--control-height, #{$control-height});
+			height: var(--control-height, #{$control-height});
+			border-radius: var(--control-radius, #{$control-radius});
 		}
 
 		.dropdown-selected-name-wrapper {
@@ -1546,13 +1543,13 @@ iframe {
 		> i {
 			margin-bottom: -1px;
 			margin-top: -1px;
-			height: 50px !important;
+			height: calc(var(--control-height, #{$control-height}) + 2px) !important;
 			background-color: var(--secondaryColor);
 		}
 	}
 
 	button.dropdown-toggle {
-		width: 48px;
+		width: var(--control-height, #{$control-height});
 		background-color: var(--secondaryColor);
 
 		&:hover {
@@ -1718,9 +1715,9 @@ iframe {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			width: 48px;
-			height: 48px;
-			border-radius: #{$control-radius-xl} 0 0 #{$control-radius-xl};
+			width: var(--control-height, #{$control-height});
+			height: var(--control-height, #{$control-height});
+			border-radius: var(--control-radius, #{$control-radius}) 0 0 var(--control-radius, #{$control-radius});
 
 			background-color: $secondary;
 			font-size: 18px;
@@ -1769,12 +1766,9 @@ select.is-invalid + .select2 {
 	margin-left: .5rem;
 
 	.btn {
-		height: 48px;
-		width: 48px;
+		@include control-square;
 		background-color: $secondary;
 		border: solid 1px $secondary-darker;
-		border-radius: var(--control-radius, #{$control-radius});
-		padding: 0 !important;
 		align-items: center;
 		justify-content: center;
 
@@ -1787,8 +1781,8 @@ select.is-invalid + .select2 {
 		margin: 0;
 		display: flex;
 		align-items: center;
-		height: 48px;
-		width: 48px;
+		width: var(--control-height, #{$control-height});
+		height: var(--control-height, #{$control-height});
 
 		.form-check-label {
 			margin-bottom: 0;

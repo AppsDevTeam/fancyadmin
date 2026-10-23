@@ -89,3 +89,13 @@
 	--control-radius: #{$control-radius-xl};
 	--control-font: #{$control-font-xl};
 }
+
+// Ikona roste s výškou stupně; :where nechá vyhrát .fa-lg a lokální úpravy
+:where(.btn) > i {
+	font-size: calc(var(--control-height) * 0.4);
+}
+
+// Tlačítko jen s ikonou je čtverec o hraně výšky svého stupně
+.btn.btn-icon {
+	@include control-square;
+}

@@ -43,8 +43,7 @@ body:has(.side-panel) .container {
   }
 
   .btn-icon {
-    border: 0;
-    border-radius: var(--control-radius, #{$control-radius});
+    padding: 0;
     border: solid 1px $secondary-darker;
 
     &:hover {

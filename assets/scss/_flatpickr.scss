@@ -41,7 +41,7 @@ $fp-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 	padding: 8px;
 	background: $background;
 	border: 1px solid $color-light-gray;
-	border-radius: $br-grid;
+	border-radius: var(--overlay-radius);
 	box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
 	font-family: inherit;
 	font-size: 14px;
@@ -248,7 +248,7 @@ $fp-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 		overscroll-behavior: contain;
 		scrollbar-width: thin;
 		border: 1px solid $color-light-gray;
-		border-radius: $br-grid;
+		border-radius: var(--overlay-radius);
 		background: $background;
 		box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
 		text-align: center;

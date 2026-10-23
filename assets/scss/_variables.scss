@@ -34,7 +34,7 @@ $padding-input: 15px;
  *  Velikosti ovládacích prvků
  *
  *  Inputy, selecty a Select2 mají tři velikosti. Poměr poloměru k výšce drží
- *  kolem 0,4 (12/32 = 0,38, 16/40 = 0,40, 20/48 = 0,42), takže všechny tři
+ *  kolem 0,36 (12/32 = 0,38, 14/40 = 0,35, 18/48 = 0,38), takže všechny tři
  *  působí jako jedna rodina — oblost se vnímá relativně k výšce, ne absolutně.
  *  Výšky i odsazení sedí na čtyřpixelové mřížce.
  *
@@ -49,14 +49,14 @@ $control-padding-x-sm: 12px;
 $control-font-sm: 14px;
 
 $control-height: 40px;
-$control-radius: 16px;
+$control-radius: 14px;
 $control-padding-x: 16px;
 $control-font: 16px;
 
 // xl odpovídá rozměrům, které měly prvky dřív jako jediné (49px/20px); výška
 // je srovnaná na 48px, ať nevypadává z mřížky — rozdíl není okem postřehnutelný.
 $control-height-xl: 48px;
-$control-radius-xl: 20px;
+$control-radius-xl: 18px;
 $control-padding-x-xl: 20px;
 $control-font-xl: 16px;
 
@@ -71,10 +71,10 @@ $paddingTableHeadY: 12px;
  *
  *  Plochy (podklady) mají vlastní žebříček, nezávislý na ovládacích prvcích:
  *  velká plocha s malým rohem působí hranatě, malá vrstva s velkým rozteklá.
- *  Stupně jdou po 8, aby se daly skládat soustředně (vnitřní = vnější − odsazení).
+ *  Vnořené plochy se skládají soustředně (vnitřní = vnější − odsazení).
  * -------------------- */
 
-$br-surface-sm: 16px;   // plovoucí vrstvy a menší karty - dropdown, kalendář, grid
+$br-surface-sm: $control-radius;   // plovoucí vrstvy a menší karty - dropdown, kalendář, grid
 $br-surface: 24px;      // karty, panely, modaly
 $br-surface-lg: 36px;   // velké stránkové karty
 
@@ -213,4 +213,12 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
   --loginInputTextColor: var(--fa-text);
   --loginPageBackground: #17161a;
   --loginPageTextColor: var(--fa-text);
+}
+
+// Čtverec jen s ikonou o hraně výšky stupně; mimo .btn bere výchozí stupeň
+@mixin control-square {
+	width: var(--control-height, #{$control-height});
+	height: var(--control-height, #{$control-height});
+	padding: 0;
+	font-size: calc(var(--control-height, #{$control-height}) * 0.4);
 }
