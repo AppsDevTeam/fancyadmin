@@ -61,9 +61,10 @@ select.form-select-lg + .select2-container {
 // Pole formuláře má jít přes celou šířku svého místa jako každý jiný input, takže
 // inline hodnotu přebíjíme (jinak než !important to proti inline stylu nejde).
 // Platí jen pro select vykreslený jako samostatné pole (přímo v obalu dvojice
-// popisek+prvek) - select v .input-group je zanořený hlouběji a o šířku se dělí
+// popisek+prvek nebo ve sloupci gridu) - select v .input-group je zanořený hlouběji a o šířku se dělí
 // s tlačítkem vedle sebe, tomu do ní nemluvíme.
-.mb-3 > .select2-container {
+.mb-3 > .select2-container,
+.row > :is(.col, [class^="col-"], [class*=" col-"]) > .select2-container {
 	width: 100% !important;
 }
 

@@ -96,6 +96,18 @@ a {
 	}
 }
 
+// Telefon z BootstrapFormRendereru má natvrdo col-5/col-7; předvolba stačí úzká, číslo vyplní zbytek
+.row:has(> .col-5 > select):has(> .col-7 > input[type="tel"]) {
+	> .col-5 {
+		width: 120px;
+	}
+
+	> .col-7 {
+		flex: 1 1 0;
+		width: auto;
+	}
+}
+
 .form-label {
 	font-size: 14px;
 	line-height: 18px;
