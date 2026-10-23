@@ -34,6 +34,7 @@ $select2CloseIcon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 	--select2-padding-x: #{$control-padding-x};
 	--select2-padding-y: 4px;
 	--select2-tag-gap: 8px;
+	--select2-tag-padding-x: 10px;
 }
 
 // Velikost se bere z původního selectu — Select2 ho nechává v DOMu hned před
@@ -110,8 +111,8 @@ nav {
 	}
 
 	.select2-selection {
-		padding: 0 !important;
-		padding-right: 10px !important;
+		// Místo pro šipku vpravo drží margin .select2-selection__rendered
+		padding: 0 var(--select2-padding-x) !important;
 		background-color: initial !important;
 
 		.select2-selection__rendered {
@@ -252,9 +253,15 @@ $select2MinWidth: 300px;
 	margin-bottom: 0  !important;
 	border-radius: 14px !important;
 	background-color: $secondary-darker !important;
-	padding: 0 18px !important;
+	padding: 0 var(--select2-tag-padding-x) !important;
 	margin-right: 0 !important;
 	border-color: $secondary-darker !important;
+}
+
+// Theme dává položce cursor: auto a křížek ho dědí
+.select2-selection__choice__remove,
+.select2-selection__clear {
+	cursor: pointer;
 }
 
 // Křížky „odebrat položku" a „vymazat výběr" kreslí Select2 znakem × z písma

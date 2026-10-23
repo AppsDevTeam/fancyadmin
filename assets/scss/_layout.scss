@@ -4,7 +4,7 @@
   --bs-bg-opacity: 1;
   --bs-dark-rgb: 16, 30, 42;
   --bs-body-font-size: $fs-body;
-  --bs-font-sans-serif: "Roboto";
+  --bs-font-sans-serif: "Hanken Grotesk";
   --bs-link-color-rgb: 36, 21, 86;
   --bs-btn-bg: $datagrid-color;
   //--bs-link-color-rgb: 36, 21, 86;
@@ -27,6 +27,15 @@ body:has(.side-panel) .container {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+// Nadpis se záložkami a štítky vlevo — jinak by je space-between v .header rozhodil po šířce
+.header-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .header-actions {

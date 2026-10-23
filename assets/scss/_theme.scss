@@ -101,7 +101,6 @@ a {
 	line-height: 18px;
 	color: var(--labelColor, #{$text-muted});
 	margin-bottom: 6px;
-	padding-left: $padding-input + 1px;
 }
 
 input[type="file"] {
@@ -838,7 +837,7 @@ $bottomSubMenuHeight: 45px;
 	border: 0;
 	background-color: $background;
 	margin-top: 10px;
-	font-family: "Roboto";
+	font-family: "Hanken Grotesk";
 
 	.drp-buttons .btn {
 		margin-left: 8px;

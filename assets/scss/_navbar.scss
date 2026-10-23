@@ -113,6 +113,11 @@ nav {
     align-items: center;
     gap: 15px;
     min-width: 100%;
+
+    // Prázdný kontejner chyb z BootstrapFormRendereru by ukrojil mezeru z gapu
+    > [data-adt-errors-for]:empty {
+      display: none;
+    }
   }
 
   .mb-3 {

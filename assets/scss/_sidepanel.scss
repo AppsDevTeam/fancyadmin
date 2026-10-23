@@ -33,6 +33,8 @@ body.menu-wide {
 	--menu-wide-divider: color-mix(in srgb, var(--menu-wide-text) 15%, var(--menu-wide-bg));
 	--menu-wide-text: #{$text-primary};
 	--menu-wide-muted: #878787;
+	// Verzálkové podnadpisy submenu — nádech primární barvy je odliší od šedých položek
+	--menu-wide-subheading: color-mix(in srgb, var(--primaryColor) 60%, var(--menu-wide-muted));
 	--menu-wide-text-strong: #{$heading-color};
 	--menu-wide-hover-bg: #f7f4f5;
 	--menu-wide-hover-text: var(--primaryColorDark);
@@ -202,7 +204,7 @@ body.menu-wide .side-panel-wide {
 	// Rozbalený režim: skupinová hlavička = uppercase label, ikona skryta (ta je jen ve sbaleném)
 	.group-heading {
 		font-size: 0.72rem;
-		font-weight: 600;
+		font-weight: 800;
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		color: var(--menu-wide-muted);
@@ -248,7 +250,8 @@ body.menu-wide .side-panel-wide {
 		.title {
 			flex: 1;
 			font-size: 0.9rem;
-			font-weight: 500;
+			// Variabilní mezistupeň: 500 vedle obrysových ikon těžkne, 400 se v 10px rozpadá
+			font-weight: 450;
 			text-align: left;
 		}
 
@@ -308,7 +311,8 @@ body.menu-wide .side-panel-wide {
 				}
 			}
 
-			&.active > .item-header {
+			// Otevřené podmenu ukazuje aktivní podpoložku, zavřené ji zastoupí rodičem
+			&.active:not(.open) > .item-header {
 				background: var(--menu-wide-active-bg);
 				color: var(--menu-wide-active-text);
 
@@ -328,7 +332,8 @@ body.menu-wide .side-panel-wide {
 				background: transparent;
 				color: inherit;
 
-				.icon {
+				.icon,
+				.submenu-chevron {
 					color: var(--menu-wide-muted);
 				}
 			}
@@ -351,6 +356,7 @@ body.menu-wide .side-panel-wide {
 				.item {
 					padding: 8px 12px;
 					font-size: 0.85rem;
+					font-weight: 450;
 					background: transparent;
 					color: var(--menu-wide-text);
 
@@ -364,10 +370,14 @@ body.menu-wide .side-panel-wide {
 					}
 
 					&.active {
-						background: transparent;
-						color: var(--menu-wide-active-bg);
-						font-weight: 600;
+						background: var(--menu-wide-active-bg);
+						color: var(--menu-wide-active-text);
 					}
+				}
+
+				// Podbarvené aktivní podpoložky by se jinak dotýkaly sousedů
+				.item + .item {
+					margin-top: 3px;
 				}
 			}
 
@@ -504,7 +514,7 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu 
 	// které si ho zobrazí - ty pak řeší jen display a typografii
 	.submenu-heading {
 		padding-top: 10px;
-		padding-bottom: 4px;
+		padding-bottom: 6px;
 	}
 
 	// Po položkách předchozí sekce o --menu-wide-item-gap víc, ať je vidět předěl.
@@ -560,7 +570,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		text-transform: none;
 		letter-spacing: 0;
 		font-size: 0.625rem;
-		font-weight: 500;
+		font-weight: 450;
 		color: var(--menu-wide-text);
 		border-radius: var(--menu-wide-item-radius);
 
@@ -618,17 +628,17 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			.submenu-heading {
 				display: block;
 				font-size: 0.72rem;
-				font-weight: 600;
+				font-weight: 800;
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
-				color: var(--menu-wide-muted);
-				padding: 12px 9px 4px;
+				color: var(--menu-wide-subheading);
+				padding: 12px 9px 6px;
 			}
 
 			.item {
 				padding: 8px 12px;
 				font-size: 0.9rem;
-				font-weight: 400;
+				font-weight: 450;
 				text-transform: none;
 				letter-spacing: 0;
 				background: transparent;
@@ -703,6 +713,8 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 	// Aktivní top-level item s podmenu - stacked layout nastavuje barvu přímo na .item-header
 	// (vyšší specificita), takže bílou z wrapperu nezdědí
 	.menu-body > .item.has-submenu.active > .item-header {
+		// Podbarvení i s .open z rozbaleného režimu, jinak by hover dal do aktivní položky bílý čtverec
+		background: var(--menu-wide-active-bg);
 		color: var(--menu-wide-active-text);
 
 		.icon {
@@ -764,7 +776,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		cursor: default;
 
 		> .item-header {
-			padding: 12px 12px 4px;
+			padding: 12px 12px 6px;
 
 			.icon,
 			.submenu-chevron {
@@ -775,8 +787,8 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 				text-transform: uppercase;
 				letter-spacing: 0.06em;
 				font-size: 0.72rem;
-				font-weight: 600;
-				color: var(--menu-wide-muted);
+				font-weight: 800;
+				color: var(--menu-wide-subheading);
 				text-align: left;
 			}
 		}
@@ -786,7 +798,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			background: transparent;
 
 			.title {
-				color: var(--menu-wide-muted);
+				color: var(--menu-wide-subheading);
 			}
 		}
 
@@ -807,7 +819,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			.item {
 				padding: 8px 12px;
 				font-size: 0.9rem;
-				font-weight: 400;
+				font-weight: 450;
 				text-transform: none;
 				letter-spacing: 0;
 				background: transparent;

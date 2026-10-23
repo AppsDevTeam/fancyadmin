@@ -137,6 +137,7 @@ $tertiary-text: var(--tertiaryTextColor);
 $background: var(--fa-surface);
 $background-dark: var(--fa-surface-hover);
 $background-darker: var(--fa-surface-active);
+$row-hover: var(--fa-row-hover);
 
 $login-background: var(--loginBackground);
 
@@ -213,6 +214,11 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
   --loginInputTextColor: var(--fa-text);
   --loginPageBackground: #17161a;
   --loginPageTextColor: var(--fa-text);
+}
+
+// Krytí místo mixu s plochou — sedí na jakémkoli podkladu; na body kvůli značkovým barvám
+body {
+  --fa-row-hover: color-mix(in srgb, color-mix(in srgb, var(--primaryColor) 50%, var(--fa-text)) 8%, transparent);
 }
 
 // Čtverec jen s ikonou o hraně výšky stupně; mimo .btn bere výchozí stupeň
