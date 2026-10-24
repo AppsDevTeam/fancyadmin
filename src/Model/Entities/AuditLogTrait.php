@@ -7,6 +7,7 @@ namespace ADT\FancyAdmin\Model\Entities;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\Index;
 
 /**
  * Sloupce jednotneho auditniho zaznamu.
@@ -24,19 +25,13 @@ use Doctrine\ORM\Mapping\Column;
  * a patri do payloadu - jinak by tabulka mela sloupec pro kazdy typ
  * a vetsinu z nich prazdnou.
  *
- * POZOR: Doctrine cte #[Index] jen z entity, na traite ho IGNORUJE. Entita
- * v projektu proto musi indexy deklarovat sama:
- *
- *   #[ORM\Entity]
- *   #[ORM\Index(fields: ['action'])]
- *   #[ORM\Index(fields: ['correlationId'])]
- *   #[ORM\Index(fields: ['createdById'])]
- *   #[ORM\Index(fields: ['createdAt'])]
- *   class AuditLog extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\AuditLog
- *   {
- *       use AuditLogTrait;
- *   }
+ * Indexy nese trait - entite je doplni TraitIndexListener z adt/doctrine-components,
+ * ktery musi mit projekt registrovany (Doctrine sama #[Index] na traitu ignoruje).
  */
+#[Index(fields: ['action'])]
+#[Index(fields: ['correlationId'])]
+#[Index(fields: ['createdById'])]
+#[Index(fields: ['createdAt'])]
 trait AuditLogTrait
 {
 	/** co se stalo; hodnoty definuje kazda knihovna sama (viz jeji rozhrani) */

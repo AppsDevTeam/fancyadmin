@@ -1030,6 +1030,9 @@ services:
 			- setExpirationCallback(Closure::fromCallable(@ADT\FancyAdmin\Model\Security\SessionExpirationCallback))
 	- ADT\DoctrineAuthenticator\OTP\OnetimeTokenService
 	- ADT\FancyAdmin\Model\Security\SessionExpirationCallback
+	# indexy deklarované na traitech fancyadminu (AuditLogTrait, ApiLogTrait) - bez něj je
+	# Doctrine ignoruje a migrations-diff by je smazal
+	- ADT\DoctrineComponents\Listeners\TraitIndexListener
 ```
 
 ### common.neon — datagrid
@@ -2604,9 +2607,7 @@ odeslaný požadavek, přijatou odpověď, stavový kód, dobu zpracování a p�
 
 ```php
 #[ORM\Entity]
-#[ORM\Index(fields: ['createdAt'])]
-#[ORM\Index(fields: ['accountId'])]
-#[ORM\Index(fields: ['type'])]
+#[ORM\Index(fields: ['type'])] // indexy createdAt a accountId nese trait
 class ApiLog extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\ApiLog
 {
 	use \ADT\FancyAdmin\Model\Entities\ApiLogTrait;
