@@ -6,11 +6,14 @@ namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineAuthenticator\DoctrineAuthenticatorIdentity;
 use ADT\DoctrineComponents\Entities\Entity;
+use ADT\DoctrineLoggable\Attributes\LoggableEntity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasIdentity;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActiveInterface;
 use DateTimeImmutable;
 use Nette\Security\Resource;
 
+// založení se loguje kvůli auditní stopě - viz ChangeLogAuditSubscriber
+#[LoggableEntity(logCreate: true)]
 interface Identity extends DoctrineAuthenticatorIdentity, IsActiveInterface, Entity, HasIdentity
 {
 	// CreatedAt

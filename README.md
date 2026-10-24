@@ -2330,10 +2330,13 @@ tříd a přibytí další entity do domény nic nerozbije.
 ### Založení a smazání
 
 Do auditu jde, co zapíše `change_log` — úpravy a smazání vždy, **založení jen u entit
-s `#[LoggableEntity(logCreate: true)]`**. Atribut sedí na třídě entity v projektu (traita
-ho nenese), takže ho projekt musí doplnit sám, typicky u `Identity`, `AclRole`, `Acl`,
-`ApiKey`, `Passkey`, `Sso`, `Account` a `Configuration`. Bez něj v auditu chybí, kdo komu
-založil účet, roli nebo API klíč.
+s `#[LoggableEntity(logCreate: true)]`**. Rozhraní fancyadminu z tabulky výš (kromě
+`AclResource`) ho nesou sama a doctrine-loggable ho čte i z rozhraní, takže založení
+identity, role nebo API klíče se do auditu dostane bez zásahu do entit projektu.
+Obyčejné `#[LoggableEntity]` na třídě entity to nevypne — atributy se sčítají.
+
+U vlastních entit s `#[Audited]` dá projekt `logCreate: true` sám, pokud chce v auditu
+i jejich založení.
 
 Záznam pak nese `change` = `create`/`edit`/`delete` a u založení v `values` počáteční
 hodnoty jako změnu z `null`.
@@ -2744,7 +2747,7 @@ knihovna mezeru má.
 | **8.3.6** heslo min. 12 znaků, písmena i číslice | `PasswordPolicy` na roli (délka, třídy znaků), `BreachedPasswordChecker` | Na všech rolích zapnout `passwordPolicyEnabled`, `passwordMinLength = 12`, vyžadovat číslici a písmeno (výchozí minimum je 8) |
 | **8.4.1 / 8.4.2** MFA pro administraci | `needs2fa` (passkey, sekce 19.8), `needsSso` (Keycloak, sekce 18) | `passkeyEnabled: true` a `needs2fa` na všech rolích s přístupem do backoffice; zvážit `passkeyEmailOtpEnabled: false` (kód na e-mail 2FA oslabuje, sekce 19.9) a `passkeyEnrollmentRequired: true`. U SSO je MFA na straně Keycloaku |
 | **8.6.x** systémové účty (API klíče) | Hashované klíče (SHA-256), zobrazené jen jednou (sekce 20) | Rotace (smazat a založit nový) — expiraci ani evidenci použití knihovna nemá |
-| **10.2.1.2 / 10.2.1.5** akce adminů, změny účtů | `ChangeLogAuditSubscriber` → `audit_log` (založení, změna, smazání identit, rolí, oprávnění, účtů, konfigurace) | Navěsit subscriber ze sekce 21, na entity identit a oprávnění dát `#[LoggableEntity(logCreate: true)]`, vlastní entity označit `#[Audited]` |
+| **10.2.1.2 / 10.2.1.5** akce adminů, změny účtů | `ChangeLogAuditSubscriber` → `audit_log` (založení, změna, smazání identit, rolí, oprávnění, účtů, konfigurace) | Navěsit subscriber ze sekce 21; vlastní entity označit `#[Audited]` a `#[LoggableEntity(logCreate: true)]` |
 | **10.2.1.4** neúspěšné pokusy o přístup | — (doctrine-authenticator jen ohlašuje `$onAuthEvent`, 403 knihovna nezapisuje) | Vlastní subscriber `$onAuthEvent` → `AuditLogger::log()` (přihlášení, odhlášení, neúspěch, blokace) a zápis zamítnutých přístupů (403) |
 | **10.2.1.1** přístup k datům držitelů karet | — | Audit exportů a výdejů souborů (adt/exporter jen ohlašuje `onExport`/`onDownload`) a čtení citlivých dat dle projektu |
 | **10.2.1.3** přístup k auditním logům | `audit_log` se v administraci nezobrazuje | Řízení a logování přístupu k DB a centrálnímu úložišti auditu (infrastruktura) |

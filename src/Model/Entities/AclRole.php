@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineComponents\Entities\Entity;
+use ADT\DoctrineLoggable\Attributes\LoggableEntity;
 use Nette\Security\Resource;
 use Nette\Security\Role;
 
+// založení se loguje kvůli auditní stopě - viz ChangeLogAuditSubscriber
+#[LoggableEntity(logCreate: true)]
 interface AclRole extends Role, Entity
 {
 	// AclRole interface (Nette)
