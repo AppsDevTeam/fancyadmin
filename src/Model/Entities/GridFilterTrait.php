@@ -13,9 +13,8 @@ use Doctrine\ORM\Mapping\JoinColumn;
 /**
  * Ulozeny filtr datagridu.
  *
- * Unikatnost nazvu si urci entita sama - atribut #[UniqueConstraint] na traitu Doctrine
- * necte, bere jen atributy samotne tridy entity. Projekt s ucty ji chce v ramci uctu
- * (grid, name, account), projekt bez nich globalne (grid, name).
+ * Unikatnost nazvu si urci entita sama, protoze se lisi podle projektu: projekt s ucty
+ * ji chce v ramci uctu (grid, name, account), projekt bez nich globalne (grid, name).
  *
  * Ucet je nullable zamerne: v backoffice se identite vybrany ucet nuluje
  * ({@see \ADT\FancyAdmin\UI\Presenters\AuthPresenterTrait::startup()}), takze filtr

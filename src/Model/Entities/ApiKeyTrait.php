@@ -46,8 +46,7 @@ trait ApiKeyTrait
 	 * projdou oba, protože ani jeden ještě nevidí zápis toho druhého. Aplikační kontrola
 	 * má smysl kvůli hlášce uživateli, ne jako záruka.
 	 *
-	 * POZOR: samotný unikátní index musí deklarovat entita v projektu, atribut třídy
-	 * z traity nepřijde:
+	 * POZOR: samotný unikátní index trait nenese, deklaruje ho entita v projektu:
 	 *
 	 *   #[ORM\UniqueConstraint(name: 'uniq_api_key_name_account', columns: ['name', 'account_key'])]
 	 *
