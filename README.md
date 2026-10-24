@@ -193,6 +193,14 @@ class Profile extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Profi
 
 **ProfileTrait poskytuje:** `identity` (N:1), `account` (N:1), `roles` (M:N s AclRole), `isActive`, timestamps
 
+ProfileTrait nese i unikátní omezení `(identity, account)` — identita má v jednom účtu nejvýš
+jeden profil. Projekt, jehož entita ho dosud neměla, ho v dalším `migrations-diff` dostane
+a migrace spadne, pokud v databázi duplicitní profily už jsou. Před nasazením je ověřte:
+
+```sql
+SELECT identity_id, account_id, COUNT(*) FROM profile GROUP BY identity_id, account_id HAVING COUNT(*) > 1;
+```
+
 ### 3.4 AclRole
 
 ```php
