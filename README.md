@@ -2327,6 +2327,17 @@ implementují, takže projekt k tomu nemusí sahat do entit:
 Osa je doména, ne entita: detekční pravidla se pak klíčují na jednu hodnotu místo výčtu
 tříd a přibytí další entity do domény nic nerozbije.
 
+### Založení a smazání
+
+Do auditu jde, co zapíše `change_log` — úpravy a smazání vždy, **založení jen u entit
+s `#[LoggableEntity(logCreate: true)]`**. Atribut sedí na třídě entity v projektu (traita
+ho nenese), takže ho projekt musí doplnit sám, typicky u `Identity`, `AclRole`, `Acl`,
+`ApiKey`, `Passkey`, `Sso`, `Account` a `Configuration`. Bez něj v auditu chybí, kdo komu
+založil účet, roli nebo API klíč.
+
+Záznam pak nese `change` = `create`/`edit`/`delete` a u založení v `values` počáteční
+hodnoty jako změnu z `null`.
+
 ### Entity projektu
 
 Ty fancyadmin nezná, takže se vybírají **jmenovitě**, atributem (ten zároveň přebíjí
@@ -2711,3 +2722,49 @@ Poznámky:
   `setMultiTenant()`; `SecurityUser` sestavený mimo DI (testy, konzole) se chová jako dřív,
   tedy jako více tenantů. Vlastní implementace rozhraní `SecurityUser` bez `SecurityUserTrait`
   musí `isMultiTenant()` doplnit.
+
+---
+
+## 27. PCI DSS 4.0
+
+Knihovna sama o sobě „PCI DSS compliant“ být nemůže — shodu posuzuje auditor u celého
+prostředí (aplikace, infrastruktura, procesy), ne u balíčku. fancyadmin dodává stavební
+kameny pro část požadavků; většinu z nich je potřeba v projektu **zapnout a nastavit**,
+výchozí hodnoty PCI nesplňují. Níže je, co je v knihovně, co musí udělat projekt a kde
+knihovna mezeru má.
+
+### Co musí projekt nastavit
+
+| Požadavek | Co dodává fancyadmin | Co musí udělat projekt |
+|---|---|---|
+| **8.2.1** jedinečná identita | `Identity`, `ssoSub` je unikátní | Unikátní index na `email`/`username` (trait ho nemá), žádné sdílené účty (organizačně) |
+| **8.2.6** neaktivní účty do 90 dní | `Identity::$lastLoginAt` (sekce 24, razítko posledního přihlášení) | Cron, který účty bez přihlášení 90 dní deaktivuje (`isActive = false`) — knihovna nic nevypíná |
+| **8.2.8** odhlášení po 15 min nečinnosti | Klouzavá expirace session, `AclRole::$sessionExpirationMinutes` | Výchozí `expiration` authenticatoru na `'15 minutes'`, **nebo** `sessionExpirationMinutes = 15` na rolích — pozor, to platí jen u role se zapnutou heslovou politikou (`passwordPolicyEnabled`), jinak se tiše ignoruje |
+| **8.3.4** zamčení po max. 10 pokusech na ≥ 30 min | `setLoginAttemptProtection()` z adt/doctrine-authenticator | Zapnout (výchozí je vypnuto) s oknem aspoň `'-30 minutes'`, viz níže mezery |
+| **8.3.6** heslo min. 12 znaků, písmena i číslice | `PasswordPolicy` na roli (délka, třídy znaků), `BreachedPasswordChecker` | Na všech rolích zapnout `passwordPolicyEnabled`, `passwordMinLength = 12`, vyžadovat číslici a písmeno (výchozí minimum je 8) |
+| **8.4.1 / 8.4.2** MFA pro administraci | `needs2fa` (passkey, sekce 19.8), `needsSso` (Keycloak, sekce 18) | `passkeyEnabled: true` a `needs2fa` na všech rolích s přístupem do backoffice; zvážit `passkeyEmailOtpEnabled: false` (kód na e-mail 2FA oslabuje, sekce 19.9) a `passkeyEnrollmentRequired: true`. U SSO je MFA na straně Keycloaku |
+| **8.6.x** systémové účty (API klíče) | Hashované klíče (SHA-256), zobrazené jen jednou (sekce 20) | Rotace (smazat a založit nový) — expiraci ani evidenci použití knihovna nemá |
+| **10.2.1.2 / 10.2.1.5** akce adminů, změny účtů | `ChangeLogAuditSubscriber` → `audit_log` (založení, změna, smazání identit, rolí, oprávnění, účtů, konfigurace) | Navěsit subscriber ze sekce 21, na entity identit a oprávnění dát `#[LoggableEntity(logCreate: true)]`, vlastní entity označit `#[Audited]` |
+| **10.2.1.4** neúspěšné pokusy o přístup | — (doctrine-authenticator jen ohlašuje `$onAuthEvent`, 403 knihovna nezapisuje) | Vlastní subscriber `$onAuthEvent` → `AuditLogger::log()` (přihlášení, odhlášení, neúspěch, blokace) a zápis zamítnutých přístupů (403) |
+| **10.2.1.1** přístup k datům držitelů karet | — | Audit exportů a výdejů souborů (adt/exporter jen ohlašuje `onExport`/`onDownload`) a čtení citlivých dat dle projektu |
+| **10.2.1.3** přístup k auditním logům | `audit_log` se v administraci nezobrazuje | Řízení a logování přístupu k DB a centrálnímu úložišti auditu (infrastruktura) |
+| **10.2.2** obsah záznamu | `audit_log`: kdo, co, kdy (UTC), výsledek, IP, User-Agent, dotčený objekt | — |
+| **10.3 / 10.5.1** ochrana, 12 měsíců retence, 3 měsíce po ruce | adt/log-mover (sekce 23): zápis jen INSERT, mazání jen retencí | Odvoz `audit_log` do odděleného úložiště, `hot: '3 months'`, `retention` ≥ 12 měsíců; `audit_log` **nedávat** do `purge` (sekce 22) |
+| **3.4.1 / 3.5.1** PAN v logech | `SensitiveDataSanitizer` (adt/log-sanitizer) maskuje čísla karet v auditu i v `api_log` | Zaregistrovat vlastní sanitizer s `onCardNumberDetected()` — jinak se nález zamaskuje, ale nikdo se o něm nedozví |
+| **6.2.4** běžné útoky (XSS, CSRF, clickjacking) | `security.neon` (CSP, hlavičky, cookies), CSRF signálů (sekce 14) | Includovat `security.neon` (sekce 15) |
+| **10.6** synchronizace času | Logy fancyadminu zapisují v UTC | NTP na serverech |
+
+### Kde knihovna mezeru má
+
+Tyhle požadavky fancyadmin nepokrývá vůbec a projekt je musí doplnit sám, nebo je
+vědomě vést jako odchylku:
+
+- **8.3.4 skutečné zamčení** — throttling je klouzavé okno, ne zámek; z adresy, ze které se
+  uživatel v posledních 30 dnech úspěšně přihlásil, se limit násobí (výchozí ×4).
+- **8.3.5** změna hesla při prvním přihlášení — místo toho se heslo nastavuje jednorázovým
+  odkazem (platnost 72 h), administrátor ho nikdy nezná.
+- **8.3.7** zákaz posledních 4 hesel — historie hesel se nedrží.
+- **8.3.9** změna hesla každých 90 dní (u přihlášení jen heslem) — expirace hesla není;
+  splnit se dá jen MFA (8.4).
+- **10.2.1.6** spuštění a zastavení auditního logování se nezaznamenává.
+- `BreachedPasswordChecker` **propouští** heslo, když HaveIBeenPwned do 500 ms neodpoví.
