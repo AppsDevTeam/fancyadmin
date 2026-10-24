@@ -928,6 +928,7 @@ extensions:
 	translation: Contributte\Translation\DI\TranslationExtension
 	nettrine.dbal: ADT\DoctrineComponents\DI\DbalExtension
 	nettrine.orm: Nettrine\ORM\DI\OrmExtension
+	doctrineComponents: ADT\DoctrineComponents\DI\DoctrineComponentsExtension
 	nettrine.extensions.atlantic18: Nettrine\Extensions\Atlantic18\DI\Atlantic18BehaviorExtension
 	queryObjectDataSource: ADT\QueryObjectDataSource\DI\QueryObjectDataSourceExtension
 	fancyadmin: ADT\FancyAdmin\DI\FancyAdminExtension
@@ -935,6 +936,10 @@ extensions:
 ```
 
 **Poznámka:** DBAL extension je `ADT\DoctrineComponents\DI\DbalExtension` (ne `Nettrine\DBAL\DI\DbalExtension`). Tato extension rozšiřuje Nettrine DBAL o další funkce.
+
+`DoctrineComponentsExtension` registruje `TraitIndexListener` - indexy deklarované na traitech
+fancyadminu (`AuditLogTrait`, `ApiLogTrait`) Doctrine sama ignoruje a bez něj by je
+migrations-diff smazal.
 
 ### common.neon — search (auto-registrace services)
 
@@ -1030,9 +1035,6 @@ services:
 			- setExpirationCallback(Closure::fromCallable(@ADT\FancyAdmin\Model\Security\SessionExpirationCallback))
 	- ADT\DoctrineAuthenticator\OTP\OnetimeTokenService
 	- ADT\FancyAdmin\Model\Security\SessionExpirationCallback
-	# indexy deklarované na traitech fancyadminu (AuditLogTrait, ApiLogTrait) - bez něj je
-	# Doctrine ignoruje a migrations-diff by je smazal
-	- ADT\DoctrineComponents\Listeners\TraitIndexListener
 ```
 
 ### common.neon — datagrid

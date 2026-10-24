@@ -18,7 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
  * Reference jsou prostá čísla bez cizích klíčů: log nesmí bránit smazání toho, o čem
  * vypovídá, a odváží se do úložiště, kde cílová tabulka stejně neexistuje.
  *
- * Indexy nese trait - entitě je doplní TraitIndexListener z adt/doctrine-components.
+ * Indexy nese trait - entitě je doplní TraitIndexListener z adt/doctrine-components
+ * (registruje ho DoctrineComponentsExtension).
  * Index na `type` si přidá entita, protože sloupec definuje ona.
  */
 #[ORM\Index(fields: ['createdAt'])]

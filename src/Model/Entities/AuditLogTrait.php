@@ -25,8 +25,8 @@ use Doctrine\ORM\Mapping\Index;
  * a patri do payloadu - jinak by tabulka mela sloupec pro kazdy typ
  * a vetsinu z nich prazdnou.
  *
- * Indexy nese trait - entite je doplni TraitIndexListener z adt/doctrine-components,
- * ktery musi mit projekt registrovany (Doctrine sama #[Index] na traitu ignoruje).
+ * Indexy nese trait - entite je doplni TraitIndexListener z adt/doctrine-components
+ * (registruje ho DoctrineComponentsExtension; Doctrine sama #[Index] na traitu ignoruje).
  */
 #[Index(fields: ['action'])]
 #[Index(fields: ['correlationId'])]
