@@ -939,7 +939,7 @@ extensions:
 
 `DoctrineComponentsExtension` registruje `TraitIndexListener` - indexy deklarované na traitech
 fancyadminu (`AuditLogTrait`, `ApiLogTrait`) Doctrine sama ignoruje a bez něj by je
-migrations-diff smazal.
+migrations-diff smazal. Projekt, který extension nemá, dostane listener od `FancyAdminExtension`.
 
 ### common.neon — search (auto-registrace services)
 

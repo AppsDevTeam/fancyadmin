@@ -11,6 +11,8 @@ use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
+use ADT\DoctrineComponents\DI\DoctrineComponentsExtension;
+use ADT\DoctrineComponents\Listeners\TraitIndexListener;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
 use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
@@ -141,6 +143,16 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);
+
+		// Indexy nesou traity entit (AuditLogTrait, ApiLogTrait) a Doctrine je bez listeneru
+		// ignoruje - migrations-diff by je smazal. Projekt bez DoctrineComponentsExtension
+		// ho proto dostane odsud. Musi to byt uz tady, ne v beforeCompile: nettrine/orm
+		// sbira subscribery ve svem beforeCompile, ktery muze probehnout drive.
+		if (!$this->compiler->getExtensions(DoctrineComponentsExtension::class)) {
+			$builder->addDefinition($this->prefix('traitIndexListener'))
+				->setFactory(TraitIndexListener::class)
+				->setAutowired(false);
+		}
 
 		$builder->addDefinition($this->prefix('administration'))
 			->setFactory(FancyAdmin::class, [
