@@ -20,6 +20,29 @@ layout:
     back: späť
     backToHomepage: späť na hlavnú stránku
     goToLogin: prejsť na prihlásenie
+  quickbar:
+    close: Zavrieť
+    search:
+      title: Hľadanie
+      placeholder: Hľadať
+      placeholderOpen: Hľadať…
+      empty: Začnite písať a hľadajte.
+      noResults: Pre „%query%“ sme nič nenašli.
+    notifications:
+      label: Notifikácie
+      title: Notifikácie
+      readAll: Označiť všetko ako prečítané
+      empty: Žiadne notifikácie
+    todo:
+      label: Úlohy
+      title: Moje úlohy
+      placeholder: Pridať úlohu…
+      empty: Žiadne úlohy
+    chat:
+      label: Chat
+      title: Chat
+      placeholder: Napísať správu…
+      send: Odoslať
 aclResource:
   title:
     portal:
@@ -113,6 +136,10 @@ presenters:
       requireDigit: Vyžadovať číslicu
       requireSpecialChar: Vyžadovať špeciálny znak
       sessionExpirationMinutes: Expirácia session (minúty)
+      search: Vyhľadávanie
+      todo: Úlohy
+      notifications: Notifikácie
+      chat: Chat
 
   apiKeys:
     title: API kľúče

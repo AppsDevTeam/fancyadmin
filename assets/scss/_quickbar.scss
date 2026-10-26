@@ -1,0 +1,480 @@
+@use 'variables' as *;
+
+// Rychlá lišta dole uprostřed - src/UI/Presenters/@quickbar.latte, chování v assets/js/quickbar.js.
+// Na body kvůli značkovým barvám; projekt si paletu přemapuje na své tokeny.
+body {
+	--quickbar-surface: var(--fa-surface);
+	--quickbar-sunken: var(--fa-surface-hover);
+	--quickbar-tint: color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface));
+	--quickbar-primary: var(--primaryColor);
+	--quickbar-on-primary: #fff;
+	--quickbar-danger: var(--bs-danger);
+	--quickbar-warning: var(--bs-warning);
+	--quickbar-line: var(--fa-border);
+	--quickbar-border: var(--fa-border);
+	--quickbar-heading: var(--fa-text);
+	--quickbar-text: var(--fa-text);
+	--quickbar-text-strong: var(--fa-text);
+	--quickbar-muted: var(--fa-text-muted);
+	--quickbar-faint: var(--fa-text-faint);
+	--quickbar-item-radius: 8px;
+	--quickbar-shadow: 0 0 2px rgba(5, 5, 6, 0.16), 0 0 4px rgba(5, 5, 6, 0.16), 0 0 32px rgba(5, 5, 6, 0.12);
+
+	--quickbar-width: 400px;
+	--quickbar-width-open: 520px;
+	--quickbar-bottom: 20px;
+	// Panel 10 px nad lištou: 8 + 40 + 8 obsah, 2 rámeček
+	--quickbar-panel-bottom: calc(var(--quickbar-bottom) + 68px);
+}
+
+// Na mobilu nad spodním menu (.bottom-mobile-menu, 65 px)
+@include media-breakpoint-down(sm) {
+	body {
+		--quickbar-bottom: 77px;
+	}
+}
+
+// Rezerva, aby lišta nepřekryla konec stránky („Načíst další")
+body:has(.quickbar) .container-main {
+	padding-bottom: 120px;
+}
+
+%quickbar-glass {
+	backdrop-filter: blur(20px) saturate(160%);
+	-webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+.quickbar {
+	@extend %quickbar-glass;
+	position: fixed;
+	left: 50%;
+	bottom: var(--quickbar-bottom);
+	transform: translateX(-50%);
+	z-index: 1060;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	max-width: calc(100vw - 32px);
+	padding: 8px 10px 8px 8px;
+	// Zaoblení stupně xl - lišta je vyšší než běžný ovládací prvek
+	border-radius: $control-radius-xl;
+	background: color-mix(in srgb, var(--quickbar-surface) 55%, transparent);
+	border: 1px solid color-mix(in srgb, var(--quickbar-surface) 70%, transparent);
+	box-shadow: var(--quickbar-shadow), inset 0 1px 0 color-mix(in srgb, var(--quickbar-surface) 85%, transparent);
+	transition: width .25s ease, border-color .15s;
+
+	&.quickbar--with-search {
+		width: var(--quickbar-width);
+	}
+
+	&.quickbar--open-search {
+		width: var(--quickbar-width-open);
+		border-color: var(--quickbar-primary);
+	}
+}
+
+.quickbar-search {
+	flex: 1;
+	min-width: 0;
+	height: $control-height;
+	padding: 0 12px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	border-radius: $control-radius;
+	color: var(--quickbar-muted);
+	cursor: text;
+}
+
+.quickbar-search-input {
+	flex: 1;
+	min-width: 0;
+	border: 0;
+	outline: 0;
+	padding: 0;
+	background: transparent;
+	font: inherit;
+	color: var(--quickbar-text);
+
+	&::placeholder {
+		color: var(--quickbar-muted);
+	}
+}
+
+.quickbar-key {
+	padding: 1px 6px;
+	border: 1px solid var(--quickbar-border);
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font-family: inherit;
+	font-size: 12px;
+	color: var(--quickbar-faint);
+	white-space: nowrap;
+}
+
+.quickbar-divider {
+	flex: none;
+	width: 1px;
+	height: 24px;
+	background: var(--quickbar-border);
+}
+
+.quickbar-buttons {
+	display: flex;
+	gap: 6px;
+}
+
+// Rámeček napevno u obou stavů, jinak ikona i badge při přepnutí na btn-primary poskočí
+.quickbar-button.btn {
+	position: relative;
+	border-width: 1.5px;
+	border-style: solid;
+}
+
+// Přes .quickbar-button - Bootstrap má .btn .badge { position: relative }
+.quickbar-button .quickbar-badge {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	padding: 3px 5px;
+	font-size: 10px;
+	// Prstenec, aby byl badge vidět i na aktivním (primárním) tlačítku
+	box-shadow: 0 0 0 2px var(--quickbar-surface);
+}
+
+// === Panely nad lištou ===
+
+.quickbar-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1040;
+}
+
+.quickbar-panel {
+	@extend %quickbar-glass;
+	position: fixed;
+	left: 50%;
+	bottom: var(--quickbar-panel-bottom);
+	transform: translateX(-50%);
+	z-index: 1050;
+	display: flex;
+	flex-direction: column;
+	width: var(--quickbar-width);
+	max-width: calc(100vw - 32px);
+	max-height: min(560px, calc(100vh - 140px));
+	overflow: hidden;
+	border-radius: var(--overlay-radius);
+	background: color-mix(in srgb, var(--quickbar-surface) 72%, transparent);
+	border: 1px solid color-mix(in srgb, var(--quickbar-surface) 60%, transparent);
+	box-shadow: var(--quickbar-shadow), inset 0 1px 0 color-mix(in srgb, var(--quickbar-surface) 80%, transparent);
+	color: var(--quickbar-text);
+
+	&.quickbar-panel--search {
+		width: var(--quickbar-width-open);
+
+		.quickbar-panel-body {
+			gap: 4px;
+			padding: 8px;
+		}
+	}
+
+	&.quickbar-panel--todo .quickbar-panel-body {
+		padding: 8px 8px 4px;
+	}
+
+	&.quickbar-panel--chat {
+		height: min(520px, calc(100vh - 140px));
+	}
+}
+
+.quickbar-panel-header {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 12px 12px 10px 16px;
+	border-bottom: 1px solid var(--quickbar-line);
+}
+
+.quickbar-panel-title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--quickbar-heading);
+}
+
+.quickbar-panel-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.quickbar-panel-body {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 6px;
+}
+
+.quickbar-panel-hint {
+	flex: none;
+	display: flex;
+	gap: 16px;
+	padding: 8px 16px;
+	border-top: 1px solid var(--quickbar-line);
+	font-size: 12px;
+	color: var(--quickbar-faint);
+
+	> span {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+}
+
+.quickbar-panel-form {
+	flex: none;
+	display: flex;
+	gap: 8px;
+	padding: 10px 12px 12px;
+	border-top: 1px solid var(--quickbar-line);
+}
+
+.quickbar-empty {
+	padding: 24px 12px;
+	text-align: center;
+	font-size: 14px;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-group-title {
+	padding: 10px 10px 4px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	color: var(--quickbar-muted);
+
+	&:first-child {
+		padding-top: 8px;
+	}
+}
+
+// Řádek seznamu - výsledek hledání, notifikace i úkol
+.quickbar-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	margin: 0;
+	padding: 8px 10px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	text-align: left;
+	text-decoration: none;
+	color: var(--quickbar-text);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-sunken);
+		color: var(--quickbar-text);
+	}
+}
+
+.quickbar-panel--search .quickbar-item {
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-tint);
+	}
+}
+
+.quickbar-item-icon {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-avatar {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--quickbar-tint);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--quickbar-primary);
+}
+
+.quickbar-item-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.quickbar-item-label {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--quickbar-text-strong);
+
+	&.quickbar-item-label--strong {
+		font-weight: 600;
+	}
+}
+
+.quickbar-item-meta {
+	font-size: 12px;
+	color: var(--quickbar-muted);
+}
+
+// === Notifikace ===
+
+.quickbar-notification {
+	align-items: flex-start;
+	padding: 10px;
+
+	.quickbar-item-icon {
+		border-radius: 50%;
+		background: var(--quickbar-sunken);
+	}
+}
+
+.quickbar-notification-text {
+	font-size: 13px;
+	color: var(--quickbar-muted);
+	text-wrap: pretty;
+}
+
+.quickbar-notification-time {
+	font-size: 12px;
+	color: var(--quickbar-faint);
+}
+
+.quickbar-unread-dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	margin-top: 6px;
+	border-radius: 50%;
+	background: var(--quickbar-primary);
+}
+
+@each $tone in danger, primary, warning {
+	.quickbar-item-icon--tone-#{$tone} {
+		color: var(--quickbar-#{$tone});
+	}
+}
+
+// === Úkoly ===
+
+.quickbar-todo {
+	align-items: flex-start;
+	gap: 10px;
+
+	.form-check-input {
+		flex: none;
+		margin: 2px 0 0;
+	}
+
+	.quickbar-item-label {
+		font-weight: 400;
+	}
+
+	&.quickbar-todo--done .quickbar-item-label {
+		text-decoration: line-through;
+		color: var(--quickbar-faint);
+	}
+}
+
+// === Chat ===
+
+.quickbar-chats {
+	flex: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--quickbar-line);
+}
+
+.quickbar-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 12px;
+	border: 1px solid var(--quickbar-border);
+	border-radius: 999px;
+	background: var(--quickbar-surface);
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--quickbar-text);
+	cursor: pointer;
+
+	&.quickbar-chip--active {
+		border-color: var(--quickbar-primary);
+		background: var(--quickbar-tint);
+		color: var(--quickbar-primary);
+	}
+}
+
+.quickbar-thread {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 14px;
+	background: var(--quickbar-sunken);
+}
+
+.quickbar-message {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+
+	&.quickbar-message--mine {
+		align-items: flex-end;
+	}
+}
+
+.quickbar-bubble {
+	max-width: 80%;
+	padding: 8px 12px;
+	border: 1px solid var(--quickbar-line);
+	border-radius: var(--overlay-radius);
+	background: var(--quickbar-surface);
+	font-size: 14px;
+	line-height: 1.4;
+	color: var(--quickbar-text);
+
+	.quickbar-message--mine & {
+		border-color: var(--quickbar-primary);
+		background: var(--quickbar-primary);
+		color: var(--quickbar-on-primary);
+	}
+}
+
+.quickbar-message-time {
+	padding: 0 4px;
+	font-size: 11px;
+	color: var(--quickbar-faint);
+}

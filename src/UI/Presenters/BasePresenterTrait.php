@@ -5,7 +5,9 @@ namespace ADT\FancyAdmin\UI\Presenters;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\JsComponentsInject;
+use ADT\FancyAdmin\DI\Injects\QuickbarSettingsInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Quickbar\QuickbarItem;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Exception;
@@ -22,6 +24,7 @@ trait BasePresenterTrait
 	use EntityManagerInject;
 	use TranslatorInject;
 	use JsComponentsInject;
+	use QuickbarSettingsInject;
 
 	protected bool $primaryTemplate = false;
 
@@ -44,6 +47,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->project = $this->_fancyAdmin->getProject();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
+		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
@@ -116,6 +120,17 @@ trait BasePresenterTrait
 			}
 		}
 		$this->getTemplate()->keycloakSettingsJson = $keycloakSettingsJson;
+	}
+
+
+	/**
+	 * Položky rychlé lišty podle nastavení `quickbar`; projekt může přepsat. Prázdné pole = lišta se nevykreslí.
+	 *
+	 * @return list<QuickbarItem>
+	 */
+	protected function getQuickbarItems(): array
+	{
+		return $this->_quickbarSettings->getItems();
 	}
 
 

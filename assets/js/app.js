@@ -113,6 +113,7 @@ AdtJsComponents.init('translate', 'Translate');
 import './flashes';
 // import './userDropdown';
 import './tableActionsShadow';
+import './quickbar';
 // import './_datagrid';
 // import './dateRange';
 // import '../../../vendor/ublaboo/datagrid/assets/datagrid';

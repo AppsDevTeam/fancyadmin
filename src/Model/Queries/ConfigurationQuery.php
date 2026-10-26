@@ -6,5 +6,6 @@ use ADT\FancyAdmin\Model\Queries\Abstract\BaseQuery;
 
 interface ConfigurationQuery extends BaseQuery
 {
-
+	/** Implementuje ConfigurationQueryTrait */
+	public function byKey(string|array $key): static;
 }

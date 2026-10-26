@@ -18,6 +18,7 @@ use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
 use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
+use ADT\FancyAdmin\Model\Quickbar\QuickbarSettings;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\LastLoginSubscriber;
@@ -190,6 +191,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('jsComponents'))
 			->setFactory(JsComponents::class);
+
+		$builder->addDefinition($this->prefix('quickbarSettings'))
+			->setFactory(QuickbarSettings::class);
 
 		$builder->addDefinition($this->prefix('passkeyService'))
 			->setFactory(PasskeyService::class);

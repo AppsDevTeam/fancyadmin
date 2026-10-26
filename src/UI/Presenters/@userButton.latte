@@ -1,8 +1,7 @@
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
 {varType ADT\FancyAdmin\Model\Menu\UserMenu $userMenu}
 {var $identity = $user->getIdentity()}
-{var $roles = $identity->getRoles()}
-{var $roleName = $roles ? reset($roles)->getName() : null}
+{var $roleNames = implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()))}
 <div class="bottom-menu">
     <div class="dropdown user">
         <button class="btn user-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -12,7 +11,7 @@
             </span>
             <span class="user-button-info">
                 <span class="user-button-name">{$identity->getFullName()}</span>
-                <span n:if="$roleName" class="user-button-role">{$roleName}</span>
+                <span n:if="$roleNames" class="user-button-role">{$roleNames}</span>
             </span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end user-dropdown dropdown-menu-bottom">
@@ -24,7 +23,7 @@
                     </div>
                     <div class="col-auto">
                         <div>{$user->getIdentity()->getFirstName()}</div>
-                        <div>{$user->getIdentity()->getEmail()}</div>
+                        <div n:if="$roleNames">{$roleNames}</div>
                     </div>
                 </div>
             </li>

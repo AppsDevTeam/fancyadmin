@@ -20,6 +20,29 @@ layout:
     back: zpět
     backToHomepage: zpět na hlavní stránku
     goToLogin: přejít na přihlášení
+  quickbar:
+    close: Zavřít
+    search:
+      title: Hledání
+      placeholder: Hledat
+      placeholderOpen: Hledat…
+      empty: Začněte psát a hledejte.
+      noResults: Nic jsme nenašli pro „%query%“.
+    notifications:
+      label: Notifikace
+      title: Notifikace
+      readAll: Označit vše jako přečtené
+      empty: Žádné notifikace
+    todo:
+      label: Úkoly
+      title: Moje úkoly
+      placeholder: Přidat úkol…
+      empty: Žádné úkoly
+    chat:
+      label: Chat
+      title: Chat
+      placeholder: Napsat zprávu…
+      send: Odeslat
 aclResource:
   title:
     portal:
@@ -113,6 +136,10 @@ presenters:
       requireDigit: Vyžadovat číslici
       requireSpecialChar: Vyžadovat speciální znak
       sessionExpirationMinutes: Expirace session (minuty)
+      search: Vyhledávání
+      todo: Úkoly
+      notifications: Notifikace
+      chat: Chat
 
   apiKeys:
     title: API klíče

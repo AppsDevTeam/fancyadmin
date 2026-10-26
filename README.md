@@ -2746,3 +2746,38 @@ Poznámky:
   `setMultiTenant()`; `SecurityUser` sestavený mimo DI (testy, konzole) se chová jako dřív,
   tedy jako více tenantů. Vlastní implementace rozhraní `SecurityUser` bez `SecurityUserTrait`
   musí `isMultiTenant()` doplnit.
+
+## 28. Rychlá lišta (volitelné)
+
+Plovoucí lišta dole uprostřed backoffice: hledání (Ctrl/⌘ K, „/") a ikony Notifikace, Úkoly,
+Chat, každá otevírá panel nad lištou. Šablona `src/UI/Presenters/@quickbar.latte` (layout ji
+vloží sám), styly `assets/scss/_quickbar.scss` (součást `app.scss`), chování `assets/js/quickbar.js`.
+
+**Zapnutí a položky** — řádek `quickbar` v tabulce `configuration` (Nastavení), zakládá ho
+migrace `Version20261026120000`. Výchozí je vypnutá:
+
+```json
+{"enabled": false, "search": true, "todo": true, "notifications": true, "chat": true}
+```
+
+Čte ho `QuickbarSettings::getItems()`; `BasePresenterTrait::getQuickbarItems()` jde v projektu přepsat
+(např. položky podle oprávnění). Ikony jsou v pořadí Notifikace, Úkoly, Chat, hledání vždy vlevo.
+
+**JS** — importovat modul (`app.js` fancyadminu ho importuje sám) a předat mu zdroj dat; bez něj jsou panely prázdné:
+
+```js
+import { setQuickbarSource } from '@fancyadmin/js/quickbar';
+
+setQuickbarSource({
+	search: (query) => fetch(...).then((r) => r.json()),   // [{ label, items: [...] }]
+	notifications: { list, read, readAll },
+	todos: { list, add, setDone },
+	chats: { list, messages, send, read },
+});
+```
+
+Tvar dat je popsaný v hlavičce `quickbar.js`. Metody můžou vracet hodnotu i Promise, chybějící
+metoda se bere jako prázdný výsledek.
+
+**Barvy** — proměnné `--quickbar-*` na `body` (výchozí z `--fa-*` a `--primaryColor`), projekt
+může přemapovat na své tokeny. Texty jsou v `fcadmin.layout.quickbar.*`.

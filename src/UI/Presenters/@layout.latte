@@ -171,6 +171,10 @@
 			{snippet sidePanelStacked}{/snippet}
 			<button type="button" class="btn-close"></button>
 		</div>
+
+		{if !empty($quickbarItems)}
+			{include @quickbar.latte}
+		{/if}
 	{else}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">

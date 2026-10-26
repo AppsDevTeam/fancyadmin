@@ -1,0 +1,73 @@
+{varType ADT\FancyAdmin\Model\Quickbar\QuickbarItem[] $quickbarItems}
+{* Rychlá lišta - kostra panelů; obsah seznamů vykresluje assets/js/quickbar.js z dat projektu *}
+{var $hasSearch = in_array(ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Search, $quickbarItems, true)}
+{var $buttons = array_filter($quickbarItems, fn($item) => $item !== ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Search)}
+
+<div class="quickbar-overlay" data-quickbar-close hidden></div>
+
+<section n:if="$hasSearch" class="quickbar-panel quickbar-panel--search" id="quickbar-panel-search" data-quickbar-panel="search" aria-label="{_fcadmin.layout.quickbar.search.title}" hidden>
+	<header class="quickbar-panel-header">
+		<h2 class="quickbar-panel-title">{_fcadmin.layout.quickbar.search.title}</h2>
+		{include closeButton}
+	</header>
+	<div class="quickbar-panel-body" data-quickbar-results data-empty="{_fcadmin.layout.quickbar.search.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
+	<footer class="quickbar-panel-hint">
+		<span><kbd class="quickbar-key">Esc</kbd>{_fcadmin.layout.quickbar.close}</span>
+	</footer>
+</section>
+
+{foreach $buttons as $item}
+	<section class="quickbar-panel quickbar-panel--{$item->value}" id="quickbar-panel-{$item->value}" data-quickbar-panel="{$item->value}" aria-label="{_'fcadmin.layout.quickbar.' . $item->value . '.title'}" hidden>
+		<header class="quickbar-panel-header">
+			<h2 class="quickbar-panel-title">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
+			<div class="quickbar-panel-actions">
+				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-sm btn-outline-secondary" data-quickbar-read-all>{_fcadmin.layout.quickbar.notifications.readAll}</button>
+				{include closeButton}
+			</div>
+		</header>
+
+		{switch $item}
+			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications}
+				<div class="quickbar-panel-body" data-quickbar-list="notifications" data-empty="{_fcadmin.layout.quickbar.notifications.empty}"></div>
+			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Todo}
+				<div class="quickbar-panel-body" data-quickbar-list="todo" data-empty="{_fcadmin.layout.quickbar.todo.empty}"></div>
+				<form class="quickbar-panel-form noajax" data-quickbar-form="todo">
+					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.todo.placeholder}" aria-label="{_fcadmin.layout.quickbar.todo.placeholder}">
+					<button type="submit" class="btn btn-sm btn-primary">{_fcadmin.global.buttons.add}</button>
+				</form>
+			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat}
+				<div class="quickbar-chats" data-quickbar-chats></div>
+				<div class="quickbar-thread" data-quickbar-thread></div>
+				<form class="quickbar-panel-form noajax" data-quickbar-form="chat">
+					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.placeholder}" aria-label="{_fcadmin.layout.quickbar.chat.placeholder}">
+					<button type="submit" class="btn btn-icon btn-sm btn-primary" title="{_fcadmin.layout.quickbar.chat.send}"><i class="fa-regular fa-paper-plane"></i></button>
+				</form>
+		{/switch}
+	</section>
+{/foreach}
+
+<div n:class="quickbar, $hasSearch ? quickbar--with-search" data-quickbar>
+	<label n:if="$hasSearch" class="quickbar-search">
+		<i class="fa-regular fa-magnifying-glass"></i>
+		<input type="text" class="quickbar-search-input" autocomplete="off"
+			placeholder="{_fcadmin.layout.quickbar.search.placeholder}"
+			data-placeholder-closed="{_fcadmin.layout.quickbar.search.placeholder}"
+			data-placeholder-open="{_fcadmin.layout.quickbar.search.placeholderOpen}"
+			aria-label="{_fcadmin.layout.quickbar.search.title}" aria-controls="quickbar-panel-search" aria-expanded="false"
+			data-quickbar-search>
+		<kbd class="quickbar-key" data-quickbar-shortcut>Ctrl K</kbd>
+	</label>
+	<div n:if="$hasSearch && $buttons" class="quickbar-divider"></div>
+	<div n:if="$buttons" class="quickbar-buttons">
+		<button n:foreach="$buttons as $item" type="button" class="btn btn-icon btn-sm btn-outline-secondary quickbar-button"
+			title="{_'fcadmin.layout.quickbar.' . $item->value . '.label'}" aria-controls="quickbar-panel-{$item->value}" aria-expanded="false"
+			data-quickbar-toggle="{$item->value}">
+			<i class="fa-regular fa-{$item->getIcon()}"></i>
+			<span class="badge {$item->getBadgeClass()} quickbar-badge" data-quickbar-count="{$item->value}" hidden></span>
+		</button>
+	</div>
+</div>
+
+{define closeButton}
+	<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-regular fa-xmark"></i></button>
+{/define}
