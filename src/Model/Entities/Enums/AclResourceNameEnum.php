@@ -14,6 +14,9 @@ enum AclResourceNameEnum: string implements Resource
 	case BACKOFFICE_DASHBOARD = 'portalBackoffice.dashboard';
 	case FULL_DATA = 'fullData';
 
+	// AI asistent: čtení konverzací ostatních uživatelů (jen pro čtení, ne psaní do nich)
+	case BACKOFFICE_AI_VIEW_OTHERS = 'portalBackoffice.ai.viewOthers';
+
 	// Modulově neutrální - Profile presenter existuje v obou modulech, jde o tutéž akci.
 	case PROFILE_PERSONAL_DATA = 'profile.personalData';
 

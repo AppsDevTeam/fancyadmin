@@ -2782,3 +2782,153 @@ vědomě vést jako odchylku:
   splnit se dá jen MFA (8.4).
 - **10.2.1.6** spuštění a zastavení auditního logování se nezaznamenává.
 - `BreachedPasswordChecker` **propouští** heslo, když HaveIBeenPwned do 500 ms neodpoví.
+
+## 28. AI asistent (volitelné)
+
+Chat nad daty projektu postavený na [adt/ai-chat](https://github.com/AppsDevTeam/ai-chat)
+(Anthropic Managed Agents). Uživatel se ptá v přirozeném jazyce, AI si sama píše `SELECT`y
+nad **anonymizovanou kopií schématu** (pohledy z [adt/doctrine-anonymization](https://github.com/AppsDevTeam/doctrine-anonymization))
+a odpovídá textem, tabulkou, grafem nebo CSV exportem. Fancyadmin dodává grid konverzací,
+konverzaci v bočním panelu, napojení na ACL a překlady; tah AI běží ve workeru `adt/background-queue`.
+
+> ⚠️ **Více tenantů:** AI čte celé anonymizované schéma, účty nerozlišuje. V režimu
+> `multiTenant: true` ji proto `AiPresenterTrait` pustí jen uživateli s `fullDataAclResource`,
+> ostatní dostanou 403.
+
+### 28.1 Entity
+
+Konverzace, zprávy a mapování agentů na schéma. Traity nesou mapování i anonymizační atributy:
+
+```php
+// app/Model/Entities/AiConversation.php
+#[ORM\Entity]
+#[ORM\Table(name: 'ai_conversation')]
+class AiConversation extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\AiConversation
+{
+	use \ADT\FancyAdmin\Model\Entities\AiConversationTrait;
+}
+
+// app/Model/Entities/AiMessage.php
+#[ORM\Entity]
+#[ORM\Table(name: 'ai_message')]
+class AiMessage extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\AiMessage
+{
+	use \ADT\FancyAdmin\Model\Entities\AiMessageTrait;
+}
+
+// app/Model/Entities/AiAgent.php
+#[ORM\Entity]
+#[ORM\Table(name: 'ai_agent')]
+class AiAgent extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\AiAgent
+{
+	use \ADT\FancyAdmin\Model\Entities\AiAgentTrait;
+}
+```
+
+Rozhraní `AiConversation` atd. záměrně nerozšiřují `ADT\DoctrineComponents\Entities\Entity`
+(nesedí signatura `getId()`) — `Entity` přinese `BaseEntity` projektu. Migraci vygenerujte
+přes `migrations-diff`.
+
+### 28.2 Query, grid, presenter
+
+```php
+// app/Model/Queries/AiConversationQuery.php
+class AiConversationQuery extends BaseQuery implements \ADT\FancyAdmin\Model\Queries\AiConversationQuery
+{
+	use \ADT\FancyAdmin\Model\Queries\AiConversationQueryTrait;
+}
+
+// app/UI/.../Grids/AiConversationGrid.php
+class AiConversationGrid extends BaseGrid implements \ADT\FancyAdmin\UI\Components\Grids\AiConversation\AiConversationGrid
+{
+	use BaseGridTrait;
+	use \ADT\FancyAdmin\UI\Components\Grids\AiConversation\AiConversationGridTrait;
+}
+
+// app/UI/PortalBackoffice/Presenters/Ai/AiPresenter.php
+class AiPresenter extends AuthPresenter
+{
+	use \ADT\FancyAdmin\UI\Presenters\Ai\AiPresenterTrait;
+}
+```
+
+```neon
+services:
+	aiConversationQueryFactory:
+		implement: App\Model\Queries\Factories\AiConversationQueryFactory   # extends fancyadminovou factory
+		factory: App\Model\Queries\AiConversationQuery
+		setup:
+			- setSecurityUser(@security.user)
+	aiConversationGridFactory:
+		implement: ADT\FancyAdmin\UI\Components\Grids\AiConversation\AiConversationGridFactory
+		factory: App\UI\Components\Grids\AiConversationGrid
+```
+
+Položka menu a ACL resource `portalBackoffice.ai` (presenter), volitelně
+`portalBackoffice.ai.viewOthers` (`AclResourceNameEnum::BACKOFFICE_AI_VIEW_OTHERS`) — kdo ho má,
+vidí v gridu konverzace všech uživatelů a cizí si otevře **jen pro čtení**. Psát a mazat jde
+vždy jen do vlastních konverzací. Konverzace se mažou měkce (`deleted`).
+
+### 28.3 Konfigurace
+
+```neon
+fancyadmin:
+	ai:
+		enabled: true
+		apiKey: %env.ANTHROPIC_API_KEY%
+		model: claude-sonnet-5-5          # výchozí
+		conversationClass: App\Model\Entities\AiConversation
+		messageClass: App\Model\Entities\AiMessage
+		agentClass: App\Model\Entities\AiAgent
+		readOnlyConnection:
+			user: %env.DB_ANON_USER%
+			password: %env.DB_ANON_PASSWORD%
+			# dbname: výchozí <databáze>_anon, host/port: výchozí z aplikačního spojení
+		# systemPromptPath: %appDir%/ai/system-prompt.md   # výchozí šablona z adt/ai-chat
+		# chat: [rateLimitPerMinute: 20, attachments: [maxCount: 5, maxBytes: 10485760]]
+		# piiLabels: texty místo odstraněných osobních údajů (výchozí česky)
+
+backgroundQueue:
+	callbacks:
+		aiChatProcessMessage: [@fancyAdmin.ai.chatService, processQueuedMessage]
+```
+
+Rozšíření registruje klienta Managed Agents, `ChatService`, `ChatEndpoint` a ostatní služby
+adt/ai-chat. Anonymizační služby (`AnonymizationPolicy`, `ReadOnlyQueryExecutor`, …) a příkaz
+`anonymization:generate-views` přidá jen tehdy, když si je projekt neregistruje sám.
+
+### 28.4 Anonymizované schéma a read-only uživatel
+
+1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
+   fancyadminu už označené jsou). Neoznačený sloupec AI čte, jak je; `SECRET` a `BANK_ACCOUNT`
+   se anonymizují vždy.
+2. Vygenerujte pohledy: `php bin/console anonymization:generate-views` (po každé migraci).
+3. Založte DB uživatele **jen se `SELECT` na `<databáze>_anon`** — read-only spojení není
+   hranice samo o sobě, hranicí jsou práva uživatele:
+
+```sql
+CREATE USER 'app_anon'@'%' IDENTIFIED BY '…';
+GRANT SELECT ON `app_anon`.* TO 'app_anon'@'%';
+```
+
+### 28.5 Frontend
+
+```bash
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.4.1 marked dompurify chart.js
+```
+
+```js
+// entry point projektu (např. portal.js) - za nette.ajax.js
+import '@fancyadmin/js/aiChat';
+```
+
+`aiChat.js` připojí widget na boční panel AiPresenteru (i když přijde ajaxem) a po založení
+konverzace obnoví grid. Konfiguraci widgetu jde rozšířit přepsáním
+`AiPresenterTrait::getAiChatConfig()`, velikost panelu `getAiSidePanelSize()`.
+
+### 28.6 Boční panel bez formuláře
+
+Konverzace využívá `SidePanelControl::setBodyTemplate($file, $params)` — panel vykreslí blok
+`body` šablony místo formuláře. Kořenový element bloku musí mít třídu `side-panel-body`
+(podle ní se panel otevře), atribut `data-fancyadmin-side-panel-no-dirty` vypne dotaz
+„Opravdu zavřít bez uložení?".

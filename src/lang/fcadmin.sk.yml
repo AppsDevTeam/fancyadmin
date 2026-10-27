@@ -41,6 +41,15 @@ mailer:
     text: 'pre dokončenie prihlásenia do aplikácie <strong>%projectName%</strong> opíšte tento jednorazový kód. Platí %validMinutes% minút a použiť ho možno len raz. <strong>Ak ste sa práve neprihlasovali, niekto pozná vaše heslo - čo najskôr si ho zmeňte.</strong><br><br>'
 
 presenters:
+  ai:
+    title: AI asistent
+    pageTitle: AI asistent
+    newConversation: Nová konverzácia
+    grid:
+      title: Konverzácia
+      identity: Používateľ
+      updated: Posledná správa
+      created: Založené
   permissions:
     title: Oprávnenia
     pageTitle: Oprávnenia
@@ -410,6 +419,50 @@ appGeneral:
     signInBlockedUnknownTime: "Vyčerpali ste povolený počet pokusov, prihlásenie je preto dočasne zablokované. Skúste to prosím o chvíľu znova."
     noPermission: "Nemáte právo na prihlásenie"
     inactiveUser: "Neaktívny používateľ"
+
+aiChat:
+  error:
+    emptyMessage: Správa nesmie byť prázdna.
+    rateLimitMinute: "Odosielate správy príliš rýchlo (limit %limit% za minútu). Chvíľu počkajte."
+    rateLimitHour: "Prekročili ste hodinový limit správ (%limit%). Skúste to prosím neskôr."
+    tooManyAttachments: "K jednej správe je možné priložiť najviac %max% súborov."
+    attachmentTooLarge: "Súbor „%name%“ je príliš veľký. Limit je %max% MB."
+    attachmentType: "Typ súboru „%name%“ nie je podporovaný. Povolené sú obrázky (PNG, JPEG, GIF, WebP), PDF a textové súbory (TXT, CSV, MD)."
+    attachmentUploadFailed: "Nahranie súboru „%name%“ zlyhalo. Skúste to prosím znova."
+    tooManyToolCalls: Asistent v jednom kroku zavolal príliš veľa nástrojov a bol zastavený. Skúste otázku upresniť.
+    turnTimeout: Asistent nestihol odpovedať včas. Pošlite prosím správu znova.
+    serviceUnavailable: "AI služba je dočasne nedostupná, skúste to prosím o chvíľu. (%detail%)"
+    invalidExport: Neplatný odkaz na export.
+    conversationNotFound: Konverzácia nebola nájdená.
+    unexpected: Nastala neočakávaná chyba. Skúste to prosím znova.
+  export:
+    empty: Export neobsahuje žiadne dáta.
+    failed: Export zlyhal
+  labels:
+    title: AI asistent
+    newConversation: Nová konverzácia
+    noConversations: Zatiaľ žiadne konverzácie.
+    noTitle: Nová konverzácia
+    placeholder: Opýtajte sa na čokoľvek ohľadom dát...
+    send: Odoslať
+    attach: Priložiť súbor (obrázok, PDF, CSV, text)
+    removeFile: Odobrať
+    delete: Zmazať
+    deleteConfirm: Naozaj chcete konverzáciu zmazať?
+    loading: AI premýšľa...
+    welcome: Vyberte konverzáciu alebo začnite novú.
+    welcomeSingle: Opýtajte sa na čokoľvek ohľadom dát.
+    exportCsv: Stiahnuť CSV
+    contextLabel: Kontext konverzácie
+    contextOk: Pamätám si celú konverzáciu.
+    contextWarn: Konverzácia je dlhá, čoskoro začnem zabúdať jej začiatok.
+    contextFull: Pamäť je takmer plná, zvážte novú konverzáciu.
+    errorConnection: Chyba spojenia. Skúste to prosím znova.
+    errorTimeout: Odpoveď trvá príliš dlho. Načítajte konverzáciu neskôr znova.
+    errorUnavailable: Konverzácia už nie je dostupná.
+    errorUnknown: Nastala neočakávaná chyba. Skúste to prosím znova.
+    errorTooManyFiles: "K jednej správe je možné priložiť najviac {max} súborov."
+    errorFileTooLarge: "Súbor „{name}“ je príliš veľký. Limit je {max} MB."
 
 sidePanels:
   control:

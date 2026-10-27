@@ -1,0 +1,20 @@
+// AI asistent v bočním panelu (assets/js/aiChat.js). Panel stylem cílí na formuláře
+// (tlačítka přes celou šířku, form jako sloupec), widget ale má vlastní layout.
+
+.side-panel-body.ai-chat-side-panel {
+	height: 100%;
+	min-height: 0;
+
+	&.ai-chat {
+		height: 100%;
+	}
+
+	form {
+		display: block;
+	}
+
+	[type="submit"],
+	.ai-chat__send-btn {
+		width: 36px;
+	}
+}

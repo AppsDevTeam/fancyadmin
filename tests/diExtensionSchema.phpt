@@ -187,3 +187,12 @@ test('logicke volby prijmou jen bool', function () {
 		Assert::exception(fn() => process([$option => 'ano']), ValidationException::class, null, null, $option);
 	}
 });
+
+
+test('AI je ve vychozi konfiguraci vypnute', function () {
+	$config = process();
+
+	Assert::false($config->ai->enabled);
+	Assert::same('aiChatProcessMessage', $config->ai->queueCallback);
+	Assert::same(['secret', 'email', 'bank_account', 'phone', 'value'], array_keys($config->ai->piiLabels));
+});
