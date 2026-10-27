@@ -13,8 +13,13 @@
 		display: block;
 	}
 
+	// Projekty si submitům v panelu dávají min-width a padding (tlačítko Uložit),
+	// kulaté odesílací tlačítko proto drží rozměry samo
 	[type="submit"],
 	.ai-chat__send-btn {
 		width: 36px;
+		min-width: 36px;
+		height: 36px;
+		padding: 0;
 	}
 }
