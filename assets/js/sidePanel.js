@@ -111,8 +111,12 @@ $(function () {
 		}
 	});
 
-	// Změna hodnoty v inputu → dirty
+	// Změna hodnoty v inputu → dirty. Obsah, který si ukládá sám (např. AI chat),
+	// se z toho vyjímá atributem data-fancyadmin-side-panel-no-dirty.
 	$(document).on('change input', '[id^="snippet--sidePanel"] form :input', function () {
+		if ($(this).closest('[data-fancyadmin-side-panel-no-dirty]').length) {
+			return;
+		}
 		const panelId = getPanelId(this);
 		if (panelId && panels[panelId]) {
 			panels[panelId].isDirty = true;
@@ -133,6 +137,8 @@ $(function () {
 	function buildFormActions(container) {
 		container.querySelectorAll('[id^="snippet--sidePanel"] form').forEach((form) => {
 			if (form.querySelector(':scope > .side-panel-actions')) return;
+			// formuláře uvnitř vlastní šablony panelu (setBodyTemplate) mají vlastní layout
+			if (form.closest('.side-panel-body')) return;
 
 			// Skrytý submit je jen nosič signálu
 			const buttons = form.querySelectorAll('[type="submit"]:not([hidden])');
@@ -184,7 +190,7 @@ $(function () {
 	function applyPanelState() {
 		const main = document.querySelector('.side-panel-template-container:not(.side-panel-template-container--stacked)');
 		const stacked = document.querySelector('.side-panel-template-container--stacked');
-		const isOpen = (container) => !!container && !!container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-loading)');
+		const isOpen = (container) => !!container && !!container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-body, .side-panel-loading)');
 		const mainOpen = isOpen(main);
 		const stackedOpen = isOpen(stacked);
 
@@ -211,7 +217,7 @@ $(function () {
 	// zúžil. Šířku podržíme inline hned v callbacku observeru (ještě před vykreslením).
 	function holdClosingWidth() {
 		document.querySelectorAll('.side-panel-template-container--open').forEach((container) => {
-			if (container.dataset.openWidth && !container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-loading)')) {
+			if (container.dataset.openWidth && !container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-body, .side-panel-loading)')) {
 				container.style.setProperty('--width', container.dataset.openWidth);
 			}
 		});

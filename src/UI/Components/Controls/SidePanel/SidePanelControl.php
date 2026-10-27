@@ -29,13 +29,39 @@ class SidePanelControl extends Control
 	/** @var callable|null */
 	private $resultLabel = null;
 
+	private ?string $bodyTemplate = null;
+
+	/** @var array<string, mixed> */
+	private array $bodyParameters = [];
+
 	public function render(): void
 	{
+		if ($this->bodyTemplate !== null) {
+			$this->template->fileName = $this->bodyTemplate;
+			foreach ($this->bodyParameters as $_name => $_value) {
+				$this->template->$_name = $_value;
+			}
+		}
+
 		$this->template->size = $this->size->value;
 		$this->template->stacked = $this->stacked;
 		$this->template->closeConfirm = $this->closeConfirm;
 		$this->template->setFile(__DIR__ . '/SidePanelControl.latte');
 		$this->template->render();
+	}
+
+	/**
+	 * Panel bez formuláře: šablona musí definovat blok `body`, ten se vykreslí místo
+	 * formuláře. Kořenový element bloku má mít třídu `side-panel-body`, podle ní se
+	 * panel otevře (jinak se otvírá, až když v něm je formulář).
+	 *
+	 * @param array<string, mixed> $parameters proměnné šablony
+	 */
+	public function setBodyTemplate(string $file, array $parameters = []): static
+	{
+		$this->bodyTemplate = $file;
+		$this->bodyParameters = $parameters;
+		return $this;
 	}
 
 	public function setFormFactory(callable $formFactory): static
