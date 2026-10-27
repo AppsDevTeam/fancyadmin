@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use Doctrine\ORM\Mapping as ORM;
@@ -34,6 +37,8 @@ trait GridFilterTrait
 	protected string $name;
 
 	#[Column(type: "json", nullable: false)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('JSON of the saved filter values; may contain searched names or e-mails.')]
 	protected array $value = [];
 
 	#[ORM\ManyToOne(targetEntity: 'Account')]

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
@@ -34,20 +37,28 @@ trait IdentityTrait
 
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
+	#[Anonymize(AnonymizationType::FIRST_NAME)]
+	#[Description('First name of the user.')]
 	protected ?string $firstName = null;
 
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
+	#[Anonymize(AnonymizationType::LAST_NAME)]
+	#[Description('Last name of the user.')]
 	protected ?string $lastName = null;
 
 	#[ORM\Column(nullable:true)]
 	#[LoggableProperty]
 	#[AuditedValue]
+	#[Anonymize(AnonymizationType::EMAIL)]
+	#[Description('E-mail of the user, also used to sign in.')]
 	protected ?string $email = null;
 
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty]
 	#[AuditedValue]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('Login name of the user (often an e-mail).')]
 	protected ?string $username = null;
 
 	#[ORM\Column(nullable: true)]
@@ -56,6 +67,8 @@ trait IdentityTrait
 
 	#[ORM\Column(nullable:true)]
 	#[LoggableProperty]
+	#[Anonymize(AnonymizationType::PHONE)]
+	#[Description('Phone number of the user.')]
 	protected ?string $phoneNumber = null;
 
 	/**
@@ -66,6 +79,8 @@ trait IdentityTrait
 	 */
 	#[ORM\Column(nullable: true)]
 	#[LoggableProperty(withValue: false)]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('Password hash.')]
 	protected ?string $password = null;
 
 	#[ORM\OneToMany(targetEntity: 'Profile', mappedBy: 'identity', cascade: ["persist", "remove"], orphanRemoval: true)]
@@ -95,6 +110,8 @@ trait IdentityTrait
 	#[ORM\Column(unique: true, nullable: true)]
 	#[LoggableProperty]
 	#[AuditedValue]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('Subject (user id) of the identity in the external SSO provider.')]
 	protected ?string $ssoSub = null;
 
 	#[ManyToMany(targetEntity: 'AclRole')]

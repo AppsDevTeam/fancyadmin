@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationType;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
@@ -30,6 +33,8 @@ trait ConfigurationTrait
 
 	#[Column(name: '`value`', type: Types::TEXT, nullable: true)]
 	#[LoggableProperty]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('Configuration value; may hold credentials (API keys, passwords), so it is never readable.')]
 	protected ?string $value = null;
 
 	#[OneToOne(targetEntity: 'File', cascade: ['persist'], orphanRemoval: true)]
