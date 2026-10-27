@@ -2946,3 +2946,113 @@ Konverzace využívá `SidePanelControl::setBodyTemplate($file, $params)` — pa
 `body` šablony místo formuláře. Kořenový element bloku musí mít třídu `side-panel-body`
 (podle ní se panel otevře), atribut `data-fancyadmin-side-panel-no-dirty` vypne dotaz
 „Opravdu zavřít bez uložení?".
+
+### 29.7 MCP server (volitelné)
+
+Stejná anonymizovaná data jako chat jde zpřístupnit i jiným AI agentům — Claude Code, Claude
+Desktop a dalším MCP klientům — přes [Model Context Protocol](https://modelcontextprotocol.io).
+Jádro (`ADT\AiChat\Mcp\McpServer`, Streamable HTTP bez session) je v adt/ai-chat, fancyadmin
+dodává osobní tokeny, jejich správu a endpoint. Klient dostane jen nástroje
+`get_database_schema` a `execute_sql` (stejný `ToolHandler`, stejný read-only účet a limit
+řádků); každý řetězec výsledku projde `PiiResponseFilter`.
+
+Token patří uživateli a klient pracuje s jeho právy: endpoint (`AiMcpEndpoint`) pustí jen
+aktivní identitu, která se smí přihlásit do portálu (`FancyAdmin::canSignIn()`), má resource
+`portalBackoffice.ai.mcp` (`AclResourceNameEnum::BACKOFFICE_AI_MCP`) a v režimu
+`multiTenant: true` i `fullDataAclResource`. Práva se čtou z rolí identity
+(`Identity::isAllowed()`), bez session. V databázi je jen SHA-256 otisk tokenu (`SECRET`),
+čitelný token se ukáže jednou po vytvoření.
+
+```php
+// app/Model/Entities/AiMcpToken.php
+#[ORM\Entity]
+#[ORM\Table(name: 'ai_mcp_token')]
+class AiMcpToken extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\AiMcpToken
+{
+	use \ADT\FancyAdmin\Model\Entities\AiMcpTokenTrait;
+}
+
+// query, grid, formulář - jako u ostatních entit
+class AiMcpTokenQuery extends BaseQuery implements \ADT\FancyAdmin\Model\Queries\AiMcpTokenQuery
+{
+	use \ADT\FancyAdmin\Model\Queries\AiMcpTokenQueryTrait;
+}
+class AiMcpTokenGrid extends BaseGrid implements \ADT\FancyAdmin\UI\Components\Grids\AiMcpToken\AiMcpTokenGrid
+{
+	use BaseGridTrait;
+	use \ADT\FancyAdmin\UI\Components\Grids\AiMcpToken\AiMcpTokenGridTrait;
+}
+class AiMcpTokenForm extends BaseForm implements \ADT\FancyAdmin\UI\Components\Forms\AiMcpToken\AiMcpTokenForm
+{
+	use \ADT\FancyAdmin\UI\Components\Forms\AiMcpToken\AiMcpTokenFormTrait;
+}
+
+// správa vlastních tokenů (backoffice, za přihlášením)
+class AiMcpTokensPresenter extends AuthPresenter
+{
+	use \ADT\FancyAdmin\UI\Presenters\AiMcpTokens\AiMcpTokensPresenterTrait;
+
+	protected function getAiMcpEndpointUrl(): string
+	{
+		return $this->link('//:Api:Mcp:default');
+	}
+}
+
+// endpoint - holý IPresenter, NE AuthPresenter (ten by klienta bez cookie přesměroval na přihlášení)
+final class McpPresenter implements \Nette\Application\IPresenter
+{
+	use \ADT\FancyAdmin\UI\Presenters\Ai\AiMcpPresenterTrait;
+}
+```
+
+```neon
+fancyadmin:
+	ai:
+		mcp:
+			enabled: true
+			tokenClass: App\Model\Entities\AiMcpToken
+			# serverName: výchozí project
+			# instructions: text pro model klienta; výchozí McpServer::DEFAULT_INSTRUCTIONS
+
+services:
+	aiMcpTokenQueryFactory:
+		implement: App\Model\Queries\Factories\AiMcpTokenQueryFactory   # extends fancyadminovou factory
+		factory: App\Model\Queries\AiMcpTokenQuery
+		setup:
+			- setSecurityUser(@security.user)
+	aiMcpTokenGridFactory:
+		implement: ADT\FancyAdmin\UI\Components\Grids\AiMcpToken\AiMcpTokenGridFactory
+		factory: App\UI\Components\Grids\AiMcpTokenGrid
+	aiMcpTokenFormFactory:
+		implement: ADT\FancyAdmin\UI\Components\Forms\AiMcpToken\AiMcpTokenFormFactory
+		factory: App\UI\Components\Forms\AiMcpTokenForm
+```
+
+Routa na endpoint (`$router->addRoute('mcp', 'Api:Mcp:default')`) musí být mimo přihlášení
+a CSRF. ACL: resource presenteru správy tokenů + `portalBackoffice.ai.mcp`; kdo má jen první,
+dostane 403 (token by stejně nefungoval). Migraci vygenerujte přes `migrations-diff` a pak
+přegenerujte anonymizované pohledy.
+
+Na stránku správy tokenů vede tlačítko „Připojit jiné AI (MCP)" v hlavičce AI asistenta —
+zobrazí se, když AI presenter vrátí odkaz a uživatel má `portalBackoffice.ai.mcp`:
+
+```php
+class AiPresenter extends AuthPresenter
+{
+	use AiPresenterTrait;
+
+	protected function getAiMcpTokensLink(): ?string
+	{
+		return $this->link('AiMcpTokens:default');
+	}
+}
+```
+
+Připojení klienta (stránka správy tokenů ukazuje adresu i příkaz):
+
+```bash
+claude mcp add --transport http <project> https://<host>/mcp --header "Authorization: Bearer <token>"
+```
+
+Každé volání nástroje se zaloguje (`ai.logger`, info) s `identityId` a `mcpTokenId`.
+Smazání tokenu v gridu ho okamžitě zneplatní.

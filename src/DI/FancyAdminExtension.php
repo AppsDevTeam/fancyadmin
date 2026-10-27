@@ -11,6 +11,7 @@ use ADT\AiChat\ChatService;
 use ADT\AiChat\Client\GuzzleManagedAgentsClient;
 use ADT\AiChat\Dispatch\BackgroundQueueMessageDispatcher;
 use ADT\AiChat\Http\ChatEndpoint;
+use ADT\AiChat\Mcp\McpServer;
 use ADT\AiChat\PiiResponseFilter;
 use ADT\AiChat\PiiValueCollector;
 use ADT\AiChat\SystemPromptBuilder;
@@ -29,6 +30,7 @@ use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
+use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\DoctrineComponents\DI\DoctrineComponentsExtension;
@@ -156,6 +158,16 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'bank_account' => '[odstraněné číslo účtu]',
 					'phone' => '[odstraněné telefonní číslo]',
 					'value' => '[odstraněný osobní údaj]',
+				]),
+				// MCP server nad stejnými nástroji pro jiné AI agenty (README, AI asistent - MCP server)
+				'mcp' => Expect::structure([
+					'enabled' => Expect::bool()->default(false),
+					// projektová entita implementující AiMcpToken
+					'tokenClass' => Expect::string()->nullable()->default(null),
+					// jméno serveru, které klient uvidí; null = project
+					'serverName' => Expect::string()->nullable()->default(null),
+					// instrukce pro model klienta; null = výchozí z adt/ai-chat (McpServer::DEFAULT_INSTRUCTIONS)
+					'instructions' => Expect::string()->nullable()->default(null),
 				]),
 			]),
 			'colors' => Expect::structure([
@@ -377,6 +389,23 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('ai.translator'))
 			->setFactory(AiChatTranslator::class);
 
+		if ($ai->mcp->enabled) {
+			if (empty($ai->mcp->tokenClass)) {
+				throw new RuntimeException('fancyadmin: ai.mcp.enabled je zapnuté, ale chybí ai.mcp.tokenClass. Viz README (AI asistent - MCP server).');
+			}
+
+			$builder->addDefinition($this->prefix('ai.mcpServer'))
+				->setFactory(McpServer::class, [
+					'tools' => $this->prefix('@ai.toolHandler'),
+					'responseFilter' => $this->prefix('@ai.piiResponseFilter'),
+					'serverName' => $ai->mcp->serverName ?? $this->config->project ?? 'fancyadmin',
+					'instructions' => $ai->mcp->instructions ?? McpServer::DEFAULT_INSTRUCTIONS,
+				]);
+
+			$builder->addDefinition($this->prefix('ai.mcpEndpoint'))
+				->setFactory(AiMcpEndpoint::class, ['tokenClass' => $ai->mcp->tokenClass]);
+		}
+
 		$builder->addDefinition($this->prefix('ai.provisionAgentCommand'))
 			->setFactory(ProvisionAiAgentCommand::class)
 			->addSetup('setLocksDir', [$this->config->locksDir])
@@ -397,8 +426,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			$logger = new Statement(TracyToPsrLoggerAdapter::class, ['@' . $tracyLogger]);
 		}
 
-		foreach (['ai.chatService', 'ai.endpoint'] as $_name) {
-			$builder->getDefinition($this->prefix($_name))->setArgument('logger', $logger);
+		foreach (['ai.chatService', 'ai.endpoint', 'ai.mcpServer'] as $_name) {
+			if ($builder->hasDefinition($this->prefix($_name))) {
+				$builder->getDefinition($this->prefix($_name))->setArgument('logger', $logger);
+			}
 		}
 	}
 
