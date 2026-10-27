@@ -2749,19 +2749,26 @@ Poznámky:
 
 ## 28. Rychlá lišta (volitelné)
 
-Plovoucí lišta dole uprostřed backoffice: hledání (Ctrl/⌘ K, „/") a ikony Notifikace, Úkoly,
-Chat, každá otevírá panel nad lištou. Šablona `src/UI/Presenters/@quickbar.latte` (layout ji
+Plovoucí lišta dole uprostřed backoffice: hledání (Ctrl/⌘ K, „/") a ikony AI asistent, Notifikace,
+Úkoly, Chat, každá otevírá panel nad lištou. Šablona `src/UI/Presenters/@quickbar.latte` (layout ji
 vloží sám), styly `assets/scss/_quickbar.scss` (součást `app.scss`), chování `assets/js/quickbar.js`.
 
 **Zapnutí a položky** — řádek `quickbar` v tabulce `configuration` (Nastavení), zakládá ho
-migrace `Version20261026120000`. Výchozí je vypnutá:
+migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). Výchozí je vypnutá:
 
 ```json
-{"enabled": false, "search": true, "todo": true, "notifications": true, "chat": true}
+{"enabled": false, "search": true, "ai": true, "todo": true, "notifications": true, "chat": true}
 ```
 
 Čte ho `QuickbarSettings::getItems()`; `BasePresenterTrait::getQuickbarItems()` jde v projektu přepsat
-(např. položky podle oprávnění). Ikony jsou v pořadí Notifikace, Úkoly, Chat, hledání vždy vlevo.
+(např. položky podle oprávnění). Ikony jsou v pořadí AI, Notifikace, Úkoly, Chat, hledání vždy vlevo.
+
+**AI asistent** se v liště ukáže jen se zapnutým `fancyadmin.ai` (sekce 29), právem k AI presenteru
+(`<modul>.ai`) a v multi-tenant režimu s plnými daty. Panel hostí widget adt-ai-chat: lišta si při prvním
+otevření načte jeho konfiguraci ze signálu `AiPresenterTrait::handleAiQuickbar()` (presenter hledá jako
+`Ai:default`, jinde přepsat `BasePresenterTrait::getQuickbarAiUrl()`), otevře poslední konverzaci
+a nedávné konverzace bere z `urls.conversations` widgetu. Projekt musí importovat `@fancyadmin/js/aiChat`
+(sekce 29), jinak zůstane panel prázdný.
 
 **JS** — importovat modul (`app.js` fancyadminu ho importuje sám) a předat mu zdroj dat; bez něj jsou panely prázdné:
 
@@ -2776,7 +2783,7 @@ setQuickbarSource({
 });
 ```
 
-Tvar dat je popsaný v hlavičce `quickbar.js`. Metody můžou vracet hodnotu i Promise, chybějící
+Zdroj se netýká AI, to má vlastní backend. Tvar dat je popsaný v hlavičce `quickbar.js`. Metody můžou vracet hodnotu i Promise, chybějící
 metoda se bere jako prázdný výsledek.
 
 **Barvy** — proměnné `--quickbar-*` na `body` (výchozí z `--fa-*` a `--primaryColor`), projekt

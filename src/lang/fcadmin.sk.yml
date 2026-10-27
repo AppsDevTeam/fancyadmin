@@ -28,6 +28,19 @@ layout:
       placeholderOpen: Hľadať…
       empty: Začnite písať a hľadajte.
       noResults: Pre „%query%“ sme nič nenašli.
+    ai:
+      label: AI asistent
+      title: AI asistent
+      newConversation: Nová konverzácia
+      recent: Nedávne konverzácie
+      back: Späť do konverzácie
+      emptyTitle: Nová konverzácia
+      emptyText: Opýtajte sa na dáta aplikácie alebo si nechajte pripraviť text správy.
+      noConversations: Zatiaľ žiadne konverzácie.
+      untitled: Nová konverzácia
+      current: Otvorená
+      allConversations: Zobraziť všetky konverzácie
+      unavailable: AI asistent teraz nie je dostupný.
     notifications:
       label: Notifikácie
       title: Notifikácie
@@ -173,6 +186,7 @@ presenters:
       requireSpecialChar: Vyžadovať špeciálny znak
       sessionExpirationMinutes: Expirácia session (minúty)
       search: Vyhľadávanie
+      ai: AI asistent
       todo: Úlohy
       notifications: Notifikácie
       chat: Chat

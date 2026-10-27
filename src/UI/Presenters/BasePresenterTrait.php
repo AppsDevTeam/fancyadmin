@@ -7,11 +7,13 @@ use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\JsComponentsInject;
 use ADT\FancyAdmin\DI\Injects\QuickbarSettingsInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Menu\StringResource;
 use ADT\FancyAdmin\Model\Quickbar\QuickbarItem;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakSessionSection;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Exception;
 use Nette\Application\Attributes\Persistent;
+use Nette\Application\UI\InvalidLinkException;
 use Nette\Http\Session;
 use Nette\Utils\Json;
 use stdClass;
@@ -48,6 +50,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];
+		$this->getTemplate()->quickbarAiUrl = in_array(QuickbarItem::Ai, $this->getTemplate()->quickbarItems, true) ? $this->getQuickbarAiUrl() : null;
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
@@ -130,7 +133,37 @@ trait BasePresenterTrait
 	 */
 	protected function getQuickbarItems(): array
 	{
-		return $this->_quickbarSettings->getItems();
+		$items = $this->_quickbarSettings->getItems();
+
+		// AI jen tam, kde asistent běží a uživatel k němu smí
+		return in_array(QuickbarItem::Ai, $items, true) && $this->getQuickbarAiUrl() === null
+			? array_values(array_filter($items, fn(QuickbarItem $item) => $item !== QuickbarItem::Ai))
+			: $items;
+	}
+
+	/**
+	 * Signál AiPresenterTrait::handleAiQuickbar(), ze kterého si lišta načte konfiguraci widgetu;
+	 * null = AI v liště není. Projekt s AI presenterem jinde než `Ai:default` přepíše.
+	 */
+	protected function getQuickbarAiUrl(): ?string
+	{
+		$user = $this->getUser();
+		if (
+			!$this->_fancyAdmin->isAiEnabled()
+			|| !$user instanceof SecurityUser
+			|| ($user->isMultiTenant() && !$user->isAllowedFullDataAclResource())
+			|| !$user->isAllowed(new StringResource(lcfirst(explode(':', $this->getName())[0]) . '.ai'))
+		) {
+			return null;
+		}
+
+		try {
+			$url = $this->link('Ai:default', ['do' => 'aiQuickbar']);
+		} catch (InvalidLinkException) {
+			return null;
+		}
+
+		return str_starts_with($url, '#') ? null : $url;
 	}
 
 

@@ -28,6 +28,19 @@ layout:
       placeholderOpen: Hledat…
       empty: Začněte psát a hledejte.
       noResults: Nic jsme nenašli pro „%query%“.
+    ai:
+      label: AI asistent
+      title: AI asistent
+      newConversation: Nová konverzace
+      recent: Nedávné konverzace
+      back: Zpět do konverzace
+      emptyTitle: Nová konverzace
+      emptyText: Zeptejte se na data aplikace nebo si nechte připravit text zprávy.
+      noConversations: Zatím žádné konverzace.
+      untitled: Nová konverzace
+      current: Otevřená
+      allConversations: Zobrazit všechny konverzace
+      unavailable: AI asistent teď není dostupný.
     notifications:
       label: Notifikace
       title: Notifikace
@@ -173,6 +186,7 @@ presenters:
       requireSpecialChar: Vyžadovat speciální znak
       sessionExpirationMinutes: Expirace session (minuty)
       search: Vyhledávání
+      ai: AI asistent
       todo: Úkoly
       notifications: Notifikace
       chat: Chat

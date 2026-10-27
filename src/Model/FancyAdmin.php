@@ -41,6 +41,7 @@ class FancyAdmin
 		protected array $ssoAllowedHosts = [],
 		protected ?string $appIconsDir = null,
 		protected bool $multiTenant = true,
+		protected bool $aiEnabled = false,
 	) {}
 
 	/**
@@ -51,6 +52,12 @@ class FancyAdmin
 	public function isMultiTenant(): bool
 	{
 		return $this->multiTenant;
+	}
+
+	/** AI asistent (fancyadmin.ai.enabled) - bez něj nejsou zaregistrované jeho služby */
+	public function isAiEnabled(): bool
+	{
+		return $this->aiEnabled;
 	}
 
 	public function getSsoHostAllowlist(): SsoHostAllowlist

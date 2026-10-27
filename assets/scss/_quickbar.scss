@@ -20,8 +20,8 @@ body {
 	--quickbar-item-radius: 8px;
 	--quickbar-shadow: 0 0 2px rgba(5, 5, 6, 0.16), 0 0 4px rgba(5, 5, 6, 0.16), 0 0 32px rgba(5, 5, 6, 0.12);
 
-	--quickbar-width: 400px;
-	--quickbar-width-open: 520px;
+	--quickbar-width: 440px;
+	--quickbar-width-open: 560px;
 	--quickbar-bottom: 20px;
 	// Panel 10 px nad lištou: 8 + 40 + 8 obsah, 2 rámeček
 	--quickbar-panel-bottom: calc(var(--quickbar-bottom) + 68px);
@@ -67,8 +67,12 @@ body:has(.quickbar) .container-main {
 		width: var(--quickbar-width);
 	}
 
-	&.quickbar--open-search {
+	// Hledání a AI lištu rozšíří
+	&.quickbar--wide {
 		width: var(--quickbar-width-open);
+	}
+
+	&.quickbar--open-search {
 		border-color: var(--quickbar-primary);
 	}
 }
@@ -132,6 +136,11 @@ body:has(.quickbar) .container-main {
 	border-style: solid;
 }
 
+// AI se mezi ostatními ikonami odlišuje barvou
+.quickbar-button--ai.btn-outline-secondary {
+	color: var(--quickbar-primary);
+}
+
 // Přes .quickbar-button - Bootstrap má .btn .badge { position: relative }
 .quickbar-button .quickbar-badge {
 	position: absolute;
@@ -183,8 +192,13 @@ body:has(.quickbar) .container-main {
 		padding: 8px 8px 4px;
 	}
 
-	&.quickbar-panel--chat {
+	&.quickbar-panel--chat,
+	&.quickbar-panel--ai {
 		height: min(520px, calc(100vh - 140px));
+	}
+
+	&.quickbar-panel--ai {
+		width: var(--quickbar-width-open);
 	}
 }
 
@@ -240,9 +254,15 @@ body:has(.quickbar) .container-main {
 .quickbar-panel-form {
 	flex: none;
 	display: flex;
+	align-items: center;
 	gap: 8px;
 	padding: 10px 12px 12px;
 	border-top: 1px solid var(--quickbar-line);
+}
+
+// Jinak se ikonové tlačítko vedle pole roztáhne na obdélník
+.quickbar-panel-form .btn {
+	flex: none;
 }
 
 .quickbar-empty {
@@ -477,4 +497,292 @@ body:has(.quickbar) .container-main {
 	padding: 0 4px;
 	font-size: 11px;
 	color: var(--quickbar-faint);
+}
+
+// === AI asistent - vlákno a odesílání je widget adt-ai-chat, tady jen jeho vzhled v liště ===
+
+.quickbar-ai {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.quickbar-ai-chat {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+
+	.quickbar-ai--recent & {
+		display: none;
+	}
+}
+
+// Prázdný stav přes vlákno widgetu - jeho vlastní uvítání má jen jeden řádek textu
+.quickbar-ai-empty {
+	display: none;
+	position: absolute;
+	// Nad patičkou widgetu: 10 + 32 + 12 odsazení a pole
+	inset: 0 0 56px;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 24px 12px;
+	text-align: center;
+	pointer-events: none;
+
+	.quickbar-ai:has(.ai-chat__welcome):not(.quickbar-ai--recent) & {
+		display: flex;
+	}
+}
+
+.quickbar-ai-empty-icon {
+	width: 40px;
+	height: 40px;
+	margin-bottom: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--quickbar-tint);
+	color: var(--quickbar-primary);
+}
+
+.quickbar-ai-empty-title {
+	font-size: 17px;
+	font-weight: 600;
+	color: var(--quickbar-heading);
+}
+
+.quickbar-ai-empty-text {
+	max-width: 300px;
+	font-size: 13px;
+	color: var(--quickbar-muted);
+	text-wrap: pretty;
+}
+
+// Tři třídy - widget má vlastní CSS (adt-ai-chat/ai-chat.css) a cílí jednou až dvěma
+.quickbar-ai .quickbar-ai-widget.ai-chat {
+	flex: 1;
+	height: auto;
+	min-height: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	font-size: 14px;
+
+	.ai-chat__header,
+	.ai-chat__welcome {
+		display: none;
+	}
+
+	.ai-chat__messages {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		padding: 14px 16px;
+	}
+
+	.ai-chat__message {
+		margin: 0;
+	}
+
+	.ai-chat__bubble--user {
+		max-width: 85%;
+		padding: 8px 12px;
+		border-radius: var(--overlay-radius);
+		background: var(--quickbar-primary);
+		color: var(--quickbar-on-primary);
+		line-height: 1.4;
+	}
+
+	// Odpověď bez bubliny, vlevo avatar asistenta
+	.ai-chat__message--ai {
+		position: relative;
+		gap: 8px;
+		padding-left: 38px;
+
+		&::before {
+			content: '\f890';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 28px;
+			height: 28px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: 50%;
+			background: var(--quickbar-tint);
+			color: var(--quickbar-primary);
+			font: normal 400 12px/1 'Font Awesome 6 Pro';
+		}
+	}
+
+	.ai-chat__bubble--ai {
+		max-width: 100%;
+		padding: 4px 0 0;
+		border-radius: 0;
+		background: transparent;
+		color: var(--quickbar-text);
+		line-height: 1.5;
+	}
+
+	.ai-chat__input-area {
+		padding: 10px 12px 12px;
+		border-top: 1px solid var(--quickbar-line);
+	}
+
+	.ai-chat__input-wrapper {
+		align-items: center;
+		gap: 8px;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	// Rámeček stínem - widget počítá výšku ze scrollHeight bez borderu, ten by přetekl do scrollbaru
+	.ai-chat__textarea {
+		min-height: #{$control-height-sm};
+		padding: 6px #{$control-padding-x-sm};
+		border: 0;
+		border-radius: #{$control-radius-sm};
+		box-shadow: inset 0 0 0 1px var(--quickbar-border);
+		background: var(--inputBackground);
+		font-size: #{$control-font-sm};
+		color: var(--quickbar-text);
+
+		&:focus {
+			background: var(--inputFocusBackground);
+		}
+	}
+
+	.ai-chat__attach-btn {
+		color: var(--quickbar-muted);
+	}
+
+	// Barvu dává projektové .btn-primary (tlačítko tu třídu má), velikost stupeň sm jako odesílání v chatu
+	.ai-chat__send-btn {
+		--control-height: #{$control-height-sm};
+		--control-radius: #{$control-radius-sm};
+
+		@include control-square;
+		min-width: var(--control-height);
+		min-height: var(--control-height);
+		border-radius: var(--control-radius);
+	}
+
+	.ai-chat__loading {
+		text-align: left;
+		font-size: 13px;
+		color: var(--quickbar-muted);
+	}
+}
+
+// === AI - nedávné konverzace (nahrazují vlákno v témže panelu) ===
+
+.quickbar-ai-recent {
+	display: none;
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 10px 14px;
+
+	.quickbar-ai--recent & {
+		display: flex;
+	}
+}
+
+.quickbar-ai-recent-heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 8px 8px 4px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-ai-back {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	margin-right: -2px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: transparent;
+	font-size: 12px;
+	color: var(--quickbar-muted);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--quickbar-primary);
+	}
+}
+
+.quickbar-ai-conversation {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	width: 100%;
+	padding: 8px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	text-align: left;
+	color: var(--quickbar-text);
+	cursor: pointer;
+
+	&:hover {
+		background: var(--quickbar-tint);
+	}
+
+	&.quickbar-ai-conversation--current {
+		background: var(--quickbar-sunken);
+	}
+
+	> i {
+		flex: none;
+		width: 16px;
+		text-align: center;
+		color: var(--quickbar-faint);
+	}
+}
+
+.quickbar-ai-conversation-title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--quickbar-text-strong);
+}
+
+.quickbar-ai-conversation-time {
+	font-size: 12px;
+	color: var(--quickbar-faint);
+	white-space: nowrap;
+}
+
+.quickbar-ai-all {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 8px 0;
+	font-size: 13px;
 }

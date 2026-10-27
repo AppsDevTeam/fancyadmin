@@ -20,6 +20,7 @@ class QuickbarSettings
 	public const array DEFAULTS = [
 		'enabled' => false,
 		'search' => true,
+		'ai' => true,
 		'todo' => true,
 		'notifications' => true,
 		'chat' => true,
@@ -28,6 +29,7 @@ class QuickbarSettings
 	/** Pořadí v liště podle návrhu, ne podle pořadí klíčů v nastavení */
 	private const array ORDER = [
 		QuickbarItem::Search,
+		QuickbarItem::Ai,
 		QuickbarItem::Notifications,
 		QuickbarItem::Todo,
 		QuickbarItem::Chat,

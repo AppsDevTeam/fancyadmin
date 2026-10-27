@@ -243,6 +243,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'fullDataAclResource' => $this->config->fullDataAclResource,
 				'personalDataAclResource' => $this->config->personalDataAclResource,
 				'multiTenant' => $this->config->multiTenant,
+				'aiEnabled' => $this->config->ai->enabled,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
 				'colors' => (array) $this->config->colors,

@@ -1,4 +1,5 @@
 {varType ADT\FancyAdmin\Model\Quickbar\QuickbarItem[] $quickbarItems}
+{varType string|null $quickbarAiUrl}
 {* Rychlá lišta - kostra panelů; obsah seznamů vykresluje assets/js/quickbar.js z dat projektu *}
 {var $hasSearch = in_array(ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Search, $quickbarItems, true)}
 {var $buttons = array_filter($quickbarItems, fn($item) => $item !== ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Search)}
@@ -21,12 +22,34 @@
 		<header class="quickbar-panel-header">
 			<h2 class="quickbar-panel-title">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
 			<div class="quickbar-panel-actions">
-				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-sm btn-outline-secondary" data-quickbar-read-all>{_fcadmin.layout.quickbar.notifications.readAll}</button>
+				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
+					<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
+				{/if}
+				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-regular fa-check-double"></i></button>
 				{include closeButton}
 			</div>
 		</header>
 
 		{switch $item}
+			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
+				{* Vlákno a odesílání je widget AI asistenta (assets/js/aiChat.js), konfiguraci si lišta načte z AiPresenteru *}
+				<div class="quickbar-ai" data-quickbar-ai="{$quickbarAiUrl}">
+					<div class="quickbar-ai-recent" data-quickbar-ai-recent>
+						<div class="quickbar-ai-recent-heading">
+							<button type="button" class="quickbar-ai-back" title="{_fcadmin.layout.quickbar.ai.back}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-arrow-left"></i></button>
+							<span>{_fcadmin.layout.quickbar.ai.recent}</span>
+						</div>
+						<div class="quickbar-ai-list" data-quickbar-ai-list data-empty="{_fcadmin.layout.quickbar.ai.noConversations}" data-untitled="{_fcadmin.layout.quickbar.ai.untitled}" data-current="{_fcadmin.layout.quickbar.ai.current}"></div>
+						<a class="quickbar-ai-all" data-quickbar-ai-all hidden>{_fcadmin.layout.quickbar.ai.allConversations}<i class="fa-regular fa-arrow-right"></i></a>
+					</div>
+					<div class="quickbar-ai-empty">
+						<span class="quickbar-ai-empty-icon"><i class="fa-regular fa-sparkles"></i></span>
+						<span class="quickbar-ai-empty-title">{_fcadmin.layout.quickbar.ai.emptyTitle}</span>
+						<span class="quickbar-ai-empty-text">{_fcadmin.layout.quickbar.ai.emptyText}</span>
+					</div>
+					<div class="quickbar-ai-chat" data-quickbar-ai-chat data-unavailable="{_fcadmin.layout.quickbar.ai.unavailable}"></div>
+				</div>
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications}
 				<div class="quickbar-panel-body" data-quickbar-list="notifications" data-empty="{_fcadmin.layout.quickbar.notifications.empty}"></div>
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Todo}
@@ -59,11 +82,11 @@
 	</label>
 	<div n:if="$hasSearch && $buttons" class="quickbar-divider"></div>
 	<div n:if="$buttons" class="quickbar-buttons">
-		<button n:foreach="$buttons as $item" type="button" class="btn btn-icon btn-sm btn-outline-secondary quickbar-button"
+		<button n:foreach="$buttons as $item" type="button" class="btn btn-icon btn-sm btn-outline-secondary quickbar-button quickbar-button--{$item->value}"
 			title="{_'fcadmin.layout.quickbar.' . $item->value . '.label'}" aria-controls="quickbar-panel-{$item->value}" aria-expanded="false"
 			data-quickbar-toggle="{$item->value}">
 			<i class="fa-regular fa-{$item->getIcon()}"></i>
-			<span class="badge {$item->getBadgeClass()} quickbar-badge" data-quickbar-count="{$item->value}" hidden></span>
+			<span n:if="$item->getBadgeClass()" class="badge {$item->getBadgeClass()} quickbar-badge" data-quickbar-count="{$item->value}" hidden></span>
 		</button>
 	</div>
 </div>

@@ -72,6 +72,20 @@ trait AiPresenterTrait
 		$this->redrawSidePanel();
 	}
 
+	/** Konfigurace widgetu pro AI panel rychlé lišty (BasePresenterTrait::getQuickbarAiUrl). */
+	public function handleAiQuickbar(): void
+	{
+		$this->checkAiTenantAccess();
+		$config = $this->getAiChatConfig(null);
+		// Odesílání jako u ostatních panelů lišty
+		$config['icons'] = ($config['icons'] ?? []) + ['send' => 'fa-regular fa-paper-plane'];
+
+		$this->sendJson([
+			'chat' => $config,
+			'historyUrl' => $this->link('default'),
+		]);
+	}
+
 	/** Grid po založení konverzace v panelu (assets/js/aiChat.js). */
 	public function handleRefreshAiConversations(): void
 	{

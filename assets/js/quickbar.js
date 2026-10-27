@@ -6,6 +6,8 @@
 //   notifications: { list() → [{ id, icon, tone?, title, text, time, unread }], read(id), readAll() }
 //   todos: { list() → [{ id, text, due?, done }], add(text) → todo, setDone(id, done) }
 //   chats: { list() → [{ id, name, unread }], messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
+//
+// AI asistent zdroj nepotřebuje - panel hostí widget adt-ai-chat (assets/js/aiChat.js), konfiguraci dá AiPresenter.
 
 const SEARCH_DEBOUNCE_MS = 200;
 
@@ -20,6 +22,7 @@ const state = {
 	chats: [],
 	activeChat: null,
 	messages: [],
+	ai: { config: null, historyUrl: null, view: 'chat', conversations: [], conversationId: null, element: null },
 };
 
 let currentBar = null;
@@ -64,6 +67,9 @@ function open(name) {
 		if (name === 'chat') {
 			openChat(state.activeChat ?? state.chats[0]?.id ?? null);
 		}
+		if (name === 'ai') {
+			openAi();
+		}
 	}
 }
 
@@ -92,6 +98,7 @@ function render() {
 	}
 
 	$bar.classList.toggle('quickbar--open-search', state.open === 'search');
+	$bar.classList.toggle('quickbar--wide', state.open === 'search' || state.open === 'ai');
 	document.querySelector('.quickbar-overlay').hidden = state.open === null;
 	document.querySelectorAll('[data-quickbar-panel]').forEach((el) => {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
@@ -113,6 +120,7 @@ function render() {
 	renderNotifications();
 	renderTodos();
 	renderChat();
+	renderAi();
 }
 
 function renderCounts() {
@@ -322,6 +330,152 @@ function sendMessage(text) {
 	});
 }
 
+// === AI asistent ===
+
+const aiRoot = () => document.querySelector('[data-quickbar-ai]');
+// Instanci widgetu na element věší aiChat.js; bez něj (projekt AI nemá) zůstane panel prázdný
+const aiWidget = () => state.ai.element?.adtAiChat ?? null;
+
+function aiRequest(url) {
+	return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+		.then((response) => (response.ok ? response.json() : Promise.reject(response)));
+}
+
+function openAi() {
+	const $root = aiRoot();
+	if (!$root) {
+		return;
+	}
+	state.ai.view = 'chat';
+
+	if (state.ai.config) {
+		renderAi();
+		focusAi();
+		return;
+	}
+
+	// Po otevření vždy poslední konverzace, bez ní prázdný stav
+	aiRequest($root.dataset.quickbarAi)
+		.then((payload) => {
+			state.ai.config = payload.chat;
+			state.ai.historyUrl = payload.historyUrl;
+			return loadAiConversations();
+		})
+		.then(() => {
+			mountAi(state.ai.conversations[0]?.id ?? null);
+			focusAi();
+		})
+		.catch(() => {
+			const $chat = document.querySelector('[data-quickbar-ai-chat]');
+			$chat.innerHTML = `<div class="quickbar-empty">${esc($chat.dataset.unavailable)}</div>`;
+		});
+}
+
+function loadAiConversations() {
+	return aiRequest(state.ai.config.urls.conversations).then((payload) => {
+		state.ai.conversations = payload.conversations || [];
+		renderAi();
+	});
+}
+
+function mountAi(conversationId) {
+	destroyAi();
+	state.ai.conversationId = conversationId;
+	const element = document.createElement('div');
+	element.className = 'quickbar-ai-widget';
+	element.dataset.adtFancyadminAiChat = JSON.stringify({ ...state.ai.config, conversationId });
+	document.querySelector('[data-quickbar-ai-chat]').replaceChildren(element);
+	state.ai.element = element;
+}
+
+// Odpojený widget by jinak dál dotazoval server na odpověď
+function destroyAi() {
+	state.ai.element?.adtAiChat?.destroy();
+	state.ai.element = null;
+}
+
+function focusAi() {
+	// Widget se připojuje až v MutationObserveru aiChat.js
+	setTimeout(() => document.querySelector('[data-quickbar-ai-chat] textarea')?.focus(), 50);
+}
+
+function openAiConversation(conversationId) {
+	state.ai.view = 'chat';
+	state.ai.conversationId = conversationId;
+	const widget = aiWidget();
+	if (widget) {
+		conversationId === null ? widget.newConversation() : widget.loadConversation(conversationId);
+	} else if (state.ai.config) {
+		mountAi(conversationId);
+	}
+	renderAi();
+	focusAi();
+}
+
+function toggleAiRecent() {
+	if (!state.ai.config) {
+		return;
+	}
+	state.ai.view = state.ai.view === 'recent' ? 'chat' : 'recent';
+	renderAi();
+	if (state.ai.view === 'recent') {
+		loadAiConversations();
+	} else {
+		focusAi();
+	}
+}
+
+function formatAiTime(value) {
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) {
+		return '';
+	}
+	const locale = document.documentElement.lang || undefined;
+	return date.toDateString() === new Date().toDateString()
+		? date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
+		: date.toLocaleDateString(locale, { day: 'numeric', month: 'numeric' });
+}
+
+function renderAi() {
+	const $root = aiRoot();
+	if (!$root) {
+		return;
+	}
+	const recent = state.ai.view === 'recent';
+	$root.classList.toggle('quickbar-ai--recent', recent);
+	document.querySelectorAll('[data-quickbar-ai-recent-toggle].btn').forEach((button) => {
+		button.classList.toggle('btn-primary', recent);
+		button.classList.toggle('btn-outline-secondary', !recent);
+	});
+
+	const $list = $root.querySelector('[data-quickbar-ai-list]');
+	const conversations = state.ai.conversations;
+	$list.innerHTML = conversations.length
+		? conversations.map((c) => {
+			const current = String(c.id) === String(state.ai.conversationId);
+			return `<button type="button" class="quickbar-ai-conversation ${current ? 'quickbar-ai-conversation--current' : ''}" data-quickbar-ai-conversation="${esc(c.id)}">
+				<i class="fa-regular fa-message"></i>
+				<span class="quickbar-ai-conversation-title">${esc(c.title || $list.dataset.untitled)}</span>
+				${current ? `<span class="badge bg-secondary">${esc($list.dataset.current)}</span>` : ''}
+				<span class="quickbar-ai-conversation-time">${esc(formatAiTime(c.updated))}</span>
+			</button>`;
+		}).join('')
+		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`;
+
+	const $all = $root.querySelector('[data-quickbar-ai-all]');
+	$all.hidden = !conversations.length || !state.ai.historyUrl;
+	if (state.ai.historyUrl) {
+		$all.href = state.ai.historyUrl;
+	}
+}
+
+// Widget hlásí založení konverzace i doručenou odpověď
+document.addEventListener('ai-chat:conversation', (e) => {
+	if (e.target.closest?.('[data-quickbar-ai-chat]') && e.detail?.conversation?.id) {
+		state.ai.conversationId = e.detail.conversation.id;
+	}
+});
+
 // === Události (delegace na document - lišta je ve snippetu body a překresluje se) ===
 
 document.addEventListener('click', (e) => {
@@ -337,6 +491,20 @@ document.addEventListener('click', (e) => {
 	const toggleButton = target.closest('[data-quickbar-toggle]');
 	if (toggleButton) {
 		toggle(toggleButton.dataset.quickbarToggle);
+		return;
+	}
+	if (target.closest('[data-quickbar-ai-new]')) {
+		openAiConversation(null);
+		return;
+	}
+	if (target.closest('[data-quickbar-ai-recent-toggle]')) {
+		toggleAiRecent();
+		return;
+	}
+	const aiConversation = target.closest('[data-quickbar-ai-conversation]');
+	if (aiConversation) {
+		const conversation = state.ai.conversations.find((c) => String(c.id) === aiConversation.dataset.quickbarAiConversation);
+		openAiConversation(conversation ? conversation.id : null);
 		return;
 	}
 	if (target.closest('[data-quickbar-read-all]')) {
@@ -445,6 +613,9 @@ function init() {
 	}
 	state.open = null;
 	state.query = '';
+	// Nová lišta = nový (prázdný) AI panel, widget se připojí při dalším otevření
+	destroyAi();
+	state.ai.config = null;
 	firstBar ? loadCounts() : render();
 }
 
