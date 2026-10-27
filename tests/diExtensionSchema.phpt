@@ -195,4 +195,7 @@ test('AI je ve vychozi konfiguraci vypnute', function () {
 	Assert::false($config->ai->enabled);
 	Assert::same('aiChatProcessMessage', $config->ai->queueCallback);
 	Assert::same(['secret', 'email', 'bank_account', 'phone', 'value'], array_keys($config->ai->piiLabels));
+	// null = Tracy logger; LoggerInterface se neautowiruje (bral by SQL logger Doctrine)
+	Assert::null($config->ai->logger);
+	Assert::null($config->ai->apiKey);
 });

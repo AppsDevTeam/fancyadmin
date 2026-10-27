@@ -18,6 +18,8 @@ const GRID_REFRESH_SELECTOR = '[data-adt-fancyadmin-ai-grid-refresh]';
 function mount(root) {
 	root.querySelectorAll?.(SELECTOR).forEach((element) => {
 		AiChat.mount(element, { marked, DOMPurify, Chart }, JSON.parse(element.dataset.adtFancyadminAiChat || '{}'));
+		// formulář si odesílá widget sám, nette.ajax ho nesmí převzít
+		element.querySelectorAll('form').forEach((form) => form.classList.add('noajax'));
 	});
 }
 
