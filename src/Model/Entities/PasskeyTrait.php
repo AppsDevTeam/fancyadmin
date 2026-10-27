@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
@@ -21,14 +24,20 @@ trait PasskeyTrait
 	#[ORM\Column(length: 64, nullable: false)]
 	#[LoggableProperty]
 	#[AuditedValue]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('Label of the passkey given by the user (e.g. device name).')]
 	protected string $name;
 
 	/** Raw binary credential ID (VARBINARY(255)); DBAL binary type může vracet stream, getter normalizuje. */
 	#[ORM\Column(type: 'binary', length: 255, unique: true, nullable: false)]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('WebAuthn credential id.')]
 	protected mixed $credentialId;
 
 	/** Veřejný klíč v PEM formátu (výstup lbuchs/webauthn processCreate) */
 	#[ORM\Column(type: 'text', nullable: false)]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('WebAuthn public key (PEM).')]
 	protected string $publicKey;
 
 	#[ORM\Column(type: 'integer', nullable: false, options: ['unsigned' => true, 'default' => 0])]

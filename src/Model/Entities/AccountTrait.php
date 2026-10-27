@@ -2,6 +2,9 @@
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
@@ -20,6 +23,8 @@ trait AccountTrait
 	use UpdatedBy;
 	#[Column(nullable: false)]
 	#[LoggableProperty]
+	#[Anonymize(AnonymizationType::COMPANY_NAME)]
+	#[Description('Name of the account (tenant) - usually the customer company or organisation.')]
 	protected string $name;
 
 	#[ORM\OneToMany(targetEntity: 'Account', mappedBy: 'parent')]

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use Doctrine\DBAL\Types\Types;
@@ -24,6 +27,8 @@ trait ApiKeyTrait
 	 */
 	#[ORM\Column(name: '`key`', unique: true, nullable: true)]
 	#[LoggableProperty(withValue: false)]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('SHA-256 hash of the API key; the readable key is never stored.')]
 	protected ?string $key = null;
 
 	/** Převod klíče pod jiný účet mění, k čím datům se jím dá dostat. */

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -37,12 +40,18 @@ trait ApiLogTrait
 	protected ?string $environment = null;
 
 	#[ORM\Column(type: Types::TEXT, nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('Called URL; its query string may carry personal data or tokens.')]
 	protected ?string $endpointUrl = null;
 
 	#[ORM\Column(type: Types::TEXT, nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('Raw request body of the API call.')]
 	protected ?string $request = null;
 
 	#[ORM\Column(type: Types::TEXT, nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('Raw response body of the API call.')]
 	protected ?string $response = null;
 
 	#[ORM\Column(nullable: true)]
@@ -50,6 +59,8 @@ trait ApiLogTrait
 
 	/** chyba spojení (timeout, DNS) - plní se jen když protistrana neodpověděla */
 	#[ORM\Column(type: Types::TEXT, nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('Error message of a failed API call; may quote request data.')]
 	protected ?string $errorMessage = null;
 
 	#[ORM\Column(nullable: true)]

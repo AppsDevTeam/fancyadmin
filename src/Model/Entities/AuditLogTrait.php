@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\Mapping\Column;
@@ -69,17 +72,25 @@ trait AuditLogTrait
 
 	/** lidsky citelne oznaceni aktera - aby sel log cist bez znalosti tvaru createdBy */
 	#[Column(nullable: true)]
+	#[Anonymize(AnonymizationType::FULL_NAME)]
+	#[Description('Human readable label of the actor (name or e-mail of the user who did the action).')]
 	protected ?string $createdByLabel = null;
 
 	/** cim dalsim projekt aktera identifikuje (jmeno, e-mail, role, ucet...) */
 	#[Column(type: 'json', nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('JSON snapshot of the actor (name, e-mail, role, account).')]
 	protected ?array $createdBy = null;
 
 	/** odkud pozadavek prisel - ploche, stoji na tom detekcni pravidla */
 	#[Column(length: 45, nullable: true)]
+	#[Anonymize(AnonymizationType::IP_ADDRESS)]
+	#[Description('IP address the request came from.')]
 	protected ?string $sourceIp = null;
 
 	#[Column(type: 'text', nullable: true)]
+	#[Anonymize(AnonymizationType::USER_AGENT)]
+	#[Description('User-Agent header of the request.')]
 	protected ?string $userAgent = null;
 
 	/**
@@ -92,6 +103,8 @@ trait AuditLogTrait
 
 	/** obsah dle action */
 	#[Column(type: 'json', nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	#[Description('JSON details of the event, shape depends on the action.')]
 	protected ?array $payload = null;
 
 	public function getAction(): string

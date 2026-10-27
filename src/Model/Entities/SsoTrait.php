@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\DoctrineAnonymization\AnonymizationType;
+use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\DoctrineAnonymization\Attributes\Description;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
@@ -47,6 +50,8 @@ trait SsoTrait
 	protected string $clientId;
 
 	#[ORM\Column(nullable: false)]
+	#[Anonymize(AnonymizationType::SECRET)]
+	#[Description('OAuth client secret of the SSO client.')]
 	protected string $clientSecret;
 
 	#[ORM\Column(nullable: false)]
