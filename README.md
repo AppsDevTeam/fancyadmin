@@ -2886,15 +2886,23 @@ fancyadmin:
 		# systemPromptPath: %appDir%/ai/system-prompt.md   # výchozí šablona z adt/ai-chat
 		# chat: [rateLimitPerMinute: 20, attachments: [maxCount: 5, maxBytes: 10485760]]
 		# piiLabels: texty místo odstraněných osobních údajů (výchozí česky)
+		# logger: @monolog.logger   # PSR logger pro chyby tahů; výchozí Tracy přes PSR adaptér
 
 backgroundQueue:
 	callbacks:
-		aiChatProcessMessage: [@fancyAdmin.ai.chatService, processQueuedMessage]
+		aiChatProcessMessage: [@fancyadmin.ai.chatService, processQueuedMessage]
 ```
 
-Rozšíření registruje klienta Managed Agents, `ChatService`, `ChatEndpoint` a ostatní služby
-adt/ai-chat. Anonymizační služby (`AnonymizationPolicy`, `ReadOnlyQueryExecutor`, …) a příkaz
-`anonymization:generate-views` přidá jen tehdy, když si je projekt neregistruje sám.
+Prefix služeb je název rozšíření v `extensions:` projektu (zde `fancyadmin`). `apiKey` není
+povinný: bez klíče se aplikace sestaví a volání API skončí chybou autorizace ve widgetu.
+
+Rozšíření registruje klienta Managed Agents, `ChatService`, `ChatEndpoint`, příkaz
+`fancyadmin:ai:provision-agent` a ostatní služby adt/ai-chat. Anonymizační služby
+(`AnonymizationPolicy`, `ReadOnlyQueryExecutor`, …) a příkaz `anonymization:generate-views`
+přidá jen tehdy, když si je projekt neregistruje sám.
+
+Logger se `ChatService` a `ChatEndpoint` předává explicitně (`ai.logger`), ne autowiringem:
+první `LoggerInterface` v kontejneru bývá SQL logger Doctrine, který na běžný `error()` spadne.
 
 ### 29.4 Anonymizované schéma a read-only uživatel
 
@@ -2909,6 +2917,12 @@ adt/ai-chat. Anonymizační služby (`AnonymizationPolicy`, `ReadOnlyQueryExecut
 CREATE USER 'app_anon'@'%' IDENTIFIED BY '…';
 GRANT SELECT ON `app_anon`.* TO 'app_anon'@'%';
 ```
+
+   Účet umí založit i příkaz: `anonymization:generate-views --grant-user=app_anon --grant-password=…`
+   (potřebuje DB uživatele s právem `CREATE USER`/`GRANT`, typicky přes `--host`/`--db-user`).
+4. Zajistěte agenta Managed Agents: `php bin/console fancyadmin:ai:provision-agent` (po
+   pohledech, v každém deployi — aktualizuje systémový prompt a nástroje). Bez agenta skončí
+   první zpráva chybou „No Managed Agents agent is provisioned“.
 
 ### 29.5 Frontend
 

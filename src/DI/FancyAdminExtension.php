@@ -24,6 +24,7 @@ use ADT\DoctrineAnonymization\ReadOnlyQueryExecutor;
 use ADT\DoctrineAnonymization\SchemaDescriber;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
+use ADT\FancyAdmin\Console\ProvisionAiAgentCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
@@ -64,6 +65,8 @@ use Nette\Schema\Schema;
 use Nette\Security\Resource;
 use ReflectionClass;
 use RuntimeException;
+use Tracy\Bridges\Psr\TracyToPsrLoggerAdapter;
+use Tracy\ILogger;
 
 class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
@@ -139,6 +142,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				// null = výchozí šablona z adt/ai-chat
 				'systemPromptPath' => Expect::string()->nullable()->default(null),
 				'exportEnabled' => Expect::bool()->default(true),
+				// PSR logger pro chyby tahů (např. '@monolog.logger'); null = Tracy logger přes PSR adaptér.
+				// Záměrně se neautowiruje - v projektu bývá LoggerInterface i SQL logger Doctrine.
+				'logger' => Expect::string()->nullable()->default(null),
 				// jméno callbacku v backgroundQueue.callbacks
 				'queueCallback' => Expect::string()->default(BackgroundQueueMessageDispatcher::DEFAULT_CALLBACK),
 				// další klíče ChatOptions: rateLimitPerMinute, rateLimitPerHour, attachments, ...
@@ -317,7 +323,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder = $this->getContainerBuilder();
 		$ai = $this->config->ai;
 
-		foreach (['apiKey', 'conversationClass', 'messageClass', 'agentClass'] as $_key) {
+		// apiKey záměrně není povinný - typicky jde z env a vývojář bez klíče má mít funkční
+		// aplikaci; volání API pak skončí chybou autorizace, kterou widget zobrazí
+		foreach (['conversationClass', 'messageClass', 'agentClass'] as $_key) {
 			if (empty($ai->$_key)) {
 				throw new RuntimeException('fancyadmin: ai.enabled je zapnuté, ale chybí ai.' . $_key . '. Viz README (AI asistent).');
 			}
@@ -325,7 +333,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('ai.client'))
 			->setFactory(GuzzleManagedAgentsClient::class, [
-				'apiKey' => $ai->apiKey,
+				'apiKey' => (string) $ai->apiKey,
 				'model' => $ai->model,
 			]);
 
@@ -362,7 +370,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('ai.dispatcher'))
 			->setFactory(BackgroundQueueMessageDispatcher::class, ['callbackName' => $ai->queueCallback]);
 
-		// projekt na ni věší callback fronty: aiChatProcessMessage: [@fancyAdmin.ai.chatService, processQueuedMessage]
+		// projekt na ni věší callback fronty: aiChatProcessMessage: [@<název rozšíření>.ai.chatService, processQueuedMessage]
 		$builder->addDefinition($this->prefix('ai.chatService'))
 			->setFactory(ChatService::class)
 			->addSetup('setTranslator', [[$this->prefix('@ai.translator'), 'translate']]);
@@ -372,6 +380,30 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('ai.translator'))
 			->setFactory(AiChatTranslator::class);
+
+		$builder->addDefinition($this->prefix('ai.provisionAgentCommand'))
+			->setFactory(ProvisionAiAgentCommand::class)
+			->addSetup('setLocksDir', [$this->config->locksDir])
+			->setAutowired(false);
+	}
+
+	/**
+	 * Logger služeb AI se předává explicitně: autowiring LoggerInterface by vzal první
+	 * PSR logger v kontejneru, a tím bývá SQL logger Doctrine, který na běžný error()
+	 * spadne. Řeší se až v beforeCompile(), kdy už je zaregistrovaný Tracy.
+	 */
+	private function wireAiLogger(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$logger = $this->config->ai->logger;
+
+		if ($logger === null && ($tracyLogger = $builder->getByType(ILogger::class)) !== null) {
+			$logger = new Statement(TracyToPsrLoggerAdapter::class, ['@' . $tracyLogger]);
+		}
+
+		foreach (['ai.chatService', 'ai.endpoint'] as $_name) {
+			$builder->getDefinition($this->prefix($_name))->setArgument('logger', $logger);
+		}
 	}
 
 	/** Anonymizační služby, které si projekt neregistroval sám. */
@@ -413,6 +445,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		if ($this->config->ai->enabled) {
 			$this->completeAiAnonymizationServices();
+			$this->wireAiLogger();
 		}
 
 		// Doctrine Migrations je volitelne - kdyz ho projekt ma, rekne prikazu, kam migraci zapsat.
