@@ -111,8 +111,12 @@ $(function () {
 		}
 	});
 
-	// Změna hodnoty v inputu → dirty
+	// Změna hodnoty v inputu → dirty. Obsah, který si ukládá sám (např. AI chat),
+	// se z toho vyjímá atributem data-fancyadmin-side-panel-no-dirty.
 	$(document).on('change input', '[id^="snippet--sidePanel"] form :input', function () {
+		if ($(this).closest('[data-fancyadmin-side-panel-no-dirty]').length) {
+			return;
+		}
 		const panelId = getPanelId(this);
 		if (panelId && panels[panelId]) {
 			panels[panelId].isDirty = true;
