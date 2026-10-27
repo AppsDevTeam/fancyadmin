@@ -5,6 +5,7 @@
 <div class="header">
 	<h1 class="header-title">{_fcadmin.presenters.ai.pageTitle}</h1>
 	<div class="header-actions">
+		<a n:if="$aiMcpTokensLink" class="btn btn-outline-secondary" href="{$aiMcpTokensLink}">{_fcadmin.presenters.ai.mcpTokens}</a>
 		<a class="btn btn-primary ajax" n:href="new!">{_fcadmin.presenters.ai.newConversation}</a>
 	</div>
 </div>

@@ -30,7 +30,8 @@ test('nazvy ACL zdroju', function () {
 	Assert::same('fullData', AclResourceNameEnum::FULL_DATA->value);
 	Assert::same('profile.personalData', AclResourceNameEnum::PROFILE_PERSONAL_DATA->value);
 	Assert::same('portalBackoffice.ai.viewOthers', AclResourceNameEnum::BACKOFFICE_AI_VIEW_OTHERS->value);
-	Assert::count(7, AclResourceNameEnum::cases());
+	Assert::same('portalBackoffice.ai.mcp', AclResourceNameEnum::BACKOFFICE_AI_MCP->value);
+	Assert::count(8, AclResourceNameEnum::cases());
 });
 
 

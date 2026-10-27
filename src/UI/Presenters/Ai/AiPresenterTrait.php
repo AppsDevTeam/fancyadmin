@@ -46,6 +46,9 @@ trait AiPresenterTrait
 	public function actionDefault(): void
 	{
 		$this->checkAiTenantAccess();
+		$this->template->aiMcpTokensLink = $this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_AI_MCP)
+			? $this->getAiMcpTokensLink()
+			: null;
 		$this->setPackageTemplateFile(__DIR__ . '/default.latte');
 	}
 
@@ -185,6 +188,15 @@ trait AiPresenterTrait
 				'export' => $this->link('aiExport!'),
 			],
 		];
+	}
+
+	/**
+	 * Odkaz na správu MCP tokenů (AiMcpTokensPresenterTrait) v hlavičce stránky;
+	 * null = projekt MCP server nemá a tlačítko se nezobrazí.
+	 */
+	protected function getAiMcpTokensLink(): ?string
+	{
+		return null;
 	}
 
 	protected function getAiSidePanelSize(): SidePanelSize

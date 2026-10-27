@@ -70,11 +70,38 @@ presenters:
     title: AI asistent
     pageTitle: AI asistent
     newConversation: Nová konverzace
+    mcpTokens: Připojit jiné AI (MCP)
     grid:
       title: Konverzace
       identity: Uživatel
       updated: Poslední zpráva
       created: Založeno
+  aiMcpTokens:
+    title: MCP přístup
+    pageTitle: MCP přístup
+    newToken: Nový token
+    intro: 'Přes MCP (Model Context Protocol) se k datům AI asistenta připojí i jiní AI agenti - Claude Code, Claude Desktop a další MCP klienti. Pracují se stejnými anonymizovanými daty a s vašimi oprávněními. Token je osobní, nesdílejte ho.'
+    endpoint: 'Adresa MCP serveru:'
+    claudeCode: 'Připojení z Claude Code:'
+    messages:
+      created: 'Token byl vytvořen, uložte si ho - už ho znovu nezobrazíme:<br><code>%token%</code>'
+    grid:
+      name: Název
+      fingerprint: Otisk tokenu
+      createdAt: Vytvořeno
+      expiresAt: Platnost do
+      lastUsedAt: Naposledy použito
+      neverExpires: bez omezení
+      expired: vypršel
+    form:
+      name: Název
+      namePlaceholder: např. Claude Code na notebooku
+      validity: Platnost
+      validityDays: '%days% dní'
+      validityUnlimited: Bez omezení
+      submit: Uložit
+      errors:
+        nameRequired: Název je povinný
   permissions:
     title: Oprávnění
     pageTitle: Oprávnění

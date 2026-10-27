@@ -210,4 +210,6 @@ test('AI je ve vychozi konfiguraci vypnute', function () {
 	// null = Tracy logger; LoggerInterface se neautowiruje (bral by SQL logger Doctrine)
 	Assert::null($config->ai->logger);
 	Assert::null($config->ai->apiKey);
+	Assert::false($config->ai->mcp->enabled);
+	Assert::null($config->ai->mcp->tokenClass);
 });

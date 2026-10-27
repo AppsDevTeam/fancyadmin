@@ -1,0 +1,22 @@
+{define title}{_fcadmin.presenters.aiMcpTokens.title}{/define}
+
+{block content}
+
+<div class="header">
+	<h1 class="header-title">{_fcadmin.presenters.aiMcpTokens.pageTitle}</h1>
+	<div class="header-actions">
+		<a class="btn btn-primary ajax" n:href="new!">{_fcadmin.presenters.aiMcpTokens.newToken}</a>
+	</div>
+</div>
+
+<div class="card mb-3">
+	<div class="card-body">
+		<p>{_fcadmin.presenters.aiMcpTokens.intro}</p>
+		<p class="mb-1">{_fcadmin.presenters.aiMcpTokens.endpoint}</p>
+		<pre class="mb-3"><code>{$aiMcpEndpointUrl}</code></pre>
+		<p class="mb-1">{_fcadmin.presenters.aiMcpTokens.claudeCode}</p>
+		<pre class="mb-0"><code>claude mcp add --transport http {$aiMcpServerName} {$aiMcpEndpointUrl} --header "Authorization: Bearer &lt;token&gt;"</code></pre>
+	</div>
+</div>
+
+{control aiMcpTokenGrid}
