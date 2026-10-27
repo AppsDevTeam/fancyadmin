@@ -30,12 +30,14 @@
     "adt/doctrine-loggable": "^4.2",
     "adt/log-sanitizer": "^1.2",
     "lbuchs/webauthn": "^2.2",
-    "adt/doctrine-anonymization": "^0.2"
+    "adt/doctrine-anonymization": "^0.2",
+    "adt/ai-chat": "^0.4"
   },
   "suggest": {
-    "guzzlehttp/guzzle": "Required for Keycloak SSO integration",
+    "guzzlehttp/guzzle": "Required for Keycloak SSO integration and the AI chat (ADT\\AiChat\\Client\\GuzzleManagedAgentsClient)",
     "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)",
-    "doctrine/migrations": "Used by fancyadmin:generate-missing-acl-resources to find the migrations namespace and directory"
+    "doctrine/migrations": "Used by fancyadmin:generate-missing-acl-resources to find the migrations namespace and directory",
+    "adt/background-queue": "Runs the AI chat turns in a worker (ADT\\AiChat\\Dispatch\\BackgroundQueueMessageDispatcher), see README (AI asistent)"
   },
   "require-dev": {
     "nette/tester": "^2.5",

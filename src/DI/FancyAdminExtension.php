@@ -4,11 +4,30 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\DI;
 
+use ADT\AiChat\AgentProvisioner;
+use ADT\AiChat\AiChatOptions;
+use ADT\AiChat\ChatOptions;
+use ADT\AiChat\ChatService;
+use ADT\AiChat\Client\GuzzleManagedAgentsClient;
+use ADT\AiChat\Dispatch\BackgroundQueueMessageDispatcher;
+use ADT\AiChat\Http\ChatEndpoint;
+use ADT\AiChat\PiiResponseFilter;
+use ADT\AiChat\PiiValueCollector;
+use ADT\AiChat\SystemPromptBuilder;
+use ADT\AiChat\ToolHandler;
+use ADT\DoctrineAnonymization\AnonymizationPolicy;
+use ADT\DoctrineAnonymization\AnonymizedViewsGenerator;
+use ADT\DoctrineAnonymization\GenerateAnonymizedViewsCommand;
+use ADT\DoctrineAnonymization\PersonalDataColumns;
+use ADT\DoctrineAnonymization\ReadOnlyConnectionOptions;
+use ADT\DoctrineAnonymization\ReadOnlyQueryExecutor;
+use ADT\DoctrineAnonymization\SchemaDescriber;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
+use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
@@ -103,6 +122,36 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			// Hosty, na ktere smi mirit verejna URL SSO instance - viz Model\Security\SsoHostAllowlist.
 			// Prazdny seznam nepousti nic, projekt se SSO si hosty vypsat musi.
 			'ssoAllowedHosts' => Expect::listOf('string')->default([]),
+			// AI asistent nad daty projektu (adt/ai-chat), README, AI asistent
+			'ai' => Expect::structure([
+				'enabled' => Expect::bool()->default(false),
+				'apiKey' => Expect::string()->nullable()->default(null),
+				'model' => Expect::string()->default('claude-sonnet-5-5'),
+				// projektové entity implementující AiConversation, AiMessage, AiAgent
+				'conversationClass' => Expect::string()->nullable()->default(null),
+				'messageClass' => Expect::string()->nullable()->default(null),
+				'agentClass' => Expect::string()->nullable()->default(null),
+				// prefix jména agenta v Anthropic konzoli; null = project
+				'agentNamePrefix' => Expect::string()->nullable()->default(null),
+				// read-only DB uživatel se SELECT jen nad anonymizovaným schématem:
+				// user, password, dbname (výchozí `<db>_anon`), host, port, maxRows, ...
+				'readOnlyConnection' => Expect::array()->default([]),
+				// null = výchozí šablona z adt/ai-chat
+				'systemPromptPath' => Expect::string()->nullable()->default(null),
+				'exportEnabled' => Expect::bool()->default(true),
+				// jméno callbacku v backgroundQueue.callbacks
+				'queueCallback' => Expect::string()->default(BackgroundQueueMessageDispatcher::DEFAULT_CALLBACK),
+				// další klíče ChatOptions: rateLimitPerMinute, rateLimitPerHour, attachments, ...
+				'chat' => Expect::array()->default([]),
+				// texty, kterými se v odpovědích nahrazují osobní údaje (klíče PiiResponseFilter)
+				'piiLabels' => Expect::arrayOf('string', 'string')->default([
+					'secret' => '[odstraněno: tajný údaj]',
+					'email' => '[odstraněný e-mail]',
+					'bank_account' => '[odstraněné číslo účtu]',
+					'phone' => '[odstraněné telefonní číslo]',
+					'value' => '[odstraněný osobní údaj]',
+				]),
+			]),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -232,6 +281,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				->setArgument('verifySsl', $this->config->keycloakVerifySsl);
 		}
 
+		if ($this->config->ai->enabled) {
+			$this->loadAiConfiguration();
+		}
+
 		// command registration
 
 		$defs[] = $builder->addDefinition($this->prefix('createIdentity'))
@@ -255,11 +308,112 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		}
 	}
 
+	/**
+	 * Služby adt/ai-chat. Anonymizační služby (adt/doctrine-anonymization) se doplní
+	 * až v beforeCompile, jen pokud si je projekt neregistruje sám.
+	 */
+	private function loadAiConfiguration(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$ai = $this->config->ai;
+
+		foreach (['apiKey', 'conversationClass', 'messageClass', 'agentClass'] as $_key) {
+			if (empty($ai->$_key)) {
+				throw new RuntimeException('fancyadmin: ai.enabled je zapnuté, ale chybí ai.' . $_key . '. Viz README (AI asistent).');
+			}
+		}
+
+		$builder->addDefinition($this->prefix('ai.client'))
+			->setFactory(GuzzleManagedAgentsClient::class, [
+				'apiKey' => $ai->apiKey,
+				'model' => $ai->model,
+			]);
+
+		$builder->addDefinition($this->prefix('ai.toolHandler'))
+			->setFactory(ToolHandler::class, ['exportEnabled' => $ai->exportEnabled]);
+
+		$builder->addDefinition($this->prefix('ai.piiValueCollector'))
+			->setFactory(PiiValueCollector::class);
+
+		$builder->addDefinition($this->prefix('ai.piiResponseFilter'))
+			->setFactory(PiiResponseFilter::class, ['labels' => $ai->piiLabels]);
+
+		$builder->addDefinition($this->prefix('ai.turnOptions'))
+			->setFactory(AiChatOptions::class);
+
+		$builder->addDefinition($this->prefix('ai.systemPromptBuilder'))
+			->setFactory(SystemPromptBuilder::class, [
+				'templatePath' => $ai->systemPromptPath ?? SystemPromptBuilder::defaultTemplatePath(),
+			]);
+
+		$builder->addDefinition($this->prefix('ai.agentProvisioner'))
+			->setFactory(AgentProvisioner::class, [
+				'agentClass' => $ai->agentClass,
+				'namePrefix' => $ai->agentNamePrefix ?? $this->config->project ?? 'fancyadmin',
+			]);
+
+		$builder->addDefinition($this->prefix('ai.chatOptions'))
+			->setFactory(ChatOptions::class . '::fromArray', [[
+				'conversationClass' => $ai->conversationClass,
+				'messageClass' => $ai->messageClass,
+				'ownerField' => 'identity',
+			] + $ai->chat]);
+
+		$builder->addDefinition($this->prefix('ai.dispatcher'))
+			->setFactory(BackgroundQueueMessageDispatcher::class, ['callbackName' => $ai->queueCallback]);
+
+		// projekt na ni věší callback fronty: aiChatProcessMessage: [@fancyAdmin.ai.chatService, processQueuedMessage]
+		$builder->addDefinition($this->prefix('ai.chatService'))
+			->setFactory(ChatService::class)
+			->addSetup('setTranslator', [[$this->prefix('@ai.translator'), 'translate']]);
+
+		$builder->addDefinition($this->prefix('ai.endpoint'))
+			->setFactory(ChatEndpoint::class);
+
+		$builder->addDefinition($this->prefix('ai.translator'))
+			->setFactory(AiChatTranslator::class);
+	}
+
+	/** Anonymizační služby, které si projekt neregistroval sám. */
+	private function completeAiAnonymizationServices(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$ai = $this->config->ai;
+
+		$services = [
+			'policy' => [AnonymizationPolicy::class, []],
+			'schemaDescriber' => [SchemaDescriber::class, []],
+			'personalDataColumns' => [PersonalDataColumns::class, []],
+			'viewsGenerator' => [AnonymizedViewsGenerator::class, []],
+			'readOnlyConnectionOptions' => [ReadOnlyConnectionOptions::class . '::fromArray', [$ai->readOnlyConnection]],
+			'readOnlyQueryExecutor' => [ReadOnlyQueryExecutor::class, []],
+		];
+
+		foreach ($services as $_name => [$_factory, $_args]) {
+			$type = explode('::', $_factory)[0];
+			if ($builder->getByType($type) === null) {
+				$builder->addDefinition($this->prefix('ai.anonymization.' . $_name))
+					->setType($type)
+					->setFactory($_factory, $_args);
+			}
+		}
+
+		if ($builder->findByType(GenerateAnonymizedViewsCommand::class) === []) {
+			$builder->addDefinition($this->prefix('ai.anonymization.generateViewsCommand'))
+				->setFactory(GenerateAnonymizedViewsCommand::class)
+				->setAutowired(false);
+		}
+	}
+
 	public function beforeCompile(): void
 	{
 		$builder = $this->getContainerBuilder();
 
 		$this->checkSignalCsrfRouter();
+
+		if ($this->config->ai->enabled) {
+			$this->completeAiAnonymizationServices();
+		}
 
 		// Doctrine Migrations je volitelne - kdyz ho projekt ma, rekne prikazu, kam migraci zapsat.
 		if (
