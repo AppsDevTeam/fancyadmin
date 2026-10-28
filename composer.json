@@ -30,8 +30,8 @@
     "adt/doctrine-loggable": "^4.2",
     "adt/log-sanitizer": "^1.2",
     "lbuchs/webauthn": "^2.2",
-    "adt/doctrine-anonymization": "^0.2",
-    "adt/ai-chat": "^0.5"
+    "adt/doctrine-anonymization": "^0.3",
+    "adt/ai-chat": "^0.6"
   },
   "suggest": {
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration and the AI chat (ADT\\AiChat\\Client\\GuzzleManagedAgentsClient)",

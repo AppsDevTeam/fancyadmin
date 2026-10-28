@@ -210,6 +210,28 @@ test('AI je ve vychozi konfiguraci vypnute', function () {
 	// null = Tracy logger; LoggerInterface se neautowiruje (bral by SQL logger Doctrine)
 	Assert::null($config->ai->logger);
 	Assert::null($config->ai->apiKey);
+	Assert::null($config->ai->apiKeyProvider);
+	Assert::same([], $config->ai->excludedEntities);
 	Assert::false($config->ai->mcp->enabled);
 	Assert::null($config->ai->mcp->tokenClass);
+	// bez klíče nejde tajná konfigurace uložit ani přečíst
+	Assert::null($config->secretKey);
+});
+
+
+test('klic AI jde misto retezce brat ze sluzby', function () {
+	$config = process(['ai' => ['apiKeyProvider' => '@clinicApiKeyProvider']]);
+
+	Assert::same('@clinicApiKeyProvider', $config->ai->apiKeyProvider);
+});
+
+
+test('z anonymizovaneho schematu se vychozi vyrazuji logy, sessions a jednorazove tokeny', function () {
+	Assert::same([
+		'ADT\\DoctrineLoggable\\Entity\\ChangeLog',
+		'ADT\\DoctrineAuthenticator\\StorageEntity',
+		'ADT\\DoctrineAuthenticator\\OTP\\OnetimeToken',
+		'ADT\\DoctrineAuthenticator\\AuthLog',
+		'ADT\\DoctrineAuthenticator\\LoginAttempt',
+	], FancyAdminExtension::AI_DEFAULT_EXCLUDED_ENTITIES);
 });

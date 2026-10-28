@@ -46,6 +46,7 @@ use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Model\Security\LastLoginSubscriber;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\Model\Security\ReturnPath;
+use ADT\FancyAdmin\Model\Security\SecretCipher;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
@@ -72,6 +73,15 @@ use Tracy\ILogger;
 
 class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
+	/** Viz getAiExcludedEntities(); neexistující třídy policy ignoruje. */
+	public const array AI_DEFAULT_EXCLUDED_ENTITIES = [
+		'ADT\\DoctrineLoggable\\Entity\\ChangeLog',
+		'ADT\\DoctrineAuthenticator\\StorageEntity',
+		'ADT\\DoctrineAuthenticator\\OTP\\OnetimeToken',
+		'ADT\\DoctrineAuthenticator\\AuthLog',
+		'ADT\\DoctrineAuthenticator\\LoginAttempt',
+	];
+
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
@@ -127,10 +137,16 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			// Hosty, na ktere smi mirit verejna URL SSO instance - viz Model\Security\SsoHostAllowlist.
 			// Prazdny seznam nepousti nic, projekt se SSO si hosty vypsat musi.
 			'ssoAllowedHosts' => Expect::listOf('string')->default([]),
+			// Klíč pro šifrování tajných hodnot v DB (konfigurace typu secret), typicky z env.
+			// Bez něj nejde tajnou hodnotu uložit ani přečíst. README, Konfigurace - tajné hodnoty
+			'secretKey' => Expect::string()->nullable()->default(null),
 			// AI asistent nad daty projektu (adt/ai-chat), README, AI asistent
 			'ai' => Expect::structure([
 				'enabled' => Expect::bool()->default(false),
 				'apiKey' => Expect::string()->nullable()->default(null),
+				// služba implementující ADT\AiChat\Client\ApiKeyProvider (např. klíč z konfigurace
+				// v DB pro každou instanci); má přednost před apiKey
+				'apiKeyProvider' => Expect::anyOf(Expect::string(), Expect::type(Statement::class))->nullable()->default(null),
 				'model' => Expect::string()->default('claude-sonnet-5-5'),
 				// projektové entity implementující AiConversation, AiMessage, AiAgent
 				'conversationClass' => Expect::string()->nullable()->default(null),
@@ -141,6 +157,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				// read-only DB uživatel se SELECT jen nad anonymizovaným schématem:
 				// user, password, dbname (výchozí `<db>_anon`), host, port, maxRows, ...
 				'readOnlyConnection' => Expect::array()->default([]),
+				// další entity, které nemají v anonymizovaném schématu žádný pohled
+				// (přidávají se k AI_DEFAULT_EXCLUDED_ENTITIES a k ai.mcp.tokenClass)
+				'excludedEntities' => Expect::listOf('string')->default([]),
 				// null = výchozí šablona z adt/ai-chat
 				'systemPromptPath' => Expect::string()->nullable()->default(null),
 				'exportEnabled' => Expect::bool()->default(true),
@@ -266,6 +285,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder->addDefinition($this->prefix('passkeyService'))
 			->setFactory(PasskeyService::class);
 
+		$builder->addDefinition($this->prefix('secretCipher'))
+			->setFactory(SecretCipher::class, ['secretKey' => $this->config->secretKey]);
+
 		// Cíl "kam po přihlášení" v cookie, aby nepřihlášenému nevznikala session
 		$builder->addDefinition($this->prefix('returnPath'))
 			->setFactory(ReturnPath::class);
@@ -346,7 +368,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('ai.client'))
 			->setFactory(GuzzleManagedAgentsClient::class, [
-				'apiKey' => (string) $ai->apiKey,
+				'apiKey' => $ai->apiKeyProvider ?? (string) $ai->apiKey,
 				'model' => $ai->model,
 			]);
 
@@ -438,6 +460,26 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		}
 	}
 
+	/**
+	 * Entity vyřazené z anonymizovaného schématu - tabulky, které nejde maskovat po
+	 * sloupcích a neregistrovaný čtenář pohledů _anon (AI, MCP klient) je vidět nesmí:
+	 * změnový log (JSON se starými i novými hodnotami všech logovaných entit včetně jmen
+	 * a hesel/klíčů před zašifrováním), sessions a jednorázové tokeny (převzetí účtu),
+	 * přihlašovací logy (IP, uživatelská jména) a tokeny MCP.
+	 *
+	 * @return list<class-string>
+	 */
+	private function getAiExcludedEntities(): array
+	{
+		$ai = $this->config->ai;
+
+		return array_values(array_unique(array_merge(
+			self::AI_DEFAULT_EXCLUDED_ENTITIES,
+			$ai->mcp->tokenClass !== null ? [$ai->mcp->tokenClass] : [],
+			$ai->excludedEntities,
+		)));
+	}
+
 	/** Anonymizační služby, které si projekt neregistroval sám. */
 	private function completeAiAnonymizationServices(): void
 	{
@@ -445,7 +487,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$ai = $this->config->ai;
 
 		$services = [
-			'policy' => [AnonymizationPolicy::class, []],
+			'policy' => [AnonymizationPolicy::class, ['excludedEntities' => $this->getAiExcludedEntities()]],
 			'schemaDescriber' => [SchemaDescriber::class, []],
 			'personalDataColumns' => [PersonalDataColumns::class, []],
 			'viewsGenerator' => [AnonymizedViewsGenerator::class, []],

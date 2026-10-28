@@ -57,14 +57,15 @@ test('typy konfiguracnich polozek', function () {
 	Assert::same('plaintext', ConfigurationTypeEnum::TYPE_PLAINTEXT->value);
 	Assert::same('select', ConfigurationTypeEnum::TYPE_SELECT->value);
 	Assert::same('file', ConfigurationTypeEnum::TYPE_FILE->value);
-	Assert::count(4, ConfigurationTypeEnum::cases());
+	Assert::same('secret', ConfigurationTypeEnum::TYPE_SECRET->value);
+	Assert::count(5, ConfigurationTypeEnum::cases());
 	Assert::type(ConfigurationType::class, ConfigurationTypeEnum::TYPE_JSON);
 });
 
 
 test('seznam typu pro formular ma klic i popisek stejny', function () {
 	Assert::same(
-		['json' => 'json', 'plaintext' => 'plaintext', 'select' => 'select', 'file' => 'file'],
+		['json' => 'json', 'plaintext' => 'plaintext', 'select' => 'select', 'file' => 'file', 'secret' => 'secret'],
 		ConfigurationTypeEnum::list(),
 	);
 });

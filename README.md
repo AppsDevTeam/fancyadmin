@@ -2903,6 +2903,23 @@ backgroundQueue:
 Prefix služeb je název rozšíření v `extensions:` projektu (zde `fancyadmin`). `apiKey` není
 povinný: bez klíče se aplikace sestaví a volání API skončí chybou autorizace ve widgetu.
 
+**Klíč pro každou instanci zvlášť.** Místo pevného `apiKey` jde předat službu
+implementující `ADT\AiChat\Client\ApiKeyProvider` - klient se jí ptá při každém requestu,
+takže změna klíče platí hned, bez restartu:
+
+```neon
+fancyadmin:
+	secretKey: %env.CONFIGURATION_SECRET_KEY%
+	ai:
+		apiKey: %env.ANTHROPIC_API_KEY%            # záložní klíč serveru
+		apiKeyProvider: @App\Model\Ai\ClinicApiKeyProvider
+```
+
+Typicky klíč čte z konfigurace typu `secret` (viz 29.8) a když není vyplněný, vrátí
+záložní `apiKey`. Agenti, prostředí, sessions a soubory Managed Agents patří workspace
+klíče - po změně klíče je potřeba agenta zajistit znovu (`AgentProvisioner::ensureProvisioned()`
+po smazání mapování v `agentClass`) a staré konverzace pod novým klíčem nepokračují.
+
 Rozšíření registruje klienta Managed Agents, `ChatService`, `ChatEndpoint`, příkaz
 `fancyadmin:ai:provision-agent` a ostatní služby adt/ai-chat. Anonymizační služby
 (`AnonymizationPolicy`, `ReadOnlyQueryExecutor`, …) a příkaz `anonymization:generate-views`
@@ -2930,6 +2947,21 @@ GRANT SELECT ON `app_anon`.* TO 'app_anon'@'%';
 4. Zajistěte agenta Managed Agents: `php bin/console fancyadmin:ai:provision-agent` (po
    pohledech, v každém deployi — aktualizuje systémový prompt a nástroje). Bez agenta skončí
    první zpráva chybou „No Managed Agents agent is provisioned“.
+
+**Tabulky bez pohledu.** Některé tabulky nejde maskovat po sloupcích a v anonymizovaném
+schématu nemají co dělat. Rozšíření je proto předá `AnonymizationPolicy` jako vyřazené
+(`FancyAdminExtension::AI_DEFAULT_EXCLUDED_ENTITIES`) - pohled nevznikne a existující se při
+generování smaže:
+
+| Entita | Proč |
+|---|---|
+| `ChangeLog` (adt/doctrine-loggable) | JSON se starými i novými hodnotami všech logovaných entit, jména pacientů nevyjímaje |
+| `StorageEntity`, `OnetimeToken` (adt/doctrine-authenticator) | čitelný token session / reset hesla = převzetí účtu |
+| `AuthLog`, `LoginAttempt` | IP adresy a přihlašovací jména |
+| `ai.mcp.tokenClass` | otisky tokenů MCP |
+
+Další entity přidá `ai.excludedEntities: [App\Model\Entities\Něco]`. Když si projekt
+registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 
 ### 29.5 Frontend
 
@@ -3062,3 +3094,20 @@ claude mcp add --transport http <project> https://<host>/mcp --header "Authoriza
 
 Každé volání nástroje se zaloguje (`ai.logger`, info) s `identityId` a `mcpTokenId`.
 Smazání tokenu v gridu ho okamžitě zneplatní.
+
+### 29.8 Tajné hodnoty v konfiguraci
+
+Konfigurace typu `secret` (`ConfigurationTypeEnum::TYPE_SECRET`) je pro API klíče a hesla,
+která si zadává sám uživatel v Nastavení (např. Anthropic klíč kliniky). Hodnota se ukládá
+zašifrovaná přes `SecretCipher` (libsodium secretbox) klíčem `fancyadmin.secretKey`, který
+v DB není - DB, zálohy, `change_log` ani pohledy `_anon` ji tedy čitelnou nemají.
+
+- formulář hodnotu nikdy nezobrazí; prázdné pole = ponechat, zaškrtávátko smaže uloženou,
+- grid ukazuje jen „nastaveno“ / „—“,
+- bez `secretKey` formulář uložení odmítne, `decrypt()` vyhodí výjimku,
+- výměna `secretKey` = staré hodnoty nejdou přečíst, je potřeba je zadat znovu.
+
+```php
+$value = $configuration->getValue();
+$apiKey = SecretCipher::isEncrypted($value) ? $secretCipher->decrypt($value) : null;
+```

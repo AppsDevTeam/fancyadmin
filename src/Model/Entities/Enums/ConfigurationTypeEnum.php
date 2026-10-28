@@ -10,6 +10,8 @@ enum ConfigurationTypeEnum: string implements ConfigurationType
 	case TYPE_PLAINTEXT = 'plaintext';
 	case TYPE_SELECT = 'select';
 	case TYPE_FILE = 'file';
+	// hodnota uložená zašifrovaná přes SecretCipher, v administraci se nikdy nezobrazí
+	case TYPE_SECRET = 'secret';
 
 	public static function list(): array
 	{
