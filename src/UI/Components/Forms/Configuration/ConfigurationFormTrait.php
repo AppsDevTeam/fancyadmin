@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Components\Forms\Configuration;
 
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\SecretCipherInject;
 use ADT\FancyAdmin\Model\Entities\Configuration;
 use ADT\FancyAdmin\Model\Entities\Enums\ConfigurationTypeEnum;
 use ADT\FancyAdmin\Model\Entities\File;
@@ -19,8 +20,12 @@ use Nette\Utils\JsonException;
 trait ConfigurationFormTrait
 {
 	use EntityManagerInject;
+	use SecretCipherInject;
 
 	private const string JSON_VALUE_PREFIX = 'value_';
+	// pole tajné hodnoty nejsou sloupce entity, mapper formuláře je tedy do entity nezapisuje
+	private const string SECRET_INPUT = '_secret';
+	private const string SECRET_CLEAR_INPUT = '_secretClear';
 
 	public function initForm(Form $form): void
 	{
@@ -54,6 +59,27 @@ trait ConfigurationFormTrait
 				->setRequired();
 		}, 'fileInput');
 
+		// tajná hodnota (TYPE_SECRET) se do formuláře nikdy nenačítá - ani zašifrovaná;
+		// prázdné pole = ponechat uloženou hodnotu
+		if ($this->isSecretConfiguration()) {
+			$form->addSection(function() use ($form) {
+				$hasValue = $this->getEntity()->getValue() !== null && $this->getEntity()->getValue() !== '';
+
+				$form->addPassword(self::SECRET_INPUT, 'fcadmin.presenters.configurations.secret.value')
+					->setHtmlAttribute('autocomplete', 'new-password')
+					->setOption('description', $hasValue
+						? 'fcadmin.presenters.configurations.secret.keepHint'
+						: 'fcadmin.presenters.configurations.secret.emptyHint');
+
+				if ($hasValue) {
+					$form->addCheckbox(self::SECRET_CLEAR_INPUT, 'fcadmin.presenters.configurations.secret.clear');
+				}
+			}, 'secretInput');
+
+			$form->addSubmit("submit", 'Save');
+			return;
+		}
+
 		$jsonValues = $this->getDecodedJsonValue();
 
 		$form->addSection(function() use ($form, $jsonValues) {
@@ -74,6 +100,13 @@ trait ConfigurationFormTrait
 
 	public function validateForm(Configuration $entity, array $inputs): void
 	{
+		if ($entity->getType() === ConfigurationTypeEnum::TYPE_SECRET) {
+			if (($inputs[self::SECRET_INPUT] ?? '') !== '' && !$this->secretCipher->isConfigured()) {
+				$this->form->addError('fcadmin.presenters.configurations.secret.notConfigured');
+			}
+			return;
+		}
+
 		// pro JSON skládáme hodnotu z jednotlivých polí (value_*), validní JSON tedy vznikne vždy
 		if ($entity->getType() === ConfigurationTypeEnum::TYPE_JSON->value && isset($inputs['value']) && !is_array(json_decode($inputs['value'], true))) {
 			$this->form->addError('Input value not contains valid JSON');
@@ -107,6 +140,13 @@ trait ConfigurationFormTrait
 				$value = json_decode($inputs['value']);
 			}
 			$entity->setValue(json_encode($value, JSON_PRETTY_PRINT));
+		} elseif ($entity->getType() === ConfigurationTypeEnum::TYPE_SECRET) {
+			$secret = trim((string) ($inputs[self::SECRET_INPUT] ?? ''));
+			if ($secret !== '') {
+				$entity->setValue($this->secretCipher->encrypt($secret));
+			} elseif (!empty($inputs[self::SECRET_CLEAR_INPUT])) {
+				$entity->setValue(null);
+			}
 		} elseif ($entity->getType() === ConfigurationTypeEnum::TYPE_FILE) {
 			/** @var FileUpload $fileUpload */
 			$fileUpload = $inputs['_file'];
@@ -124,6 +164,13 @@ trait ConfigurationFormTrait
 	protected function getEntityClass(): ?string
 	{
 		return Configuration::class;
+	}
+
+	private function isSecretConfiguration(): bool
+	{
+		$entity = $this->getEntity();
+
+		return $entity instanceof Configuration && $entity->getType() === ConfigurationTypeEnum::TYPE_SECRET;
 	}
 
 	/**

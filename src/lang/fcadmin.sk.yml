@@ -139,6 +139,13 @@ presenters:
     grid:
       name: Názov
       value: Hodnota
+    secret:
+      value: Nová hodnota
+      keepHint: Hodnota je uložená (zašifrovane) a nezobrazuje sa. Prázdne pole ju ponechá bez zmeny.
+      emptyHint: Hodnota sa uloží zašifrovane a už sa znovu nezobrazí.
+      clear: Zmazať uloženú hodnotu
+      set: nastavené
+      notConfigured: Tajnú hodnotu nie je možné uložiť, na serveri chýba šifrovací kľúč (fancyadmin.secretKey).
     valueKeys:
       enabled: Aktívne
       minLength: Minimálna dĺžka

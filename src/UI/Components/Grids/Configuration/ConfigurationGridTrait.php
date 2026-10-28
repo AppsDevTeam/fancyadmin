@@ -45,6 +45,13 @@ trait ConfigurationGridTrait
 					return $configuration->getFile()->getUrl();
 				}
 
+				// tajnou hodnotu neukazujeme ani zamaskovanou, jen jestli je vyplněná
+				if ($configuration->getType() === ConfigurationTypeEnum::TYPE_SECRET) {
+					return $configuration->getValue() !== null && $configuration->getValue() !== ''
+						? $this->getTranslator()->translate('fcadmin.presenters.configurations.secret.set')
+						: '—';
+				}
+
 				if ($this->isSensitiveConfiguration($configuration->getKey())) {
 					return $this->maskSensitiveValue((string) $configuration->getValue());
 				}
