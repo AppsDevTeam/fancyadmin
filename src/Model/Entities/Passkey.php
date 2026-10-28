@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\Model\Entities;
 
 use ADT\DoctrineComponents\Entities\Entity;
+use ADT\DoctrineLoggable\Attributes\LoggableEntity;
 use DateTimeImmutable;
 
+// založení se loguje kvůli auditní stopě - viz ChangeLogAuditSubscriber
+#[LoggableEntity(logCreate: true)]
 interface Passkey extends Entity
 {
 	public function getIdentity(): Identity;

@@ -193,6 +193,14 @@ class Profile extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\Profi
 
 **ProfileTrait poskytuje:** `identity` (N:1), `account` (N:1), `roles` (M:N s AclRole), `isActive`, timestamps
 
+ProfileTrait nese i unikátní omezení `(identity, account)` — identita má v jednom účtu nejvýš
+jeden profil. Projekt, jehož entita ho dosud neměla, ho v dalším `migrations-diff` dostane
+a migrace spadne, pokud v databázi duplicitní profily už jsou. Před nasazením je ověřte:
+
+```sql
+SELECT identity_id, account_id, COUNT(*) FROM profile GROUP BY identity_id, account_id HAVING COUNT(*) > 1;
+```
+
 ### 3.4 AclRole
 
 ```php
@@ -928,6 +936,7 @@ extensions:
 	translation: Contributte\Translation\DI\TranslationExtension
 	nettrine.dbal: ADT\DoctrineComponents\DI\DbalExtension
 	nettrine.orm: Nettrine\ORM\DI\OrmExtension
+	doctrineComponents: ADT\DoctrineComponents\DI\DoctrineComponentsExtension
 	nettrine.extensions.atlantic18: Nettrine\Extensions\Atlantic18\DI\Atlantic18BehaviorExtension
 	queryObjectDataSource: ADT\QueryObjectDataSource\DI\QueryObjectDataSourceExtension
 	fancyadmin: ADT\FancyAdmin\DI\FancyAdminExtension
@@ -935,6 +944,10 @@ extensions:
 ```
 
 **Poznámka:** DBAL extension je `ADT\DoctrineComponents\DI\DbalExtension` (ne `Nettrine\DBAL\DI\DbalExtension`). Tato extension rozšiřuje Nettrine DBAL o další funkce.
+
+`DoctrineComponentsExtension` registruje `TraitIndexListener` - indexy deklarované na traitech
+fancyadminu (`AuditLogTrait`, `ApiLogTrait`) Doctrine sama ignoruje a bez něj by je
+migrations-diff smazal. Projekt, který extension nemá, dostane listener od `FancyAdminExtension`.
 
 ### common.neon — search (auto-registrace services)
 
@@ -1291,14 +1304,13 @@ Kam smí mířit se needituje, to je věc administrátora.
 
 #### Proč `isActive`
 
-Silent SSO na přihlašovací stránce projde **všechny aktivní** instance a na každou udělá
-jeden `prompt=none` check. Vadná konfigurace tedy ovlivní login celé platformy — deaktivace
-je způsob, jak takovou instanci odstavit, aniž by se musela smazat: konfigurace i identity
-na ni navázané zůstanou zachované. Smazat ji ostatně nejde, dokud na ní visí identity.
+Vadná konfigurace instance nebo výpadek jejího Keycloaku znemožní přihlášení SSO
+uživatelům na ni navázaným. Deaktivace je způsob, jak takovou instanci odstavit, aniž by
+se musela smazat: konfigurace i identity na ni navázané zůstanou zachované. Smazat ji
+ostatně nejde, dokud na ní visí identity.
 
 Co deaktivace ovlivní:
 
-- **Silent SSO** instanci vynechá, `prompt=none` check se na ni neposílá.
 - **SSO uživatelé navázaní na instanci** (identita se `sso_id` a alespoň jednou rolí
   s `needs_sso`) se chovají jako **běžní uživatelé s heslem**: přihlásí se lokálním heslem,
   lost password i reset hesla z gridu uživatelů pošlou lokální recovery mail a na Profilu
@@ -1352,6 +1364,22 @@ ohlásí výsledek. Přijatý `code` se za token nevymění. Bez toho by se admi
 cizí identitou, případně by se přes `defaultRole` provisionovala nová.
 
 Používá se existující `silent-check` redirect URI, takže se v Keycloaku **nic nepřidává**.
+
+#### Automatický silent SSO na přihlašovací stránce není
+
+Přihlašovací stránka nepřihlášeného návštěvníka na Keycloak sama nepřesměrovává. SSO
+uživatele tam pošle až e-mailové směrování: po zadání e-mailu (AJAX `checkKeycloak`, bez JS
+při odeslání formuláře) se podle identity najde její instance. Pokud má uživatel v Keycloaku
+aktivní session, vrátí se rovnou přihlášený bez hesla. Při přechodu mezi aplikacemi
+ve stejném realmu tedy uživatel zadá v další aplikaci jen e-mail.
+
+Dřívější automatický `prompt=none` check pro všechny aktivní instance byl zrušený:
+
+- přesměrovával přes Keycloak každého nepřihlášeného návštěvníka, i uživatele s heslem,
+- při výpadku Keycloaku nikdo neviděl přihlašovací formulář,
+- klienty bez cookies (monitoring, boti) posílal do smyčky redirectů.
+
+Endpoint `silent-check` zůstává jen pro zkušební průchod (viz výše) a nikoho nepřihlásí.
 
 ### 18.3 NEON konfigurace
 
@@ -2328,6 +2356,20 @@ implementují, takže projekt k tomu nemusí sahat do entit:
 Osa je doména, ne entita: detekční pravidla se pak klíčují na jednu hodnotu místo výčtu
 tříd a přibytí další entity do domény nic nerozbije.
 
+### Založení a smazání
+
+Do auditu jde, co zapíše `change_log` — úpravy a smazání vždy, **založení jen u entit
+s `#[LoggableEntity(logCreate: true)]`**. Rozhraní fancyadminu z tabulky výš (kromě
+`AclResource`) ho nesou sama a doctrine-loggable ho čte i z rozhraní, takže založení
+identity, role nebo API klíče se do auditu dostane bez zásahu do entit projektu.
+Obyčejné `#[LoggableEntity]` na třídě entity to nevypne — atributy se sčítají.
+
+U vlastních entit s `#[Audited]` dá projekt `logCreate: true` sám, pokud chce v auditu
+i jejich založení.
+
+Záznam pak nese `change` = `create`/`edit`/`delete` a u založení v `values` počáteční
+hodnoty jako změnu z `null`.
+
 ### Entity projektu
 
 Ty fancyadmin nezná, takže se vybírají **jmenovitě**, atributem (ten zároveň přebíjí
@@ -2591,9 +2633,7 @@ odeslaný požadavek, přijatou odpověď, stavový kód, dobu zpracování a p�
 
 ```php
 #[ORM\Entity]
-#[ORM\Index(fields: ['createdAt'])]
-#[ORM\Index(fields: ['accountId'])]
-#[ORM\Index(fields: ['type'])]
+#[ORM\Index(fields: ['type'])] // indexy createdAt a accountId nese trait
 class ApiLog extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\ApiLog
 {
 	use \ADT\FancyAdmin\Model\Entities\ApiLogTrait;
@@ -2747,7 +2787,51 @@ Poznámky:
   tedy jako více tenantů. Vlastní implementace rozhraní `SecurityUser` bez `SecurityUserTrait`
   musí `isMultiTenant()` doplnit.
 
-## 28. Rychlá lišta (volitelné)
+## 28. PCI DSS 4.0
+
+Knihovna sama o sobě „PCI DSS compliant“ být nemůže — shodu posuzuje auditor u celého
+prostředí (aplikace, infrastruktura, procesy), ne u balíčku. fancyadmin dodává stavební
+kameny pro část požadavků; většinu z nich je potřeba v projektu **zapnout a nastavit**,
+výchozí hodnoty PCI nesplňují. Níže je, co je v knihovně, co musí udělat projekt a kde
+knihovna mezeru má.
+
+### Co musí projekt nastavit
+
+| Požadavek | Co dodává fancyadmin | Co musí udělat projekt |
+|---|---|---|
+| **8.2.1** jedinečná identita | `Identity`, `ssoSub` je unikátní | Unikátní index na `email`/`username` (trait ho nemá), žádné sdílené účty (organizačně) |
+| **8.2.6** neaktivní účty do 90 dní | `Identity::$lastLoginAt` (sekce 24, razítko posledního přihlášení) | Cron, který účty bez přihlášení 90 dní deaktivuje (`isActive = false`) — knihovna nic nevypíná |
+| **8.2.8** odhlášení po 15 min nečinnosti | Klouzavá expirace session, `AclRole::$sessionExpirationMinutes` | Výchozí `expiration` authenticatoru na `'15 minutes'`, **nebo** `sessionExpirationMinutes = 15` na rolích — pozor, to platí jen u role se zapnutou heslovou politikou (`passwordPolicyEnabled`), jinak se tiše ignoruje |
+| **8.3.4** zamčení po max. 10 pokusech na ≥ 30 min | `setLoginAttemptProtection()` z adt/doctrine-authenticator | Zapnout (výchozí je vypnuto) s oknem aspoň `'-30 minutes'`, viz níže mezery |
+| **8.3.6** heslo min. 12 znaků, písmena i číslice | `PasswordPolicy` na roli (délka, třídy znaků), `BreachedPasswordChecker` | Na všech rolích zapnout `passwordPolicyEnabled`, `passwordMinLength = 12`, vyžadovat číslici a písmeno (výchozí minimum je 8) |
+| **8.4.1 / 8.4.2** MFA pro administraci | `needs2fa` (passkey, sekce 19.8), `needsSso` (Keycloak, sekce 18) | `passkeyEnabled: true` a `needs2fa` na všech rolích s přístupem do backoffice; zvážit `passkeyEmailOtpEnabled: false` (kód na e-mail 2FA oslabuje, sekce 19.9) a `passkeyEnrollmentRequired: true`. U SSO je MFA na straně Keycloaku |
+| **8.6.x** systémové účty (API klíče) | Hashované klíče (SHA-256), zobrazené jen jednou (sekce 20) | Rotace (smazat a založit nový) — expiraci ani evidenci použití knihovna nemá |
+| **10.2.1.2 / 10.2.1.5** akce adminů, změny účtů | `ChangeLogAuditSubscriber` → `audit_log` (založení, změna, smazání identit, rolí, oprávnění, účtů, konfigurace) | Navěsit subscriber ze sekce 21; vlastní entity označit `#[Audited]` a `#[LoggableEntity(logCreate: true)]` |
+| **10.2.1.4** neúspěšné pokusy o přístup | — (doctrine-authenticator jen ohlašuje `$onAuthEvent`, 403 knihovna nezapisuje) | Vlastní subscriber `$onAuthEvent` → `AuditLogger::log()` (přihlášení, odhlášení, neúspěch, blokace) a zápis zamítnutých přístupů (403) |
+| **10.2.1.1** přístup k datům držitelů karet | — | Audit exportů a výdejů souborů (adt/exporter jen ohlašuje `onExport`/`onDownload`) a čtení citlivých dat dle projektu |
+| **10.2.1.3** přístup k auditním logům | `audit_log` se v administraci nezobrazuje | Řízení a logování přístupu k DB a centrálnímu úložišti auditu (infrastruktura) |
+| **10.2.2** obsah záznamu | `audit_log`: kdo, co, kdy (UTC), výsledek, IP, User-Agent, dotčený objekt | — |
+| **10.3 / 10.5.1** ochrana, 12 měsíců retence, 3 měsíce po ruce | adt/log-mover (sekce 23): zápis jen INSERT, mazání jen retencí | Odvoz `audit_log` do odděleného úložiště, `hot: '3 months'`, `retention` ≥ 12 měsíců; `audit_log` **nedávat** do `purge` (sekce 22) |
+| **3.4.1 / 3.5.1** PAN v logech | `SensitiveDataSanitizer` (adt/log-sanitizer) maskuje čísla karet v auditu i v `api_log` | Zaregistrovat vlastní sanitizer s `onCardNumberDetected()` — jinak se nález zamaskuje, ale nikdo se o něm nedozví |
+| **6.2.4** běžné útoky (XSS, CSRF, clickjacking) | `security.neon` (CSP, hlavičky, cookies), CSRF signálů (sekce 14) | Includovat `security.neon` (sekce 15) |
+| **10.6** synchronizace času | Logy fancyadminu zapisují v UTC | NTP na serverech |
+
+### Kde knihovna mezeru má
+
+Tyhle požadavky fancyadmin nepokrývá vůbec a projekt je musí doplnit sám, nebo je
+vědomě vést jako odchylku:
+
+- **8.3.4 skutečné zamčení** — throttling je klouzavé okno, ne zámek; z adresy, ze které se
+  uživatel v posledních 30 dnech úspěšně přihlásil, se limit násobí (výchozí ×4).
+- **8.3.5** změna hesla při prvním přihlášení — místo toho se heslo nastavuje jednorázovým
+  odkazem (platnost 72 h), administrátor ho nikdy nezná.
+- **8.3.7** zákaz posledních 4 hesel — historie hesel se nedrží.
+- **8.3.9** změna hesla každých 90 dní (u přihlášení jen heslem) — expirace hesla není;
+  splnit se dá jen MFA (8.4).
+- **10.2.1.6** spuštění a zastavení auditního logování se nezaznamenává.
+- `BreachedPasswordChecker` **propouští** heslo, když HaveIBeenPwned do 500 ms neodpoví.
+
+## 29. Rychlá lišta (volitelné)
 
 Plovoucí lišta dole uprostřed backoffice: hledání (Ctrl/⌘ K, „/") a ikony AI asistent, Notifikace,
 Úkoly, Chat, každá otevírá panel nad lištou. Šablona `src/UI/Presenters/@quickbar.latte` (layout ji
@@ -2763,12 +2847,12 @@ migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). V
 Čte ho `QuickbarSettings::getItems()`; `BasePresenterTrait::getQuickbarItems()` jde v projektu přepsat
 (např. položky podle oprávnění). Ikony jsou v pořadí AI, Notifikace, Úkoly, Chat, hledání vždy vlevo.
 
-**AI asistent** se v liště ukáže jen se zapnutým `fancyadmin.ai` (sekce 29), právem k AI presenteru
+**AI asistent** se v liště ukáže jen se zapnutým `fancyadmin.ai` (sekce 30), právem k AI presenteru
 (`<modul>.ai`) a v multi-tenant režimu s plnými daty. Panel hostí widget adt-ai-chat: lišta si při prvním
 otevření načte jeho konfiguraci ze signálu `AiPresenterTrait::handleAiQuickbar()` (presenter hledá jako
 `Ai:default`, jinde přepsat `BasePresenterTrait::getQuickbarAiUrl()`), otevře poslední konverzaci
 a nedávné konverzace bere z `urls.conversations` widgetu. Projekt musí importovat `@fancyadmin/js/aiChat`
-(sekce 29), jinak zůstane panel prázdný.
+(sekce 30), jinak zůstane panel prázdný.
 
 **JS** — importovat modul (`app.js` fancyadminu ho importuje sám) a předat mu zdroj dat; bez něj jsou panely prázdné:
 
@@ -2789,7 +2873,7 @@ metoda se bere jako prázdný výsledek.
 **Barvy** — proměnné `--quickbar-*` na `body` (výchozí z `--fa-*` a `--primaryColor`), projekt
 může přemapovat na své tokeny. Texty jsou v `fcadmin.layout.quickbar.*`.
 
-## 29. AI asistent (volitelné)
+## 30. AI asistent (volitelné)
 
 Chat nad daty projektu postavený na [adt/ai-chat](https://github.com/AppsDevTeam/ai-chat)
 (Anthropic Managed Agents). Uživatel se ptá v přirozeném jazyce, AI si sama píše `SELECT`y
@@ -2801,7 +2885,7 @@ konverzaci v bočním panelu, napojení na ACL a překlady; tah AI běží ve wo
 > `multiTenant: true` ji proto `AiPresenterTrait` pustí jen uživateli s `fullDataAclResource`,
 > ostatní dostanou 403.
 
-### 29.1 Entity
+### 30.1 Entity
 
 Konverzace, zprávy a mapování agentů na schéma. Traity nesou mapování i anonymizační atributy:
 
@@ -2835,7 +2919,7 @@ Rozhraní `AiConversation` atd. záměrně nerozšiřují `ADT\DoctrineComponent
 (nesedí signatura `getId()`) — `Entity` přinese `BaseEntity` projektu. Migraci vygenerujte
 přes `migrations-diff`.
 
-### 29.2 Query, grid, presenter
+### 30.2 Query, grid, presenter
 
 ```php
 // app/Model/Queries/AiConversationQuery.php
@@ -2875,7 +2959,7 @@ Položka menu a ACL resource `portalBackoffice.ai` (presenter), volitelně
 vidí v gridu konverzace všech uživatelů a cizí si otevře **jen pro čtení**. Psát a mazat jde
 vždy jen do vlastních konverzací. Konverzace se mažou měkce (`deleted`).
 
-### 29.3 Konfigurace
+### 30.3 Konfigurace
 
 ```neon
 fancyadmin:
@@ -2915,7 +2999,7 @@ fancyadmin:
 		apiKeyProvider: @App\Model\Ai\ClinicApiKeyProvider
 ```
 
-Typicky klíč čte z konfigurace typu `secret` (viz 29.8) a když není vyplněný, vrátí
+Typicky klíč čte z konfigurace typu `secret` (viz 30.8) a když není vyplněný, vrátí
 záložní `apiKey`. Agenti, prostředí, sessions a soubory Managed Agents patří workspace
 klíče - po změně klíče je potřeba agenta zajistit znovu (`AgentProvisioner::ensureProvisioned()`
 po smazání mapování v `agentClass`) a staré konverzace pod novým klíčem nepokračují.
@@ -2928,7 +3012,7 @@ přidá jen tehdy, když si je projekt neregistruje sám.
 Logger se `ChatService` a `ChatEndpoint` předává explicitně (`ai.logger`), ne autowiringem:
 první `LoggerInterface` v kontejneru bývá SQL logger Doctrine, který na běžný `error()` spadne.
 
-### 29.4 Anonymizované schéma a read-only uživatel
+### 30.4 Anonymizované schéma a read-only uživatel
 
 1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
    fancyadminu už označené jsou). Neoznačený sloupec AI čte, jak je; `SECRET` a `BANK_ACCOUNT`
@@ -2963,7 +3047,7 @@ generování smaže:
 Další entity přidá `ai.excludedEntities: [App\Model\Entities\Něco]`. Když si projekt
 registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 
-### 29.5 Frontend
+### 30.5 Frontend
 
 ```bash
 yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.4.1 marked dompurify chart.js
@@ -2978,14 +3062,14 @@ import '@fancyadmin/js/aiChat';
 konverzace obnoví grid. Konfiguraci widgetu jde rozšířit přepsáním
 `AiPresenterTrait::getAiChatConfig()`, velikost panelu `getAiSidePanelSize()`.
 
-### 29.6 Boční panel bez formuláře
+### 30.6 Boční panel bez formuláře
 
 Konverzace využívá `SidePanelControl::setBodyTemplate($file, $params)` — panel vykreslí blok
 `body` šablony místo formuláře. Kořenový element bloku musí mít třídu `side-panel-body`
 (podle ní se panel otevře), atribut `data-fancyadmin-side-panel-no-dirty` vypne dotaz
 „Opravdu zavřít bez uložení?".
 
-### 29.7 MCP server (volitelné)
+### 30.7 MCP server (volitelné)
 
 Stejná anonymizovaná data jako chat jde zpřístupnit i jiným AI agentům — Claude Code, Claude
 Desktop a dalším MCP klientům — přes [Model Context Protocol](https://modelcontextprotocol.io).
@@ -3095,7 +3179,7 @@ claude mcp add --transport http <project> https://<host>/mcp --header "Authoriza
 Každé volání nástroje se zaloguje (`ai.logger`, info) s `identityId` a `mcpTokenId`.
 Smazání tokenu v gridu ho okamžitě zneplatní.
 
-### 29.8 Tajné hodnoty v konfiguraci
+### 30.8 Tajné hodnoty v konfiguraci
 
 Konfigurace typu `secret` (`ConfigurationTypeEnum::TYPE_SECRET`) je pro API klíče a hesla,
 která si zadává sám uživatel v Nastavení (např. Anthropic klíč kliniky). Hodnota se ukládá

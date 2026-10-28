@@ -55,33 +55,25 @@ trait KeycloakAuthPresenterTrait
 	}
 
 	/**
-	 * Silent SSO check — Keycloak přesměruje sem po prompt=none.
+	 * Návrat ze zkušebního průchodu (prompt=none) z akce Vyzkoušet v SSO gridu.
+	 *
+	 * Automatický silent SSO na přihlašovací stránce je zrušený: spouštěl redirect na Keycloak
+	 * každému nepřihlášenému návštěvníkovi, při výpadku Keycloaku zablokoval přihlášení všem
+	 * a klienty bez cookies posílal do smyčky. SSO uživatele teď na Keycloak posílá jen
+	 * e-mailové směrování v přihlašovacím formuláři. Tenhle endpoint proto nikoho nepřihlašuje.
 	 */
 	public function actionSilentCheck(?string $state = null, ?string $code = null, ?string $error = null, ?string $instance = null): void
 	{
-		// Zkušební průchod z administrace (SSO grid) - jen ohlásíme, jak Keycloak odpověděl,
-		// a nikoho nepřihlašujeme. Musí se to rozhodnout tady, protože obě větve níž už
-		// vedou k autentizaci; kdyby test propadl do nich, admin by se přihlásil cizí
-		// identitou nebo by se přes defaultRole provisionovala nová.
 		$keycloak = $instance !== null ? $this->_fancyAdmin->getKeycloakManager()?->getInstance($instance) : null;
 		if ($keycloak?->isTestAuthState($state)) {
 			$this->finishSsoTest($keycloak, $state, $error, $code);
 			return;
 		}
 
-		if ($error !== null || $code === null || $instance === null) {
-			// Silent check neprošel (typicky error=login_required) — vrátíme se na URL,
-			// ze které byl flow spuštěn. Čte se ze session přes state, ne z requestu.
-			$backRedirect = ($keycloak?->consumeAuthState($state) ?? [])['backRedirect'] ?? null;
-
-			if ($backRedirect !== null && Validators::isUrl($backRedirect)) {
-				$this->redirectUrl($backRedirect);
-			}
-			$this->redirect(':Portal:Sign:in');
-			return;
-		}
-
-		$this->processKeycloakAuthRequest($code, $instance, $state, isSilent: true);
+		// Cokoli jiného (typicky request rozpracovaný ještě před zrušením silent SSO) jen
+		// zneplatní state a skončí na přihlašovací stránce. Code se za token nevyměňuje.
+		$keycloak?->consumeAuthState($state);
+		$this->redirect(':Portal:Sign:in');
 	}
 
 	/**
@@ -228,7 +220,7 @@ trait KeycloakAuthPresenterTrait
 		return $error !== '' && $error !== Keycloak::SSO_TEST_OK ? substr($error, 0, 64) : 'unknown';
 	}
 
-	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $isSilent = false, bool $kcActionSuccess = false): void
+	private function processKeycloakAuthRequest(string $code, string $instanceName, ?string $state = null, bool $kcActionSuccess = false): void
 	{
 		$manager = $this->_fancyAdmin->getKeycloakManager();
 		$keycloak = $manager?->getInstance($instanceName);
@@ -275,10 +267,8 @@ trait KeycloakAuthPresenterTrait
 		}
 
 		// redirect_uri musí být totožné s tím, které bylo použito v autorizačním requestu,
-		// jinak Keycloak výměnu code za token odmítne (silent check používá jiné redirect_uri než callback).
-		$redirectUri = $isSilent
-			? $keycloak->getSilentRedirectUri()
-			: $keycloak->getAuthRedirectUri();
+		// jinak Keycloak výměnu code za token odmítne.
+		$redirectUri = $keycloak->getAuthRedirectUri();
 
 		$keycloakAuthentication = $keycloak->checkSessionValidity($code, $redirectUri, $authState['verifier']);
 
@@ -305,9 +295,8 @@ trait KeycloakAuthPresenterTrait
 		// Uložíme název instance do session pro logout a frontend
 		$manager->storeInstanceInSession($instanceName);
 
-		// Reset auth attempt counteru a příznaku silent SSO pokusů
+		// Reset auth attempt counteru
 		$keycloakSession->set(KeycloakSessionSection::AUTH_ATTEMPT_COUNT, 0);
-		$keycloakSession->remove(KeycloakSessionSection::SSO_SILENT_TRIED);
 
 		// Přihlášení proběhlo úspěšně — přesměrujeme zpět tam, odkud uživatel přišel.
 		if ($backRedirect !== null && Validators::isUrl($backRedirect)) {

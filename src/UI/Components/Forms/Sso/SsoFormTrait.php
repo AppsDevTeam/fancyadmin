@@ -35,8 +35,7 @@ trait SsoFormTrait
 
 		// Musí to být absolutní URL. Jaký host, to je věc administrátora - tohle neomezuje
 		// kam smí mířit, jen odmítá hodnotu, která jako URL nedává smysl, aby spadla tady
-		// s chybou u pole místo tichého přeskočení za běhu (Validators::isUrl
-		// v SignPresenterTrait::attemptSilentSso).
+		// s chybou u pole, a ne až při přihlašování SSO uživatele za běhu.
 		//
 		// Zámerne NE Form::URL: to hodnotu normalizuje - z 'test' udělá 'https://test',
 		// samo to zapíše do pole a pustí dál. Vznikla by tak syntakticky platná, ale

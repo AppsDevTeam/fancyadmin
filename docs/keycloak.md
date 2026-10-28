@@ -27,7 +27,7 @@ Návod na integraci na straně projektu je v [README.md](../README.md), sekce **
 | Flow | Účel | Klient |
 |---|---|---|
 | **Authorization Code Flow s PKCE (S256)** | Přihlášení uživatele | confidential |
-| **Authorization Code Flow s PKCE a `prompt=none`** | Silent SSO check (ověření existující KC session bez interakce) | confidential |
+| **Authorization Code Flow s PKCE a `prompt=none`** | Zkušební průchod instance (akce Vyzkoušet v SSO gridu), nikoho nepřihlásí | confidential |
 | **Client Credentials Grant** | Získání admin tokenu pro Admin API | confidential (service account) |
 | **OIDC Backchannel Logout** | Invalidace aplikační session při odhlášení v KC | confidential |
 | **Application-Initiated Action (`kc_action=UPDATE_PASSWORD`)** | Změna hesla uživatele v KC z aplikace | confidential |
@@ -60,12 +60,12 @@ Všechna Admin API volání jsou autentizována Bearer tokenem získaným přes 
 
 | Endpoint | Účel |
 |---|---|
-| `/realms/{realm}/protocol/openid-connect/auth` | Autorizační endpoint — přihlášení, silent check (`prompt=none`), změna hesla (`kc_action=UPDATE_PASSWORD`) |
+| `/realms/{realm}/protocol/openid-connect/auth` | Autorizační endpoint — přihlášení, zkušební průchod (`prompt=none`), změna hesla (`kc_action=UPDATE_PASSWORD`) |
 | `/realms/{realm}/protocol/openid-connect/logout` | RP-initiated logout (s `id_token_hint`, `post_logout_redirect_uri`, `client_id`, `state`) |
 
 Autorizační request vždy obsahuje: `client_id`, `response_type=code`, `redirect_uri`, `scope=openid email profile`, `state` (náhodný CSRF token vázaný na session), `code_challenge` + `code_challenge_method=S256` (PKCE), volitelně `login_hint` (předvyplnění emailu), `ui_locales`, `kc_action`.
 
-**`login_hint` nikdy nejde v URL.** Request s ním se nejdřív pošle ze serveru na PAR endpoint (s `client_secret`) a prohlížeč dostane jen `client_id` a `request_uri`. Keycloak pak použije výhradně parametry z PAR, proto v nich jsou i `kc_action` a `ui_locales`. E-mail tak nekončí v historii prohlížeče, v access logu Keycloaku ani v hlavičce Referer (nález WEB-SSO-02). Když PAR selže (Keycloak nedostupný, PAR zakázaný), zaloguje se to jako warning a přihlášení pokračuje bez nápovědy - uživatel e-mail v Keycloaku napíše znovu. Requesty bez `login_hint` (silent check, přihlášení bez e-mailu) jdou přímo v URL, citlivé nic nenesou.
+**`login_hint` nikdy nejde v URL.** Request s ním se nejdřív pošle ze serveru na PAR endpoint (s `client_secret`) a prohlížeč dostane jen `client_id` a `request_uri`. Keycloak pak použije výhradně parametry z PAR, proto v nich jsou i `kc_action` a `ui_locales`. E-mail tak nekončí v historii prohlížeče, v access logu Keycloaku ani v hlavičce Referer (nález WEB-SSO-02). Když PAR selže (Keycloak nedostupný, PAR zakázaný), zaloguje se to jako warning a přihlášení pokračuje bez nápovědy - uživatel e-mail v Keycloaku napíše znovu. Requesty bez `login_hint` (zkušební průchod, přihlášení bez e-mailu) jdou přímo v URL, citlivé nic nenesou.
 
 `request_uri` platí v Keycloaku ve výchozím stavu 60 s (*Realm settings - Tokens - Pushed Authorization Request lifespan*), což stačí, protože aplikace na URL přesměrovává hned. PAR musí mít klient povolený (v Keycloaku je ve výchozím stavu povolený všem klientům, vynutit ho jde volbou *Pushed authorization request required*).
 
@@ -82,7 +82,7 @@ Všechny jsou v routě `keycloak-auth/*` resp. `keycloak-log/*`:
 | Endpoint | Metoda | Volá | Účel |
 |---|---|---|---|
 | `/keycloak-auth/callback?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | OAuth2 callback — ověření state proti session, výměna code za tokeny (s PKCE verifierem), přihlášení uživatele |
-| `/keycloak-auth/silent-check?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | Callback pro silent SSO check (`prompt=none`), stejná validace state/PKCE. Má i testovací režim (akce Vyzkoušet v SSO gridu) řízený příznakem `isTest` uloženým v session u `state`: nikoho nepřihlásí, `code` se za token nevymění, výsledek jen vrátí do gridu parametrem `ssoTest` v návratové URL ze session |
+| `/keycloak-auth/silent-check?instance={name}&code=...&state=...` | GET | prohlížeč (redirect z KC) | Návrat ze zkušebního průchodu (`prompt=none`, akce Vyzkoušet v SSO gridu) řízeného příznakem `isTest` uloženým v session u `state`: nikoho nepřihlásí, `code` se za token nevymění, výsledek jen vrátí do gridu parametrem `ssoTest` v návratové URL ze session. Request bez testovacího `state` jen zneplatní state a přesměruje na přihlašovací stránku (automatický silent SSO na přihlašovací stránce je zrušený) |
 | `/keycloak-auth/post-log-out?state=...` | GET | prohlížeč (redirect z KC) | Návrat po logoutu z KC, redirect na `state` |
 | `/keycloak-auth/backchannel-logout?instance={name}` | POST | **Keycloak server** | OIDC backchannel logout — přijímá `logout_token` (JWT) |
 | `/keycloak-auth/silent-check-sso` | GET | prohlížeč (iframe keycloak-js) | Stránka pro silent check iframe adapteru |
@@ -225,7 +225,7 @@ Aplikace používá KC Admin API pro synchronizaci uživatelů (volitelné, dle 
 - **Ochrana proti open redirectu** — návratové URL pochází výhradně ze serverové session (generované aplikací); post-logout `state` se navíc validuje na shodu hostu s aplikací
 - **Backchannel logout** — `logout_token` se plně validuje podle OIDC spec (podpis proti JWKS, iss, aud, events, replay ochrana přes jti); identita uživatele se navíc ověřuje zpětným dotazem na KC Admin API (`sub` → uživatel → email)
 - **Žádné ukládání tokenů v DB** — `id_token` je pouze v serverové session (pro logout), access/refresh tokeny backend nedrží
-- **Deaktivace instance (`sso.is_active`)**: deaktivovanou instanci silent SSO vynechá a SSO uživatelé na ni navázaní se záměrně chovají jako běžní uživatelé s heslem (přihlášení heslem, lokální obnova i změna hesla), deaktivace je tedy i nouzový režim při výpadku Keycloaku; callback rozpracovaného requestu, odhlášení (včetně RP-initiated logoutu z KC) a backchannel logout fungují dál, aby deaktivace neuvěznila už přihlášené uživatele
+- **Deaktivace instance (`sso.is_active`)**: SSO uživatelé navázaní na deaktivovanou instanci se záměrně chovají jako běžní uživatelé s heslem (přihlášení heslem, lokální obnova i změna hesla), deaktivace je tedy i nouzový režim při výpadku Keycloaku; callback rozpracovaného requestu, odhlášení (včetně RP-initiated logoutu z KC) a backchannel logout fungují dál, aby deaktivace neuvěznila už přihlášené uživatele
 - **Testovací průchod (akce Vyzkoušet)**: příznak `isTest` je jen v serverové session u jednorázového `state`, ne v URL, takže ho nelze podvrhnout; `code` se v testovacím režimu za token nevymění a nikdo se nepřihlásí ani neprovisionuje; návrat vede výhradně na `backRedirect` ze session a kód chyby od KC se před zobrazením sanitizuje na `[a-z0-9_.-]` (max 64 znaků)
 - **Druhý faktor plně v KC** — WebAuthn ceremonie i credentials jsou na straně Keycloaku; aplikace klíče nevidí, neukládá a nijak s nimi nepracuje, jejich správa probíhá výhradně v Keycloaku (viz sekce 11)
 
@@ -249,7 +249,7 @@ Provozní poznámky:
 
 - **`Relying Party ID` nelze později změnit** bez zneplatnění všech registrovaných klíčů. KC musí běžet na HTTPS (nebo `localhost`) — WebAuthn v nezabezpečeném kontextu nefunguje.
 - **Ztráta klíče.** Bez klíče se uživatel nepřihlásí. Administrátor mu klíč odebere (detail uživatele → **Credentials**) a uživatel si při dalším přihlášení heslem zaregistruje nový. Do té doby chrání účet jen heslo, proto má odebrání klíče předcházet ověření identity uživatele.
-- Silent SSO (`prompt=none`) i backchannel logout fungují bez změny — druhý faktor se řeší jen při vytváření KC session.
+- Backchannel logout funguje bez změny — druhý faktor se řeší jen při vytváření KC session.
 - CSP aplikace se nemění: WebAuthn ceremonie běží na doméně KC, ne na doméně aplikace.
 
 ### Správa klíčů

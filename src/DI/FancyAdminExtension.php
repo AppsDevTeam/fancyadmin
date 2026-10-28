@@ -109,7 +109,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			// Více účtů (tenantů) v jedné databázi - data se oddělují podle účtu a uživatel
 			// si účet vybírá. false = jeden tenant na databázi (projekt bez účtů, nebo
 			// s databází pro každého zákazníka): bez filtrů podle účtu, výběru účtu
-			// a zákaznického portálu. Viz README, sekce 26 (Single-tenant režim).
+			// a zákaznického portálu. Viz README, sekce 27 (Single-tenant režim).
 			'multiTenant' => Expect::bool()->default(true),
 			'context' => Expect::string()->default(null),
 			'jsComponentsConfig' => Expect::array()->default([]),

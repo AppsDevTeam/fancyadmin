@@ -17,9 +17,9 @@ trait SsoTrait
 	/**
 	 * Zapojuje se instance do přihlašování?
 	 *
-	 * Silent SSO na přihlašovací stránce prochází všechny aktivní instance, takže vadná
-	 * konfigurace ovlivní login celé platformy. Deaktivace je způsob, jak takovou instanci
-	 * odstavit, aniž by se musela smazat - konfigurace i navázané identity zůstanou.
+	 * Vadná konfigurace nebo výpadek Keycloaku znemožní přihlášení SSO uživatelům navázaným
+	 * na instanci. Deaktivace je způsob, jak takovou instanci odstavit, aniž by se musela
+	 * smazat - konfigurace i navázané identity zůstanou a uživatelé se přihlásí heslem.
 	 * Viz KeycloakManager::getAllSsoRecords().
 	 */
 	use IsActive;

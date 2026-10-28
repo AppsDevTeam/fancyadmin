@@ -157,9 +157,9 @@ class KeycloakManager
 	/**
 	 * Instance, které se zapojují do přihlašování.
 	 *
-	 * Neaktivní se vynechávají. Silent SSO na přihlašovací stránce prochází tenhle seznam,
-	 * takže jeden vadný záznam přesměruje login celé platformy - deaktivace je způsob, jak
-	 * ho odstavit, aniž by se musel smazat (což u instance s navázanými identitami nejde).
+	 * Neaktivní se vynechávají. Vadná instance pošle své SSO uživatele na nefunkční Keycloak -
+	 * deaktivace je způsob, jak ji odstavit, aniž by se musela smazat (což u instance
+	 * s navázanými identitami nejde). Navázaní uživatelé se pak přihlašují heslem.
 	 *
 	 * Pozor: filtr je záměrně JEN tady, ne v getInstance(). Podle názvu se instance
 	 * dohledává i pro callback rozpracovaného requestu, odhlášení a backchannel logout -

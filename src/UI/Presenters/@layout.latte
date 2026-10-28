@@ -30,8 +30,8 @@
 	<link rel="manifest" href="{$basePath}/manifest.webmanifest"/>
 	{* iOS manifest ikony ignoruje a bere jen apple-touch-icon *}
 	<link n:if="$appIconsDir" rel="apple-touch-icon" href="{$basePath}/{$appIconsDir}/apple-touch-icon.png">
-	<link n:ifset="$faviconFileNamePng" rel="icon" type="image/svg+xml" href="{$basePath}/favicon/{$faviconFileNamePng}">
-	<link n:ifset="$faviconFileNameSvg" rel="icon" type="image/png" href="{$basePath}/favicon/{$faviconFileNameSvg}">
+	<link n:ifset="$faviconFileNameSvg" rel="icon" type="image/svg+xml" href="{$basePath}/favicon/{$faviconFileNameSvg}">
+	<link n:ifset="$faviconFileNamePng" rel="icon" type="image/png" href="{$basePath}/favicon/{$faviconFileNamePng}">
 	{* Vite entry (portal mapping) — emits the module script + its extracted CSS (and dev-server HMR client). *}
 	{asset 'portal:js/portal.js'}
 

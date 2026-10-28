@@ -15,8 +15,14 @@ use Doctrine\ORM\Mapping\InverseJoinColumn;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
+use Doctrine\ORM\Mapping\UniqueConstraint;
 use Nette\Security\Resource;
 
+/**
+ * Identita ma v jednom uctu nejvys jeden profil - na tom stoji vyber profilu po prihlaseni
+ * i prepinani uctu. Unikatni omezeni doplni entite TraitIndexListener z adt/doctrine-components.
+ */
+#[UniqueConstraint(fields: ['identity', 'account'])]
 trait ProfileTrait
 {
 	use IsActive;
