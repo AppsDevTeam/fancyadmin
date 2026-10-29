@@ -1,0 +1,47 @@
+@use 'variables' as *;
+
+// Šipka theme bootstrap-5 (right .75rem, šířka 16 px) + mezera 8 px od textu
+$select-filter-arrow-space: calc(.75rem + 16px + 8px);
+
+// Filtr = podmnožina téhož seznamu: select s vždy viditelným popiskem
+.select-filter {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	> .form-label {
+		margin-bottom: 0;
+		white-space: nowrap;
+	}
+
+	// Šířka textu nejdelší volby z js/selectFilter.js + odsazení, místo pro šipku a rámeček; strop 240 px
+	> .select2-container {
+		width: calc(var(--select-filter-text-width, 0px) + var(--select2-padding-x) + #{$select-filter-arrow-space} + 2px) !important;
+		max-width: 240px;
+
+		// Zkrácený text (…) nesmí zajet pod šipku
+		.select2-selection--single .select2-selection__rendered {
+			margin-right: calc(#{$select-filter-arrow-space} - var(--select2-padding-x));
+		}
+	}
+
+	@include media-breakpoint-down(sm) {
+		width: 100%;
+
+		> .select2-container {
+			flex: 1;
+			min-width: 0;
+			width: auto !important;
+			max-width: none;
+		}
+	}
+}
+
+// Otevřený seznam smí být širší než pole (data-dropdown-auto-width); dlouhé volby se zalomí
+.select2-dropdown.select-filter-dropdown {
+	max-width: 320px;
+
+	.select2-results__option {
+		white-space: normal;
+	}
+}

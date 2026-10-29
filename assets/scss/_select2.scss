@@ -43,6 +43,8 @@ select.form-select-sm + .select2-container {
 	--select2-height: #{$control-height-sm};
 	--select2-radius: #{$control-radius-sm};
 	--select2-padding-x: #{$control-padding-x-sm};
+	// Písmo stupně jako .form-control-sm; prvek ho jinak dědí z okolí
+	font-size: $control-font-sm;
 }
 
 select.form-select-xl + .select2-container,

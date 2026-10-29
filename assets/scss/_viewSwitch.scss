@@ -1,0 +1,25 @@
+@use 'variables' as *;
+
+// Přepínač pohledu = stejná data, jiné zobrazení (Den/Týden, Kalendář/Tabulka). Vzhled i velikost
+// jsou tlačítka v .btn-group (btn-outline-secondary, -sm přes .btn-group-sm); přepínač jen plní aktivní položku
+.view-switch > .btn {
+	--bs-btn-active-color: var(--onPrimaryColor, #fff);
+	--bs-btn-active-bg: var(--primaryColor);
+	--bs-btn-active-border-color: var(--primaryColor);
+	// Fokus dovnitř, vnější kroužek by sousedé zakryli; světlá linka ho ukáže i na aktivní položce
+	--bs-btn-focus-box-shadow: inset 0 0 0 2px var(--btn-ring), inset 0 0 0 3px var(--fa-surface);
+
+	// Bootstrap zvedá najetou položku nad sousedy (z-index); po odjetí ji drží nahoře, dokud rámeček nevybledne
+	transition: background-color .18s ease, color .18s ease, border-color .18s ease, z-index 0s .18s;
+
+	&:hover {
+		transition-delay: 0s;
+	}
+
+	// Pod lg u položek s ikonou zůstane jen ikona (popisek je v title)
+	> i + span {
+		@include media-breakpoint-down(lg) {
+			@include visually-hidden;
+		}
+	}
+}

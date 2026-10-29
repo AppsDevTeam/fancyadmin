@@ -1,0 +1,178 @@
+@use 'variables' as *;
+
+// Záložky = navigace mezi sekcemi (mění se celý obsah); jezdec, „Další“ a posuvnou lištu dodává js/tabs.js
+.nav-tabs {
+	--bs-nav-link-padding-x: 14px;
+	--bs-nav-link-padding-y: 10px;
+	--bs-nav-link-font-weight: 500;
+	--bs-nav-link-color: var(--fa-text-muted);
+	--bs-nav-link-hover-color: var(--fa-heading, var(--fa-text));
+	--bs-nav-tabs-border-color: var(--fa-border);
+	--bs-nav-tabs-border-radius: 0;
+	--bs-nav-tabs-link-hover-border-color: transparent transparent var(--fa-border);
+	--bs-nav-tabs-link-active-color: var(--fa-heading, var(--fa-text));
+	--bs-nav-tabs-link-active-bg: transparent;
+	--bs-nav-tabs-link-active-border-color: transparent transparent var(--primaryColor);
+
+	position: relative;
+	flex-wrap: nowrap;
+
+	> .nav-item {
+		flex: none;
+	}
+
+	.nav-link {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		// Podtržení hoveru i aktivní záložky; mezi položkami bez mezery, aby navazovalo
+		border-width: 0 0 2px;
+		white-space: nowrap;
+
+		&.active {
+			font-weight: 600;
+		}
+	}
+
+	// Aktivní podtržení kreslí jezdec
+	&.has-indicator .nav-link.active {
+		border-bottom-color: transparent;
+	}
+
+	// Podzáložky uvnitř panelu (2. úroveň)
+	&.nav-tabs-sm {
+		--bs-nav-link-padding-x: 11px;
+		--bs-nav-link-padding-y: 6px;
+		--bs-nav-link-font-size: 13px;
+	}
+}
+
+.nav-tabs-indicator {
+	position: absolute;
+	left: 0;
+	bottom: -1px;
+	z-index: 1;
+	height: 2px;
+	background: var(--primaryColor);
+	pointer-events: none;
+	transition: left .25s cubic-bezier(.3, .7, .2, 1), width .25s cubic-bezier(.3, .7, .2, 1);
+}
+
+// Obal z tabs.js; linku kreslí on, aby šla i pod šipky posuvné lišty
+.nav-tabs-wrap {
+	display: flex;
+	align-items: stretch;
+	border-bottom: var(--bs-nav-tabs-border-width, 1px) solid var(--fa-border);
+
+	> .nav-tabs {
+		flex: 1;
+		min-width: 0;
+		border-bottom: 0;
+	}
+}
+
+.nav-tabs-arrow {
+	display: none;
+	flex: none;
+	width: 16px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--fa-text-muted);
+	font-size: 12px;
+	transition: opacity .15s;
+
+	&:hover {
+		color: var(--primaryColor);
+	}
+
+	// Na kraji šipka zmizí, místo ale drží, aby záložky neposkakovaly
+	&:disabled {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+// Posuvná lišta: úzká šířka nebo podzáložky, které se nevejdou
+.nav-tabs-wrap.is-scroll {
+	> .nav-tabs-arrow {
+		display: block;
+	}
+
+	> .nav-tabs {
+		overflow-x: auto;
+		scroll-behavior: smooth;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+
+		// overflow by přesah přes linku ořízl
+		.nav-link {
+			margin-bottom: 0;
+		}
+
+		.nav-tabs-indicator {
+			bottom: 0;
+		}
+	}
+
+	&.can-scroll-start > .nav-tabs {
+		mask-image: linear-gradient(90deg, transparent 0, #000 20px);
+	}
+
+	&.can-scroll-end > .nav-tabs {
+		mask-image: linear-gradient(90deg, #000 calc(100% - 20px), transparent 100%);
+	}
+
+	&.can-scroll-start.can-scroll-end > .nav-tabs {
+		mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+	}
+}
+
+// Přetečení: „Další“ je Bootstrap dropdown; vrstvu ladí jako rozbalený Select2
+.nav-tabs-more {
+	.nav-link > .fa-chevron-down {
+		font-size: 11px;
+	}
+
+	// Šipka je vlastní ikona, ne caret Bootstrapu
+	.dropdown-toggle::after {
+		display: none;
+	}
+
+	.dropdown-menu {
+		--bs-dropdown-spacer: 4px;
+		--bs-dropdown-border-color: var(--fa-border);
+		--bs-dropdown-link-active-bg: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface)));
+		--bs-dropdown-link-active-color: var(--primaryColor);
+
+		// Bootstrap v .nav-tabs menu přisazuje k lince a ubírá mu horní rohy
+		margin-top: 0;
+		border-radius: var(--bs-dropdown-border-radius);
+		max-height: 420px;
+		overflow-y: auto;
+		box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+	}
+
+	.dropdown-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+
+		&.active {
+			font-weight: 600;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nav-tabs-indicator {
+		transition: none;
+	}
+
+	.nav-tabs-wrap > .nav-tabs {
+		scroll-behavior: auto;
+	}
+}
