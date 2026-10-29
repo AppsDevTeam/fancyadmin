@@ -252,7 +252,7 @@ $select2MinWidth: 300px;
 
 .select2-selection__choice {
 	margin-bottom: 0  !important;
-	border-radius: 14px !important;
+	border-radius: var(--bs-border-radius) !important;
 	background-color: $secondary-darker !important;
 	padding: 0 var(--select2-tag-padding-x) !important;
 	margin-right: 0 !important;

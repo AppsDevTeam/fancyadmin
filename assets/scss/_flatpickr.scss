@@ -11,8 +11,8 @@
 
 $fp-day-size: 34px;
 $fp-gap: 3px;
-$fp-radius-day: 9px;
-$fp-radius-control: 8px;
+$fp-radius-day: var(--bs-border-radius-xs);
+$fp-radius-control: var(--bs-border-radius-xs);
 // Výška ovládacích prvků v hlavičce (měsíc, rok, šipky) a šířka pole s časem
 $fp-control-size: 28px;
 $fp-time-field-width: 56px;
@@ -99,7 +99,7 @@ $fp-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 			width: $fp-control-size;
 			height: $fp-control-size;
 			padding: 0;
-			border-radius: $br-element;
+			border-radius: var(--bs-border-radius-xs);
 			color: $text-muted;
 			fill: $text-muted;
 			transition: background-color .15s, color .15s;

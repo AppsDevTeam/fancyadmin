@@ -1,4 +1,5 @@
 @use 'sass:color';
+@use 'radius' as *;
 
 /* ====================
  *  Fonts
@@ -22,41 +23,31 @@ $fs-body: 0.9rem;
 $navbar-height: 80px;
 $side-panel-width: 70px;
 
-// border-radius
-$br-container: 20px;
-$br-element: 10px;
-$br-thumbnail: 3px;
-
 // inputs
 $padding-input: 15px;
 
 /* --------------------
  *  Velikosti ovládacích prvků
  *
- *  Inputy, selecty a Select2 mají tři velikosti. Poměr poloměru k výšce drží
- *  kolem 0,36 (12/32 = 0,38, 14/40 = 0,35, 18/48 = 0,38), takže všechny tři
- *  působí jako jedna rodina — oblost se vnímá relativně k výšce, ne absolutně.
- *  Výšky i odsazení sedí na čtyřpixelové mřížce.
- *
- *  Prvky si rozměry čtou z CSS proměnných --control-*, takže je projekt nebo
- *  konkrétní kontext (lišta, panel) přenastaví bez přebíjení jednotlivých
- *  vlastností. Třídy: výchozí / .form-control-sm / .form-control-xl.
+ *  Inputy, selecty, Select2 a tlačítka mají tři velikosti na čtyřpixelové mřížce, zaoblení je stupeň škály výše.
+ *  Prvky si rozměry čtou z CSS proměnných --control-*, kontext (lišta, panel) je přenastaví bez přebíjení.
+ *  Třídy: .form-control-sm / výchozí / .form-control-xl.
  * -------------------- */
 
 $control-height-sm: 32px;
-$control-radius-sm: 12px;
+$control-radius-sm: $border-radius-sm;
 $control-padding-x-sm: 12px;
 $control-font-sm: 14px;
 
 $control-height: 40px;
-$control-radius: 14px;
+$control-radius: $border-radius;
 $control-padding-x: 16px;
 $control-font: 16px;
 
 // xl odpovídá rozměrům, které měly prvky dřív jako jediné (49px/20px); výška
 // je srovnaná na 48px, ať nevypadává z mřížky — rozdíl není okem postřehnutelný.
 $control-height-xl: 48px;
-$control-radius-xl: 18px;
+$control-radius-xl: $border-radius-lg;
 $control-padding-x-xl: 20px;
 $control-font-xl: 16px;
 
@@ -65,23 +56,6 @@ $control-font-xl: 16px;
 $paddingTableRowY: 12px;
 $paddingTableRowX: 12px;
 $paddingTableHeadY: 12px;
-
-/* --------------------
- *  Zaoblení ploch
- *
- *  Plochy (podklady) mají vlastní žebříček, nezávislý na ovládacích prvcích:
- *  velká plocha s malým rohem působí hranatě, malá vrstva s velkým rozteklá.
- *  Vnořené plochy se skládají soustředně (vnitřní = vnější − odsazení).
- * -------------------- */
-
-$br-surface-sm: $control-radius;   // plovoucí vrstvy a menší karty - dropdown, kalendář, grid
-$br-surface: 24px;      // karty, panely, modaly
-$br-surface-lg: 36px;   // velké stránkové karty
-
-// Karta gridu má stupeň menší plochy; projekt si ji pro konkrétní kontext (např.
-// grid vnořený v panelu) přenastaví proměnnou --datagridRadius na .datagrid —
-// drží se tím i přilepená hlavička a podklad jejích rohů.
-$br-grid: $br-surface-sm;
 
 // Ikony Font Awesome se v šablonách píšou několika způsoby (.fa, .fas, .fa-solid,
 // .fa-regular…), samotné .fa je proto nechytí všechny. Vybíráme je podle libovolné
@@ -106,7 +80,15 @@ $input-color-focus: var(--fa-input-focus);
   // buttons
   $btn-font-size: $fs-body !default,
   $btn-line-height: normal !default,
-  $btn-border-radius: $br-container !default,
+  $border-radius: $border-radius !default,
+  $border-radius-sm: $border-radius-sm !default,
+  $border-radius-lg: $border-radius-lg !default,
+  $border-radius-xl: $border-radius-xl !default,
+  $border-radius-xxl: $border-radius-xxl !default,
+  $border-radius-pill: $border-radius-pill !default,
+  $card-border-radius: var(--bs-border-radius-lg) !default,
+  $tooltip-border-radius: var(--bs-border-radius-sm) !default,
+  $badge-border-radius: var(--bs-border-radius-pill) !default,
   $btn-padding-y: 15px !default,
   $btn-padding-x: 25px !default,
   $component-active-bg: var(--primaryColor) !default,

@@ -1,0 +1,22 @@
+/* --------------------
+ *  Zaoblení — jedna škála pro ovládací prvky i plochy
+ *
+ *  Názvy i CSS proměnné (--bs-border-radius-*) jsou Bootstrapu, xs a xxs doplňujeme.
+ *  Prvek i plocha berou stupeň podle své velikosti; vnořená plocha má stupeň menší než ta, ve které leží.
+ *  Samostatný soubor bez CSS, aby škálu převzaly i bundly, které celý fancyadmin nenačítají.
+ * -------------------- */
+
+$border-radius-xxs: 4px;    // drobné značky: tečky legendy, čtverečky v kalendáři
+$border-radius-xs: 8px;     // položky uvnitř ploch: menu, seznamy, den v kalendáři, vnořený grid
+$border-radius-sm: 12px;    // malý prvek, malá plocha (tooltip, box v kartě)
+$border-radius: 14px;       // výchozí prvek, panel, karta gridu, plovoucí vrstva
+$border-radius-lg: 18px;    // velký prvek, karta, widget, modal
+$border-radius-xl: 24px;    // velký kontejner: přihlášení, chat
+$border-radius-xxl: 32px;   // stránková karta
+$border-radius-pill: 50rem; // stavy a navigace: badge, chip, záložky, stránkování
+
+// Stupně pod sm Bootstrap nemá, doplňujeme je do jeho škály
+@mixin radius-root-vars {
+	--bs-border-radius-xxs: #{$border-radius-xxs};
+	--bs-border-radius-xs: #{$border-radius-xs};
+}

@@ -1,7 +1,7 @@
 @use 'variables' as *;
 
 .datagrid {
-	--datagridRadius: #{$br-grid};
+	--datagridRadius: var(--bs-border-radius);
 }
 
 .table-responsive {
@@ -9,25 +9,25 @@
 	white-space: nowrap;
 	border: 1px solid $secondary-darker;
 	//overflow: hidden;
-	border-radius: var(--datagridRadius, #{$br-grid});
+	border-radius: var(--datagridRadius, var(--bs-border-radius));
 	background-color: $background;
 	position: relative;
 
 	&::-webkit-scrollbar-track {
-		border-radius: 999px;
+		border-radius: var(--bs-border-radius-pill);
 		background: transparent;
 		display: none;
 	}
 
 	&::-webkit-scrollbar {
-		border-radius: 999px;
+		border-radius: var(--bs-border-radius-pill);
 		background: transparent;
 		height: 0;
 		display: none;
 	}
 
 	&::-webkit-scrollbar-thumb {
-		border-radius: 999px;
+		border-radius: var(--bs-border-radius-pill);
 		background-color: $background;
 		border: 23px solid transparent;
 		display: none;
@@ -296,11 +296,7 @@ form:has(> .table-responsive-wrapper) {
 
 		.btn {
 			border: 1px solid $color-light-gray;
-			border-radius: 10px;
-			border-top-right-radius: 10px !important;
-			border-bottom-right-radius: 10px !important;
-			border-top-left-radius:  10px !important;
-			border-bottom-left-radius:  10px !important;
+			border-radius: var(--bs-border-radius-pill) !important;
 			width: 35px;
 			height: 35px;
 			display: flex;
@@ -649,7 +645,7 @@ $datagridPageHeaderAnimation: .25s;
 			top: 0;
 			left: 0;
 			right: 0;
-			height: var(--datagridRadius, #{$br-grid});
+			height: var(--datagridRadius, var(--bs-border-radius));
 			background-color: $background-color;
 		}
 
@@ -661,7 +657,7 @@ $datagridPageHeaderAnimation: .25s;
 			overflow-x: hidden;
 			scrollbar-width: none;
 			border-bottom: 0;
-			border-radius: var(--datagridRadius, #{$br-grid}) var(--datagridRadius, #{$br-grid}) 0 0;
+			border-radius: var(--datagridRadius, var(--bs-border-radius)) var(--datagridRadius, var(--bs-border-radius)) 0 0;
 			box-shadow: 0 6px 8px -6px rgba(0, 0, 0, .15);
 
 			table {

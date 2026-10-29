@@ -52,7 +52,7 @@
   width: 100%;
   background-color: #fff;
   transition: all 0.25s;
-  border-radius: 3px
+  border-radius: var(--bs-border-radius-pill)
 }
 
 .hor {

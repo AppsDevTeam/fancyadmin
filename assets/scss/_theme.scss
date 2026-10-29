@@ -302,7 +302,7 @@ input[type="color"]::-webkit-color-swatch {
 			width: 20px;
 			height: 20px;
 			border: 2px solid $secondary;
-			border-radius: 4px;
+			border-radius: var(--bs-border-radius-xxs);
 			transition: all .2s;
 			min-width: 20px;
 			margin-top: 2px;
@@ -426,7 +426,7 @@ input[type="color"]::-webkit-color-swatch {
 .dashboard-card {
 	padding: $cardPadding;
 	border: 1px solid $secondary-darker;
-	border-radius: $br-surface;
+	border-radius: var(--bs-border-radius-lg);
 	display: flex;
 	gap: 25px;
 	min-height: calc(100% - 1rem);
@@ -679,7 +679,7 @@ $bottomSubMenuHeight: 45px;
 	align-items: flex-start;
 	gap: 16px;
 
-	border-radius: $br-surface;
+	border-radius: var(--bs-border-radius-lg);
 	border: 1px solid $color-light-gray;
 	background: $background;
 
@@ -951,7 +951,7 @@ $bottomSubMenuHeight: 45px;
 
 			background-color: var(--legendItemColor);
 			margin-right: 8px;
-			border-radius: 5px;
+			border-radius: var(--bs-border-radius-xxs);
 		}
 
 		&:hover {
@@ -963,7 +963,7 @@ $bottomSubMenuHeight: 45px;
 #chart-tooltip {
 	background: $background;
 	border: 1px solid $color-light-gray;
-	border-radius: 5px;
+	border-radius: var(--bs-border-radius-sm);
 	padding: 10px;
 	font-size: 13px;
 	color: $black;
@@ -1205,7 +1205,7 @@ body:not(:has(.navbar)) #snippet--container {
 	}
 
 	.iOsA2HS_popup {
-		border-radius: $br-surface-sm;
+		border-radius: var(--bs-border-radius);
 		z-index: 9999;
 		background: #f3f3f3;
 		position: fixed;
@@ -1233,7 +1233,7 @@ body:not(:has(.navbar)) #snippet--container {
 			justify-content: center;
 			background: white;
 			box-shadow: 0 1px 7px -2px rgba(0, 0, 0, .7882352941);
-			border-radius: 12px;
+			border-radius: var(--bs-border-radius-sm);
 
 			img {
 				width: 60%;
@@ -1249,7 +1249,7 @@ body:not(:has(.navbar)) #snippet--container {
 
 	li > i {
 		background-color: white;
-		border-radius: 12px;
+		border-radius: var(--bs-border-radius-sm);
 		color: dodgerblue;
 		padding: 8px;
 		margin-left: 5px;
@@ -1257,7 +1257,7 @@ body:not(:has(.navbar)) #snippet--container {
 
 	li > b {
 		background-color: white;
-		border-radius: 12px;
+		border-radius: var(--bs-border-radius-sm);
 		padding: 8px 12px;
 		margin-left: 5px;
 		font-weight: normal;
@@ -1845,7 +1845,7 @@ select.is-invalid + .select2 {
 	background-size: 100px 100px;
 	background-color: $background;
 	border: 1px solid $color-light-gray;
-	border-radius: 10px;
+	border-radius: var(--bs-border-radius-sm);
 }
 
 .draggable {
@@ -1855,7 +1855,7 @@ select.is-invalid + .select2 {
 
 .light-gray-bordered-box {
 	border: 1px solid $color-light-gray;
-	border-radius: $br-surface-sm;
+	border-radius: var(--bs-border-radius);
 }
 
 .table-bottom-scroll {
@@ -1873,13 +1873,13 @@ select.is-invalid + .select2 {
 	z-index: 9;
 
 	&::-webkit-scrollbar {
-		border-radius: 999px;
+		border-radius: var(--bs-border-radius-pill);
 		background: $secondary;
 		height: $height;
 	}
 
 	&::-webkit-scrollbar-thumb {
-		border-radius: 999px;
+		border-radius: var(--bs-border-radius-pill);
 		background-color: $secondary-darker;
 		border: $padding solid $secondary;
 		cursor: pointer;

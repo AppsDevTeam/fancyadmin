@@ -40,7 +40,7 @@ body.menu-wide {
 	--menu-wide-hover-text: var(--primaryColorDark);
 	--menu-wide-active-bg: var(--primaryColor);
 	--menu-wide-active-text: #fff;
-	--menu-wide-item-radius: 8px;
+	--menu-wide-item-radius: var(--bs-border-radius-xs);
 	--menu-wide-popover-radius: var(--overlay-radius);
 	--menu-wide-popover-bg: #{$background};
 	--menu-wide-popover-border: #f0eeef;

@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'radius';
 
 @each $size, $container-max-width in $container-max-widths {
 	.maxw-#{$size} {
@@ -8,7 +9,8 @@
 
 // Jedno zaoblení všech plovoucích vrstev (dropdowny, Select2, kalendář, popovery)
 :root {
-	--overlay-radius: #{$br-surface-sm};
+	@include radius.radius-root-vars;
+	--overlay-radius: var(--bs-border-radius);
 }
 
 

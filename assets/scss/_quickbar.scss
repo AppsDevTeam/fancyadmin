@@ -17,7 +17,7 @@ body {
 	--quickbar-text-strong: var(--fa-text);
 	--quickbar-muted: var(--fa-text-muted);
 	--quickbar-faint: var(--fa-text-faint);
-	--quickbar-item-radius: 8px;
+	--quickbar-item-radius: var(--bs-border-radius-xs);
 	--quickbar-shadow: 0 0 2px rgba(5, 5, 6, 0.16), 0 0 4px rgba(5, 5, 6, 0.16), 0 0 32px rgba(5, 5, 6, 0.12);
 
 	--quickbar-width: 440px;
@@ -440,7 +440,7 @@ body:has(.quickbar) .container-main {
 	height: 30px;
 	padding: 0 12px;
 	border: 1px solid var(--quickbar-border);
-	border-radius: 999px;
+	border-radius: var(--bs-border-radius-pill);
 	background: var(--quickbar-surface);
 	font-size: 13px;
 	font-weight: 500;

@@ -1,7 +1,7 @@
 @use 'variables' as *;
 
 $color_1: $black;
-$borderRadius: 4px;
+$borderRadius: var(--bs-border-radius-xxs);
 
 .structFilter {
 	min-height: 20px;
@@ -29,7 +29,7 @@ $borderRadius: 4px;
 				> span {
 					background-color: $background-darker;
 					color: $text-muted;
-					border-radius: 2px;
+					border-radius: var(--bs-border-radius-xxs);
 					margin-right: 1px;
 					padding: 0 6px;
 					font-size: 13px;
