@@ -8,6 +8,8 @@ class UserMenu
 {
 	protected bool $addMyProfileMenuItem = true;
 
+	protected bool $addMyAccountMenuItem = false;
+
 	protected bool $addFirebaseMenuItem = true;
 
 	protected ?string $profileLink = null;
@@ -64,6 +66,21 @@ class UserMenu
 	public function isAddMyProfileMenuItem(): bool
 	{
 		return $this->addMyProfileMenuItem;
+	}
+
+	/**
+	 * Odkaz na stránku Můj účet (presenter Account v modulu, viz AccountPresenterTrait).
+	 * Zobrazí se jen uživateli s vybraným účtem a právem na resource `<modul>.account`.
+	 */
+	public function setAddMyAccountMenuItem(bool $addMyAccountMenuItem): self
+	{
+		$this->addMyAccountMenuItem = $addMyAccountMenuItem;
+		return $this;
+	}
+
+	public function isAddMyAccountMenuItem(): bool
+	{
+		return $this->addMyAccountMenuItem;
 	}
 
 	public function setFirebaseMenuItem(bool $value): self

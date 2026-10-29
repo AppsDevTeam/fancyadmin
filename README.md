@@ -811,6 +811,33 @@ class ProfilePresenter extends AuthPresenter
 V `PortalCustomer` pak stojí vedle sebe `Profile` (moje údaje) a `Profiles` (seznam
 profilů účtu) — jsou to dva různé presentery.
 
+### AccountPresenter (stránka „Můj účet")
+
+Zákazník si na ní upravuje **vybraný účet** (`selectedAccount`) — tentýž `AccountForm`,
+kterým administrátor edituje účty v backoffice (`Accounts`). Presenter patří do
+`PortalCustomer` (URL `/<selectedAccount>/account`), v single-tenant projektu vrací 404.
+Na rozdíl od Profilu **není z ACL vyjmutý**: přístup má jen role s resourcem
+`portalCustomer.account` (doplní `fancyadmin:generate-missing-acl-resources`).
+
+```php
+// app/UI/Portal/Customer/Presenters/Account/AccountPresenter.php
+namespace App\UI\Portal\Customer\Presenters\Account;
+
+use ADT\FancyAdmin\UI\Presenters\Account\AccountPresenterTrait;
+use App\UI\Portal\Presenters\AuthPresenter;
+
+class AccountPresenter extends AuthPresenter
+{
+	use AccountPresenterTrait;
+}
+```
+
+Odkaz „Můj účet" do uživatelského menu se zapíná v `UserMenuFactory` modulu přes
+`$userMenu->setAddMyAccountMenuItem(true)` a zobrazí se jen tomu, kdo na resource právo má.
+
+Formulář je jeden pro obě stránky, takže co smí měnit jen administrátor (ceny, limity…),
+musí `AccountForm` v projektu sám skrýt — fancyadmin o polích projektu neví.
+
 #### ACL na Profilu: presenter je vyjmutý, změna osobních údajů ne
 
 `AuthPresenterTrait::validatePresenterPermission()` vyjímá `Profile` presenter z běžné

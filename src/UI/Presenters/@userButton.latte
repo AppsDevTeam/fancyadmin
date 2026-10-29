@@ -30,6 +30,16 @@
                     </div>
                 </div>
             </a>
+            <a n:if="$userMenu->isAddMyAccountMenuItem() && $user->isMultiTenant() && $user->getIdentity()->getSelectedAccount() && $user->isAllowed(lcfirst(explode(':', $presenter->getName())[0]) . '.account')" n:href="Account:default" class="dropdown-item">
+                <div>
+                    <div>
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div>
+                        {_fcadmin.modules.web.navbar.account.myAccount}
+                    </div>
+                </div>
+            </a>
             <li n:if="$userMenu->isFirebaseMenuItem()" class="dropdown-item" data-adt-notifications="" data-adt-notifications-enable="" style="display:none">
                 <div>
                     <div>

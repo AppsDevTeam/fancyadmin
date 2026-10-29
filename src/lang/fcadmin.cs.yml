@@ -110,6 +110,11 @@ presenters:
     pageTitle: Účty
     header: Účty
 
+  # Stránka Můj účet (vybraný účet) — presenter Account
+  myAccount:
+    pageTitle: Můj účet
+    header: Můj účet
+
   # Stránka Můj profil — presenter Profile
   profile:
     pageTitle: Můj profil
@@ -576,6 +581,8 @@ passkeys:
 modules:
   web:
     navbar:
+      account:
+        myAccount: "Můj účet"
       profile:
         myProfile: "Můj profil"
     presenters:
