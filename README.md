@@ -3028,9 +3028,12 @@ GRANT SELECT ON `app_anon`.* TO 'app_anon'@'%';
 
    Účet umí založit i příkaz: `anonymization:generate-views --grant-user=app_anon --grant-password=…`
    (potřebuje DB uživatele s právem `CREATE USER`/`GRANT`, typicky přes `--host`/`--db-user`).
-4. Zajistěte agenta Managed Agents: `php bin/console fancyadmin:ai:provision-agent` (po
-   pohledech, v každém deployi — aktualizuje systémový prompt a nástroje). Bez agenta skončí
-   první zpráva chybou „No Managed Agents agent is provisioned“.
+4. Agenta Managed Agents není potřeba zakládat — první konverzace bez agenta ho založí
+   a po změně systémového promptu nebo nástrojů (nový release) ho aktualizuje (otisk
+   `fingerprint` na entitě agenta, bez změny se API nevolá). Deploy tak nepotřebuje klíč
+   API a chybný klíč jedné instance shodí jen její chat. Ručně (ověření klíče, vynucená
+   aktualizace): `php bin/console fancyadmin:ai:provision-agent`. Od adt/ai-chat 0.7 má
+   entita agenta sloupec `fingerprint` — projekt potřebuje migraci.
 
 **Tabulky bez pohledu.** Některé tabulky nejde maskovat po sloupcích a v anonymizovaném
 schématu nemají co dělat. Rozšíření je proto předá `AnonymizationPolicy` jako vyřazené
