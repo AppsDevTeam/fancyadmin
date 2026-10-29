@@ -1,9 +1,13 @@
 @use 'variables' as *;
 
-@property --button-primary-color {
-	syntax: '<color>';
-	inherits: false;
-	initial-value: #fff;
+// Barvy variant jdou přes proměnné Bootstrapu, hover/focus/stisk/disabled pak řeší jeho .btn
+@mixin button-colors($color, $bg, $border, $hover-color, $hover-bg, $hover-border) {
+	--bs-btn-color: #{$color};
+	--bs-btn-bg: #{$bg};
+	--bs-btn-border-color: #{$border};
+	--bs-btn-hover-color: #{$hover-color};
+	--bs-btn-hover-bg: #{$hover-bg};
+	--bs-btn-hover-border-color: #{$hover-border};
 }
 
 // Tlačítko je ovládací prvek jako input, takže bere rozměry ze stejné škály
@@ -12,75 +16,62 @@
 	--control-height: #{$control-height};
 	--control-radius: #{$control-radius};
 	--control-font: #{$control-font};
+	--bs-btn-font-weight: 600;
+	// Ring v barvě tlačítka, vnitřní mezera v barvě plochy ho odsadí od okraje
+	--btn-ring: var(--primaryColor);
+	--bs-btn-focus-box-shadow: 0 0 0 2px var(--fa-surface), 0 0 0 4px var(--btn-ring);
+	// Stisk vypadá jako najetí, varianty tak nastavují jen klid a hover
+	--bs-btn-active-color: var(--bs-btn-hover-color);
+	--bs-btn-active-bg: var(--bs-btn-hover-bg);
+	--bs-btn-active-border-color: var(--bs-btn-hover-border-color);
+	// Neaktivní u všech variant jako plná šedá plocha místo průhlednosti .65
+	--bs-btn-disabled-opacity: 1;
+	--bs-btn-disabled-color: var(--fa-text-faint);
+	--bs-btn-disabled-bg: #{$secondary};
+	--bs-btn-disabled-border-color: #{$secondary};
 
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
-	border: none;
+	gap: 8px;
+	// Rámeček mají všechny varianty (plné průhledný), aby měly stejnou výšku
+	border: 1px solid var(--bs-btn-border-color);
 	border-radius: var(--control-radius);
 	// min-height, ne height: tlačítko s delším popiskem se musí umět zalomit,
-	// jednořádkové vyjde na přesnou výšku stupně
+	// jednořádkové vyjde na přesnou výšku stupně (7 + 24 + 7 + 2× rámeček = 40)
 	height: auto;
 	min-height: var(--control-height);
-	padding-top: 8px;
-	padding-bottom: 8px;
+	padding: 7px 18px;
 	font-size: var(--control-font);
+	line-height: 1.5;
+	transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
 
-	&.btn-primary {
-		--button-primary-color: var(--primaryColor);
-		background: linear-gradient(90deg, var(--primaryColorDark20) 0%, var(--button-primary-color) 100%);
-		transition: --button-primary-color .5s;
-
-		border: none;
-		color: white;
-
-		&:hover {
-			--button-primary-color: var(--primaryColorDark20);
-		}
-	}
-
-	&.btn-outline-primary {
-		--bs-btn-color: var(--primaryColor);
-		--bs-btn-border-color: var(--primaryColor);
-		--bs-btn-hover-bg: var(--primaryColor);
-		--bs-btn-hover-border-color: var(--primaryColor);
-		--bs-btn-active-bg: var(--primaryColorDark);
-		--bs-btn-active-border-color: var(--primaryColorDark);
-		--bs-btn-disabled-color: var(--primaryColor);
-		--bs-btn-disabled-border-color: var(--primaryColor);
-		border: 1px solid var(--bs-btn-border-color);
-	}
-
-	&.btn-secondary {
-		color: $black;
-		background-color: transparent;
-		border-radius: var(--control-radius);
-		border: 1px solid var(--buttonSecondaryBorder, #D1E4E4);
-
-		&:active,
-		&:hover {
-			border: 1px solid var(--buttonSecondaryBorderHover, #A8CCCC);
-		}
-	}
-
-	&.btn-danger {
-		color: white;
-		background-color: $bg-danger;
-
-		&:active,
-		&:hover {
-			background-color: $bg-danger-dark-10;
-		}
+	&:active {
+		transform: scale(0.97);
 	}
 }
+
 // Velikostní varianty tlačítka. Specificita musí dosáhnout na .btn výše, proto
 // dvojice tříd; -lg je bootstrapí název pro totéž co -xl.
-.btn.btn-sm {
+.btn.btn-sm,
+.btn-group-sm > .btn {
 	--control-height: #{$control-height-sm};
 	--control-radius: #{$control-radius-sm};
-	--control-font: #{$control-font-sm};
+	--control-font: 13px;
 
-	padding: 0 16px;
+	padding: 0 14px;
+	line-height: 1.25;
+	gap: 5px;
+}
+
+// Stupeň pod škálou ovládacích prvků pro tlačítka v řádcích tabulek
+.btn.btn-xs {
+	--control-height: 28px;
+	--control-radius: var(--bs-border-radius-xs);
+	--control-font: 13px;
+
+	padding: 0 10px;
+	gap: 4px;
 }
 
 .btn.btn-xl,
@@ -98,4 +89,93 @@
 // Tlačítko jen s ikonou je čtverec o hraně výšky svého stupně
 .btn.btn-icon {
 	@include control-square;
+}
+
+// Projekt ladí barvy přes --fa-accent(-hover), --fa-on-accent, --fa-heading, --fa-text-strong, --fa-danger/success/warning, --fa-on-warning
+.btn.btn-primary {
+	$bg: var(--fa-accent, var(--primaryColor));
+	$hover: var(--fa-accent-hover, var(--primaryColorDark));
+	$text: var(--fa-on-accent, #fff);
+
+	@include button-colors($text, $bg, $bg, $text, $hover, $hover);
+}
+
+.btn.btn-secondary {
+	$text: var(--onPrimaryColor, #fff);
+
+	@include button-colors($text, var(--primaryColor), var(--primaryColor), $text, var(--primaryColorDark), var(--primaryColorDark));
+}
+
+.btn.btn-success {
+	$bg: var(--fa-success, #{$success});
+	$hover: color-mix(in srgb, #{$bg} 85%, black);
+
+	@include button-colors(#fff, $bg, $bg, #fff, $hover, $hover);
+}
+
+.btn.btn-danger {
+	$bg: var(--fa-danger, #{$bg-danger});
+	$hover: color-mix(in srgb, #{$bg} 85%, black);
+
+	--btn-ring: #{$bg};
+
+	@include button-colors(#fff, $bg, $bg, #fff, $hover, $hover);
+}
+
+// Varovná barva, ne akcent: u značky s červeným akcentem by varování splynulo s chybou
+.btn.btn-warning {
+	$bg: var(--fa-warning, #{$warning});
+	$hover: color-mix(in srgb, #{$bg} 85%, black);
+	$text: var(--fa-on-warning, #3a2408);
+
+	@include button-colors($text, $bg, $bg, $text, $hover, $hover);
+}
+
+// Obrysové tlačítko; -secondary je alias, nové šablony píšou -primary
+.btn.btn-outline-primary,
+.btn.btn-outline-secondary {
+	@include button-colors(var(--fa-heading, var(--fa-text)), transparent, var(--fa-border), var(--primaryColor), transparent, var(--primaryColor));
+}
+
+.btn.btn-outline-danger {
+	$danger: var(--fa-danger, #{$bg-danger});
+
+	--btn-ring: #{$danger};
+
+	@include button-colors(
+		$danger,
+		transparent,
+		color-mix(in srgb, #{$danger} 45%, var(--fa-border)),
+		$danger,
+		color-mix(in srgb, #{$danger} 8%, var(--fa-surface)),
+		$danger
+	);
+}
+
+// Jemné tlačítko — zapuštěná plocha bez rámečku pro vedlejší akce v lištách
+.btn.btn-soft {
+	$text: var(--fa-heading, var(--fa-text));
+
+	@include button-colors($text, $secondary, transparent, $text, color-mix(in srgb, var(--fa-text-muted) 6%, #{$secondary}), transparent);
+}
+
+// Bez podkladu pro málo důležité akce (Zpět, Zobrazit více)
+.btn.btn-ghost {
+	@include button-colors(var(--fa-text-strong, var(--fa-text)), transparent, transparent, var(--fa-heading, var(--fa-text)), $secondary, transparent);
+}
+
+// Spinner v tlačítku je vidět jen během načítání
+.btn.loading {
+	cursor: progress;
+	pointer-events: none;
+}
+
+.btn .spinner-border {
+	width: 14px;
+	height: 14px;
+	border-width: 2px;
+}
+
+.btn:not(.loading) > .spinner-border {
+	display: none;
 }

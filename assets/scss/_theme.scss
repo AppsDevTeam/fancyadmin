@@ -1103,10 +1103,10 @@ body:not(:has(.navbar)) #snippet--container {
 	}
 }
 
-// Rozměry má z velikostní škály v _buttons.scss
+// Rozměry má z velikostní škály v _buttons.scss; barvy přes proměnné, aby je varianta (.btn-outline-*) přebila
 .btn-icon {
-	border: 1px solid $secondary-darker;
-	background-color: $secondary;
+	--bs-btn-border-color: #{$secondary-darker};
+	--bs-btn-bg: #{$secondary};
 
 	&:not(.loading) {
 		.spinner-border {
@@ -1123,11 +1123,6 @@ body:not(:has(.navbar)) #snippet--container {
 			display: none;
 		}
 	}
-}
-
-:not(.btn-check) + .btn:active {
-	--bs-btn-active-border-color: initial;
-	--bs-btn-active-color: initial;
 }
 
 .btn-dashboard-filter {
