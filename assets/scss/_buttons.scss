@@ -1,13 +1,18 @@
 @use 'variables' as *;
 
 // Barvy variant jdou přes proměnné Bootstrapu, hover/focus/stisk/disabled pak řeší jeho .btn
-@mixin button-colors($color, $bg, $border, $hover-color, $hover-bg, $hover-border) {
+@mixin button-colors($color, $bg, $border, $hover-color, $hover-bg, $hover-border, $active-color: null, $active-bg: null, $active-border: null) {
 	--bs-btn-color: #{$color};
 	--bs-btn-bg: #{$bg};
 	--bs-btn-border-color: #{$border};
 	--bs-btn-hover-color: #{$hover-color};
 	--bs-btn-hover-bg: #{$hover-bg};
 	--bs-btn-hover-border-color: #{$hover-border};
+
+	// Stisk (:active) i trvalý stav (.active, .show, zaškrtnuté .btn-check); bez hodnot jako hover
+	--bs-btn-active-color: #{$active-color or $hover-color};
+	--bs-btn-active-bg: #{$active-bg or $hover-bg};
+	--bs-btn-active-border-color: #{$active-border or $hover-border};
 }
 
 // Tlačítko je ovládací prvek jako input, takže bere rozměry ze stejné škály
@@ -20,10 +25,6 @@
 	// Ring v barvě tlačítka, vnitřní mezera v barvě plochy ho odsadí od okraje
 	--btn-ring: var(--primaryColor);
 	--bs-btn-focus-box-shadow: 0 0 0 2px var(--fa-surface), 0 0 0 4px var(--btn-ring);
-	// Stisk vypadá jako najetí, varianty tak nastavují jen klid a hover
-	--bs-btn-active-color: var(--bs-btn-hover-color);
-	--bs-btn-active-bg: var(--bs-btn-hover-bg);
-	--bs-btn-active-border-color: var(--bs-btn-hover-border-color);
 	// Neaktivní u všech variant jako plná šedá plocha místo průhlednosti .65
 	--bs-btn-disabled-opacity: 1;
 	--bs-btn-disabled-color: var(--fa-text-faint);
@@ -44,11 +45,7 @@
 	padding: 7px 18px;
 	font-size: var(--control-font);
 	line-height: 1.5;
-	transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
-
-	&:active {
-		transform: scale(0.97);
-	}
+	transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 // Velikostní varianty tlačítka. Specificita musí dosáhnout na .btn výše, proto
@@ -96,14 +93,16 @@
 	$bg: var(--fa-accent, var(--primaryColor));
 	$hover: var(--fa-accent-hover, var(--primaryColorDark));
 	$text: var(--fa-on-accent, #fff);
+	$pressed: color-mix(in srgb, #{$hover} 85%, black);
 
-	@include button-colors($text, $bg, $bg, $text, $hover, $hover);
+	@include button-colors($text, $bg, $bg, $text, $hover, $hover, $active-bg: $pressed, $active-border: $pressed);
 }
 
 .btn.btn-secondary {
 	$text: var(--onPrimaryColor, #fff);
+	$pressed: color-mix(in srgb, var(--primaryColorDark) 85%, black);
 
-	@include button-colors($text, var(--primaryColor), var(--primaryColor), $text, var(--primaryColorDark), var(--primaryColorDark));
+	@include button-colors($text, var(--primaryColor), var(--primaryColor), $text, var(--primaryColorDark), var(--primaryColorDark), $active-bg: $pressed, $active-border: $pressed);
 }
 
 .btn.btn-success {
@@ -116,10 +115,11 @@
 .btn.btn-danger {
 	$bg: var(--fa-danger, #{$bg-danger});
 	$hover: color-mix(in srgb, #{$bg} 85%, black);
+	$pressed: color-mix(in srgb, #{$bg} 72%, black);
 
 	--btn-ring: #{$bg};
 
-	@include button-colors(#fff, $bg, $bg, #fff, $hover, $hover);
+	@include button-colors(#fff, $bg, $bg, #fff, $hover, $hover, $active-bg: $pressed, $active-border: $pressed);
 }
 
 // Varovná barva, ne akcent: u značky s červeným akcentem by varování splynulo s chybou
@@ -134,7 +134,15 @@
 // Obrysové tlačítko; -secondary je alias, nové šablony píšou -primary
 .btn.btn-outline-primary,
 .btn.btn-outline-secondary {
-	@include button-colors(var(--fa-heading, var(--fa-text)), transparent, var(--fa-border), var(--primaryColor), transparent, var(--primaryColor));
+	@include button-colors(
+		var(--fa-heading, var(--fa-text)),
+		transparent,
+		var(--fa-border),
+		var(--primaryColor),
+		transparent,
+		var(--primaryColor),
+		$active-bg: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface)))
+	);
 }
 
 .btn.btn-outline-danger {
@@ -148,7 +156,8 @@
 		color-mix(in srgb, #{$danger} 45%, var(--fa-border)),
 		$danger,
 		color-mix(in srgb, #{$danger} 8%, var(--fa-surface)),
-		$danger
+		$danger,
+		$active-bg: color-mix(in srgb, #{$danger} 16%, var(--fa-surface))
 	);
 }
 
@@ -156,12 +165,12 @@
 .btn.btn-soft {
 	$text: var(--fa-heading, var(--fa-text));
 
-	@include button-colors($text, $secondary, transparent, $text, color-mix(in srgb, var(--fa-text-muted) 6%, #{$secondary}), transparent);
+	@include button-colors($text, $secondary, transparent, $text, color-mix(in srgb, var(--fa-text-muted) 6%, #{$secondary}), transparent, $active-bg: color-mix(in srgb, var(--fa-text-muted) 14%, #{$secondary}));
 }
 
 // Bez podkladu pro málo důležité akce (Zpět, Zobrazit více)
 .btn.btn-ghost {
-	@include button-colors(var(--fa-text-strong, var(--fa-text)), transparent, transparent, var(--fa-heading, var(--fa-text)), $secondary, transparent);
+	@include button-colors(var(--fa-text-strong, var(--fa-text)), transparent, transparent, var(--fa-heading, var(--fa-text)), $secondary, transparent, $active-bg: color-mix(in srgb, var(--fa-text-muted) 8%, #{$secondary}));
 }
 
 // Spinner v tlačítku je vidět jen během načítání
