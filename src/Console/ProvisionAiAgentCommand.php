@@ -16,10 +16,10 @@ use Throwable;
 /**
  * Založí (nebo aktualizuje) Managed Agents agenta a prostředí pro AI asistenta.
  *
- * Agent se váže na anonymizované schéma, nad kterým se ptá - bez něj první zpráva
- * skončí chybou "No Managed Agents agent is provisioned". Patří do deploye hned za
- * anonymization:generate-views: při každém běhu se agentovi znovu pošle systémový
- * prompt a definice nástrojů, takže změny v nich se projeví bez ručního zásahu.
+ * V deployi není potřeba - agenta založí nebo aktualizuje první konverzace, které
+ * chybí nebo má zastaralý systémový prompt či nástroje (AgentProvisioner::resolver).
+ * Příkaz je pro ruční zásah: ověření klíče API, vynucená aktualizace agenta. Vždy
+ * agentovi pošle aktuální prompt a nástroje, i když se nezměnily.
  *
  * Volá Anthropic API, proto ho testy ani lokální init nespouštějí samy.
  */
