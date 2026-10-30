@@ -14,6 +14,8 @@ use ADT\AiChat\Http\ChatEndpoint;
 use ADT\AiChat\Mcp\McpServer;
 use ADT\AiChat\PiiResponseFilter;
 use ADT\AiChat\PiiValueCollector;
+use ADT\AiChat\Pseudonymization\OpenAiCompatiblePiiDetector;
+use ADT\AiChat\Pseudonymization\Pseudonymizer;
 use ADT\AiChat\SystemPromptBuilder;
 use ADT\AiChat\ToolHandler;
 use ADT\DoctrineAnonymization\AnonymizationPolicy;
@@ -31,6 +33,7 @@ use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
+use ADT\FancyAdmin\Model\AiChat\AuditPiiCheckListener;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
 use ADT\FancyAdmin\Model\Audit\AuditLogger;
@@ -177,6 +180,33 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'bank_account' => '[odstraněné číslo účtu]',
 					'phone' => '[odstraněné telefonní číslo]',
 					'value' => '[odstraněný osobní údaj]',
+				]),
+				// Pseudonymizace textu uživatele před odesláním do AI (README, AI asistent - Pseudonymizace vstupu)
+				'pseudonymization' => Expect::structure([
+					'enabled' => Expect::bool()->default(false),
+					// bez kontroly LLM detektorem text do AI neodejde (fail-closed)
+					'required' => Expect::bool()->default(true),
+					// projektová entita implementující AiPseudonym (povinná při enabled)
+					'pseudonymClass' => Expect::string()->nullable()->default(null),
+					// služba implementující ADT\AiChat\Pseudonymization\PiiSubjectResolver
+					'resolver' => Expect::anyOf(Expect::string(), Expect::type(Statement::class))->nullable()->default(null),
+					// formát kotvy subjektu s %s (např. '[PACIENT #%%s]'); null = výchozí ai-chat
+					'subjectAnchor' => Expect::string()->nullable()->default(null),
+					// druh údaje => název kotvy (name: OSOBA, …); prázdné = výchozí ai-chat
+					'labels' => Expect::arrayOf('string', 'string')->default([]),
+					// poznámka pro AI na konci textu; null = výchozí ai-chat
+					'note' => Expect::string()->nullable()->default(null),
+					// OpenAI-kompatibilní LLM (qwen); bez url jen regulární výrazy a resolver
+					'detector' => Expect::structure([
+						'url' => Expect::string()->nullable()->default(null),
+						'model' => Expect::string()->nullable()->default(null),
+						'apiKey' => Expect::string()->nullable()->default(null),
+						'authUser' => Expect::string()->nullable()->default(null),
+						'authPassword' => Expect::string()->nullable()->default(null),
+						'timeout' => Expect::int()->default(20),
+						// null = výchozí anglický prompt ai-chat
+						'systemPrompt' => Expect::string()->nullable()->default(null),
+					]),
 				]),
 				// MCP server nad stejnými nástroji pro jiné AI agenty (README, AI asistent - MCP server)
 				'mcp' => Expect::structure([
@@ -400,15 +430,24 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'conversationClass' => $ai->conversationClass,
 				'messageClass' => $ai->messageClass,
 				'ownerField' => 'identity',
-			] + $ai->chat]);
+			] + self::getAiChatOptions($ai->chat, $ai->pseudonymization->enabled)]);
 
 		$builder->addDefinition($this->prefix('ai.dispatcher'))
 			->setFactory(BackgroundQueueMessageDispatcher::class, ['callbackName' => $ai->queueCallback]);
 
 		// projekt na ni věší callback fronty: aiChatProcessMessage: [@<název rozšíření>.ai.chatService, processQueuedMessage]
-		$builder->addDefinition($this->prefix('ai.chatService'))
+		$chatService = $builder->addDefinition($this->prefix('ai.chatService'))
 			->setFactory(ChatService::class)
 			->addSetup('setTranslator', [[$this->prefix('@ai.translator'), 'translate']]);
+
+		// Bez pseudonymizace výslovně null - jinak by autowiring sáhl po případné službě projektu
+		$chatService->setArgument('pseudonymizer', null)->setArgument('piiCheckListener', null);
+		if ($ai->pseudonymization->enabled) {
+			$this->loadAiPseudonymization();
+			$chatService
+				->setArgument('pseudonymizer', $this->prefix('@ai.pseudonymizer'))
+				->setArgument('piiCheckListener', $this->prefix('@ai.piiCheckListener'));
+		}
 
 		$builder->addDefinition($this->prefix('ai.endpoint'))
 			->setFactory(ChatEndpoint::class);
@@ -440,6 +479,66 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	}
 
 	/**
+	 * Pseudonymizace textu uživatele (adt/ai-chat Pseudonymizer): detektor qwen, kotvy
+	 * v projektové entitě, audit ai_pii_check.
+	 */
+	private function loadAiPseudonymization(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$pseudonymization = $this->config->ai->pseudonymization;
+		$detector = $pseudonymization->detector;
+
+		if (empty($pseudonymization->pseudonymClass)) {
+			throw new RuntimeException('fancyadmin: ai.pseudonymization.enabled je zapnuté, ale chybí ai.pseudonymization.pseudonymClass. Viz README (AI asistent - Pseudonymizace vstupu).');
+		}
+
+		// Registruje se i bez url - s required pak každou zprávu zastaví, bez něj vrátí null
+		$builder->addDefinition($this->prefix('ai.piiDetector'))
+			->setFactory(OpenAiCompatiblePiiDetector::class, [
+				'url' => $detector->url,
+				'model' => $detector->model,
+				'apiKey' => $detector->apiKey,
+				'authUser' => $detector->authUser,
+				'authPassword' => $detector->authPassword,
+				'required' => $pseudonymization->required,
+				'timeout' => $detector->timeout,
+				'systemPrompt' => $detector->systemPrompt,
+			])
+			->setAutowired(false);
+
+		$resolver = $pseudonymization->resolver;
+		$builder->addDefinition($this->prefix('ai.pseudonymizer'))
+			->setFactory(Pseudonymizer::class, array_filter([
+				'pseudonymClass' => $pseudonymization->pseudonymClass,
+				'detector' => $this->prefix('@ai.piiDetector'),
+				'resolver' => is_string($resolver) && !str_starts_with($resolver, '@') ? new Statement($resolver) : $resolver,
+				'subjectAnchor' => $pseudonymization->subjectAnchor,
+				'labels' => $pseudonymization->labels,
+				'note' => $pseudonymization->note,
+			], static fn($_value): bool => $_value !== null && $_value !== []) + ['resolver' => null]);
+
+		$builder->addDefinition($this->prefix('ai.piiCheckListener'))
+			->setFactory(AuditPiiCheckListener::class);
+	}
+
+	/**
+	 * Klíče ChatOptions z konfigurace ai.chat. Přílohy se nahrávají do Anthropic Files API už
+	 * ve webovém requestu a pseudonymizace na ně nedosáhne - při zapnuté pseudonymizaci jsou
+	 * proto vypnuté, pokud je projekt výslovně nepovolí.
+	 *
+	 * @param array<string, mixed> $chat
+	 * @return array<string, mixed>
+	 */
+	private static function getAiChatOptions(array $chat, bool $pseudonymization): array
+	{
+		if ($pseudonymization && !isset($chat['attachments']['maxCount'])) {
+			$chat['attachments'] = ['maxCount' => 0] + ($chat['attachments'] ?? []);
+		}
+
+		return $chat;
+	}
+
+	/**
 	 * Logger služeb AI se předává explicitně: autowiring LoggerInterface by vzal první
 	 * PSR logger v kontejneru, a tím bývá SQL logger Doctrine, který na běžný error()
 	 * spadne. Řeší se až v beforeCompile(), kdy už je zaregistrovaný Tracy.
@@ -453,7 +552,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			$logger = new Statement(TracyToPsrLoggerAdapter::class, ['@' . $tracyLogger]);
 		}
 
-		foreach (['ai.chatService', 'ai.endpoint', 'ai.mcpServer'] as $_name) {
+		foreach (['ai.chatService', 'ai.endpoint', 'ai.mcpServer', 'ai.piiDetector'] as $_name) {
 			if ($builder->hasDefinition($this->prefix($_name))) {
 				$builder->getDefinition($this->prefix($_name))->setArgument('logger', $logger);
 			}
@@ -465,7 +564,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	 * sloupcích a neregistrovaný čtenář pohledů _anon (AI, MCP klient) je vidět nesmí:
 	 * změnový log (JSON se starými i novými hodnotami všech logovaných entit včetně jmen
 	 * a hesel/klíčů před zašifrováním), sessions a jednorázové tokeny (převzetí účtu),
-	 * přihlašovací logy (IP, uživatelská jména) a tokeny MCP.
+	 * přihlašovací logy (IP, uživatelská jména), tokeny MCP a kotvy pseudonymizace
+	 * (skutečné osobní údaje z textu uživatele).
 	 *
 	 * @return list<class-string>
 	 */
@@ -476,6 +576,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		return array_values(array_unique(array_merge(
 			self::AI_DEFAULT_EXCLUDED_ENTITIES,
 			$ai->mcp->tokenClass !== null ? [$ai->mcp->tokenClass] : [],
+			$ai->pseudonymization->pseudonymClass !== null ? [$ai->pseudonymization->pseudonymClass] : [],
 			$ai->excludedEntities,
 		)));
 	}

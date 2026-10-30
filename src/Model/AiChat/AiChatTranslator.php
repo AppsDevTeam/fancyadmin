@@ -17,7 +17,7 @@ class AiChatTranslator
 		'title', 'newConversation', 'noConversations', 'noTitle', 'placeholder', 'send', 'attach',
 		'removeFile', 'delete', 'deleteConfirm', 'loading', 'welcome', 'welcomeSingle', 'exportCsv',
 		'contextLabel', 'contextOk', 'contextWarn', 'contextFull', 'errorConnection', 'errorTimeout',
-		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge',
+		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge', 'sentContent',
 	];
 
 	public function __construct(

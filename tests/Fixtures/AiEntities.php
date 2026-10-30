@@ -13,6 +13,8 @@ use ADT\FancyAdmin\Model\Entities\AiMessage;
 use ADT\FancyAdmin\Model\Entities\AiMcpToken;
 use ADT\FancyAdmin\Model\Entities\AiMcpTokenTrait;
 use ADT\FancyAdmin\Model\Entities\AiMessageTrait;
+use ADT\FancyAdmin\Model\Entities\AiPseudonym;
+use ADT\FancyAdmin\Model\Entities\AiPseudonymTrait;
 
 final class TestAiConversation implements AiConversation
 {
@@ -30,6 +32,12 @@ final class TestAiAgent implements AiAgent
 {
 	use Identifier;
 	use AiAgentTrait;
+}
+
+final class TestAiPseudonym implements AiPseudonym
+{
+	use Identifier;
+	use AiPseudonymTrait;
 }
 
 final class TestAiMcpToken implements AiMcpToken

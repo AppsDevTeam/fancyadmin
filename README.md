@@ -2428,6 +2428,18 @@ celý, s `payload.supersedesPrevious`.
 
 ---
 
+### Události AI asistenta
+
+Mimo změny entit zapisuje fancyadmin do `audit_log` i kontrolu osobních údajů ve zprávě pro
+AI (jen při zapnuté pseudonymizaci, viz 30.9):
+
+| `action` | `outcome` | `payload` |
+|---|---|---|
+| `ai_pii_check` | `success` - zpráva odešla | `conversation_id`, `qwen` (text kontroloval LLM detektor, ne jen regulární výrazy), `findings` (počty nahrazených údajů podle druhu kotvy) |
+| `ai_pii_check` | `failure` - povinná kontrola neproběhla, zpráva neodešla | `conversation_id`, `reason: pii_check_unavailable` |
+
+Hodnoty osobních údajů se do auditu nikdy nezapisují.
+
 ## 22. Retence logů (volitelné)
 
 Logovací tabulky rostou donekonečna, dokud je někdo nemaže. Jak dlouho se co drží, je
@@ -2978,6 +2990,7 @@ fancyadmin:
 		# chat: [rateLimitPerMinute: 20, attachments: [maxCount: 5, maxBytes: 10485760]]
 		# piiLabels: texty místo odstraněných osobních údajů (výchozí česky)
 		# logger: @monolog.logger   # PSR logger pro chyby tahů; výchozí Tracy přes PSR adaptér
+		# pseudonymization: osobní údaje z textu uživatele do AI neodejdou (30.9)
 
 backgroundQueue:
 	callbacks:
@@ -3053,7 +3066,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 30.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.4.1 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.8.0 marked dompurify chart.js
 ```
 
 ```js
@@ -3198,3 +3211,99 @@ v DB není - DB, zálohy, `change_log` ani pohledy `_anon` ji tedy čitelnou nem
 $value = $configuration->getValue();
 $apiKey = SecretCipher::isEncrypted($value) ? $secretCipher->decrypt($value) : null;
 ```
+
+### 30.9 Pseudonymizace vstupu (volitelné)
+
+Pohledy `_anon` chrání data v databázi, ne to, co uživatel napíše do chatu („Pošli SMS Janě
+Novákové, RČ 4848518484"). Pseudonymizace (adt/ai-chat `Pseudonymizer`, README ai-chat
+„Input pseudonymization") nahradí osobní údaje v textu kotvami dřív, než text odejde do AI:
+
+- údaj, který patří právě jednomu subjektu (pacient, klient…) → `[PACIENT #123]` - ID není
+  osobní údaj, AI ho rovnou použije v SQL i nástrojích,
+- ostatní → `[OSOBA_1]`, `[EMAIL_1]`, `[ADRESA_1]`…; hodnota zůstane jen u nás (entita kotev),
+  stejná hodnota má v konverzaci stejnou kotvu.
+
+Odpověď AI se uloží se skutečnými údaji, AI má jen kotvy. Nad odpovědí widget ukáže sbalený
+blok „Osobní údaje jsme před AI skryli - zobrazit, co AI dostala" s textem, jak ho AI dostala.
+
+Údaje hledají regulární výrazy (RČ, e-mail, telefon, účet, IBAN), LLM detektor (qwen na naší
+infrastruktuře - jména v jakémkoli pádě, adresy, data narození, doklady…) a resolver projektu.
+
+```neon
+fancyadmin:
+	ai:
+		pseudonymization:
+			enabled: true
+			required: true                  # bez kontroly detektorem text do AI neodejde (výchozí)
+			pseudonymClass: App\Model\Entities\AiPseudonym
+			resolver: @App\Model\Ai\PatientPiiResolver   # nebo třída; volitelný
+			subjectAnchor: '[PACIENT #%%s]'  # %s = ID subjektu, v neonu jako %%s
+			labels:                         # druh údaje => název kotvy; výchozí anglicky
+				name: OSOBA
+				birth_number: RČ
+				email: EMAIL
+				# insurance_number, file_number, phone, address, birth_date, bank_account, document_number, other
+			# note: poznámka pro AI, co kotvy znamenají (%%1$s = ukázková kotva subjektu); výchozí anglicky
+			detector:                       # OpenAI-kompatibilní API, POST {url}/v1/chat/completions
+				url: %env.AI_URL%
+				model: %env.AI_MODEL%
+				apiKey: %env.AI_API_KEY%        # hlavička X-Api-Key
+				authUser: %env.AI_AUTH_USER%    # volitelně basic auth
+				authPassword: %env.AI_AUTH_PASSWORD%
+				# timeout: 20
+				# systemPrompt: prompt detektoru; výchozí anglický z adt/ai-chat
+```
+
+**Entita kotev.** Unikátní index Doctrine z traitu nepřečte, patří na entitu:
+
+```php
+#[ORM\Entity]
+#[ORM\Table(name: 'ai_pseudonym')]
+#[ORM\UniqueConstraint(name: 'uniq_ai_pseudonym_anchor', columns: ['conversation_id', 'anchor'])]
+class AiPseudonym extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\AiPseudonym
+{
+	use \ADT\FancyAdmin\Model\Entities\AiPseudonymTrait;   // anchor VARCHAR(40), value TEXT
+}
+```
+
+Entitu fancyadmin sám vyřadí z anonymizovaného schématu (30.4) - hodnoty kotev AI nesmí
+vidět ani v `_anon`.
+
+**Resolver** (`ADT\AiChat\Pseudonymization\PiiSubjectResolver`) zná subjekty projektu:
+`resolve()` vrátí ID jediného subjektu podle údaje (e-mail, RČ, jméno v 1. pádě…), jinak null;
+`isReadable()` nechá čitelné např. jméno zaměstnance, které neodpovídá žádnému subjektu;
+`findInText()` přidá nálezy z vlastních dat (jména ze skloňování); `label()` vrátí, co uživatel
+uvidí místo kotvy subjektu (celé jméno). Příklad dohledání podle e-mailu:
+
+```php
+public function resolve(PiiFinding $finding): int|string|null
+{
+	if ($finding->kind !== PiiFinding::EMAIL) {
+		return null;
+	}
+	$ids = $this->em->getConnection()->fetchFirstColumn('SELECT id FROM patient WHERE LOWER(email) = LOWER(?) LIMIT 2', [$finding->text]);
+
+	return count($ids) === 1 ? (int) $ids[0] : null;
+}
+```
+
+Bez resolveru dostane každý údaj obecnou kotvu.
+
+**Povinná kontrola.** S `required: true` zprávu zastaví nenastavený detektor (bez `url`),
+jeho výpadek i odpověď bez JSON: do AI nejde nic, nezaloží se žádná kotva a konverzace dostane
+chybovou odpověď (`fcadmin.aiChat.error.piiCheckUnavailable`). Kombinace `required: true`
+bez `url` je platná - asistent pak na každou zprávu odpoví chybou, dokud detektor nebude
+nastavený. Lokálně a v CI, kde detektor není, dejte `required: false`: zbydou regulární výrazy
+a resolver. Do logu nejde text uživatele ani odpověď detektoru.
+
+**Audit.** Každá zpráva zapíše do `audit_log` akci `ai_pii_check` (viz 21, Události AI
+asistenta) - jen počty nahrazených údajů podle druhu, nikdy hodnoty.
+
+**Přílohy** se nahrávají do Anthropic Files API už ve webovém requestu a pseudonymizace na ně
+nedosáhne. Při zapnuté pseudonymizaci jsou proto ve výchozím stavu vypnuté
+(`ai.chat.attachments.maxCount: 0`, widget tlačítko příloh schová); výslovné nastavení
+projektu má přednost.
+
+**Migrace** (adt/ai-chat 0.8): sloupec `ai_message.sent_content` (`LONGTEXT NULL`; mapuje ho
+`AiMessageTrait` vždy, plní se jen při pseudonymizaci) a tabulka entity kotev. Vygenerujte přes
+`migrations-diff`.

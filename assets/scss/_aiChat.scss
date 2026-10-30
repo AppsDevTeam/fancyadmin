@@ -23,3 +23,15 @@
 		padding: 0;
 	}
 }
+
+// Blok „co AI dostala" nad odpovědí (pseudonymizace, widget adt-ai-chat) v barvách
+// fancyadminu - ikonka štítu v barvě úspěchu, text tlumený, rozbalený text na zapuštěném podkladu
+.ai-chat {
+	--ai-chat-muted: var(--fa-text-muted);
+	--ai-chat-success: var(--fa-success);
+	--ai-chat-sunken-bg: var(--fa-surface-hover);
+
+	.ai-chat__sent-text {
+		color: var(--fa-text);
+	}
+}

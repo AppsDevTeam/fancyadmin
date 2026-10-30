@@ -511,6 +511,7 @@ aiChat:
     serviceUnavailable: "AI služba je dočasně nedostupná, zkuste to prosím za chvíli. (%detail%)"
     invalidExport: Neplatný odkaz na export.
     conversationNotFound: Konverzace nebyla nalezena.
+    piiCheckUnavailable: Zpráva nebyla odeslána AI - kontrola osobních údajů je teď nedostupná. Zkuste to prosím za chvíli.
     unexpected: Nastala neočekávaná chyba. Zkuste to prosím znovu.
   export:
     empty: Export neobsahuje žádná data.
@@ -540,6 +541,7 @@ aiChat:
     errorUnknown: Nastala neočekávaná chyba. Zkuste to prosím znovu.
     errorTooManyFiles: "K jedné zprávě lze přiložit nejvýše {max} souborů."
     errorFileTooLarge: "Soubor „{name}“ je příliš velký. Limit je {max} MB."
+    sentContent: Osobní údaje jsme před AI skryli - zobrazit, co AI dostala
 
 sidePanels:
   control:
