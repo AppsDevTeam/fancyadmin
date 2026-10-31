@@ -811,6 +811,33 @@ class ProfilePresenter extends AuthPresenter
 V `PortalCustomer` pak stojí vedle sebe `Profile` (moje údaje) a `Profiles` (seznam
 profilů účtu) — jsou to dva různé presentery.
 
+### AccountPresenter (stránka „Můj účet")
+
+Zákazník si na ní upravuje **vybraný účet** (`selectedAccount`) — tentýž `AccountForm`,
+kterým administrátor edituje účty v backoffice (`Accounts`). Presenter patří do
+`PortalCustomer` (URL `/<selectedAccount>/account`), v single-tenant projektu vrací 404.
+Na rozdíl od Profilu **není z ACL vyjmutý**: přístup má jen role s resourcem
+`portalCustomer.account` (doplní `fancyadmin:generate-missing-acl-resources`).
+
+```php
+// app/UI/Portal/Customer/Presenters/Account/AccountPresenter.php
+namespace App\UI\Portal\Customer\Presenters\Account;
+
+use ADT\FancyAdmin\UI\Presenters\Account\AccountPresenterTrait;
+use App\UI\Portal\Presenters\AuthPresenter;
+
+class AccountPresenter extends AuthPresenter
+{
+	use AccountPresenterTrait;
+}
+```
+
+Odkaz „Můj účet" do uživatelského menu se zapíná v `UserMenuFactory` modulu přes
+`$userMenu->setAddMyAccountMenuItem(true)` a zobrazí se jen tomu, kdo na resource právo má.
+
+Formulář je jeden pro obě stránky, takže co smí měnit jen administrátor (ceny, limity…),
+musí `AccountForm` v projektu sám skrýt — fancyadmin o polích projektu neví.
+
 #### ACL na Profilu: presenter je vyjmutý, změna osobních údajů ne
 
 `AuthPresenterTrait::validatePresenterPermission()` vyjímá `Profile` presenter z běžné
@@ -2968,8 +2995,13 @@ services:
 
 Položka menu a ACL resource `portalBackoffice.ai` (presenter), volitelně
 `portalBackoffice.ai.viewOthers` (`AclResourceNameEnum::BACKOFFICE_AI_VIEW_OTHERS`) — kdo ho má,
-vidí v gridu konverzace všech uživatelů a cizí si otevře **jen pro čtení**. Psát a mazat jde
-vždy jen do vlastních konverzací. Konverzace se mažou měkce (`deleted`).
+vidí v gridu konverzace všech uživatelů, cizí si otevře a může do nich i **psát** (navázat na
+analýzu kolegy). U každé zprávy se ukládá odesílatel (`AiMessageTrait::$sender`), widget ho
+ukazuje nad zprávou kolegy (jméno z `formatAiSender()`, výchozí `getFullName()`). Hodnotit
+a mazat jde vždy jen vlastní konverzace. Konverzace se mažou měkce (`deleted`).
+
+Otevřená konverzace je v URL (`?conversation=ID`), odkaz jde poslat: stránka po načtení
+konverzaci rovnou otevře v bočním panelu (signál `aiOpen!`), pokud ji příjemce smí vidět.
 
 ### 30.3 Konfigurace
 
@@ -3025,6 +3057,48 @@ přidá jen tehdy, když si je projekt neregistruje sám.
 Logger se `ChatService` a `ChatEndpoint` předává explicitně (`ai.logger`), ne autowiringem:
 první `LoggerInterface` v kontejneru bývá SQL logger Doctrine, který na běžný `error()` spadne.
 
+**Výběr modelu a hodnocení (adt/ai-chat 0.8, 0.9).** S `ai.chat.modelSelection` si uživatel
+vybere model a úroveň přemýšlení. Volba se uloží ke konverzaci i ke každé zprávě (`model`,
+`effort`) a pošle se jako override agenta při založení session. Od 0.9 jde přepnout
+i uprostřed konverzace: přepnutí založí novou session a model dostane přepis dosavadní
+konverzace. Bez `modelSelection` konverzace běží na modelu agenta (`ai.model`).
+
+```neon
+fancyadmin:
+	ai:
+		chat:
+			modelSelection:
+				models:
+					claude-sonnet-5-5: [label: Sonnet 5.5, contextWindowTokens: 1000000]
+					claude-opus-5-5: [label: Opus 5.5, contextWindowTokens: 1000000]
+				efforts: [medium, high, max]      # výchozí
+				defaultModel: claude-sonnet-5-5   # výchozí první z models
+				defaultEffort: high
+```
+
+Vlastník může dokončenou konverzaci ohodnotit palcem nahoru nebo dolů a připsat komentář
+(signál `aiRate!`, sloupce `rating`, `rating_comment`, `rated`). Grid konverzací ukazuje
+model i hodnocení, komentář je v tooltipu ikony. Entita konverzace (`ConversationTrait`)
+má od 0.8 pět nových sloupců: `model`, `effort`, `rating`, `rating_comment` a `rated`.
+Projekt proto potřebuje migraci (`migrations:diff`) a znovu vygenerované anonymizované
+pohledy.
+
+**Aktualizace na fancyadmin s adt/ai-chat 0.9.** Entita zprávy má tři nové sloupce: `model`,
+`effort` (z `MessageTrait`) a `sender_id` (FK na identitu, `ON DELETE SET NULL`). Vygenerujte
+migraci (`migrations:diff`) a doplňte do ní naplnění dosavadních zpráv:
+
+```sql
+UPDATE ai_message m JOIN ai_conversation c ON c.id = m.conversation_id
+	SET m.model = c.model, m.effort = c.effort;
+UPDATE ai_message m JOIN ai_conversation c ON c.id = m.conversation_id
+	SET m.sender_id = c.identity_id
+	WHERE m.author = 'user';
+```
+
+(názvy tabulek a sloupců upravte podle entit projektu). Frontend přebuildujte s novou verzí
+widgetu (30.5). Konverzace z doby před 0.8 (bez modelu) dostanou při další zprávě novou
+session s přepisem.
+
 ### 30.4 Anonymizované schéma a read-only uživatel
 
 1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
@@ -3066,7 +3140,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 30.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.8.0 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.9.1 marked dompurify chart.js
 ```
 
 ```js

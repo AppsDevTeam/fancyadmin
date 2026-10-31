@@ -26,11 +26,19 @@ use Nette\Http\FileUpload;
  * v bočním panelu. Zapojení viz README (AI asistent).
  *
  * Widget (assets/js/aiChat.js) volá signály ai*!, ty jen předávají ChatEndpointu.
- * Vlastní konverzace jdou číst i psát, cizí s právem BACKOFFICE_AI_VIEW_OTHERS jen číst.
+ * Vlastní konverzace jdou číst i psát, do cizích s právem BACKOFFICE_AI_VIEW_OTHERS
+ * jde taky psát (navázat na analýzu kolegy) - u zprávy se ukládá odesílatel.
+ * Hodnotit a mazat jde jen vlastní konverzace.
+ *
+ * Otevřená konverzace je v URL (?conversation=ID), odkaz jde poslat - stránka pak
+ * konverzaci rovnou otevře v bočním panelu (aiOpen!).
  */
 trait AiPresenterTrait
 {
 	use PresenterTrait;
+
+	/** Parametr URL s otevřenou konverzací (sdílený odkaz). */
+	private const string AI_URL_PARAM = 'conversation';
 
 	#[Autowire]
 	protected ChatService $_aiChatService;
@@ -46,6 +54,8 @@ trait AiPresenterTrait
 	public function actionDefault(): void
 	{
 		$this->checkAiTenantAccess();
+		$conversationId = (string) $this->getHttpRequest()->getQuery(self::AI_URL_PARAM);
+		$this->template->aiOpenLink = $conversationId !== '' ? $this->link('aiOpen!', ['conversationId' => $conversationId]) : null;
 		$this->template->aiMcpTokensLink = $this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_AI_MCP)
 			? $this->getAiMcpTokensLink()
 			: null;
@@ -62,6 +72,20 @@ trait AiPresenterTrait
 		}
 
 		$this->aiConversation = $aiConversation;
+		$this->redrawSidePanel();
+	}
+
+	/** Konverzace z odkazu (?conversation=ID), volá assets/js/aiChat.js po načtení stránky. */
+	public function handleAiOpen(string $conversationId): void
+	{
+		$this->checkAiTenantAccess();
+
+		$conversation = $this->_aiChatService->findConversation($conversationId);
+		if (!$conversation instanceof AiConversation || !$this->isAiConversationReadable($conversation)) {
+			$this->error();
+		}
+
+		$this->aiConversation = $conversation;
 		$this->redrawSidePanel();
 	}
 
@@ -102,8 +126,8 @@ trait AiPresenterTrait
 	public function handleAiLoad(): void
 	{
 		$this->checkAiTenantAccess();
-		[$owner, $readOnly] = $this->resolveAiOwner($this->getAiParam('conversationId'));
-		$this->sendJson($this->_aiChatEndpoint->load($owner, $this->getAiParam('conversationId'), $readOnly));
+		[$owner, $own] = $this->resolveAiOwner($this->getAiParam('conversationId'));
+		$this->sendJson($this->getAiChatEndpoint()->load($owner, $this->getAiParam('conversationId'), false, $own, $this->getAiOwner()));
 	}
 
 	public function handleAiSend(): void
@@ -117,12 +141,33 @@ trait AiPresenterTrait
 			array_filter(is_array($files) ? $files : [$files], static fn($f): bool => $f instanceof FileUpload),
 		);
 
-		// psát jde jen do vlastní konverzace - s vlastníkem = přihlášený endpoint cizí nenajde
-		$this->sendJson($this->_aiChatEndpoint->send(
-			$this->getAiOwner(),
+		// do konverzace jejího vlastníka (nová je přihlášeného), píše přihlášený
+		[$owner] = $this->resolveAiOwner($this->getAiParam('conversationId'));
+		$this->sendJson($this->getAiChatEndpoint()->send(
+			$owner,
 			$this->getAiParam('conversationId'),
 			(string) $this->getHttpRequest()->getPost('message'),
 			array_values($uploads),
+			$this->getAiParam('model') ?: null,
+			$this->getAiParam('effort') ?: null,
+			$this->getAiOwner(),
+		));
+	}
+
+	/** Hodnocení 👍/👎 s komentářem - hodnotit jde jen vlastní konverzaci. */
+	public function handleAiRate(): void
+	{
+		$this->checkAiTenantAccess();
+		$this->assertAiPost();
+
+		$rating = $this->getAiParam('rating');
+		$comment = $this->getHttpRequest()->getPost('comment');
+
+		$this->sendJson($this->_aiChatEndpoint->rate(
+			$this->getAiOwner(),
+			$this->getAiParam('conversationId'),
+			$rating !== '' ? (int) $rating : null,
+			is_string($comment) ? $comment : null,
 		));
 	}
 
@@ -130,7 +175,12 @@ trait AiPresenterTrait
 	{
 		$this->checkAiTenantAccess();
 		[$owner] = $this->resolveAiOwner($this->getAiParam('conversationId'));
-		$this->sendJson($this->_aiChatEndpoint->poll($owner, $this->getAiParam('conversationId'), $this->getAiParam('afterId')));
+		$this->sendJson($this->getAiChatEndpoint()->poll(
+			$owner,
+			$this->getAiParam('conversationId'),
+			$this->getAiParam('afterId'),
+			$this->getAiOwner(),
+		));
 	}
 
 	public function handleAiDelete(): void
@@ -186,12 +236,15 @@ trait AiPresenterTrait
 		return [
 			'mode' => 'single',
 			'conversationId' => $conversation?->getId(),
-			'readOnly' => $conversation !== null && !$this->isOwnAiConversation($conversation),
+			'urlParam' => self::AI_URL_PARAM,
+			'readOnly' => false,
+			'canManage' => $conversation === null || $this->isOwnAiConversation($conversation),
 			'locale' => $this->getAiLocale(),
 			'fitViewport' => false,
 			'accept' => $attachments->getAcceptAttribute(),
 			'maxAttachments' => $attachments->maxCount,
 			'maxAttachmentBytes' => $attachments->maxBytes,
+			'modelSelection' => $this->_aiChatService->getOptions()->modelSelection->toClient(),
 			'labels' => $this->_aiChatTranslator->getWidgetLabels(),
 			'urls' => [
 				'conversations' => $this->link('aiConversations!'),
@@ -200,6 +253,7 @@ trait AiPresenterTrait
 				'poll' => $this->link('aiPoll!'),
 				'delete' => $this->link('aiDelete!'),
 				'export' => $this->link('aiExport!'),
+				'rate' => $this->link('aiRate!'),
 			],
 		];
 	}
@@ -246,10 +300,10 @@ trait AiPresenterTrait
 	}
 
 	/**
-	 * Vlastník, pod kterým se konverzace čte: cizí (s právem číst ostatní) pod svým
-	 * vlastníkem a jen pro čtení, jinak přihlášený - endpoint pak cizí konverzaci nenajde.
+	 * Vlastník, pod kterým se ke konverzaci přistupuje: cizí (s právem číst ostatní)
+	 * pod svým vlastníkem, jinak přihlášený - endpoint pak cizí konverzaci nenajde.
 	 *
-	 * @return array{0: Identity, 1: bool} [vlastník, jen pro čtení]
+	 * @return array{0: Identity, 1: bool} [vlastník, je to vlastní konverzace]
 	 */
 	protected function resolveAiOwner(string $conversationId): array
 	{
@@ -259,15 +313,26 @@ trait AiPresenterTrait
 			&& !$this->isOwnAiConversation($conversation)
 			&& $this->isAiConversationReadable($conversation)
 		) {
-			return [$conversation->getIdentity(), true];
+			return [$conversation->getIdentity(), false];
 		}
 
-		return [$this->getAiOwner(), false];
+		return [$this->getAiOwner(), true];
+	}
+
+	/** Jméno nad zprávou kolegy ve sdílené konverzaci. */
+	protected function formatAiSender(Identity $sender): string
+	{
+		return $sender->getFullName();
 	}
 
 	protected function getAiLocale(): ?string
 	{
 		return method_exists($this->_translator, 'getLocale') ? $this->_translator->getLocale() : null;
+	}
+
+	private function getAiChatEndpoint(): ChatEndpoint
+	{
+		return $this->_aiChatEndpoint->setSenderFormatter(fn(Identity $sender): string => $this->formatAiSender($sender));
 	}
 
 	/** FormData (POST) má přednost před query. */

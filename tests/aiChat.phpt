@@ -9,6 +9,7 @@ use ADT\DoctrineAnonymization\AnonymizationType;
 use ADT\DoctrineAnonymization\Attributes\Anonymize;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\Entities\AiConversationTrait;
+use ADT\FancyAdmin\Model\Entities\AiMessageTrait;
 use ADT\FancyAdmin\Model\Entities\ApiKeyTrait;
 use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\PasskeyTrait;
@@ -54,6 +55,18 @@ test('konverzace patri identite', function () {
 });
 
 
+test('zprava nese odesilatele, ktereho plni ChatService (senderField)', function () {
+	$property = new ReflectionProperty(AiMessageTrait::class, 'sender');
+	$joinColumn = $property->getAttributes(Doctrine\ORM\Mapping\JoinColumn::class)[0]->newInstance();
+
+	Assert::true($property->getAttributes(Doctrine\ORM\Mapping\ManyToOne::class) !== []);
+	Assert::true($joinColumn->nullable);
+	Assert::same('SET NULL', $joinColumn->onDelete);
+	Assert::null(new TestAiMessage()->getSender());
+	Assert::contains("'senderField' => 'sender'", file_get_contents(__DIR__ . '/../src/DI/FancyAdminExtension.php'));
+});
+
+
 test('osobni udaje identity se anonymizuji', function () {
 	Assert::same(AnonymizationType::FIRST_NAME, anonymizeType(IdentityTrait::class, 'firstName'));
 	Assert::same(AnonymizationType::LAST_NAME, anonymizeType(IdentityTrait::class, 'lastName'));
@@ -89,10 +102,22 @@ test('widget dostane jen prelozene texty', function () {
 });
 
 
+test('urovne premysleni jdou widgetu vnorene v effortLevels', function () {
+	$translator = new AiChatTranslator(new TestTranslator([
+		'fcadmin.aiChat.labels.effort' => 'Přemýšlení',
+		'fcadmin.aiChat.labels.effortLevels.high' => 'Vysoké',
+	]));
+
+	Assert::same(['effort' => 'Přemýšlení', 'effortLevels' => ['high' => 'Vysoké']], $translator->getWidgetLabels());
+});
+
+
 test('vsechny texty widgetu jsou ve slovniku a zastupne symboly zustavaji pro widget', function () {
 	foreach (['cs', 'sk'] as $_locale) {
 		$labels = Yaml::parseFile(__DIR__ . '/../src/lang/fcadmin.' . $_locale . '.yml')['aiChat']['labels'];
 
+		Assert::same(AiChatTranslator::EFFORT_LEVELS, array_keys($labels['effortLevels']), $_locale);
+		unset($labels['effortLevels']);
 		Assert::same(AiChatTranslator::WIDGET_LABELS, array_keys($labels), $_locale);
 		Assert::contains('{max}', $labels['errorTooManyFiles'], $_locale);
 		Assert::contains('{name}', $labels['errorFileTooLarge'], $_locale);

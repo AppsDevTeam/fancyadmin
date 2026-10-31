@@ -18,4 +18,15 @@ trait AiMessageTrait
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	#[Description('Conversation the message belongs to.')]
 	protected ConversationInterface $conversation;
+
+	// plní ChatService (ChatOptions::$senderField); kolega může psát i do cizí konverzace
+	#[ORM\ManyToOne(targetEntity: 'Identity')]
+	#[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+	#[Description('User (identity) who wrote the user message; null for AI replies.')]
+	protected ?Identity $sender = null;
+
+	public function getSender(): ?Identity
+	{
+		return $this->sender;
+	}
 }

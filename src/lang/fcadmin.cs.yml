@@ -87,6 +87,8 @@ presenters:
     grid:
       title: Konverzace
       identity: Uživatel
+      model: Model
+      rating: Hodnocení
       updated: Poslední zpráva
       created: Založeno
   aiMcpTokens:
@@ -147,6 +149,11 @@ presenters:
     title: Účty
     pageTitle: Účty
     header: Účty
+
+  # Stránka Můj účet (vybraný účet) — presenter Account
+  myAccount:
+    pageTitle: Můj účet
+    header: Můj účet
 
   # Stránka Můj profil — presenter Profile
   profile:
@@ -513,6 +520,10 @@ aiChat:
     conversationNotFound: Konverzace nebyla nalezena.
     piiCheckUnavailable: Zpráva nebyla odeslána AI - kontrola osobních údajů je teď nedostupná. Zkuste to prosím za chvíli.
     unexpected: Nastala neočekávaná chyba. Zkuste to prosím znovu.
+    unknownModel: "Model „%model%“ není k dispozici."
+    unknownEffort: "Úroveň přemýšlení „%effort%“ není k dispozici."
+    invalidRating: Neplatné hodnocení.
+    turnPending: Na předchozí zprávu se ještě odpovídá. Počkejte prosím na odpověď.
   export:
     empty: Export neobsahuje žádná data.
     failed: Export selhal
@@ -535,12 +546,30 @@ aiChat:
     contextOk: Pamatuji si celou konverzaci.
     contextWarn: Konverzace je dlouhá, brzy začnu zapomínat její začátek.
     contextFull: Paměť je skoro plná, zvažte novou konverzaci.
+    contextSwitch: S jiným modelem nebo přemýšlením začne další zpráva novou paměť s přepisem konverzace.
     errorConnection: Chyba spojení. Zkuste to prosím znovu.
     errorTimeout: Odpověď trvá příliš dlouho. Načtěte konverzaci později znovu.
     errorUnavailable: Konverzace už není dostupná.
     errorUnknown: Nastala neočekávaná chyba. Zkuste to prosím znovu.
     errorTooManyFiles: "K jedné zprávě lze přiložit nejvýše {max} souborů."
     errorFileTooLarge: "Soubor „{name}“ je příliš velký. Limit je {max} MB."
+    model: Model
+    effort: Přemýšlení
+    modelHint: Model a úroveň přemýšlení pro další zprávu. Jdou přepnout i uprostřed konverzace – asistent pak naváže podle dosavadního přepisu.
+    effortLevels:
+      low: Nízké
+      medium: Střední
+      high: Vysoké
+      xhigh: Velmi vysoké
+      max: Maximální
+    rateQuestion: Pomohla vám tato konverzace?
+    rateUp: Pomohla
+    rateDown: Nepomohla
+    rateComment: Co by mohlo být lepší? (nepovinné)
+    rateCommentUp: Co se vám líbilo? (nepovinné)
+    rateSave: Odeslat
+    rateThanks: Děkujeme za zpětnou vazbu.
+    rated: Hodnoceno
     sentContent: Osobní údaje jsme před AI skryli - zobrazit, co AI dostala
 
 sidePanels:
@@ -621,6 +650,8 @@ passkeys:
 modules:
   web:
     navbar:
+      account:
+        myAccount: "Můj účet"
       profile:
         myProfile: "Můj profil"
     presenters:
