@@ -109,6 +109,25 @@ trait AiPresenterTrait
 			$this->getAiParam('conversationId'),
 			(string) $this->getHttpRequest()->getPost('message'),
 			array_values($uploads),
+			$this->getAiParam('model') ?: null,
+			$this->getAiParam('effort') ?: null,
+		));
+	}
+
+	/** Hodnocení 👍/👎 s komentářem - hodnotit jde jen vlastní konverzaci. */
+	public function handleAiRate(): void
+	{
+		$this->checkAiTenantAccess();
+		$this->assertAiPost();
+
+		$rating = $this->getAiParam('rating');
+		$comment = $this->getHttpRequest()->getPost('comment');
+
+		$this->sendJson($this->_aiChatEndpoint->rate(
+			$this->getAiOwner(),
+			$this->getAiParam('conversationId'),
+			$rating !== '' ? (int) $rating : null,
+			is_string($comment) ? $comment : null,
 		));
 	}
 
@@ -178,6 +197,7 @@ trait AiPresenterTrait
 			'accept' => $attachments->getAcceptAttribute(),
 			'maxAttachments' => $attachments->maxCount,
 			'maxAttachmentBytes' => $attachments->maxBytes,
+			'modelSelection' => $this->_aiChatService->getOptions()->modelSelection->toClient(),
 			'labels' => $this->_aiChatTranslator->getWidgetLabels(),
 			'urls' => [
 				'conversations' => $this->link('aiConversations!'),
@@ -186,6 +206,7 @@ trait AiPresenterTrait
 				'poll' => $this->link('aiPoll!'),
 				'delete' => $this->link('aiDelete!'),
 				'export' => $this->link('aiExport!'),
+				'rate' => $this->link('aiRate!'),
 			],
 		];
 	}

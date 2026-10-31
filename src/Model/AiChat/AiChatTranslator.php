@@ -17,8 +17,13 @@ class AiChatTranslator
 		'title', 'newConversation', 'noConversations', 'noTitle', 'placeholder', 'send', 'attach',
 		'removeFile', 'delete', 'deleteConfirm', 'loading', 'welcome', 'welcomeSingle', 'exportCsv',
 		'contextLabel', 'contextOk', 'contextWarn', 'contextFull', 'errorConnection', 'errorTimeout',
-		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge',
+		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge', 'model', 'effort',
+		'modelHint', 'rateQuestion', 'rateUp', 'rateDown', 'rateComment', 'rateCommentUp', 'rateSave',
+		'rateThanks', 'rated',
 	];
+
+	/** Úrovně přemýšlení (labels.effortLevels widgetu). */
+	public const array EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 	public function __construct(
 		private readonly Translator $translator,
@@ -42,19 +47,36 @@ class AiChatTranslator
 	 * Texty widgetu. Zástupné symboly {max}, {name} doplňuje až widget, ve slovníku
 	 * proto zůstávají ve složených závorkách.
 	 *
-	 * @return array<string, string>
+	 * @return array<string, string|array<string, string>>
 	 */
 	public function getWidgetLabels(): array
 	{
 		$labels = [];
 		foreach (self::WIDGET_LABELS as $_label) {
-			$key = 'fcadmin.aiChat.labels.' . $_label;
-			$translated = (string) $this->translator->translate($key);
-			if ($translated !== $key) {
+			$translated = $this->translateLabel('fcadmin.aiChat.labels.' . $_label);
+			if ($translated !== null) {
 				$labels[$_label] = $translated;
 			}
 		}
 
+		$effortLevels = [];
+		foreach (self::EFFORT_LEVELS as $_level) {
+			$translated = $this->translateLabel('fcadmin.aiChat.labels.effortLevels.' . $_level);
+			if ($translated !== null) {
+				$effortLevels[$_level] = $translated;
+			}
+		}
+		if ($effortLevels !== []) {
+			$labels['effortLevels'] = $effortLevels;
+		}
+
 		return $labels;
+	}
+
+	private function translateLabel(string $key): ?string
+	{
+		$translated = (string) $this->translator->translate($key);
+
+		return $translated !== $key ? $translated : null;
 	}
 }

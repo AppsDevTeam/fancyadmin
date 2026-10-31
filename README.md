@@ -2949,6 +2949,31 @@ přidá jen tehdy, když si je projekt neregistruje sám.
 Logger se `ChatService` a `ChatEndpoint` předává explicitně (`ai.logger`), ne autowiringem:
 první `LoggerInterface` v kontejneru bývá SQL logger Doctrine, který na běžný `error()` spadne.
 
+**Výběr modelu a hodnocení (adt/ai-chat 0.8).** S `ai.chat.modelSelection` si uživatel
+u nové konverzace vybere model a hloubku přemýšlení. Volba se uloží ke konverzaci
+(`model`, `effort`) a pošle se jako override agenta při založení session. Po první zprávě
+ji už nejde změnit. Bez `modelSelection` konverzace běží na modelu agenta (`ai.model`).
+
+```neon
+fancyadmin:
+	ai:
+		chat:
+			modelSelection:
+				models:
+					claude-sonnet-5-5: [label: Sonnet 5.5, contextWindowTokens: 1000000]
+					claude-opus-5-5: [label: Opus 5.5, contextWindowTokens: 1000000]
+				efforts: [medium, high, max]      # výchozí
+				defaultModel: claude-sonnet-5-5   # výchozí první z models
+				defaultEffort: high
+```
+
+Vlastník může dokončenou konverzaci ohodnotit palcem nahoru nebo dolů a připsat komentář
+(signál `aiRate!`, sloupce `rating`, `rating_comment`, `rated`). Grid konverzací ukazuje
+model i hodnocení, komentář je v tooltipu ikony. Entita konverzace (`ConversationTrait`)
+má od 0.8 pět nových sloupců: `model`, `effort`, `rating`, `rating_comment` a `rated`.
+Projekt proto potřebuje migraci (`migrations:diff`) a znovu vygenerované anonymizované
+pohledy.
+
 ### 28.4 Anonymizované schéma a read-only uživatel
 
 1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
@@ -2990,7 +3015,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 28.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.4.1 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.8.0 marked dompurify chart.js
 ```
 
 ```js

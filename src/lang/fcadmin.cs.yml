@@ -49,6 +49,8 @@ presenters:
     grid:
       title: Konverzace
       identity: Uživatel
+      model: Model
+      rating: Hodnocení
       updated: Poslední zpráva
       created: Založeno
   aiMcpTokens:
@@ -474,6 +476,9 @@ aiChat:
     invalidExport: Neplatný odkaz na export.
     conversationNotFound: Konverzace nebyla nalezena.
     unexpected: Nastala neočekávaná chyba. Zkuste to prosím znovu.
+    unknownModel: "Model „%model%“ není k dispozici."
+    unknownEffort: "Úroveň přemýšlení „%effort%“ není k dispozici."
+    invalidRating: Neplatné hodnocení.
   export:
     empty: Export neobsahuje žádná data.
     failed: Export selhal
@@ -502,6 +507,23 @@ aiChat:
     errorUnknown: Nastala neočekávaná chyba. Zkuste to prosím znovu.
     errorTooManyFiles: "K jedné zprávě lze přiložit nejvýše {max} souborů."
     errorFileTooLarge: "Soubor „{name}“ je příliš velký. Limit je {max} MB."
+    model: Model
+    effort: Přemýšlení
+    modelHint: Model a hloubka přemýšlení pro tuto konverzaci. Po první zprávě je už nejde změnit.
+    effortLevels:
+      low: Nízké
+      medium: Střední
+      high: Vysoké
+      xhigh: Velmi vysoké
+      max: Maximální
+    rateQuestion: Pomohla vám tato konverzace?
+    rateUp: Pomohla
+    rateDown: Nepomohla
+    rateComment: Co by mohlo být lepší? (nepovinné)
+    rateCommentUp: Co se vám líbilo? (nepovinné)
+    rateSave: Odeslat
+    rateThanks: Děkujeme za zpětnou vazbu.
+    rated: Hodnoceno
 
 sidePanels:
   control:

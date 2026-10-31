@@ -12,6 +12,7 @@ use ADT\FancyAdmin\Model\Queries\AiConversationQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\AiConversationQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\SearchFilter;
+use Nette\Utils\Html;
 
 /**
  * Seznam konverzací s AI asistentem. Úprava (edit!) otevře konverzaci v bočním
@@ -38,6 +39,12 @@ trait AiConversationGridTrait
 			$grid->addColumnText('identity', 'fcadmin.presenters.ai.grid.identity')
 				->setRenderer(fn(AiConversation $conversation) => $conversation->getIdentity()->getFullName());
 		}
+
+		$grid->addColumnText('model', 'fcadmin.presenters.ai.grid.model')
+			->setRenderer(fn(AiConversation $conversation) => trim($conversation->getModel() . ' ' . $conversation->getEffort()));
+
+		$grid->addColumnText('rating', 'fcadmin.presenters.ai.grid.rating')
+			->setRenderer(fn(AiConversation $conversation) => $this->renderAiConversationRating($conversation));
 
 		$grid->addColumnDateTime('updated', 'fcadmin.presenters.ai.grid.updated')
 			->setFormat('j. n. Y H:i')
@@ -80,6 +87,19 @@ trait AiConversationGridTrait
 				return false;
 			},
 		);
+	}
+
+	/** Palec nahoru/dolů, komentář k hodnocení v title. */
+	protected function renderAiConversationRating(AiConversation $conversation): Html|string
+	{
+		$rating = $conversation->getRating();
+		if ($rating === null) {
+			return '';
+		}
+
+		return Html::el('span')
+			->class($rating > 0 ? 'fa fa-thumbs-up text-success' : 'fa fa-thumbs-down text-danger')
+			->title((string) $conversation->getRatingComment());
 	}
 
 	protected function canViewOthersAiConversations(): bool
