@@ -479,6 +479,7 @@ aiChat:
     unknownModel: "Model „%model%“ nie je k dispozícii."
     unknownEffort: "Úroveň premýšľania „%effort%“ nie je k dispozícii."
     invalidRating: Neplatné hodnotenie.
+    turnPending: Na predchádzajúcu správu sa ešte odpovedá. Počkajte, prosím, na odpoveď.
   export:
     empty: Export neobsahuje žiadne dáta.
     failed: Export zlyhal
@@ -501,6 +502,7 @@ aiChat:
     contextOk: Pamätám si celú konverzáciu.
     contextWarn: Konverzácia je dlhá, čoskoro začnem zabúdať jej začiatok.
     contextFull: Pamäť je takmer plná, zvážte novú konverzáciu.
+    contextSwitch: S iným modelom alebo premýšľaním začne ďalšia správa novú pamäť s prepisom konverzácie.
     errorConnection: Chyba spojenia. Skúste to prosím znova.
     errorTimeout: Odpoveď trvá príliš dlho. Načítajte konverzáciu neskôr znova.
     errorUnavailable: Konverzácia už nie je dostupná.
@@ -509,7 +511,7 @@ aiChat:
     errorFileTooLarge: "Súbor „{name}“ je príliš veľký. Limit je {max} MB."
     model: Model
     effort: Premýšľanie
-    modelHint: Model a hĺbka premýšľania pre túto konverzáciu. Po prvej správe ich už nemožno zmeniť.
+    modelHint: Model a úroveň premýšľania pre ďalšiu správu. Dajú sa prepnúť aj uprostred konverzácie – asistent potom nadviaže podľa doterajšieho prepisu.
     effortLevels:
       low: Nízke
       medium: Stredné

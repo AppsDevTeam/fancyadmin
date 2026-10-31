@@ -2893,8 +2893,13 @@ services:
 
 Položka menu a ACL resource `portalBackoffice.ai` (presenter), volitelně
 `portalBackoffice.ai.viewOthers` (`AclResourceNameEnum::BACKOFFICE_AI_VIEW_OTHERS`) — kdo ho má,
-vidí v gridu konverzace všech uživatelů a cizí si otevře **jen pro čtení**. Psát a mazat jde
-vždy jen do vlastních konverzací. Konverzace se mažou měkce (`deleted`).
+vidí v gridu konverzace všech uživatelů, cizí si otevře a může do nich i **psát** (navázat na
+analýzu kolegy). U každé zprávy se ukládá odesílatel (`AiMessageTrait::$sender`), widget ho
+ukazuje nad zprávou kolegy (jméno z `formatAiSender()`, výchozí `getFullName()`). Hodnotit
+a mazat jde vždy jen vlastní konverzace. Konverzace se mažou měkce (`deleted`).
+
+Otevřená konverzace je v URL (`?conversation=ID`), odkaz jde poslat: stránka po načtení
+konverzaci rovnou otevře v bočním panelu (signál `aiOpen!`), pokud ji příjemce smí vidět.
 
 ### 28.3 Konfigurace
 
@@ -2949,10 +2954,11 @@ přidá jen tehdy, když si je projekt neregistruje sám.
 Logger se `ChatService` a `ChatEndpoint` předává explicitně (`ai.logger`), ne autowiringem:
 první `LoggerInterface` v kontejneru bývá SQL logger Doctrine, který na běžný `error()` spadne.
 
-**Výběr modelu a hodnocení (adt/ai-chat 0.8).** S `ai.chat.modelSelection` si uživatel
-u nové konverzace vybere model a hloubku přemýšlení. Volba se uloží ke konverzaci
-(`model`, `effort`) a pošle se jako override agenta při založení session. Po první zprávě
-ji už nejde změnit. Bez `modelSelection` konverzace běží na modelu agenta (`ai.model`).
+**Výběr modelu a hodnocení (adt/ai-chat 0.8, 0.9).** S `ai.chat.modelSelection` si uživatel
+vybere model a úroveň přemýšlení. Volba se uloží ke konverzaci i ke každé zprávě (`model`,
+`effort`) a pošle se jako override agenta při založení session. Od 0.9 jde přepnout
+i uprostřed konverzace: přepnutí založí novou session a model dostane přepis dosavadní
+konverzace. Bez `modelSelection` konverzace běží na modelu agenta (`ai.model`).
 
 ```neon
 fancyadmin:
@@ -2973,6 +2979,22 @@ model i hodnocení, komentář je v tooltipu ikony. Entita konverzace (`Conversa
 má od 0.8 pět nových sloupců: `model`, `effort`, `rating`, `rating_comment` a `rated`.
 Projekt proto potřebuje migraci (`migrations:diff`) a znovu vygenerované anonymizované
 pohledy.
+
+**Aktualizace na fancyadmin s adt/ai-chat 0.9.** Entita zprávy má tři nové sloupce: `model`,
+`effort` (z `MessageTrait`) a `sender_id` (FK na identitu, `ON DELETE SET NULL`). Vygenerujte
+migraci (`migrations:diff`) a doplňte do ní naplnění dosavadních zpráv:
+
+```sql
+UPDATE ai_message m JOIN ai_conversation c ON c.id = m.conversation_id
+	SET m.model = c.model, m.effort = c.effort;
+UPDATE ai_message m JOIN ai_conversation c ON c.id = m.conversation_id
+	SET m.sender_id = c.identity_id
+	WHERE m.author = 'user';
+```
+
+(názvy tabulek a sloupců upravte podle entit projektu). Frontend přebuildujte s novou verzí
+widgetu (28.5). Konverzace z doby před 0.8 (bez modelu) dostanou při další zprávě novou
+session s přepisem.
 
 ### 28.4 Anonymizované schéma a read-only uživatel
 
@@ -3015,7 +3037,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 28.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.8.0 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.9.0 marked dompurify chart.js
 ```
 
 ```js

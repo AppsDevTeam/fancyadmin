@@ -16,7 +16,7 @@ class AiChatTranslator
 	public const array WIDGET_LABELS = [
 		'title', 'newConversation', 'noConversations', 'noTitle', 'placeholder', 'send', 'attach',
 		'removeFile', 'delete', 'deleteConfirm', 'loading', 'welcome', 'welcomeSingle', 'exportCsv',
-		'contextLabel', 'contextOk', 'contextWarn', 'contextFull', 'errorConnection', 'errorTimeout',
+		'contextLabel', 'contextOk', 'contextWarn', 'contextFull', 'contextSwitch', 'errorConnection', 'errorTimeout',
 		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge', 'model', 'effort',
 		'modelHint', 'rateQuestion', 'rateUp', 'rateDown', 'rateComment', 'rateCommentUp', 'rateSave',
 		'rateThanks', 'rated',

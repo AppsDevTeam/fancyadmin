@@ -9,6 +9,7 @@ use ADT\DoctrineAnonymization\AnonymizationType;
 use ADT\DoctrineAnonymization\Attributes\Anonymize;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\Entities\AiConversationTrait;
+use ADT\FancyAdmin\Model\Entities\AiMessageTrait;
 use ADT\FancyAdmin\Model\Entities\ApiKeyTrait;
 use ADT\FancyAdmin\Model\Entities\IdentityTrait;
 use ADT\FancyAdmin\Model\Entities\PasskeyTrait;
@@ -51,6 +52,18 @@ test('konverzace patri identite', function () {
 	Assert::same($conversation, $conversation->setIdentity($identity));
 	Assert::same($identity, $conversation->getIdentity());
 	Assert::true(new ReflectionProperty(AiConversationTrait::class, 'identity')->getAttributes(Doctrine\ORM\Mapping\ManyToOne::class) !== []);
+});
+
+
+test('zprava nese odesilatele, ktereho plni ChatService (senderField)', function () {
+	$property = new ReflectionProperty(AiMessageTrait::class, 'sender');
+	$joinColumn = $property->getAttributes(Doctrine\ORM\Mapping\JoinColumn::class)[0]->newInstance();
+
+	Assert::true($property->getAttributes(Doctrine\ORM\Mapping\ManyToOne::class) !== []);
+	Assert::true($joinColumn->nullable);
+	Assert::same('SET NULL', $joinColumn->onDelete);
+	Assert::null(new TestAiMessage()->getSender());
+	Assert::contains("'senderField' => 'sender'", file_get_contents(__DIR__ . '/../src/DI/FancyAdminExtension.php'));
 });
 
 

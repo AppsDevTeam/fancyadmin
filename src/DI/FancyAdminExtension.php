@@ -395,6 +395,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'conversationClass' => $ai->conversationClass,
 				'messageClass' => $ai->messageClass,
 				'ownerField' => 'identity',
+				'senderField' => 'sender',
 			] + $ai->chat]);
 
 		$builder->addDefinition($this->prefix('ai.dispatcher'))
