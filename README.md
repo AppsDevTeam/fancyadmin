@@ -3037,7 +3037,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 28.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.9.0 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.9.1 marked dompurify chart.js
 ```
 
 ```js
