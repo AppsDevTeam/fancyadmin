@@ -117,7 +117,9 @@ test('vsechny texty widgetu jsou ve slovniku a zastupne symboly zustavaji pro wi
 		$labels = Yaml::parseFile(__DIR__ . '/../src/lang/fcadmin.' . $_locale . '.yml')['aiChat']['labels'];
 
 		Assert::same(AiChatTranslator::EFFORT_LEVELS, array_keys($labels['effortLevels']), $_locale);
-		unset($labels['effortLevels']);
+		Assert::same(AiChatTranslator::SUBAGENT_STATUSES, array_keys($labels['subagentStatus']), $_locale);
+		unset($labels['effortLevels'], $labels['subagentStatus']);
+		Assert::contains('{count}', $labels['toolCalls'], $_locale);
 		Assert::same(AiChatTranslator::WIDGET_LABELS, array_keys($labels), $_locale);
 		Assert::contains('{max}', $labels['errorTooManyFiles'], $_locale);
 		Assert::contains('{name}', $labels['errorFileTooLarge'], $_locale);

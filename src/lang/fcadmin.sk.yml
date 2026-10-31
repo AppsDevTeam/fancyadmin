@@ -526,6 +526,16 @@ aiChat:
     rateSave: Odoslať
     rateThanks: Ďakujeme za spätnú väzbu.
     rated: Hodnotené
+    stop: Zastaviť odpoveď
+    stopping: Zastavujem...
+    interrupted: Zastavené používateľom
+    subagent: Subagent
+    toolCalls: "dotazov: {count}"
+    subagentStatus:
+      running: Pracuje
+      rescheduling: Čaká
+      idle: Hotovo
+      terminated: Zastavené
 
 sidePanels:
   control:

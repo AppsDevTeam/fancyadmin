@@ -19,11 +19,14 @@ class AiChatTranslator
 		'contextLabel', 'contextOk', 'contextWarn', 'contextFull', 'contextSwitch', 'errorConnection', 'errorTimeout',
 		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge', 'model', 'effort',
 		'modelHint', 'rateQuestion', 'rateUp', 'rateDown', 'rateComment', 'rateCommentUp', 'rateSave',
-		'rateThanks', 'rated',
+		'rateThanks', 'rated', 'stop', 'stopping', 'interrupted', 'subagent', 'toolCalls',
 	];
 
 	/** Úrovně přemýšlení (labels.effortLevels widgetu). */
 	public const array EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
+
+	/** Stavy subagentů (labels.subagentStatus widgetu). */
+	public const array SUBAGENT_STATUSES = ['running', 'rescheduling', 'idle', 'terminated'];
 
 	public function __construct(
 		private readonly Translator $translator,
@@ -59,15 +62,17 @@ class AiChatTranslator
 			}
 		}
 
-		$effortLevels = [];
-		foreach (self::EFFORT_LEVELS as $_level) {
-			$translated = $this->translateLabel('fcadmin.aiChat.labels.effortLevels.' . $_level);
-			if ($translated !== null) {
-				$effortLevels[$_level] = $translated;
+		foreach (['effortLevels' => self::EFFORT_LEVELS, 'subagentStatus' => self::SUBAGENT_STATUSES] as $_group => $_keys) {
+			$group = [];
+			foreach ($_keys as $_key) {
+				$translated = $this->translateLabel('fcadmin.aiChat.labels.' . $_group . '.' . $_key);
+				if ($translated !== null) {
+					$group[$_key] = $translated;
+				}
 			}
-		}
-		if ($effortLevels !== []) {
-			$labels['effortLevels'] = $effortLevels;
+			if ($group !== []) {
+				$labels[$_group] = $group;
+			}
 		}
 
 		return $labels;

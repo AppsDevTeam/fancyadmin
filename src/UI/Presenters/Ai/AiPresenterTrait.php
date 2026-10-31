@@ -157,6 +157,15 @@ trait AiPresenterTrait
 		));
 	}
 
+	/** Zastavení rozepsané odpovědi - smí ho každý, kdo do konverzace píše. */
+	public function handleAiCancel(): void
+	{
+		$this->checkAiTenantAccess();
+		$this->assertAiPost();
+		[$owner] = $this->resolveAiOwner($this->getAiParam('conversationId'));
+		$this->sendJson($this->getAiChatEndpoint()->cancel($owner, $this->getAiParam('conversationId')));
+	}
+
 	public function handleAiPoll(): void
 	{
 		$this->checkAiTenantAccess();
@@ -237,6 +246,7 @@ trait AiPresenterTrait
 				'load' => $this->link('aiLoad!'),
 				'send' => $this->link('aiSend!'),
 				'poll' => $this->link('aiPoll!'),
+				'cancel' => $this->link('aiCancel!'),
 				'delete' => $this->link('aiDelete!'),
 				'export' => $this->link('aiExport!'),
 				'rate' => $this->link('aiRate!'),
