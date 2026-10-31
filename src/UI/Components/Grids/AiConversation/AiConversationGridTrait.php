@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Components\Grids\AiConversation;
 
+use ADT\AiChat\ChatService;
 use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Component\DeleteParams;
 use ADT\FancyAdmin\Model\Entities\AiConversation;
@@ -12,6 +13,7 @@ use ADT\FancyAdmin\Model\Queries\AiConversationQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\AiConversationQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\Editable\Editable;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\SearchFilter;
+use Kdyby\Autowired\Attributes\Autowire;
 use Nette\Utils\Html;
 
 /**
@@ -22,6 +24,9 @@ trait AiConversationGridTrait
 {
 	use Editable;
 	use SearchFilter;
+
+	#[Autowire]
+	protected ChatService $_aiChatService;
 
 	public function initGrid(DataGrid $grid): void
 	{
@@ -41,7 +46,7 @@ trait AiConversationGridTrait
 		}
 
 		$grid->addColumnText('model', 'fcadmin.presenters.ai.grid.model')
-			->setRenderer(fn(AiConversation $conversation) => trim($conversation->getModel() . ' ' . $conversation->getEffort()));
+			->setRenderer(fn(AiConversation $conversation) => $this->renderAiConversationModel($conversation));
 
 		$grid->addColumnText('rating', 'fcadmin.presenters.ai.grid.rating')
 			->setRenderer(fn(AiConversation $conversation) => $this->renderAiConversationRating($conversation));
@@ -87,6 +92,14 @@ trait AiConversationGridTrait
 				return false;
 			},
 		);
+	}
+
+	/** Model a přemýšlení poslední zprávy - konverzace běží na volbě své poslední zprávy. */
+	protected function renderAiConversationModel(AiConversation $conversation): string
+	{
+		$choice = $this->_aiChatService->getModelChoice($conversation);
+
+		return $choice !== null ? trim($choice['model'] . ' ' . $choice['effort']) : '';
 	}
 
 	/** Palec nahoru/dolů, komentář k hodnocení v title. */
