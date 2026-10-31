@@ -155,6 +155,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'conversationClass' => Expect::string()->nullable()->default(null),
 				'messageClass' => Expect::string()->nullable()->default(null),
 				'agentClass' => Expect::string()->nullable()->default(null),
+				// agent smí delegovat části dotazu na své kopie (multiagent, víc tokenů)
+				'subagents' => Expect::bool()->default(false),
+				// klíče AiChatOptions: idleTimeoutSeconds, maxTurnSeconds, maxToolCalls, ...
+				'turn' => Expect::array()->default([]),
 				// prefix jména agenta v Anthropic konzoli; null = project
 				'agentNamePrefix' => Expect::string()->nullable()->default(null),
 				// read-only DB uživatel se SELECT jen nad anonymizovaným schématem:
@@ -412,7 +416,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setFactory(PiiResponseFilter::class, ['labels' => $ai->piiLabels]);
 
 		$builder->addDefinition($this->prefix('ai.turnOptions'))
-			->setFactory(AiChatOptions::class);
+			->setFactory(AiChatOptions::class, $ai->turn);
 
 		$builder->addDefinition($this->prefix('ai.systemPromptBuilder'))
 			->setFactory(SystemPromptBuilder::class, [
@@ -423,6 +427,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setFactory(AgentProvisioner::class, [
 				'agentClass' => $ai->agentClass,
 				'namePrefix' => $ai->agentNamePrefix ?? $this->config->project ?? 'fancyadmin',
+				'subagents' => $ai->subagents,
 			]);
 
 		$builder->addDefinition($this->prefix('ai.chatOptions'))

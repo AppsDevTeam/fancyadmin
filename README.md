@@ -3114,6 +3114,30 @@ Pokud projekt už běží na 0.9, je bezpečnější před smazáním sloupců p
 m.effort = c.effort WHERE m.model IS NULL AND c.model IS NOT NULL`). Poté znovu vygenerujte
 anonymizované pohledy a přebuildujte frontend s widgetem v0.10.0.
 
+**Zastavení odpovědi a subagenti (adt/ai-chat 0.11).** Rozepsanou odpověď jde zastavit
+tlačítkem Stop (signál `aiCancel!`): worker agenta přeruší, uloží, co stihl, jako přerušenou
+odpověď a konverzace pokračuje ve stejné session. Tah už nekončí po pevném počtu dotazů,
+ale po nečinnosti (`idleTimeoutSeconds`, výchozí 300 s) nebo po stropu (`maxTurnSeconds`,
+výchozí hodina). Se `subagents: true` smí agent delegovat nezávislé části dotazu na své
+kopie; widget je ukazuje živě pod vstupem a v odpovědi jako sbalené karty s jejich tabulkami
+a grafy. Subagenti stojí víc tokenů.
+
+```neon
+fancyadmin:
+	ai:
+		subagents: true
+		turn:                         # parametry AiChatOptions
+			idleTimeoutSeconds: 300
+			maxTurnSeconds: 3600
+			maxToolCalls: 25          # na vlákno (hlavní agent i každý subagent)
+```
+
+**Aktualizace na fancyadmin s adt/ai-chat 0.11.** Entita konverzace má nové sloupce
+`turn_activity`, `turn_progress`, `turn_cancelled`, entita zprávy `interrupted`. Vygenerujte
+migraci (`migrations:diff`), znovu vygenerujte anonymizované pohledy a přebuildujte frontend
+s widgetem v0.11.0. `ai.chat.pendingTurnSeconds` se počítá od poslední aktivity workeru -
+nechte ho nad `ai.turn.idleTimeoutSeconds`.
+
 ### 30.4 Anonymizované schéma a read-only uživatel
 
 1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
@@ -3155,7 +3179,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 30.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.10.0 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.11.0 marked dompurify chart.js
 ```
 
 ```js

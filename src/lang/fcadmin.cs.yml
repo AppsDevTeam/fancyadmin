@@ -571,6 +571,16 @@ aiChat:
     rateThanks: Děkujeme za zpětnou vazbu.
     rated: Hodnoceno
     sentContent: Osobní údaje jsme před AI skryli - zobrazit, co AI dostala
+    stop: Zastavit odpověď
+    stopping: Zastavuji...
+    interrupted: Zastaveno uživatelem
+    subagent: Subagent
+    toolCalls: "dotazů: {count}"
+    subagentStatus:
+      running: Pracuje
+      rescheduling: Čeká
+      idle: Hotovo
+      terminated: Zastaveno
 
 sidePanels:
   control:
