@@ -185,6 +185,11 @@ input[type="color"]::-webkit-color-swatch {
 		background-color: var(--inputFocusBackground) !important;
 		border: var(--inputFocusBorder);
 	}
+
+	// Bez --inputHoverBorder beze změny; pole bez rámečku (s lupou) mají vyšší specificitu a zůstanou bez něj
+	&:hover:not(:focus, :disabled) {
+		border: var(--inputHoverBorder, var(--inputBorder));
+	}
 }
 
 // Menší a větší varianta. Specificita musí dosáhnout na základní pravidlo výše,
@@ -242,9 +247,22 @@ input[type="color"]::-webkit-color-swatch {
 	}
 
 	> .select2-container {
+		position: relative;
 		flex: 1 1 auto;
 		width: 1% !important;
 		min-width: 0;
+	}
+
+	// Tlačítko pole o rámeček překrývá; aktivní pole leží navrch, takže je jeho rámeček celý (postup Bootstrapu)
+	> .form-control:hover,
+	> .form-select:hover,
+	> .select2-container:hover {
+		z-index: 3;
+	}
+
+	> .select2-container--focus,
+	> .select2-container--open {
+		z-index: 5;
 	}
 
 	> .form-control:not(:last-child),
@@ -263,7 +281,7 @@ input[type="color"]::-webkit-color-swatch {
 		width: var(--control-height);
 		height: var(--control-height);
 		padding: 0;
-		margin-left: 0 !important;
+		margin-left: calc(-1 * var(--bs-border-width)) !important;
 		background-color: var(--inputBackground);
 		border: var(--inputBorder);
 		border-left: 1px solid var(--secondaryColorDarker);
@@ -275,6 +293,13 @@ input[type="color"]::-webkit-color-swatch {
 		&:focus-visible {
 			background-color: var(--inputFocusBackground);
 			color: var(--primaryColorDark);
+		}
+
+		// Najetí myší jako u pole vedle; navrch, aby byl ztmavlý rámeček vidět i na spoji
+		&:hover {
+			z-index: 3;
+			border: var(--inputHoverBorder, var(--inputBorder));
+			border-left: var(--inputHoverBorder, 1px solid var(--secondaryColorDarker));
 		}
 	}
 }

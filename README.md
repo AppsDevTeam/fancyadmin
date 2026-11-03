@@ -1036,6 +1036,13 @@ fancyadmin:
 Projekt bez účtů, nebo s databází pro každého zákazníka, přidá `multiTenant: false` — viz
 sekce 27 (Single-tenant režim).
 
+Pozadí pole (`--inputBackground`) a rámeček při najetí myší (`--inputHoverBorder`) v `colors`
+nejsou, projekt je nastaví v SCSS na `body`. Bez `--inputHoverBorder` se pole při najetí nemění
+(Select2 bere rámeček focusu). Přihlašovací pole jsou bez rámečku, dokud projekt nenastaví
+`--loginInputBorder` (případně `--loginInputHoverBorder`, `--loginInputFocusBorder`). Rozbalený seznam Select2 přebírá velikost pole přes
+`@fancyadmin/js/select2DropdownSize` — `app.js` ho importuje, projekt s vlastním entry pointem
+ho importuje sám.
+
 ### Tmavý režim
 
 Přepínač „Tmavý režim" je v uživatelském menu (`@userButton.latte`) a jako ikonka vedle tlačítka Sbalit v bočním menu (`@sideMenu.latte`), obsluha obou je `assets/js/themeToggle.js` (atribut `data-fancyadmin-theme-toggle`).

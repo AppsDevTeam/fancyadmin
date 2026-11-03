@@ -134,7 +134,8 @@ $login-lost-password-offset: 6px;
 			gap: 10px;
 			font-size: $fs-body;
 			//-webkit-text-fill-color: white;
-			border: none;
+			// Bez rámečku, pokud ho projekt nenastaví (pole pak odliší jen pozadí)
+			border: var(--loginInputBorder, none);
 			border-radius: var(--bs-border-radius-lg);
 			//box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset;
 			//-webkit-box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset;
@@ -149,6 +150,11 @@ $login-lost-password-offset: 6px;
 				//box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset !important;
 				//-webkit-box-shadow: 0 calc(10px + 2 * $padding-input + $fs-body) 0 $bg-whitish-30-no-alpha inset !important;
 				background-color: var(--loginBackgroundInputFocus) !important;
+				border: var(--loginInputFocusBorder, var(--loginInputBorder, none));
+			}
+
+			&:hover:not(:focus) {
+				border: var(--loginInputHoverBorder, var(--loginInputBorder, none));
 			}
 
 			//&:autofill,
