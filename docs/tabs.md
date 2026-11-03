@@ -6,7 +6,7 @@ zobrazení, nebo jen filtruje.
 | prvek | otázka | kdy |
 |---|---|---|
 | `.nav-tabs` | Kam jdu? | pod záložkami se mění celý obsah (sekce karty, nastavení) |
-| `.nav-tabs.nav-tabs-sm` | Kam jdu uvnitř panelu? | 2. úroveň, mění se struktura obsahu panelu |
+| `.tabs-header` + `.nav-tabs.nav-tabs-sm` | Kam jdu uvnitř karty? | 2. úroveň v hlavičce karty, mění se struktura obsahu karty |
 | `.view-switch` | Jak to zobrazím? | stejná data, jiné zobrazení (Den/Týden, Kalendář/Tabulka) |
 | `.select-filter` | Co z toho vidím? | podmnožina téhož seznamu |
 
@@ -20,7 +20,7 @@ Pravidla: záložky jen jedna úroveň na stránce a nikdy na dva řádky; přep
 
 | soubor | co dělá |
 |---|---|
-| `assets/scss/_tabs.scss` | podtržené záložky přes proměnné Bootstrapu `--bs-nav-*`, jezdec, posuvná lišta, menu „Další“ |
+| `assets/scss/_tabs.scss` | podtržené záložky přes proměnné Bootstrapu `--bs-nav-*`, jezdec, posuvná lišta, menu „Další“, hlavička karty `.tabs-header` |
 | `assets/js/tabs.js` | jezdec pod aktivní záložkou, přetečení do „Další“ (Bootstrap dropdown), pod 992 px posuvná lišta se šipkami |
 | `assets/scss/_viewSwitch.scss` | přepínač = `.btn-group` s plnou aktivní položkou (jen CSS) |
 | `assets/scss/_selectFilter.scss` | filtr s popiskem, otevřený seznam `.select-filter-dropdown` |
@@ -53,6 +53,26 @@ a utility třídy okrajů (`mb-3`, `mt-2`…) přesune z `ul` na obal.
 - **< 992 px** a podzáložky `.nav-tabs-sm`, které se nevejdou: posuvná lišta se šipkami;
   aktivní záložka se vycentruje.
 - V lištách, které se vejdou, šipky ani „Další“ nejsou.
+- Řada je vysoká 52 px včetně linky; hlavní úroveň má písmo 16 px (`$control-font`), nižší 14 px (`$control-font-sm`).
+
+## Podzáložky = hlavička karty
+
+Podzáložky stojí jen v hlavičce karty, nikdy samostatně nad kartou ani jako druhá řada pod hlavními záložkami. Karta nemá vlastní nadpis, sekci pojmenovává hlavní záložka.
+
+```html
+<div class="patient-section-panel">  <!-- karta nastaví --card-padding-x / --card-padding-y -->
+  <div class="tabs-header">
+    <ul class="nav nav-tabs nav-tabs-sm" role="tablist">…</ul>
+    <div class="tabs-header-actions">
+      <button class="btn btn-sm btn-outline-primary" title="Nový záznam"><i class="fa-regular fa-plus"></i><span>Nový záznam</span></button>
+    </div>
+  </div>
+  <div class="tab-content">…</div>
+</div>
+```
+
+- Hlavička je 52 px vysoká a linku táhne od kraje ke kraji karty: přes odsazení karty ji natáhnou `--card-padding-x/y` (jako `.card-header` u Bootstrapu). Text první záložky lícuje s obsahem karty.
+- Vpravo jedna akce (`btn-sm btn-outline-primary` s plusem) nebo stav (chip). V kartě užší než 520 px zůstane u tlačítka jen ikona, proto `title`.
 
 ## Přepínač pohledu
 

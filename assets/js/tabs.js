@@ -93,7 +93,9 @@ function layout(nav, animate = false) {
 	}
 	wrap.classList.remove('is-scroll');
 
-	const available = wrap.clientWidth;
+	// Obal v hlavičce karty má odsazení, aby text lícoval s obsahem
+	const style = getComputedStyle(wrap);
+	const available = wrap.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
 	const widths = items.map((li) => li.offsetWidth);
 	const fits = sum(widths) <= available;
 
@@ -171,7 +173,8 @@ function init(nav) {
 		const width = Math.round(entry.contentRect.width);
 		if (width !== lastWidth) {
 			lastWidth = width;
-			layout(nav);
+			// S animací: přepnutí záložky často schová posuvník stránky a bez ní by přesun jezdce utnulo
+			layout(nav, true);
 		}
 	}).observe(wrap);
 }

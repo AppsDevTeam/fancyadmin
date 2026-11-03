@@ -1,9 +1,15 @@
 @use 'variables' as *;
 
+// Výška řady záložek i hlavičky karty včetně spodní linky
+$nav-tabs-height: 52px;
+$nav-tabs-padding-x: 14px;
+
 // Záložky = navigace mezi sekcemi (mění se celý obsah); jezdec, „Další“ a posuvnou lištu dodává js/tabs.js
 .nav-tabs {
-	--bs-nav-link-padding-x: 14px;
-	--bs-nav-link-padding-y: 10px;
+	--nav-tabs-height: #{$nav-tabs-height};
+	--bs-nav-link-padding-x: #{$nav-tabs-padding-x};
+	--bs-nav-link-padding-y: 0;
+	--bs-nav-link-font-size: #{$control-font};
 	--bs-nav-link-font-weight: 500;
 	--bs-nav-link-color: var(--fa-text-muted);
 	--bs-nav-link-hover-color: var(--fa-heading, var(--fa-text));
@@ -25,6 +31,7 @@
 		display: flex;
 		align-items: center;
 		gap: 6px;
+		height: var(--nav-tabs-height);
 		// Podtržení hoveru i aktivní záložky; mezi položkami bez mezery, aby navazovalo
 		border-width: 0 0 2px;
 		white-space: nowrap;
@@ -39,11 +46,9 @@
 		border-bottom-color: transparent;
 	}
 
-	// Podzáložky uvnitř panelu (2. úroveň)
+	// Podzáložky v hlavičce karty: stejný prvek, nižší úroveň má menší písmo
 	&.nav-tabs-sm {
-		--bs-nav-link-padding-x: 11px;
-		--bs-nav-link-padding-y: 6px;
-		--bs-nav-link-font-size: 13px;
+		--bs-nav-link-font-size: #{$control-font-sm};
 	}
 }
 
@@ -108,8 +113,9 @@
 			display: none;
 		}
 
-		// overflow by přesah přes linku ořízl
+		// overflow by přesah přes linku ořízl; o něj nižší, aby celková výška zůstala
 		.nav-link {
+			height: calc(var(--nav-tabs-height) - 1px);
 			margin-bottom: 0;
 		}
 
@@ -128,6 +134,41 @@
 
 	&.can-scroll-start.can-scroll-end > .nav-tabs {
 		mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+	}
+}
+
+// Hlavička karty se záložkami: vlevo podzáložky, vpravo akce nebo stav, linka od kraje ke kraji karty.
+// Přes odsazení karty ji natáhnou --card-padding-x/y, které karta nastavuje sama (jako .card-header u Bootstrapu).
+.tabs-header {
+	container-type: inline-size;
+	display: flex;
+	align-items: stretch;
+	height: $nav-tabs-height;
+	margin: calc(-1 * var(--card-padding-y, 0px)) calc(-1 * var(--card-padding-x, 0px)) var(--card-padding-y, 16px);
+	border-bottom: 1px solid var(--fa-border);
+
+	> .nav-tabs-wrap,
+	> .nav-tabs {
+		flex: 1;
+		min-width: 0;
+		border-bottom: 0;
+		// Text první záložky lícuje s obsahem karty
+		padding-left: calc(var(--card-padding-x, 20px) - #{$nav-tabs-padding-x});
+	}
+}
+
+.tabs-header-actions {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+	padding: 0 var(--card-padding-x, 16px) 0 8px;
+
+	// V úzké kartě zůstane u tlačítka jen ikona (popisek je v title)
+	@container (max-width: 520px) {
+		.btn > i + span {
+			@include visually-hidden;
+		}
 	}
 }
 
