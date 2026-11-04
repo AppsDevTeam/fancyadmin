@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'glass' as *;
 
 :root {
   --bs-bg-opacity: 1;
@@ -160,9 +161,10 @@ body:has(.side-panel) .container {
 }
 
 $sidePanelTemplateAnimation: .4s;
-// Odsazení obsahu panelu od jeho hran. Nese ho tělo formuláře i spodní lišta, aby
-// na sebe navazovaly - proto proměnná a ne dvě nezávislá čísla.
-$sidePanelPadding: 40px;
+// Plovoucí panel je od okrajů okna odsazený
+$sidePanelInset: 12px;
+// Levé odsazení obsahu - nese ho hlavička, tělo i spodní lišta, aby byly zarovnané
+$sidePanelPadding: 24px;
 // Puntík přepínače. Bílý v obou stavech, takže stačí jeden obrázek - barvu mění
 // dráha pod ním. Bootstrap svůj puntík kreslí stejně, jen šedý ve vypnutém stavu.
 $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%23fff'/%3E%3C/svg%3E");
@@ -180,46 +182,55 @@ $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' v
 // by se změna v Chrome projevila naráz bez přechodu
 .side-panel-template-backdrop--open {
   pointer-events: all;
-  background-color: var(--fa-backdrop);
+  background-color: color-mix(in srgb, var(--fa-heading, var(--fa-text)) 14%, transparent);
 }
 
 .side-panel-template-container {
+  @include glass(70%);
+  @include glass-inputs;
+
   position: fixed;
-  width: 100vw;
+  top: $sidePanelInset;
+  bottom: $sidePanelInset;
+  right: $sidePanelInset;
+  width: calc(100vw - #{2 * $sidePanelInset});
   max-width: var(--width, 610px);
-  // Zavřený panel je mimo obrazovku posunutý o celou svou šířku. Přes right o -610px
-  // by širší panel (lg, extreme) po otevření naráz vyčníval a vysunutí nebylo vidět.
-  // right drží jen odsazení spodního panelu pod vrstveným (viz níže).
-  right: 0;
-  transform: translateX(100%);
-  top: 0;
-  bottom: 0;
-  padding: $sidePanelPadding;
-  overflow: auto;
-
-  background-color: $background;
+  // Zavřený posunutý o šířku i s odsazením a stínem; přes right by širší panel naráz vyčníval
+  transform: translateX(calc(100% + 48px));
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--bs-border-radius);
   z-index: 9020;
-  box-shadow: 0 0 0 0 black;
 
-  transition: transform $sidePanelTemplateAnimation ease, right $sidePanelTemplateAnimation ease, max-width $sidePanelTemplateAnimation ease;
+  transition: transform $sidePanelTemplateAnimation ease, right $sidePanelTemplateAnimation ease, max-width $sidePanelTemplateAnimation ease, filter $sidePanelTemplateAnimation ease;
+
+  &:not(.side-panel-template-container--open) {
+    box-shadow: none;
+  }
 
   &.side-panel-template-container--open {
     transform: translateX(0);
-    box-shadow: 0 0 45px -10px black;
   }
 
   .side-panel-loading {
     display: flex;
+    flex: 1;
     align-items: center;
     justify-content: center;
-    height: 100%;
     color: var(--primaryColor);
   }
 
-  .btn-close {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+  // Tělo panelu - posouvá se jen ono, hlavička i spodní lišta zůstávají na místě
+  > [id^="snippet--sidePanel"] {
+    @include thin-scrollbar;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden auto;
+    padding: 20px $sidePanelPadding 8px;
   }
 
   [type="submit"] {
@@ -231,47 +242,39 @@ $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' v
     flex-direction: column;
   }
 
-  // Panel s lištou je flex sloupec až dolů k formuláři, aby se formulář natáhl přes
-  // celou výšku panelu. Lišta pak (margin-top: auto) sedí na spodní hraně i u krátkého
-  // formuláře - jinak by visela hned pod posledním polem a pod ní by zbyl prázdný pruh.
-  //
-  // Prostřední článek řetězu je snippet formuláře; vybíráme ho podle toho, že formulář
-  // obsahuje, protože jeho id se jmenuje podle komponenty. Položky rostou, ale nesmí se
-  // smrsknout - delší formulář má zůstat vysoký podle obsahu a panel se musí dát odrolovat.
+  // S lištou se posouvá jen obal polí (.side-panel-scroll ze sidePanel.js), lišta zůstává pod ním
   &:has(.side-panel-actions) {
-    display: flex;
-    flex-direction: column;
-    // Spodní odsazení panelu dodává lišta svým paddingem
-    padding-bottom: 0;
-
-    > [id^="snippet--sidePanel"],
-    > [id^="snippet--sidePanel"] > :has(> form),
-    form {
-      flex: 1 0 auto;
+    > [id^="snippet--sidePanel"] {
+      overflow: hidden;
+      padding: 0;
     }
 
-    > [id^="snippet--sidePanel"],
-    > [id^="snippet--sidePanel"] > :has(> form) {
+    > [id^="snippet--sidePanel"] > :has(> form),
+    form {
+      flex: 1 1 auto;
+      min-height: 0;
       display: flex;
       flex-direction: column;
     }
   }
 
-  // Spodní lišta: [přepínač] ....... [Uložit]. Je poslední prvek formuláře, takže se při
-  // dorolování na konec kryje se svou normální pozicí a nikam neposkočí. Záporné vodorovné
-  // marginy vyruší odsazení panelu, aby pruh šel přes celou jeho šířku.
+  .side-panel-scroll {
+    @include thin-scrollbar;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden auto;
+    padding: 20px $sidePanelPadding 8px;
+  }
+
+  // Spodní lišta: [přepínač] ....... [Uložit]
   .side-panel-actions {
-    position: sticky;
-    bottom: 0;
-    // Nad obsahem formuláře, pod zavíracím křížkem v rohu panelu
-    z-index: 1;
+    flex: none;
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: auto (-$sidePanelPadding) 0;
-    padding: 16px $sidePanelPadding;
-    background-color: $background;
-    border-top: 1px solid $color-light-gray;
+    margin: 0;
+    padding: 12px 16px 12px $sidePanelPadding;
+    border-top: 1px solid var(--fa-line);
   }
 
   // Buňky lišty jsou původní bloky polí, takže si s sebou nesou odsazení, kterým se
@@ -362,10 +365,40 @@ $sidePanelStackedOffset: 48px;
 
 .side-panel-template-container--stacked {
   z-index: 9024;
+  // O kousek plnější než panel pod ním
+  background: color-mix(in srgb, var(--fa-surface) 80%, transparent);
 }
 
 .side-panel-template-container--covered {
-  right: $sidePanelStackedOffset;
+  right: $sidePanelInset + $sidePanelStackedOffset;
+  filter: brightness(0.9);
+}
+
+// Hlavička: nadpis vlevo, ikonová tlačítka vpravo (poslední je Zavřít)
+.side-panel-template-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 10px $sidePanelPadding;
+  border-bottom: 1px solid var(--fa-line);
+}
+
+.side-panel-template-title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fa-heading, var(--fa-text));
+}
+
+.side-panel-template-close {
+  flex: none;
+  margin-left: auto;
 }
 
 span.empty {

@@ -588,6 +588,7 @@ sidePanels:
     itemAdd: "Položka byla přidána."
     formSaved: "Formulář byl úspěšně uložen."
     closeConfirm: "Opravdu zavřít bez uložení?"
+    close: "Zavřít"
 
 firebase:
   notifications:

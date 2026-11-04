@@ -17,3 +17,7 @@ Tokeny jsou na `body`, projekt je může přemapovat:
 - `--fa-line`: jemné linky pod hlavičkou a nad patičkou (slabší než `--fa-border`)
 
 Jinde jsou pole bílá (`--inputBackground` projektu), sklo je jediná výjimka.
+
+## Boční panel
+
+Plovoucí sklo 12 px od okrajů okna, šířka dál podle `data-size`. Hlavička `.side-panel-template-header` (nadpis `.side-panel-template-title`, křížek `.side-panel-template-close`) i spodní lišta `.side-panel-actions` stojí, posouvá se jen tělo: snippet, a u formuláře s lištou obal polí `.side-panel-scroll`, který skládá `sidePanel.js`. Vrstvený panel má sklo 80 %, panel pod ním se posune o 48 px a ztmaví.

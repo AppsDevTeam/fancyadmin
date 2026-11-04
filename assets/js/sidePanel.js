@@ -179,6 +179,12 @@ $(function () {
 			}
 			submit.classList.add('side-panel-actions-submit');
 			actions.append(submit);
+
+			// Posouvá se jen obal polí, lišta pod ním zůstává na místě
+			const scroll = document.createElement('div');
+			scroll.className = 'side-panel-scroll';
+			scroll.append(...Array.from(form.childNodes).filter((node) => node !== actions));
+			form.prepend(scroll);
 		});
 	}
 
@@ -239,7 +245,7 @@ $(function () {
 
 	$(document).on('click', '.side-panel-template-backdrop:not(.side-panel-template-backdrop--stacked)', () => tryClose('snippet--sidePanel'));
 	$(document).on('click', '.side-panel-template-backdrop--stacked', () => tryClose('snippet--sidePanelStacked'));
-	$(document).on('click', '.side-panel-template-container .btn-close', function () {
+	$(document).on('click', '.side-panel-template-close', function () {
 		tryClose(getPanelId(this));
 	});
 });
