@@ -412,6 +412,13 @@ $fp-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 		border-top: 1px solid $color-light-gray;
 	}
 
+	// Jen čas (noCalendar): není od čeho oddělovat
+	&.hasTime.noCalendar .flatpickr-time {
+		margin-top: 0;
+		padding-top: 0;
+		border-top: 0;
+	}
+
 	// Hodiny a minuty jsou dvě stejně široká pole kolem dvojtečky, ne dvě poloviny
 	// řádku — podbarvení hoveru pak nesahá až k zaobleným rohům karty.
 	// Mřížka místo centrovaného flexu: dvojtečka drží střed karty a hodiny s minutami
