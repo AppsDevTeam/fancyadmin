@@ -1,0 +1,52 @@
+{**
+ * Malý grid v panelu (CompactDataGridTrait) — hledání a šipky stránkování nad tabulkou
+ *
+ * @param Datagrid $control
+ * @param string   $originalTemplate
+ *}
+
+{extends $originalTemplate}
+
+{block outer-filters}
+	<div class="datagrid-compact-toolbar">
+		<div n:ifset="$filters['search']" class="datagrid-compact-search">
+			<i class="fa-regular fa-magnifying-glass"></i>
+			{var $input = $control['filter']['filter'][$filters['search']->getKey()]}
+			{* Typ search kvůli nativnímu křížku pro smazání, odeslání řeší datagrid.js *}
+			{do $input->setHtmlType('search')}
+			{ADT\Datagrid\Component\FilterInput::render($input, [
+				'class' => 'form-control form-control-sm',
+				'placeholder' => $translator->translate('ublaboo_datagrid.search'),
+			])|noescape}
+		</div>
+
+		{* Formulář filtru počet řádků vyžaduje, výběr ale malý grid nenabízí *}
+		<div hidden>{input $control['filter']['perPage']}</div>
+
+		{* Snippet pagination překresluje datagrid po stránkování i hledání *}
+		<div n:snippet="pagination" class="datagrid-compact-pager">
+			{var $paginator = $control['paginator']->getPaginator()}
+			{var $titles = $control->getCompactPagerTitles()}
+			{include pagerArrow, enabled: !$paginator->isFirst(), page: $paginator->getPage() - 1, title: $titles[0], icon: 'chevron-left'}
+			{include pagerArrow, enabled: !$paginator->isLast(), page: $paginator->getPage() + 1, title: $titles[1], icon: 'chevron-right'}
+		</div>
+	</div>
+{/block}
+
+{* Stránkování je v liště nahoře *}
+{block tfoot}{/block}
+
+{block noItems}
+	<tr n:if="!$rows">
+		<td colspan="{$control->getColumnsCount()}">{='ublaboo_datagrid.no_item_found'|translate}</td>
+	</tr>
+{/block}
+
+{define pagerArrow, bool $enabled, int $page, string $title, string $icon}
+	<a n:if="$enabled" n:href="page!, page: $page" class="ajax btn btn-icon btn-sm btn-ghost" title="{$title}" aria-label="{$title}">
+		<i class="fa-regular fa-{$icon}"></i>
+	</a>
+	<button n:if="!$enabled" type="button" class="btn btn-icon btn-sm btn-ghost" title="{$title}" aria-label="{$title}" disabled>
+		<i class="fa-regular fa-{$icon}"></i>
+	</button>
+{/define}

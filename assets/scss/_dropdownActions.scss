@@ -1,0 +1,45 @@
+@use 'variables' as *;
+
+/* --------------------
+ *  Menu akcí (dropdown-menu-actions): položka s ikonou, údaj vpravo, oddělovače skupin
+ * -------------------- */
+
+.dropdown-menu.dropdown-menu-actions {
+	--bs-dropdown-min-width: 260px;
+	--bs-dropdown-spacer: 4px;
+	--bs-dropdown-border-color: var(--fa-border);
+	box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+
+	.dropdown-item {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+
+		> i {
+			flex: none;
+			width: 16px;
+			text-align: center;
+			color: var(--fa-text-muted);
+		}
+
+		&.disabled > i {
+			color: inherit;
+		}
+	}
+
+	.dropdown-item-label {
+		flex: 1;
+	}
+
+	.dropdown-item-meta {
+		font-size: 12px;
+		color: var(--fa-text-muted);
+	}
+
+	// Výchozí menu oddělovače schovává, tady dělí skupiny akcí
+	.dropdown-divider {
+		display: block;
+		margin: 0;
+		border-top-color: $secondary-dark;
+	}
+}

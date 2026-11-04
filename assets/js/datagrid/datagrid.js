@@ -172,6 +172,12 @@ $(document).on('change', 'select[data-autosubmit-per-page]', function() {
 			return dataGridSubmitForm($this.closest('form').first());
 		};
 	})(this), 200);
+}).on('search', 'input[type=search][data-autosubmit]', function() {
+	// Nativní křížek pole hledání; Enter odešle keyup níž
+	if (this.value === '') {
+		clearTimeout(window.datagrid_autosubmit_timer);
+		return dataGridSubmitForm($(this).closest('form').first());
+	}
 }).on('keyup', 'input[data-autosubmit]', function(e) {
 	var $this, code;
 	code = e.which || e.keyCode || 0;

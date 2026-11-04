@@ -1,0 +1,105 @@
+@use 'variables' as *;
+
+/* --------------------
+ *  Malý grid v panelu (DataGridCompact.latte, CompactDataGridTrait)
+ * -------------------- */
+
+.datagrid.datagrid-compact {
+	// Stejné zaoblení jako malé pole hledání nad tabulkou
+	--datagridRadius: var(--bs-border-radius-sm);
+
+	form:has(> .table-responsive-wrapper) {
+		gap: 10px;
+	}
+
+	.datagrid-compact-toolbar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.datagrid-compact-search {
+		position: relative;
+		flex: 0 1 280px;
+		min-width: 0;
+
+		> i {
+			position: absolute;
+			top: 50%;
+			left: 12px;
+			transform: translateY(-50%);
+			font-size: 13px;
+			color: var(--fa-text-muted);
+			pointer-events: none;
+		}
+
+		.form-control {
+			padding-left: 34px;
+		}
+	}
+
+	.datagrid-compact-pager {
+		display: flex;
+		gap: 4px;
+		flex-shrink: 0;
+
+		.btn {
+			--bs-btn-color: var(--fa-text-muted);
+			--bs-btn-hover-color: var(--fa-text-strong, var(--fa-text));
+			--bs-btn-disabled-color: var(--fa-text-faint);
+			--bs-btn-disabled-bg: transparent;
+			--bs-btn-disabled-border-color: transparent;
+		}
+	}
+
+	table {
+		width: 100%;
+		height: auto;
+	}
+
+	// Při stránkování pevné rozvržení, ať šířky sloupců neposkakují; úzkým sloupcům dá šířku projekt
+	&:has(.datagrid-compact-pager) table {
+		table-layout: fixed;
+	}
+
+	// Úzký panel: text se v buňkách zalamuje místo vodorovného posouvání
+	.table-responsive {
+		white-space: normal;
+	}
+
+	.table-bottom-scroll {
+		display: none;
+	}
+
+	.table-responsive table {
+		th,
+		td {
+			> div {
+				white-space: normal;
+			}
+		}
+
+		// Lepený první sloupec o šířce 300 px je pro celostránkový grid
+		tbody > tr > td:first-child,
+		thead > tr > th:first-child {
+			position: static;
+			width: auto;
+			max-width: none;
+
+			> div:not(.item-detail-content) {
+				width: auto;
+				max-width: none;
+				white-space: inherit;
+			}
+		}
+
+		.datagrid-fit-content {
+			white-space: nowrap;
+
+			> div {
+				white-space: nowrap;
+			}
+		}
+	}
+}
