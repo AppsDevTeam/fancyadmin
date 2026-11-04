@@ -11,7 +11,7 @@ body {
 	--quickbar-on-primary: #fff;
 	--quickbar-danger: var(--bs-danger);
 	--quickbar-warning: var(--bs-warning);
-	--quickbar-line: var(--fa-line);
+	--quickbar-line: var(--fa-border);
 	--quickbar-border: var(--fa-border);
 	--quickbar-heading: var(--fa-text);
 	--quickbar-text: var(--fa-text);
@@ -474,7 +474,7 @@ body:has(.quickbar) .container-main {
 .quickbar-bubble {
 	max-width: 80%;
 	padding: 8px 12px;
-	border: 1px solid var(--quickbar-line);
+	border: 1px solid var(--fa-line);
 	border-radius: var(--overlay-radius);
 	background: var(--quickbar-surface);
 	font-size: 14px;

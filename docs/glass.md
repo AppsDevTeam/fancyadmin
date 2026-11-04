@@ -14,10 +14,12 @@ Tokeny jsou na `body`, projekt je může přemapovat:
 - `--glass-filter`: `blur(40px) saturate(180%)`
 - `--glass-shadow`: stín plovoucí vrstvy
 - `--glass-input-background`: podklad polí na skle
-- `--fa-line`: jemné linky pod hlavičkou a nad patičkou (slabší než `--fa-border`)
+- `--fa-line`: jemný oddělovač, slabší než `--fa-border` (rámeček bubliny chatu)
+
+Linky pod hlavičkou a nad patičkou panelů jsou `--fa-border`.
 
 Jinde jsou pole bílá (`--inputBackground` projektu), sklo je jediná výjimka.
 
 ## Boční panel
 
-Plovoucí sklo 12 px od okrajů okna, šířka dál podle `data-size`. Hlavička `.side-panel-template-header` (nadpis `.side-panel-template-title`, křížek `.side-panel-template-close`) i spodní lišta `.side-panel-actions` stojí, posouvá se jen tělo: snippet, a u formuláře s lištou obal polí `.side-panel-scroll`, který skládá `sidePanel.js`. Vrstvený panel má sklo 80 %, panel pod ním se posune o 48 px a ztmaví.
+Plovoucí sklo 12 px od okrajů okna, šířka dál podle `data-size`. Hlavička `.side-panel-template-header` (nadpis `.side-panel-template-title`, křížek `.side-panel-template-close`) i spodní lišta `.side-panel-actions` stojí, posouvá se jen tělo: snippet, a u formuláře s lištou obal polí `.side-panel-scroll`, který skládá `sidePanel.js`. Vrstvený panel má sklo 80 %, panel pod ním se posune o 48 px a ztmaví. Linka pod hlavičkou se objeví až po odrolování a nad lištou je jen, dokud je pod ní další obsah (třídy `--scrolled` a `--more` na kontejneru z `sidePanel.js`).

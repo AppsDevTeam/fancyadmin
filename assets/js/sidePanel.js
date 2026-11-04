@@ -188,6 +188,14 @@ $(function () {
 		});
 	}
 
+	// Linka pod hlavičkou až po odrolování, nad lištou jen dokud je pod ní další obsah
+	function updateLines(container) {
+		const scroller = container.querySelector('.side-panel-scroll') || container.querySelector('[id^="snippet--sidePanel"]');
+		if (!scroller) return;
+		container.classList.toggle('side-panel-template-container--scrolled', scroller.scrollTop > 0);
+		container.classList.toggle('side-panel-template-container--more', scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 1);
+	}
+
 	// Otevřený stav panelů jako třídy - CSS se podle nich vysouvá a ztmavuje pozadí.
 	// Přes :has(form) se změna v Chrome projeví naráz a přechod neproběhne. Třída se
 	// nastavuje až o dva snímky později: vložený obsah přepočítá :has() pravidla
@@ -204,6 +212,7 @@ $(function () {
 			if (!container) return;
 			if (open) {
 				buildFormActions(container);
+				updateLines(container);
 				// Šířku určuje velikost z obsahu (:has v CSS), zapamatujeme ji pro zavírání
 				container.style.removeProperty('--width');
 				container.dataset.openWidth = getComputedStyle(container).maxWidth;
@@ -241,6 +250,18 @@ $(function () {
 	}
 
 	new MutationObserver(syncPanelState).observe(document.body, { childList: true, subtree: true });
+
+	// scroll nebublá, proto zachycení na dokumentu
+	document.addEventListener('scroll', (e) => {
+		const container = e.target instanceof Element && e.target.closest('.side-panel-template-container');
+		if (container) updateLines(container);
+	}, true);
+	$(document).on('shown.bs.tab', '.side-panel-template-container', function () {
+		updateLines(this);
+	});
+	window.addEventListener('resize', () => {
+		document.querySelectorAll('.side-panel-template-container--open').forEach(updateLines);
+	});
 	applyPanelState();
 
 	$(document).on('click', '.side-panel-template-backdrop:not(.side-panel-template-backdrop--stacked)', () => tryClose('snippet--sidePanel'));

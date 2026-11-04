@@ -274,7 +274,17 @@ $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' v
     gap: 12px;
     margin: 0;
     padding: 12px 16px 12px $sidePanelPadding;
-    border-top: 1px solid var(--fa-line);
+    border-top: 1px solid transparent;
+    transition: border-color .15s;
+  }
+
+  // Linky jen když je pod hlavičkou nebo lištou schovaný obsah (třídy nastavuje sidePanel.js)
+  &.side-panel-template-container--scrolled .side-panel-template-header {
+    border-bottom-color: var(--fa-border);
+  }
+
+  &.side-panel-template-container--more .side-panel-actions {
+    border-top-color: var(--fa-border);
   }
 
   // Buňky lišty jsou původní bloky polí, takže si s sebou nesou odsazení, kterým se
@@ -382,7 +392,9 @@ $sidePanelStackedOffset: 48px;
   justify-content: space-between;
   gap: 8px;
   padding: 12px 12px 10px $sidePanelPadding;
-  border-bottom: 1px solid var(--fa-line);
+  // Průhledná místo žádné, aby obsah při objevení linky neposkočil
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s;
 }
 
 .side-panel-template-title {
