@@ -80,6 +80,9 @@ $(function () {
 				const panelId = getFormPanelId(settings);
 				if (panelId) {
 					panels[panelId].isDirty = true;
+					// Až po vložení snippetů s hláškami
+					const container = document.getElementById(panelId).closest('.side-panel-template-container');
+					setTimeout(() => showErrorTab(container));
 				}
 				return;
 			}
@@ -110,6 +113,76 @@ $(function () {
 			$('#snippet--sidePanelStacked > .side-panel-loading').remove();
 		}
 	});
+
+	// Nadpis nového záznamu je text tlačítka, které panel otevřelo; ikonové tlačítko dá svůj popisek
+	function triggerTitle(el) {
+		const text = el.matches('.btn, .dropdown-item') ? el.textContent.replace(/\s+/g, ' ').trim() : '';
+		return text || el.getAttribute('title') || el.getAttribute('data-bs-original-title') || el.getAttribute('aria-label') || '';
+	}
+
+	// prepare dostává stejné settings jako success, before jen kopii od jQuery
+	$.nette.ext('sidePanelTitle', {
+		prepare: function (settings) {
+			const el = settings && settings.nette && settings.nette.el && settings.nette.el[0];
+			if (!el) return;
+			const stacked = el.matches('[data-fancyadmin-side-panel-stacked]');
+			// Odeslání formuláře z panelu nadpis nemění
+			if (!stacked && el.closest('.side-panel-template-container')) return;
+			settings.sidePanelTitle = { stacked, title: triggerTitle(el) };
+		},
+		success: function (payload, status, xhr, settings) {
+			const pending = settings && settings.sidePanelTitle;
+			const snippet = pending && (pending.stacked ? 'snippet--sidePanelStacked' : 'snippet--sidePanel');
+			if (!pending || !payload || !payload.snippets || !(snippet in payload.snippets)) return;
+			const container = document.getElementById(snippet).closest('.side-panel-template-container');
+			container.dataset.triggerTitle = pending.title;
+			applyTitle(container);
+		}
+	});
+
+	// Úprava má název záznamu ze serveru (.side-panel-config[data-title]), jinak text tlačítka
+	function applyTitle(container) {
+		const title = container.querySelector('.side-panel-template-title');
+		const config = container.querySelector('[id^="snippet--sidePanel"] .side-panel-config');
+		if (title) {
+			title.textContent = (config && config.dataset.title) || container.dataset.triggerTitle || '';
+		}
+	}
+
+	// Záložky ze začátku formuláře patří do hlavičky pod nadpis
+	function buildHeaderTabs(container) {
+		let row = container.querySelector('.side-panel-template-tabs');
+		const tabs = container.querySelector('[id^="snippet--sidePanel"] form > :is(.nav-tabs-wrap, .nav-tabs)');
+		if (!tabs) {
+			// Záložky formuláře, který už v panelu není (zavření, jiný obsah)
+			if (row && !container.contains(row.form)) row.remove();
+			return;
+		}
+
+		if (!row) {
+			row = document.createElement('div');
+			row.className = 'side-panel-template-tabs';
+			container.querySelector('.side-panel-template-header').after(row);
+		}
+		row.form = tabs.closest('form');
+		// Okraje patřily místu ve formuláři, v hlavičce je řídí řada
+		[...tabs.classList].filter((cls) => /^m[tbsexy]?-/.test(cls)).forEach((cls) => tabs.classList.remove(cls));
+		row.replaceChildren(tabs);
+		showErrorTab(container);
+	}
+
+	// Chyba v jiné záložce přepne na ni; klientská je jen v Nette.formErrors, serverová jen ve snippetu *-errors
+	function showErrorTab(container, afterSubmit = false) {
+		const form = container.querySelector('[id^="snippet--sidePanel"] form');
+		if (!form) return;
+		const clientErrors = afterSubmit && window.Nette ? (window.Nette.formErrors || []).map((error) => error.element) : [];
+		const invalid = clientErrors.find((el) => el && form.contains(el))
+			|| form.querySelector('.is-invalid')
+			|| [...form.querySelectorAll('[id$="-errors"]')].find((el) => el.textContent.trim());
+		const pane = invalid && invalid.closest('.tab-pane:not(.active)');
+		const tab = pane && pane.id && container.querySelector('.side-panel-template-tabs [data-bs-target="#' + pane.id + '"]');
+		if (tab) tab.click();
+	}
 
 	// Změna hodnoty v inputu → dirty. Obsah, který si ukládá sám (např. AI chat),
 	// se z toho vyjímá atributem data-fancyadmin-side-panel-no-dirty.
@@ -211,11 +284,16 @@ $(function () {
 		[[main, mainOpen], [stacked, stackedOpen]].forEach(([container, open]) => {
 			if (!container) return;
 			if (open) {
+				applyTitle(container);
+				buildHeaderTabs(container);
 				buildFormActions(container);
 				updateLines(container);
 				// Šířku určuje velikost z obsahu (:has v CSS), zapamatujeme ji pro zavírání
 				container.style.removeProperty('--width');
 				container.dataset.openWidth = getComputedStyle(container).maxWidth;
+			}
+			if (!open) {
+				buildHeaderTabs(container);
 			}
 			container.classList.toggle('side-panel-template-container--open', open);
 			const backdrop = container.previousElementSibling;
@@ -256,9 +334,19 @@ $(function () {
 		const container = e.target instanceof Element && e.target.closest('.side-panel-template-container');
 		if (container) updateLines(container);
 	}, true);
-	$(document).on('shown.bs.tab', '.side-panel-template-container', function () {
+	// Přepnutí záložky v hlavičce začne nový obsah od začátku
+	$(document).on('shown.bs.tab', '.side-panel-template-container', function (e) {
+		if (e.target.closest('.side-panel-template-tabs')) {
+			const scroller = this.querySelector('.side-panel-scroll') || this.querySelector('[id^="snippet--sidePanel"]');
+			if (scroller) scroller.scrollTop = 0;
+		}
 		updateLines(this);
 	});
+	// Klientská validace neodešle formulář, chybu ale může mít v jiné záložce; capture, nette.ajax klik dál nepouští
+	document.addEventListener('click', (e) => {
+		const container = e.target instanceof Element && e.target.closest('.side-panel-template-container [type="submit"]')?.closest('.side-panel-template-container');
+		if (container) setTimeout(() => showErrorTab(container, true));
+	}, true);
 	window.addEventListener('resize', () => {
 		document.querySelectorAll('.side-panel-template-container--open').forEach(updateLines);
 	});

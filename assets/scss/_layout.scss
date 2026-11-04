@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'glass' as *;
+@use 'tabs';
 
 :root {
   --bs-bg-opacity: 1;
@@ -278,8 +279,8 @@ $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' v
     transition: border-color .15s;
   }
 
-  // Linky jen když je pod hlavičkou nebo lištou schovaný obsah (třídy nastavuje sidePanel.js)
-  &.side-panel-template-container--scrolled .side-panel-template-header {
+  // Linky jen když je pod hlavičkou nebo lištou schovaný obsah (třídy nastavuje sidePanel.js); se záložkami linku kreslí jejich řada
+  &.side-panel-template-container--scrolled:not(:has(.side-panel-template-tabs)) .side-panel-template-header {
     border-bottom-color: var(--fa-border);
   }
 
@@ -411,6 +412,28 @@ $sidePanelStackedOffset: 48px;
 .side-panel-template-close {
   flex: none;
   margin-left: auto;
+}
+
+// Záložky pod nadpisem (přesouvá je sem sidePanel.js), linka je dráha záložek, proto vždy
+.side-panel-template-tabs {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 0 12px 0 $sidePanelPadding;
+  border-bottom: 1px solid var(--fa-border);
+
+  // Text první záložky v zákrytu s poli, podtržení aktivní na lince řady
+  > :is(.nav-tabs-wrap, .nav-tabs) {
+    flex: 1;
+    min-width: 0;
+    margin: 0 0 -1px (-(tabs.$nav-tabs-padding-x));
+    border-bottom: 0;
+  }
+
+  .nav-link {
+    margin-bottom: 0;
+  }
 }
 
 span.empty {

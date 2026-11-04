@@ -31,6 +31,11 @@ class SidePanelControl extends Control
 
 	private ?string $bodyTemplate = null;
 
+	private ?string $title = null;
+
+	/** Upravovaný záznam formuláře, z něj se odvodí nadpis */
+	private ?object $editedEntity = null;
+
 	/** @var array<string, mixed> */
 	private array $bodyParameters = [];
 
@@ -64,6 +69,44 @@ class SidePanelControl extends Control
 		return $this;
 	}
 
+	/**
+	 * Nadpis v hlavičce panelu. Bez něj se u úpravy vezme název záznamu
+	 * a u nového záznamu text tlačítka, které panel otevřelo (sidePanel.js).
+	 */
+	public function setTitle(?string $title): static
+	{
+		$this->title = $title;
+		return $this;
+	}
+
+	public function getTitle(): ?string
+	{
+		if ($this->title !== null) {
+			return $this->title;
+		}
+
+		$entity = $this->editedEntity;
+		if ($entity === null) {
+			return null;
+		}
+
+		if ($this->resultLabel !== null) {
+			return ($this->resultLabel)($entity);
+		}
+
+		if ($entity instanceof Stringable) {
+			return (string) $entity;
+		}
+
+		foreach (['getFullName', 'getName', 'getTitle'] as $method) {
+			if (method_exists($entity, $method) && is_string($name = $entity->$method()) && $name !== '') {
+				return $name;
+			}
+		}
+
+		return null;
+	}
+
 	public function setFormFactory(callable $formFactory): static
 	{
 		$this->formFactory = $formFactory;
@@ -84,6 +127,10 @@ class SidePanelControl extends Control
 				$url->setQueryParameter('editId', $form->getEntity()->getId());
 			}
 			$form->setAction((string) $url);
+			$entity = $form->getEntity();
+			if (is_object($entity) && !is_callable($entity) && method_exists($entity, 'getId') && $entity->getId() !== null) {
+				$this->editedEntity = $entity;
+			}
 		})
 			->setOnSuccess(function (Form $form) use ($baseForm) {
 				$this->getPresenter()->flashMessageSuccess('fcadmin.sidePanels.control.formSaved');
