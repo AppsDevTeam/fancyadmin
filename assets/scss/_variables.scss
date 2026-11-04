@@ -154,6 +154,8 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
   --fa-text-muted: #878787;
   --fa-text-faint: #acacac;
   --fa-border: #DDDDDD;
+  // Jemný oddělovač (linky v panelech), slabší než rámeček
+  --fa-line: #F0F0F1;
   --fa-input-focus: #F2F3F6;
   --fa-shadow-color: rgba(0, 0, 0, 0.15);
   --fa-backdrop: rgba(0, 0, 0, 0.3);
@@ -174,6 +176,7 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
   --fa-text-muted: #a39ca8;
   --fa-text-faint: #7b7480;
   --fa-border: #3a363f;
+  --fa-line: #2b2830;
   --fa-input-focus: #2b2830;
   --fa-shadow-color: rgba(0, 0, 0, 0.5);
   --fa-backdrop: rgba(0, 0, 0, 0.55);

@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'glass' as *;
 
 // Rychlá lišta dole uprostřed - src/UI/Presenters/@quickbar.latte, chování v assets/js/quickbar.js.
 // Na body kvůli značkovým barvám; projekt si paletu přemapuje na své tokeny.
@@ -10,7 +11,7 @@ body {
 	--quickbar-on-primary: #fff;
 	--quickbar-danger: var(--bs-danger);
 	--quickbar-warning: var(--bs-warning);
-	--quickbar-line: var(--fa-border);
+	--quickbar-line: var(--fa-line);
 	--quickbar-border: var(--fa-border);
 	--quickbar-heading: var(--fa-text);
 	--quickbar-text: var(--fa-text);
@@ -18,7 +19,6 @@ body {
 	--quickbar-muted: var(--fa-text-muted);
 	--quickbar-faint: var(--fa-text-faint);
 	--quickbar-item-radius: var(--bs-border-radius-xs);
-	--quickbar-shadow: 0 0 2px rgba(5, 5, 6, 0.16), 0 0 4px rgba(5, 5, 6, 0.16), 0 0 32px rgba(5, 5, 6, 0.12);
 
 	--quickbar-width: 440px;
 	--quickbar-width-open: 560px;
@@ -39,13 +39,9 @@ body:has(.quickbar) .container-main {
 	padding-bottom: 120px;
 }
 
-%quickbar-glass {
-	backdrop-filter: blur(20px) saturate(160%);
-	-webkit-backdrop-filter: blur(20px) saturate(160%);
-}
-
 .quickbar {
-	@extend %quickbar-glass;
+	// Lišta je vždy o 17 bodů průhlednější než panely nad ní
+	@include glass(53%, 70%, 85%);
 	position: fixed;
 	left: 50%;
 	bottom: var(--quickbar-bottom);
@@ -58,9 +54,6 @@ body:has(.quickbar) .container-main {
 	padding: 8px 10px 8px 8px;
 	// Zaoblení stupně xl - lišta je vyšší než běžný ovládací prvek
 	border-radius: $control-radius-xl;
-	background: color-mix(in srgb, var(--quickbar-surface) 55%, transparent);
-	border: 1px solid color-mix(in srgb, var(--quickbar-surface) 70%, transparent);
-	box-shadow: var(--quickbar-shadow), inset 0 1px 0 color-mix(in srgb, var(--quickbar-surface) 85%, transparent);
 	transition: width .25s ease, border-color .15s;
 
 	&.quickbar--with-search {
@@ -137,8 +130,10 @@ body:has(.quickbar) .container-main {
 }
 
 // AI se mezi ostatními ikonami odlišuje barvou
-.quickbar-button--ai.btn-outline-secondary {
-	color: var(--quickbar-primary);
+.quickbar-button--ai.btn-glass {
+	--bs-btn-color: var(--quickbar-primary);
+	--bs-btn-hover-color: var(--quickbar-primary);
+	--bs-btn-active-color: var(--quickbar-primary);
 }
 
 // Přes .quickbar-button - Bootstrap má .btn .badge { position: relative }
@@ -161,7 +156,8 @@ body:has(.quickbar) .container-main {
 }
 
 .quickbar-panel {
-	@extend %quickbar-glass;
+	@include glass(70%);
+	@include glass-inputs;
 	position: fixed;
 	left: 50%;
 	bottom: var(--quickbar-panel-bottom);
@@ -174,9 +170,6 @@ body:has(.quickbar) .container-main {
 	max-height: min(560px, calc(100vh - 140px));
 	overflow: hidden;
 	border-radius: var(--overlay-radius);
-	background: color-mix(in srgb, var(--quickbar-surface) 72%, transparent);
-	border: 1px solid color-mix(in srgb, var(--quickbar-surface) 60%, transparent);
-	box-shadow: var(--quickbar-shadow), inset 0 1px 0 color-mix(in srgb, var(--quickbar-surface) 80%, transparent);
 	color: var(--quickbar-text);
 
 	&.quickbar-panel--search {
@@ -226,6 +219,7 @@ body:has(.quickbar) .container-main {
 }
 
 .quickbar-panel-body {
+	@include thin-scrollbar;
 	flex: 1;
 	min-height: 0;
 	overflow: auto;
@@ -455,6 +449,7 @@ body:has(.quickbar) .container-main {
 }
 
 .quickbar-thread {
+	@include thin-scrollbar;
 	flex: 1;
 	min-height: 0;
 	overflow: auto;
@@ -580,6 +575,7 @@ body:has(.quickbar) .container-main {
 	}
 
 	.ai-chat__messages {
+		@include thin-scrollbar;
 		display: flex;
 		flex-direction: column;
 		gap: 14px;
@@ -657,8 +653,13 @@ body:has(.quickbar) .container-main {
 		font-size: #{$control-font-sm};
 		color: var(--quickbar-text);
 
+		&:hover {
+			box-shadow: inset 0 0 0 1px var(--fa-text-faint);
+		}
+
 		&:focus {
 			background: var(--inputFocusBackground);
+			box-shadow: inset 0 0 0 1px var(--primaryColor);
 		}
 	}
 
@@ -687,6 +688,7 @@ body:has(.quickbar) .container-main {
 // === AI - nedávné konverzace (nahrazují vlákno v témže panelu) ===
 
 .quickbar-ai-recent {
+	@include thin-scrollbar;
 	display: none;
 	flex: 1;
 	min-height: 0;

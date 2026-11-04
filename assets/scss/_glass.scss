@@ -1,0 +1,53 @@
+// Sklo - sdílí ho rychlá lišta a boční panel. Na body kvůli značkovým barvám.
+body {
+	--glass-filter: blur(40px) saturate(180%);
+	--glass-shadow: 0 0 2px rgba(5, 5, 6, 0.16), 0 0 4px rgba(5, 5, 6, 0.16), 0 0 32px rgba(5, 5, 6, 0.12);
+	// Pole na skle jsou poloprůhledná jako sklo panelu, bílé by z něj vystupovaly
+	--glass-input-background: color-mix(in srgb, var(--fa-surface) 70%, transparent);
+}
+
+// Poloprůhledná plocha s rozostřením; parametry jsou krytí plochy, rámečku a vrchní hrany
+@mixin glass($alpha, $border: 60%, $highlight: 80%) {
+	backdrop-filter: var(--glass-filter);
+	-webkit-backdrop-filter: var(--glass-filter);
+	background: color-mix(in srgb, var(--fa-surface) #{$alpha}, transparent);
+	border: 1px solid color-mix(in srgb, var(--fa-surface) #{$border}, transparent);
+	box-shadow: var(--glass-shadow), inset 0 1px 0 color-mix(in srgb, var(--fa-surface) #{$highlight}, transparent);
+}
+
+// Pole na skle - podklad přes proměnné fancyadminu, rámečky se nemění
+@mixin glass-inputs {
+	--inputBackground: var(--glass-input-background);
+	--inputFocusBackground: var(--glass-input-background);
+}
+
+// Tenký posuvník; v Chromu by scrollbar-color vypnul ::-webkit-scrollbar, proto jen tam, kde ho prohlížeč nezná
+@mixin thin-scrollbar {
+	$thumb: color-mix(in srgb, var(--fa-heading, var(--fa-text)) 22%, transparent);
+
+	&::-webkit-scrollbar {
+		width: 14px;
+	}
+
+	&::-webkit-scrollbar-track {
+		margin: 6px 0;
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		border: 5px solid transparent;
+		border-radius: var(--bs-border-radius-pill);
+		background-clip: padding-box;
+		background-color: $thumb;
+
+		&:hover {
+			border-width: 4px;
+			background-color: color-mix(in srgb, var(--fa-heading, var(--fa-text)) 40%, transparent);
+		}
+	}
+
+	@supports not selector(::-webkit-scrollbar) {
+		scrollbar-width: thin;
+		scrollbar-color: $thumb transparent;
+	}
+}

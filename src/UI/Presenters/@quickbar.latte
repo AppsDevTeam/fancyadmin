@@ -23,10 +23,10 @@
 			<h2 class="quickbar-panel-title">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
-					<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
-					<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
 				{/if}
-				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-regular fa-check-double"></i></button>
+				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-regular fa-check-double"></i></button>
 				{include closeButton}
 			</div>
 		</header>
@@ -82,7 +82,7 @@
 	</label>
 	<div n:if="$hasSearch && $buttons" class="quickbar-divider"></div>
 	<div n:if="$buttons" class="quickbar-buttons">
-		<button n:foreach="$buttons as $item" type="button" class="btn btn-icon btn-sm btn-outline-secondary quickbar-button quickbar-button--{$item->value}"
+		<button n:foreach="$buttons as $item" type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-button--{$item->value}"
 			title="{_'fcadmin.layout.quickbar.' . $item->value . '.label'}" aria-controls="quickbar-panel-{$item->value}" aria-expanded="false"
 			data-quickbar-toggle="{$item->value}">
 			<i class="fa-regular fa-{$item->getIcon()}"></i>
@@ -92,5 +92,5 @@
 </div>
 
 {define closeButton}
-	<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-regular fa-xmark"></i></button>
+	<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-regular fa-xmark"></i></button>
 {/define}

@@ -106,7 +106,7 @@ function render() {
 	document.querySelectorAll('[data-quickbar-toggle]').forEach((button) => {
 		const active = button.dataset.quickbarToggle === state.open;
 		button.classList.toggle('btn-primary', active);
-		button.classList.toggle('btn-outline-secondary', !active);
+		button.classList.toggle('btn-glass', !active);
 		button.setAttribute('aria-expanded', active ? 'true' : 'false');
 	});
 
@@ -445,7 +445,7 @@ function renderAi() {
 	$root.classList.toggle('quickbar-ai--recent', recent);
 	document.querySelectorAll('[data-quickbar-ai-recent-toggle].btn').forEach((button) => {
 		button.classList.toggle('btn-primary', recent);
-		button.classList.toggle('btn-outline-secondary', !recent);
+		button.classList.toggle('btn-glass', !recent);
 	});
 
 	const $list = $root.querySelector('[data-quickbar-ai-list]');

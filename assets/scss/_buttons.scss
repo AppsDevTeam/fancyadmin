@@ -173,6 +173,25 @@
 	@include button-colors(var(--fa-text-strong, var(--fa-text)), transparent, transparent, var(--fa-heading, var(--fa-text)), $secondary, transparent, $active-bg: color-mix(in srgb, var(--fa-text-muted) 8%, #{$secondary}));
 }
 
+// Ikonové tlačítko na skle (rychlá lišta, boční panel) - poloprůhledná bílá s vrchní hranou skla
+.btn.btn-glass {
+	@include button-colors(
+		var(--fa-text),
+		color-mix(in srgb, var(--fa-surface) 45%, transparent),
+		color-mix(in srgb, var(--fa-heading, var(--fa-text)) 12%, transparent),
+		var(--fa-text-strong, var(--fa-text)),
+		color-mix(in srgb, var(--fa-surface) 70%, transparent),
+		color-mix(in srgb, var(--fa-heading, var(--fa-text)) 20%, transparent)
+	);
+
+	box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fa-surface) 85%, transparent);
+	transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .1s;
+
+	&:active {
+		transform: scale(0.94);
+	}
+}
+
 // Spinner v tlačítku je vidět jen během načítání
 .btn.loading {
 	cursor: progress;
