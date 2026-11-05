@@ -20,7 +20,8 @@
 .btn {
 	--control-height: #{$control-height};
 	--control-radius: #{$control-radius};
-	--control-font: #{$control-font};
+	--control-font: #{$btn-font};
+	--btn-icon-size: #{$btn-icon};
 	--bs-btn-font-weight: 600;
 	// Ring v barvě tlačítka, vnitřní mezera v barvě plochy ho odsadí od okraje
 	--btn-ring: var(--primaryColor);
@@ -54,7 +55,8 @@
 .btn-group-sm > .btn {
 	--control-height: #{$control-height-sm};
 	--control-radius: #{$control-radius-sm};
-	--control-font: 13px;
+	--control-font: #{$btn-font-sm};
+	--btn-icon-size: #{$btn-icon-sm};
 
 	padding: 0 14px;
 	line-height: 1.25;
@@ -65,7 +67,8 @@
 .btn.btn-xs {
 	--control-height: 28px;
 	--control-radius: var(--bs-border-radius-xs);
-	--control-font: 13px;
+	--control-font: #{$btn-font-xs};
+	--btn-icon-size: #{$btn-icon-xs};
 
 	padding: 0 10px;
 	gap: 4px;
@@ -75,12 +78,13 @@
 .btn.btn-lg {
 	--control-height: #{$control-height-xl};
 	--control-radius: #{$control-radius-xl};
-	--control-font: #{$control-font-xl};
+	--control-font: #{$btn-font-xl};
+	--btn-icon-size: #{$btn-icon-xl};
 }
 
-// Ikona roste s výškou stupně; :where nechá vyhrát .fa-lg a lokální úpravy
+// Ikona má velikost podle stupně tlačítka; :where nechá vyhrát .fa-lg a lokální úpravy
 :where(.btn) > i {
-	font-size: calc(var(--control-height) * 0.4);
+	font-size: var(--btn-icon-size);
 }
 
 // Tlačítko jen s ikonou je čtverec o hraně výšky svého stupně

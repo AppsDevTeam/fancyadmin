@@ -51,6 +51,17 @@ $control-radius-xl: $border-radius-lg;
 $control-padding-x-xl: 20px;
 $control-font-xl: 16px;
 
+// Písmo tlačítek je o stupeň menší než v poli stejné výšky, krátký tučný popisek se tak čte klidněji
+$btn-font-xs: 0.8125rem;
+$btn-font-sm: 0.875rem;
+$btn-font: 0.9375rem;
+$btn-font-xl: 1rem;
+// Ikona o pixel větší než text (ikony FA jsou opticky menší než písmena), celé pixely kvůli ostrosti
+$btn-icon-xs: 14px;
+$btn-icon-sm: 15px;
+$btn-icon: 16px;
+$btn-icon-xl: 17px;
+
 // Buňky gridu i hlavičky mají odsazení ze všech stran stejné a nezávislé na odsazení
 // karty ($cardPadding) — drží tím jeden rytmus i v užších kartách a panelech.
 $paddingTableRowY: 12px;

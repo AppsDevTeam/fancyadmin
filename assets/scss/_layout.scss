@@ -45,14 +45,6 @@ body:has(.side-panel) .container {
   flex-direction: row;
   gap: 10px;
 
-  // Jen vodorovné odsazení a písmo — výšku drží stupeň ze škály (--control-height),
-  // svislý padding by ji přerostl a tlačítko v hlavičce by bylo vyšší než jinde.
-  .btn {
-    padding-left: 18px;
-    padding-right: 18px;
-    font-size: $fs-body;
-  }
-
   .btn-icon {
     padding: 0;
     border: solid 1px $secondary-darker;
