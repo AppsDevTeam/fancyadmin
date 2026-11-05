@@ -518,14 +518,6 @@ body:has(.quickbar) .container-main {
 	}
 }
 
-// Linka mezi řádky odsazená na úroveň textu: 10 odsazení + 40 avatar + 12 mezera
-.quickbar-chat-divider {
-	flex: none;
-	height: 1px;
-	margin: 0 10px 0 62px;
-	background: var(--quickbar-line);
-}
-
 .quickbar-chat-avatar {
 	flex: none;
 	width: 40px;

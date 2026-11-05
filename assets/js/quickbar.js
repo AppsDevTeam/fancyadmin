@@ -339,8 +339,7 @@ function renderChatList($list) {
 		setHtml($list, `<div class="quickbar-empty">${esc(text)}</div>`);
 		return;
 	}
-	setHtml($list, sorted.map((c, index) => `
-		${index ? '<div class="quickbar-chat-divider"></div>' : ''}
+	setHtml($list, sorted.map((c) => `
 		<button type="button" class="quickbar-chat-row ${c.unread ? 'quickbar-chat-row--unread' : ''}" data-quickbar-chat="${esc(c.id)}">
 			${chatAvatar(c)}
 			<span class="quickbar-chat-text">
