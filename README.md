@@ -2916,6 +2916,13 @@ setQuickbarSource({
 Zdroj se netýká AI, to má vlastní backend. Tvar dat je popsaný v hlavičce `quickbar.js`. Metody můžou vracet hodnotu i Promise, chybějící
 metoda se bere jako prázdný výsledek.
 
+**AI – nepřečtené odpovědi** — odpověď, která dorazí, když uživatel konverzaci nevidí (okno zavřené,
+přehled nedávných), lišta označí a ukáže počet na tlačítku AI. Drží je v `sessionStorage`; trvale je
+může dodat backend polem `unread` u konverzace (stejně jako náhled `preview`).
+
+**Linky panelů** pod hlavičkou a nad patičkou se ukážou, jen když je obsah posunutý pod hlavičku
+nebo pod patičkou ještě pokračuje (třídy `quickbar-panel--scrolled` / `--more`, jako boční panel).
+
 **Barvy** — proměnné `--quickbar-*` na `body` (výchozí z `--fa-*` a `--primaryColor`), projekt
 může přemapovat na své tokeny. Texty jsou v `fcadmin.layout.quickbar.*`.
 

@@ -38,7 +38,7 @@ layout:
       emptyText: Opýtajte sa na dáta aplikácie alebo si nechajte pripraviť text správy.
       noConversations: Zatiaľ žiadne konverzácie.
       untitled: Nová konverzácia
-      current: Otvorená
+      unread: Nová odpoveď
       allConversations: Zobraziť všetky konverzácie
       unavailable: AI asistent teraz nie je dostupný.
     notifications:

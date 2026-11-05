@@ -8,8 +8,12 @@
 //   chats: { list() → [{ id, name, unread }], messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
 //
 // AI asistent zdroj nepotřebuje - panel hostí widget adt-ai-chat (assets/js/aiChat.js), konfiguraci dá AiPresenter.
+// Konverzace můžou nést volitelně `preview` (náhled poslední zprávy) a `unread` (nepřečtená odpověď).
 
 const SEARCH_DEBOUNCE_MS = 200;
+const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
+// Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
+const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-ai-recent, .ai-chat__messages';
 
 let source = {};
 
@@ -22,7 +26,7 @@ const state = {
 	chats: [],
 	activeChat: null,
 	messages: [],
-	ai: { config: null, historyUrl: null, view: 'chat', conversations: [], conversationId: null, element: null },
+	ai: { config: null, historyUrl: null, view: 'chat', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread() },
 };
 
 let currentBar = null;
@@ -116,11 +120,13 @@ function render() {
 		input.placeholder = state.open === 'search' ? input.dataset.placeholderOpen : input.dataset.placeholderClosed;
 	}
 
+	readVisibleAi();
 	renderCounts();
 	renderNotifications();
 	renderTodos();
 	renderChat();
 	renderAi();
+	scheduleMeasure();
 }
 
 function renderCounts() {
@@ -128,6 +134,7 @@ function renderCounts() {
 		notifications: state.notifications.filter((n) => n.unread).length,
 		todo: state.todos.filter((t) => !t.done).length,
 		chat: state.chats.reduce((sum, c) => sum + (c.unread || 0), 0),
+		ai: state.ai.unread.size,
 	};
 	document.querySelectorAll('[data-quickbar-count]').forEach((badge) => {
 		const count = counts[badge.dataset.quickbarCount] || 0;
@@ -349,7 +356,7 @@ function openAi() {
 	state.ai.view = 'chat';
 
 	if (state.ai.config) {
-		renderAi();
+		render();
 		focusAi();
 		return;
 	}
@@ -363,6 +370,7 @@ function openAi() {
 		})
 		.then(() => {
 			mountAi(state.ai.conversations[0]?.id ?? null);
+			render();
 			focusAi();
 		})
 		.catch(() => {
@@ -374,8 +382,46 @@ function openAi() {
 function loadAiConversations() {
 	return aiRequest(state.ai.config.urls.conversations).then((payload) => {
 		state.ai.conversations = payload.conversations || [];
-		renderAi();
+		// Smazané konverzace z nepřečtených vypadnou, jinak by počet na liště nezmizel
+		const ids = new Set(state.ai.conversations.map((c) => String(c.id)));
+		state.ai.unread = new Set([...state.ai.unread].filter((id) => ids.has(id)));
+		state.ai.conversations.filter((c) => c.unread).forEach((c) => state.ai.unread.add(String(c.id)));
+		saveAiUnread();
+		render();
 	});
+}
+
+// === AI - nepřečtené odpovědi ===
+
+function loadAiUnread() {
+	try {
+		return new Set(JSON.parse(sessionStorage.getItem(AI_UNREAD_KEY) || '[]'));
+	} catch {
+		return new Set();
+	}
+}
+
+// Přes navigaci mezi stránkami; trvale je drží až backend (pole `unread` konverzace)
+function saveAiUnread() {
+	try {
+		sessionStorage.setItem(AI_UNREAD_KEY, JSON.stringify([...state.ai.unread]));
+	} catch {
+		// Bez sessionStorage zůstanou nepřečtené jen do konce stránky
+	}
+}
+
+function isAiVisible(conversationId) {
+	return state.open === 'ai' && state.ai.view === 'chat' && document.visibilityState === 'visible'
+		&& String(state.ai.conversationId) === String(conversationId);
+}
+
+// Konverzace, kterou uživatel právě vidí, je přečtená
+function readVisibleAi() {
+	const id = String(state.ai.conversationId);
+	if (state.ai.unread.has(id) && isAiVisible(id)) {
+		state.ai.unread.delete(id);
+		saveAiUnread();
+	}
 }
 
 function mountAi(conversationId) {
@@ -408,7 +454,7 @@ function openAiConversation(conversationId) {
 	} else if (state.ai.config) {
 		mountAi(conversationId);
 	}
-	renderAi();
+	render();
 	focusAi();
 }
 
@@ -417,7 +463,7 @@ function toggleAiRecent() {
 		return;
 	}
 	state.ai.view = state.ai.view === 'recent' ? 'chat' : 'recent';
-	renderAi();
+	render();
 	if (state.ai.view === 'recent') {
 		loadAiConversations();
 	} else {
@@ -436,6 +482,22 @@ function formatAiTime(value) {
 		: date.toLocaleDateString(locale, { day: 'numeric', month: 'numeric' });
 }
 
+function aiConversationRow(c, $list) {
+	const current = String(c.id) === String(state.ai.conversationId);
+	const unread = state.ai.unread.has(String(c.id));
+	return `<button type="button" class="quickbar-ai-conversation ${current ? 'quickbar-ai-conversation--current' : ''} ${unread ? 'quickbar-ai-conversation--unread' : ''}" data-quickbar-ai-conversation="${esc(c.id)}">
+		<i class="fa-regular fa-message"></i>
+		<span class="quickbar-ai-conversation-text">
+			<span class="quickbar-ai-conversation-head">
+				<span class="quickbar-ai-conversation-title">${esc(c.title || $list.dataset.untitled)}</span>
+				${unread ? `<span class="quickbar-unread-dot" title="${esc($list.dataset.unread)}"></span>` : ''}
+				<span class="quickbar-ai-conversation-time">${esc(formatAiTime(c.updated))}</span>
+			</span>
+			${c.preview ? `<span class="quickbar-ai-conversation-preview">${esc(c.preview)}</span>` : ''}
+		</span>
+	</button>`;
+}
+
 function renderAi() {
 	const $root = aiRoot();
 	if (!$root) {
@@ -451,15 +513,7 @@ function renderAi() {
 	const $list = $root.querySelector('[data-quickbar-ai-list]');
 	const conversations = state.ai.conversations;
 	$list.innerHTML = conversations.length
-		? conversations.map((c) => {
-			const current = String(c.id) === String(state.ai.conversationId);
-			return `<button type="button" class="quickbar-ai-conversation ${current ? 'quickbar-ai-conversation--current' : ''}" data-quickbar-ai-conversation="${esc(c.id)}">
-				<i class="fa-regular fa-message"></i>
-				<span class="quickbar-ai-conversation-title">${esc(c.title || $list.dataset.untitled)}</span>
-				${current ? `<span class="badge bg-secondary">${esc($list.dataset.current)}</span>` : ''}
-				<span class="quickbar-ai-conversation-time">${esc(formatAiTime(c.updated))}</span>
-			</button>`;
-		}).join('')
+		? conversations.map((c) => aiConversationRow(c, $list)).join('')
 		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`;
 
 	const $all = $root.querySelector('[data-quickbar-ai-all]');
@@ -469,12 +523,73 @@ function renderAi() {
 	}
 }
 
-// Widget hlásí založení konverzace i doručenou odpověď
+// Widget hlásí odeslání (ještě čeká na odpověď) i doručenou odpověď
 document.addEventListener('ai-chat:conversation', (e) => {
-	if (e.target.closest?.('[data-quickbar-ai-chat]') && e.detail?.conversation?.id) {
-		state.ai.conversationId = e.detail.conversation.id;
+	const id = e.detail?.conversation?.id;
+	if (!e.target.closest?.('[data-quickbar-ai-chat]') || !id) {
+		return;
+	}
+	state.ai.conversationId = id;
+	if (aiWidget()?.loading) {
+		state.ai.waiting.add(String(id));
+		return;
+	}
+	// Odpověď dorazila, když okno nebylo vidět (zavřené, přehled nedávných)
+	if (state.ai.waiting.delete(String(id)) && !isAiVisible(id)) {
+		state.ai.unread.add(String(id));
+		saveAiUnread();
+		render();
 	}
 });
+
+document.addEventListener('visibilitychange', () => {
+	if (document.visibilityState === 'visible' && bar()) {
+		render();
+	}
+});
+
+// === Linky panelů podle posunu (stejně jako boční panel) ===
+
+let measureScheduled = false;
+
+function scheduleMeasure() {
+	if (!measureScheduled) {
+		measureScheduled = true;
+		requestAnimationFrame(measurePanel);
+	}
+}
+
+function measurePanel() {
+	measureScheduled = false;
+	const $panel = state.open && panel(state.open);
+	if (!$panel) {
+		return;
+	}
+	// Měří se největší posuvná část, která obsahem opravdu přetéká
+	const scroller = [...$panel.querySelectorAll(PANEL_SCROLLERS)]
+		.filter((el) => el.clientHeight > 0 && el.scrollHeight > el.clientHeight + 1)
+		.sort((a, b) => b.clientHeight - a.clientHeight)[0];
+	$panel.classList.toggle('quickbar-panel--scrolled', !!scroller && scroller.scrollTop > 0);
+	$panel.classList.toggle('quickbar-panel--more', !!scroller && scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight > 1);
+}
+
+// scroll nebublá, proto zachycení na dokumentu
+document.addEventListener('scroll', (e) => {
+	if (e.target.closest?.('[data-quickbar-panel]')) {
+		scheduleMeasure();
+	}
+}, true);
+
+window.addEventListener('resize', scheduleMeasure);
+
+// Obsah panelů se mění i mimo render() - widget AI přidává zprávy, polling projektu vlákno chatu
+let panelObserver = null;
+
+function observePanels() {
+	panelObserver?.disconnect();
+	panelObserver = new MutationObserver(scheduleMeasure);
+	document.querySelectorAll('[data-quickbar-panel]').forEach((el) => panelObserver.observe(el, { childList: true, subtree: true }));
+}
 
 // === Události (delegace na document - lišta je ve snippetu body a překresluje se) ===
 
@@ -616,6 +731,8 @@ function init() {
 	// Nová lišta = nový (prázdný) AI panel, widget se připojí při dalším otevření
 	destroyAi();
 	state.ai.config = null;
+	state.ai.waiting.clear();
+	observePanels();
 	firstBar ? loadCounts() : render();
 }
 

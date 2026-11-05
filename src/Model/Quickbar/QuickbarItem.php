@@ -24,11 +24,11 @@ enum QuickbarItem: string
 		};
 	}
 
-	/** Null = bez počítadla; úkoly jsou jen připomínka, nic nehoří - proto šedé */
+	/** Null = bez počítadla; úkoly jsou jen připomínka, nic nehoří - proto šedé; AI počítá nepřečtené odpovědi */
 	public function getBadgeClass(): ?string
 	{
 		return match ($this) {
-			self::Search, self::Ai => null,
+			self::Search => null,
 			self::Todo => 'bg-secondary',
 			default => 'bg-danger',
 		};

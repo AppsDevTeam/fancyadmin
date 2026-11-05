@@ -5,7 +5,6 @@
 // Na body kvůli značkovým barvám; projekt si paletu přemapuje na své tokeny.
 body {
 	--quickbar-surface: var(--fa-surface);
-	--quickbar-sunken: var(--fa-surface-hover);
 	--quickbar-tint: color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface));
 	--quickbar-primary: var(--primaryColor);
 	--quickbar-on-primary: #fff;
@@ -13,12 +12,15 @@ body {
 	--quickbar-warning: var(--bs-warning);
 	--quickbar-line: var(--fa-border);
 	--quickbar-border: var(--fa-border);
-	--quickbar-heading: var(--fa-text);
+	--quickbar-heading: var(--fa-heading, var(--fa-text));
 	--quickbar-text: var(--fa-text);
-	--quickbar-text-strong: var(--fa-text);
+	--quickbar-text-strong: var(--fa-text-strong, var(--fa-text));
 	--quickbar-muted: var(--fa-text-muted);
 	--quickbar-faint: var(--fa-text-faint);
 	--quickbar-item-radius: var(--bs-border-radius-xs);
+	// Najetí a výběr řádku neutrálně, primární barva patří jen aktivním prvkům
+	--quickbar-hover: color-mix(in srgb, var(--quickbar-heading) 6%, transparent);
+	--quickbar-selected: color-mix(in srgb, var(--quickbar-heading) 8%, transparent);
 
 	--quickbar-width: 440px;
 	--quickbar-width-open: 560px;
@@ -202,7 +204,23 @@ body:has(.quickbar) .container-main {
 	justify-content: space-between;
 	gap: 8px;
 	padding: 12px 12px 10px 16px;
-	border-bottom: 1px solid var(--quickbar-line);
+	border-bottom: 1px solid transparent;
+	transition: border-color .15s;
+
+	// Linky jen při posunutém obsahu, třídy panelu nastavuje quickbar.js
+	.quickbar-panel--scrolled & {
+		border-bottom-color: var(--quickbar-line);
+	}
+}
+
+// Linka nad patičkou, dokud je pod ní další obsah
+%quickbar-footer-line {
+	border-top: 1px solid transparent;
+	transition: border-color .15s;
+
+	.quickbar-panel--more & {
+		border-top-color: var(--quickbar-line);
+	}
 }
 
 .quickbar-panel-title {
@@ -233,8 +251,8 @@ body:has(.quickbar) .container-main {
 	flex: none;
 	display: flex;
 	gap: 16px;
+	@extend %quickbar-footer-line;
 	padding: 8px 16px;
-	border-top: 1px solid var(--quickbar-line);
 	font-size: 12px;
 	color: var(--quickbar-faint);
 
@@ -250,8 +268,8 @@ body:has(.quickbar) .container-main {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	@extend %quickbar-footer-line;
 	padding: 10px 12px 12px;
-	border-top: 1px solid var(--quickbar-line);
 }
 
 // Jinak se ikonové tlačítko vedle pole roztáhne na obdélník
@@ -298,15 +316,8 @@ body:has(.quickbar) .container-main {
 
 	&:hover,
 	&:focus-visible {
-		background: var(--quickbar-sunken);
+		background: var(--quickbar-hover);
 		color: var(--quickbar-text);
-	}
-}
-
-.quickbar-panel--search .quickbar-item {
-	&:hover,
-	&:focus-visible {
-		background: var(--quickbar-tint);
 	}
 }
 
@@ -363,9 +374,10 @@ body:has(.quickbar) .container-main {
 	align-items: flex-start;
 	padding: 10px;
 
+	// Podklady na skle poloprůhledné, kvůli čitelnosti i na barevném pozadí
 	.quickbar-item-icon {
 		border-radius: 50%;
-		background: var(--quickbar-sunken);
+		background: color-mix(in srgb, var(--quickbar-surface) 75%, transparent);
 	}
 }
 
@@ -457,7 +469,7 @@ body:has(.quickbar) .container-main {
 	flex-direction: column;
 	gap: 8px;
 	padding: 12px 14px;
-	background: var(--quickbar-sunken);
+	background: color-mix(in srgb, var(--quickbar-heading) 4%, transparent);
 }
 
 .quickbar-message {
@@ -476,7 +488,7 @@ body:has(.quickbar) .container-main {
 	padding: 8px 12px;
 	border: 1px solid var(--fa-line);
 	border-radius: var(--overlay-radius);
-	background: var(--quickbar-surface);
+	background: color-mix(in srgb, var(--quickbar-surface) 85%, transparent);
 	font-size: 14px;
 	line-height: 1.4;
 	color: var(--quickbar-text);
@@ -627,9 +639,13 @@ body:has(.quickbar) .container-main {
 		line-height: 1.5;
 	}
 
+	.ai-chat__table-wrapper {
+		background: color-mix(in srgb, var(--quickbar-surface) 70%, transparent);
+	}
+
 	.ai-chat__input-area {
+		@extend %quickbar-footer-line;
 		padding: 10px 12px 12px;
-		border-top: 1px solid var(--quickbar-line);
 	}
 
 	.ai-chat__input-wrapper {
@@ -736,7 +752,7 @@ body:has(.quickbar) .container-main {
 
 .quickbar-ai-conversation {
 	display: flex;
-	align-items: baseline;
+	align-items: flex-start;
 	gap: 10px;
 	width: 100%;
 	padding: 8px;
@@ -749,19 +765,35 @@ body:has(.quickbar) .container-main {
 	cursor: pointer;
 
 	&:hover {
-		background: var(--quickbar-tint);
+		background: var(--quickbar-hover);
 	}
 
 	&.quickbar-ai-conversation--current {
-		background: var(--quickbar-sunken);
+		background: var(--quickbar-selected);
 	}
 
 	> i {
 		flex: none;
 		width: 16px;
+		margin-top: 3px;
 		text-align: center;
 		color: var(--quickbar-faint);
 	}
+}
+
+.quickbar-ai-conversation-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.quickbar-ai-conversation-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 22px;
 }
 
 .quickbar-ai-conversation-title {
@@ -773,12 +805,29 @@ body:has(.quickbar) .container-main {
 	font-size: 14px;
 	font-weight: 600;
 	color: var(--quickbar-text-strong);
+
+	.quickbar-ai-conversation--unread & {
+		font-weight: 700;
+	}
 }
 
 .quickbar-ai-conversation-time {
 	font-size: 12px;
 	color: var(--quickbar-faint);
 	white-space: nowrap;
+}
+
+.quickbar-ai-conversation-preview {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+	color: var(--quickbar-muted);
+}
+
+// Nová odpověď AI, kterou uživatel ještě neviděl
+.quickbar-ai-conversation .quickbar-unread-dot {
+	margin-top: 0;
 }
 
 .quickbar-ai-all {
