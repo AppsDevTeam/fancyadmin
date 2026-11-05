@@ -224,9 +224,7 @@ $select2MinWidth: 300px;
 
 		// Výška a text jako pole, ze kterého se seznam otevřel (js/select2DropdownSize.js)
 		.select2-results__option {
-			padding: calc((var(--select2-height, #{$control-height}) - 20px) / 2) var(--select2-padding-x, #{$control-padding-x}) !important;
-			line-height: 20px !important;
-			font-size: 14px !important;
+			@include dropdown-option(var(--select2-height, #{$control-height}), var(--select2-padding-x, #{$control-padding-x}), true);
 			background-color: $background !important;
 			color: $black !important;
 		}

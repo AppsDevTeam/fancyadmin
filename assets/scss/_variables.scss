@@ -213,3 +213,11 @@ body {
 	padding: 0;
 	font-size: calc(var(--control-height, #{$control-height}) * 0.4);
 }
+
+// Položka každého rozbaleného seznamu (Select2, seznamy flatpickru) — rozměr jen tady, ať se nerozjedou
+@mixin dropdown-option($height: $control-height, $padding-x: $control-padding-x, $important: false) {
+	$flag: if($important, !important, null);
+	padding: calc((#{$height} - 20px) / 2) #{$padding-x} $flag;
+	line-height: 20px $flag;
+	font-size: 14px $flag;
+}
