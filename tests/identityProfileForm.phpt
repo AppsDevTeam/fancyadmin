@@ -32,16 +32,20 @@ final class RecordingMailer implements Mailer
 	/** @var list<Identity> */
 	public array $passwordRecoveryMails = [];
 
-	public function sendAccountCreationEmail(Identity $identity): void
+	/** @var list<bool> checkLimit jednotlivých volání sendPasswordRecoveryMail */
+	public array $passwordRecoveryCheckLimits = [];
+
+	public function sendAccountCreationEmail(Identity $identity, bool $checkLimit = true): void
 	{
 	}
 
 	public function sendPasswordRecoveryMail(Identity $identity, int $tokenLifetime, bool $checkLimit = true): void
 	{
 		$this->passwordRecoveryMails[] = $identity;
+		$this->passwordRecoveryCheckLimits[] = $checkLimit;
 	}
 
-	public function sendTwoFactorCodeMail(Identity $identity, int $tokenLifetimeMinutes): void
+	public function sendTwoFactorCodeMail(Identity $identity, int $tokenLifetimeMinutes, bool $checkLimit = true): void
 	{
 	}
 }
@@ -151,6 +155,8 @@ test('identite bez hesla odejde e-mail na nastaveni hesla', function () {
 
 	Assert::same(1, $em->flushCount);
 	Assert::same([$identity], $mailer->passwordRecoveryMails);
+	// Odeslání administrátorem nesmí zablokovat limit počtu tokenů
+	Assert::same([false], $mailer->passwordRecoveryCheckLimits);
 	Assert::same('admin', $identity->getContext());
 	// Admin musi vedet, ze uzivateli odesel e-mail.
 	Assert::same(

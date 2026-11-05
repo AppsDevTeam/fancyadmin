@@ -2132,6 +2132,13 @@ delegovaný na `document`.
 > musí doplnit. Vlastní šablona mailu se jako u ostatních přebije souborem
 > `twoFactorCode.latte` ve vlastním `templates/` adresáři.
 
+> **BC break — `Mailer` a `checkLimit`.** Metody `sendAccountCreationEmail`,
+> `sendPasswordRecoveryMail` a `sendTwoFactorCodeMail` mají v interface poslední parametr
+> `bool $checkLimit = true` (false = bez limitu počtu jednorázových tokenů). Fancyadmin ho
+> předává pojmenovaně (reset hesla z gridu, `IdentityProfileFormTrait`), takže vlastní
+> implementace bez něj padala na `Unknown named parameter $checkLimit`. `MailerTrait` ho má,
+> projekt s vlastní implementací si ho musí doplnit do signatury a předat do `saveToken()`.
+
 ---
 
 ## 20. API klíče (volitelné)
