@@ -30,7 +30,7 @@ const state = {
 	chatQuery: '',
 	activeChat: null,
 	messages: [],
-	ai: { config: null, historyUrl: null, view: 'chat', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread() },
+	ai: { config: null, historyUrl: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread() },
 };
 
 let currentBar = null;
@@ -73,6 +73,7 @@ function open(name) {
 		return;
 	}
 	state.open = name;
+	state.ai.full = false;
 	// Chat se otevírá seznamem konverzací
 	state.chatView = 'list';
 	render();
@@ -99,6 +100,7 @@ function close() {
 	}
 	state.open = null;
 	state.query = '';
+	state.ai.full = false;
 	const input = searchInput();
 	if (input) {
 		input.value = '';
@@ -124,6 +126,7 @@ function render() {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
 	});
 	panel('chat')?.classList.toggle('quickbar-panel--chat-thread', state.chatView === 'thread');
+	panel('ai')?.classList.toggle('quickbar-panel--full', state.ai.full);
 	document.querySelectorAll('[data-quickbar-toggle]').forEach((button) => {
 		const active = button.dataset.quickbarToggle === state.open;
 		button.classList.toggle('btn-primary', active);
@@ -526,7 +529,7 @@ function saveAiUnread() {
 }
 
 function isAiVisible(conversationId) {
-	return state.open === 'ai' && state.ai.view === 'chat' && document.visibilityState === 'visible'
+	return state.open === 'ai' && (state.ai.view === 'chat' || state.ai.full) && document.visibilityState === 'visible'
 		&& String(state.ai.conversationId) === String(conversationId);
 }
 
@@ -573,6 +576,20 @@ function openAiConversation(conversationId) {
 	focusAi();
 }
 
+function toggleAiFull() {
+	if (!state.ai.config) {
+		return;
+	}
+	state.ai.full = !state.ai.full;
+	// Na celé ploše je seznam konverzací vlevo, přehled nedávných tam není
+	state.ai.view = 'chat';
+	render();
+	if (state.ai.full) {
+		loadAiConversations();
+	}
+	focusAi();
+}
+
 function toggleAiRecent() {
 	if (!state.ai.config) {
 		return;
@@ -597,11 +614,11 @@ function formatAiTime(value) {
 		: date.toLocaleDateString(locale, { day: 'numeric', month: 'numeric' });
 }
 
-function aiConversationRow(c, $list) {
+function aiConversationRow(c, $list, icon = true) {
 	const current = String(c.id) === String(state.ai.conversationId);
 	const unread = state.ai.unread.has(String(c.id));
 	return `<button type="button" class="quickbar-ai-conversation ${current ? 'quickbar-ai-conversation--current' : ''} ${unread ? 'quickbar-ai-conversation--unread' : ''}" data-quickbar-ai-conversation="${esc(c.id)}">
-		<i class="fa-regular fa-message"></i>
+		${icon ? '<i class="fa-regular fa-message"></i>' : ''}
 		<span class="quickbar-ai-conversation-text">
 			<span class="quickbar-ai-conversation-head">
 				<span class="quickbar-ai-conversation-title">${esc(c.title || $list.dataset.untitled)}</span>
@@ -631,11 +648,72 @@ function renderAi() {
 		? conversations.map((c) => aiConversationRow(c, $list)).join('')
 		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`);
 
-	const $all = $root.querySelector('[data-quickbar-ai-all]');
-	$all.hidden = !conversations.length || !state.ai.historyUrl;
-	if (state.ai.historyUrl) {
-		$all.href = state.ai.historyUrl;
+	$root.querySelectorAll('[data-quickbar-ai-all]').forEach(($all) => {
+		$all.hidden = !conversations.length || !state.ai.historyUrl;
+		if (state.ai.historyUrl) {
+			$all.href = state.ai.historyUrl;
+		}
+	});
+
+	renderAiSidebar($root);
+	renderAiHeader();
+}
+
+// Skupina podle data poslední změny: dnes, včera, tento týden (od pondělí), starší
+function aiGroupKey(value) {
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) {
+		return 'older';
 	}
+	const day = 24 * 60 * 60 * 1000;
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const monday = today.getTime() - ((today.getDay() + 6) % 7) * day;
+	if (date >= today) {
+		return 'today';
+	}
+	if (date >= today.getTime() - day) {
+		return 'yesterday';
+	}
+	return date >= monday ? 'week' : 'older';
+}
+
+function renderAiSidebar($root) {
+	const $list = $root.querySelector('[data-quickbar-ai-groups]');
+	if (!$list) {
+		return;
+	}
+	const query = normalize(state.ai.query.trim());
+	const conversations = state.ai.conversations.filter((c) => !query || normalize(`${c.title} ${c.preview ?? ''}`).includes(query));
+	if (!conversations.length) {
+		const text = query ? $list.dataset.noResults.replace('%query%', state.ai.query.trim()) : $list.dataset.empty;
+		setHtml($list, `<div class="quickbar-empty">${esc(text)}</div>`);
+		return;
+	}
+	const groups = ['today', 'yesterday', 'week', 'older']
+		.map((key) => ({ key, items: conversations.filter((c) => aiGroupKey(c.updated) === key) }))
+		.filter((group) => group.items.length);
+	const $rows = $root.querySelector('[data-quickbar-ai-list]');
+	setHtml($list, groups.map((group) => `
+		<div class="quickbar-group-title">${esc($list.dataset[group.key])}</div>
+		${group.items.map((c) => aiConversationRow(c, $rows, false)).join('')}
+	`).join(''));
+}
+
+function renderAiHeader() {
+	const $panel = panel('ai');
+	const $title = $panel?.querySelector('[data-quickbar-title]');
+	if (!$title) {
+		return;
+	}
+	// Na celé ploše je nadpisem název konverzace
+	const conversation = state.ai.conversations.find((c) => String(c.id) === String(state.ai.conversationId));
+	const $rows = $panel.querySelector('[data-quickbar-ai-list]');
+	$title.textContent = state.ai.full ? (conversation?.title || $rows.dataset.untitled) : $title.dataset.quickbarTitle;
+
+	const $full = $panel.querySelector('[data-quickbar-ai-full]');
+	$full.title = state.ai.full ? $full.dataset.shrink : $full.dataset.expand;
+	$full.querySelector('i').className = state.ai.full ? 'fa-regular fa-down-left-and-up-right-to-center' : 'fa-regular fa-up-right-and-down-left-from-center';
 }
 
 // Widget hlásí odeslání (ještě čeká na odpověď) i doručenou odpověď
@@ -645,6 +723,10 @@ document.addEventListener('ai-chat:conversation', (e) => {
 		return;
 	}
 	state.ai.conversationId = id;
+	// Nová konverzace se má hned objevit v seznamu na celé ploše
+	if (e.detail.created && state.ai.full) {
+		loadAiConversations();
+	}
 	if (aiWidget()?.loading) {
 		state.ai.waiting.add(String(id));
 		return;
@@ -686,6 +768,12 @@ function measurePanel() {
 		.sort((a, b) => b.clientHeight - a.clientHeight)[0];
 	$panel.classList.toggle('quickbar-panel--scrolled', !!scroller && scroller.scrollTop > 0);
 	$panel.classList.toggle('quickbar-panel--more', !!scroller && scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight > 1);
+
+	// Linka nad odkazem pod seznamem konverzací AI, dokud seznam pokračuje
+	const $sidebarList = $panel.querySelector('.quickbar-ai-sidebar-list');
+	if ($sidebarList) {
+		$sidebarList.parentElement.classList.toggle('quickbar-ai-sidebar--more', $sidebarList.scrollHeight - $sidebarList.scrollTop - $sidebarList.clientHeight > 1);
+	}
 }
 
 // scroll nebublá, proto zachycení na dokumentu
@@ -729,6 +817,10 @@ document.addEventListener('click', (e) => {
 	}
 	if (target.closest('[data-quickbar-ai-recent-toggle]')) {
 		toggleAiRecent();
+		return;
+	}
+	if (target.closest('[data-quickbar-ai-full]')) {
+		toggleAiFull();
 		return;
 	}
 	if (target.closest('[data-quickbar-chat-back]')) {
@@ -784,6 +876,11 @@ document.addEventListener('input', (e) => {
 		renderChat();
 		return;
 	}
+	if (e.target.matches('[data-quickbar-ai-query]')) {
+		state.ai.query = e.target.value;
+		renderAi();
+		return;
+	}
 	if (e.target.matches('[data-quickbar-search]')) {
 		state.query = e.target.value;
 		if (state.open !== 'search') {
@@ -826,6 +923,8 @@ document.addEventListener('keydown', (e) => {
 		// V podstavech vrací Esc nejdřív zpět, až pak zavře okno
 		if (state.open === 'chat' && state.chatView === 'thread') {
 			backToChatList();
+		} else if (state.open === 'ai' && state.ai.full) {
+			toggleAiFull();
 		} else if (state.open === 'ai' && state.ai.view === 'recent') {
 			toggleAiRecent();
 		} else {

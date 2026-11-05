@@ -41,6 +41,14 @@ layout:
       unread: Nová odpověď
       allConversations: Zobrazit všechny konverzace
       unavailable: AI asistent teď není dostupný.
+      expand: Otevřít na celou stránku
+      shrink: Zmenšit
+      search: Hledat v konverzacích
+      noResults: Nic jsme nenašli pro „%query%“.
+      today: Dnes
+      yesterday: Včera
+      week: Tento týden
+      older: Starší
     notifications:
       label: Notifikace
       title: Notifikace

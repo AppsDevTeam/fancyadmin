@@ -2921,6 +2921,10 @@ zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Řádek
 a `kind` (`colleague` / `group` = barva avataru) z `chats.list()`. Otevřený seznam nebo vlákno
 obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený chat ho ignoruje.
 
+**AI na celou plochu** — tlačítko v hlavičce roztáhne okno od bočního menu k okraji
+(`--side-panel-width`), vlevo seznam konverzací po dnech, vpravo konverzace v bublině.
+Zmenšit nebo Esc vrátí malé okno.
+
 **AI – nepřečtené odpovědi** — odpověď, která dorazí, když uživatel konverzaci nevidí (okno zavřené,
 přehled nedávných), lišta označí a ukáže počet na tlačítku AI. Drží je v `sessionStorage`; trvale je
 může dodat backend polem `unread` u konverzace (stejně jako náhled `preview`).

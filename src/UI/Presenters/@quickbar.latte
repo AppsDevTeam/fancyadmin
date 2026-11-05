@@ -21,7 +21,7 @@
 	<section class="quickbar-panel quickbar-panel--{$item->value}" id="quickbar-panel-{$item->value}" data-quickbar-panel="{$item->value}" aria-label="{_'fcadmin.layout.quickbar.' . $item->value . '.title'}" hidden>
 		<header class="quickbar-panel-header">
 			<div class="quickbar-panel-heading">
-				<h2 class="quickbar-panel-title">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
+				<h2 class="quickbar-panel-title" data-quickbar-title="{_'fcadmin.layout.quickbar.' . $item->value . '.title'}">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
 				{* Ve vlákně chatu místo nadpisu šipka zpět a protějšek, vykresluje quickbar.js *}
 				<div n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat" class="quickbar-chat-current" data-quickbar-chat-current
 					data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"></div>
@@ -29,7 +29,9 @@
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
 					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
-					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-recent-button" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.expand}" data-quickbar-ai-full
+						data-expand="{_fcadmin.layout.quickbar.ai.expand}" data-shrink="{_fcadmin.layout.quickbar.ai.shrink}"><i class="fa-regular fa-up-right-and-down-left-from-center"></i></button>
 				{/if}
 				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-regular fa-check-double"></i></button>
 				{include closeButton}
@@ -40,6 +42,20 @@
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
 				{* Vlákno a odesílání je widget AI asistenta (assets/js/aiChat.js), konfiguraci si lišta načte z AiPresenteru *}
 				<div class="quickbar-ai" data-quickbar-ai="{$quickbarAiUrl}">
+					{* Seznam konverzací vlevo, jen když je okno roztažené na celou plochu *}
+					<aside class="quickbar-ai-sidebar">
+						<div class="quickbar-ai-sidebar-search">
+							<div class="quickbar-search-field">
+								<i class="fa-regular fa-magnifying-glass"></i>
+								<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.ai.search}" aria-label="{_fcadmin.layout.quickbar.ai.search}" data-quickbar-ai-query>
+							</div>
+						</div>
+						<div class="quickbar-ai-sidebar-list" data-quickbar-ai-groups data-empty="{_fcadmin.layout.quickbar.ai.noConversations}" data-no-results="{_fcadmin.layout.quickbar.ai.noResults}"
+							data-today="{_fcadmin.layout.quickbar.ai.today}" data-yesterday="{_fcadmin.layout.quickbar.ai.yesterday}" data-week="{_fcadmin.layout.quickbar.ai.week}" data-older="{_fcadmin.layout.quickbar.ai.older}"></div>
+						<div class="quickbar-ai-sidebar-footer">
+							<a class="quickbar-ai-all" data-quickbar-ai-all hidden>{_fcadmin.layout.quickbar.ai.allConversations}<i class="fa-regular fa-arrow-right"></i></a>
+						</div>
+					</aside>
 					<div class="quickbar-ai-recent" data-quickbar-ai-recent>
 						<div class="quickbar-ai-recent-heading">
 							<button type="button" class="quickbar-ai-back" title="{_fcadmin.layout.quickbar.ai.back}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-arrow-left"></i></button>

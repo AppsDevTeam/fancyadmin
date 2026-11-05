@@ -161,22 +161,24 @@ body:has(.quickbar) .container-main {
 .quickbar-panel {
 	@include glass(70%);
 	@include glass-inputs;
+	--quickbar-panel-width: var(--quickbar-width);
+	// Vycentrované přes left/right místo translateX, jinak by roztažení AI na celou plochu nešlo animovat
+	--quickbar-panel-inset: max(16px, calc(50% - var(--quickbar-panel-width) / 2));
 	position: fixed;
-	left: 50%;
+	left: var(--quickbar-panel-inset);
+	right: var(--quickbar-panel-inset);
 	bottom: var(--quickbar-panel-bottom);
-	transform: translateX(-50%);
 	z-index: 1050;
 	display: flex;
 	flex-direction: column;
-	width: var(--quickbar-width);
-	max-width: calc(100vw - 32px);
 	max-height: min(560px, calc(100vh - 140px));
 	overflow: hidden;
 	border-radius: var(--overlay-radius);
 	color: var(--quickbar-text);
+	transition: left .3s ease, right .3s ease, height .3s ease, border-radius .3s ease;
 
 	&.quickbar-panel--search {
-		width: var(--quickbar-width-open);
+		--quickbar-panel-width: var(--quickbar-width-open);
 
 		.quickbar-panel-body {
 			gap: 4px;
@@ -194,7 +196,16 @@ body:has(.quickbar) .container-main {
 	}
 
 	&.quickbar-panel--ai {
-		width: var(--quickbar-width-open);
+		--quickbar-panel-width: var(--quickbar-width-open);
+	}
+
+	// AI roztažené od bočního menu k okraji, lišta pod ním zůstává
+	&.quickbar-panel--full {
+		left: calc(var(--side-panel-width, 0px) + 16px);
+		right: 16px;
+		height: calc(100vh - var(--quickbar-panel-bottom) - 16px);
+		max-height: none;
+		border-radius: var(--bs-border-radius-lg);
 	}
 }
 
@@ -213,8 +224,8 @@ body:has(.quickbar) .container-main {
 		border-bottom-color: var(--quickbar-line);
 	}
 
-	// Seznam chatu zajíždí pod vyhledávací pole
-	.quickbar-panel--chat:not(.quickbar-panel--chat-thread) & {
+	// Seznam chatu zajíždí pod vyhledávací pole, obsah AI na celé ploše odděluje bublina
+	:is(.quickbar-panel--chat:not(.quickbar-panel--chat-thread), .quickbar-panel--full) & {
 		border-bottom-color: transparent;
 	}
 }
@@ -247,7 +258,7 @@ body:has(.quickbar) .container-main {
 	color: var(--quickbar-heading);
 }
 
-// Pole s lupou - hledání v seznamu chatu
+// Pole s lupou - hledání v seznamu chatu a konverzací AI
 .quickbar-search-field {
 	position: relative;
 	display: flex;
@@ -1024,3 +1035,150 @@ body:has(.quickbar) .container-main {
 	font-size: 13px;
 }
 
+// === AI na celé ploše - vlevo seznam konverzací na skle, vpravo konverzace v bublině ===
+
+.quickbar-ai-sidebar {
+	display: none;
+}
+
+.quickbar-panel--full {
+	.quickbar-ai {
+		display: grid;
+		grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+	}
+
+	.quickbar-ai-sidebar {
+		grid-column: 1;
+		grid-row: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.quickbar-ai-recent-button {
+		display: none;
+	}
+
+	.quickbar-ai-chat {
+		grid-column: 2;
+		grid-row: 1;
+		margin: 8px 8px 8px 0;
+		overflow: hidden;
+		border-radius: var(--overlay-radius);
+		background: color-mix(in srgb, var(--quickbar-surface) 55%, transparent);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--quickbar-heading) 5%, transparent);
+	}
+
+	// Prázdný stav jen v bublině; absolutní prvek s místem v mřížce se měří k ní
+	.quickbar-ai-empty {
+		grid-column: 2;
+		grid-row: 1;
+		// Nad patičkou: 10 + 40 + 16 odsazení a pole, 8 okraj bubliny
+		inset: 8px 8px 82px 0;
+		gap: 6px;
+	}
+
+	.quickbar-ai-empty-icon {
+		width: 52px;
+		height: 52px;
+		margin-bottom: 10px;
+		font-size: 20px;
+	}
+
+	.quickbar-ai-empty-title {
+		font-size: 22px;
+	}
+
+	.quickbar-ai-empty-text {
+		max-width: 380px;
+		font-size: 14px;
+	}
+
+	// Vlákno vycentrované na 760 px, posuvník zůstává u okraje bubliny
+	.quickbar-ai .quickbar-ai-widget.ai-chat {
+		--quickbar-ai-gutter: max(24px, calc((100% - 760px) / 2));
+		font-size: 15px;
+
+		.ai-chat__messages {
+			gap: 22px;
+			padding: 28px var(--quickbar-ai-gutter) 12px;
+		}
+
+		.ai-chat__bubble--user {
+			max-width: 75%;
+			padding: 10px 14px;
+			line-height: 1.45;
+		}
+
+		.ai-chat__message--ai {
+			padding-left: 44px;
+
+			&::before {
+				width: 32px;
+				height: 32px;
+				font-size: 13px;
+			}
+		}
+
+		.ai-chat__bubble--ai {
+			padding-top: 5px;
+			line-height: 1.6;
+		}
+
+		.ai-chat__input-area {
+			padding: 10px var(--quickbar-ai-gutter) 16px;
+		}
+
+		// Pole výchozí velikosti, ne sm jako v malém okně
+		.ai-chat__textarea {
+			min-height: #{$control-height};
+			padding: 9px #{$control-padding-x};
+			border-radius: #{$control-radius};
+			font-size: #{$control-font};
+		}
+
+		.ai-chat__send-btn {
+			--control-height: #{$control-height};
+			--control-radius: #{$control-radius};
+		}
+	}
+}
+
+.quickbar-ai-sidebar-search {
+	flex: none;
+	padding: 12px 12px 8px;
+}
+
+.quickbar-ai-sidebar-list {
+	@include thin-scrollbar;
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 0 8px 8px;
+
+	.quickbar-group-title {
+		padding: 10px 8px 4px;
+	}
+
+	.quickbar-ai-conversation {
+		padding: 10px;
+	}
+}
+
+.quickbar-ai-sidebar-footer {
+	flex: none;
+	padding: 10px 16px;
+	border-top: 1px solid transparent;
+	transition: border-color .15s;
+
+	.quickbar-ai-sidebar--more & {
+		border-top-color: var(--quickbar-line);
+	}
+
+	.quickbar-ai-all {
+		padding: 0;
+	}
+}
