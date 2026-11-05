@@ -2918,7 +2918,8 @@ metoda se bere jako prázdný výsledek.
 
 **Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější
 zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Řádek bere `preview`, `time`
-a `kind` (`colleague` / `group` = barva avataru) z `chats.list()`. Otevřený seznam nebo vlákno
+a `kind` (`colleague` / `group` = barva avataru) z `chats.list()`; položka s `contact: true` (kolega bez
+konverzace) se ukáže jen při hledání. Otevřený seznam nebo vlákno
 obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený chat ho ignoruje.
 
 **AI na celou plochu** — tlačítko v hlavičce roztáhne okno od bočního menu k okraji

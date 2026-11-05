@@ -274,6 +274,17 @@ body:has(.quickbar) .container-main {
 
 	.form-control {
 		padding-left: 34px;
+		padding-right: 34px;
+	}
+
+	// Souměrně s lupou vlevo - stejné odsazení i velikost
+	.quickbar-search-clear {
+		@include field-clear($control-padding-x-sm);
+		font-size: 13px;
+	}
+
+	input:not(:placeholder-shown) ~ .quickbar-search-clear {
+		display: flex;
 	}
 }
 

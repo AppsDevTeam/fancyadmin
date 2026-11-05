@@ -426,25 +426,33 @@ input[type="color"]::-webkit-color-swatch {
 	}
 
 	.grid-filter-search__clear {
-		display: none;
-		position: absolute;
-		top: 0;
-		right: 16px;
-		bottom: 0;
-		align-items: center;
-		z-index: 10;
-		line-height: 1;
-		color: #878787;
-		text-decoration: none;
-
-		&:hover {
-			color: $body-color;
-		}
+		@include field-clear;
 	}
 
 	// krizek jen kdyz je co mazat
 	input[type="text"]:not(:placeholder-shown) ~ .grid-filter-search__clear {
 		display: flex;
+	}
+
+	// Gridový filtr má vlastní křížek, nativní by stál jako druhý
+	input[type="search"]::-webkit-search-cancel-button {
+		display: none;
+	}
+}
+
+// Nativní křížek pole hledání (malé gridy v panelech), WebKit ho kreslí jako ::-webkit-search-cancel-button
+input[type="search"]::-webkit-search-cancel-button {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 14px;
+	height: 14px;
+	margin-right: 6px;
+	background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23878787'><path d='M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.42 4.29 19.71l1.41 1.41 6.3-6.29 6.29 6.29 1.42-1.41-6.3-6.29 6.3-6.29z'/></svg>") center/contain no-repeat;
+	opacity: .6;
+	cursor: pointer;
+
+	&:hover {
+		opacity: 1;
 	}
 }
 

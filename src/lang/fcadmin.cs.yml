@@ -21,6 +21,7 @@ layout:
     backToHomepage: zpět na hlavní stránku
     goToLogin: přejít na přihlášení
   quickbar:
+    clear: Vymazat hledání
     close: Zavřít
     search:
       title: Hledání

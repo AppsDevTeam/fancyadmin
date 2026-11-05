@@ -215,6 +215,33 @@ body {
 }
 
 // Položka každého rozbaleného seznamu (Select2, seznamy flatpickru) — rozměr jen tady, ať se nerozjedou
+// Křížek pro vymazání pole hledání (grid, rychlá lišta); zobrazení řeší kontext, jen když je co mazat
+@mixin field-clear($right: var(--control-padding-x, #{$control-padding-x})) {
+	display: none;
+	position: absolute;
+	top: 0;
+	right: $right;
+	bottom: 0;
+	align-items: center;
+	z-index: 10;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	line-height: 1;
+	color: var(--fa-text-faint);
+	text-decoration: none;
+	cursor: pointer;
+
+	// Tenký řez i u fa-solid (grid ho má ze šablony datagridu), plný by v poli vystupoval
+	> i {
+		font-weight: 400;
+	}
+
+	&:hover {
+		color: var(--fa-text-muted);
+	}
+}
+
 @mixin dropdown-option($height: $control-height, $padding-x: $control-padding-x, $important: false) {
 	$flag: if($important, !important, null);
 	padding: calc((#{$height} - 20px) / 2) #{$padding-x} $flag;

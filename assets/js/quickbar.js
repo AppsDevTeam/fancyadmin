@@ -5,7 +5,8 @@
 //   search(query) → [{ label, items: [{ label, meta?, initials?, icon?, tone?, badge?: { label, class }, href?, panel? }] }]
 //   notifications: { list() → [{ id, icon, tone?, title, text, time, unread }], read(id), readAll() }
 //   todos: { list() → [{ id, text, due?, done }], add(text) → todo, setDone(id, done) }
-//   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials? }] (od nejnovější zprávy),
+//   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials?, contact? }] (od nejnovější zprávy;
+//            contact = kolega bez konverzace, v seznamu jen při hledání),
 //            messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
 // Otevřený chat obnovuje projekt voláním refreshQuickbarChat() (polling, push).
 //
@@ -330,7 +331,9 @@ function renderChat() {
 
 function renderChatList($list) {
 	const query = normalize(state.chatQuery.trim());
-	const chats = state.chats.filter((c) => !query || normalize(`${c.name} ${c.preview ?? ''}`).includes(query));
+	const chats = query
+		? state.chats.filter((c) => normalize(`${c.name} ${c.preview ?? ''}`).includes(query))
+		: state.chats.filter((c) => !c.contact);
 	// Nepřečtené nahoře, jinak pořadí zdroje (od nejnovější zprávy)
 	const sorted = [...chats.filter((c) => c.unread), ...chats.filter((c) => !c.unread)];
 
@@ -820,6 +823,15 @@ document.addEventListener('click', (e) => {
 	}
 	if (target.closest('[data-quickbar-ai-full]')) {
 		toggleAiFull();
+		return;
+	}
+	// Vymazání pole hledání - input vyvolá obnovu seznamu stejně jako psaní
+	const clearButton = target.closest('[data-quickbar-clear]');
+	if (clearButton) {
+		const input = clearButton.closest('.quickbar-search-field').querySelector('input');
+		input.value = '';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		input.focus();
 		return;
 	}
 	if (target.closest('[data-quickbar-chat-back]')) {
