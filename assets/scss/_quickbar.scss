@@ -667,7 +667,7 @@ body:has(.quickbar) .container-main {
 		color: var(--quickbar-muted);
 	}
 
-	// Barvu dává projektové .btn-primary (tlačítko tu třídu má), velikost stupeň sm jako odesílání v chatu
+	// Velikost stupeň sm jako odesílání v chatu, barvu z .btn-primary vrací _aiChat.scss
 	.ai-chat__send-btn {
 		--control-height: #{$control-height-sm};
 		--control-radius: #{$control-radius-sm};

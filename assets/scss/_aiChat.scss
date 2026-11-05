@@ -24,14 +24,38 @@
 	}
 }
 
-// Blok „co AI dostala" nad odpovědí (pseudonymizace, widget adt-ai-chat) v barvách
-// fancyadminu - ikonka štítu v barvě úspěchu, text tlumený, rozbalený text na zapuštěném podkladu
+// Paleta widgetu adt-ai-chat na barvy fancyadminu; výchozí (tmavě modrá, tyrkys) patří jinému projektu
 .ai-chat {
+	--ai-chat-border: var(--fa-border);
+	--ai-chat-accent: var(--primaryColor);
+	--ai-chat-primary: var(--primaryColor);
+	--ai-chat-primary-hover: var(--primaryColorDark);
+	--ai-chat-user-bg: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface)));
+	--ai-chat-ai-bg: var(--fa-surface-hover);
+	--ai-chat-active-bg: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface)));
+	// Pole fancyadminu při focusu mění jen rámeček
+	--ai-chat-focus-ring: transparent;
 	--ai-chat-muted: var(--fa-text-muted);
 	--ai-chat-success: var(--fa-success);
 	--ai-chat-sunken-bg: var(--fa-surface-hover);
 
+	// Widget má text bublin napevno tmavý, v tmavém režimu by zmizel
+	.ai-chat__bubble--user,
+	.ai-chat__bubble--ai,
 	.ai-chat__sent-text {
 		color: var(--fa-text);
+	}
+
+	// Tlačítka mají .btn-primary, widget jim ale barvu nastavuje napřímo a ten by ho přebil
+	:is(.ai-chat__new-btn, .ai-chat__send-btn:not(.ai-chat__send-btn--stop)) {
+		background-color: var(--bs-btn-bg);
+		border-color: var(--bs-btn-border-color);
+		color: var(--bs-btn-color);
+
+		&:is(:hover, :focus-visible, :active) {
+			background-color: var(--bs-btn-hover-bg);
+			border-color: var(--bs-btn-hover-border-color);
+			color: var(--bs-btn-hover-color);
+		}
 	}
 }
