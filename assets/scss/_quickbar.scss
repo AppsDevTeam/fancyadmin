@@ -915,6 +915,13 @@ body:has(.quickbar) .container-main {
 	}
 }
 
+// Mezera mezi řádky, aby podbarvení při najetí nenarazilo na vybraný řádek
+.quickbar-ai-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
 .quickbar-ai-recent-heading {
 	display: flex;
 	align-items: center;
