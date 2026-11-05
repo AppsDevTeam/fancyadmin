@@ -56,6 +56,11 @@ layout:
       title: Chat
       placeholder: Napsat zprávu…
       send: Odeslat
+      search: Hledat konverzaci nebo kolegu
+      empty: Zatím žádné konverzace.
+      back: Všechny konverzace
+      colleague: Kolega
+      group: Skupina
 aclResource:
   title:
     portal:

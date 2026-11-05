@@ -2916,6 +2916,11 @@ setQuickbarSource({
 Zdroj se netýká AI, to má vlastní backend. Tvar dat je popsaný v hlavičce `quickbar.js`. Metody můžou vracet hodnotu i Promise, chybějící
 metoda se bere jako prázdný výsledek.
 
+**Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější
+zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Řádek bere `preview`, `time`
+a `kind` (`colleague` / `group` = barva avataru) z `chats.list()`. Otevřený seznam nebo vlákno
+obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený chat ho ignoruje.
+
 **AI – nepřečtené odpovědi** — odpověď, která dorazí, když uživatel konverzaci nevidí (okno zavřené,
 přehled nedávných), lišta označí a ukáže počet na tlačítku AI. Drží je v `sessionStorage`; trvale je
 může dodat backend polem `unread` u konverzace (stejně jako náhled `preview`).

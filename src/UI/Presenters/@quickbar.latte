@@ -20,7 +20,12 @@
 {foreach $buttons as $item}
 	<section class="quickbar-panel quickbar-panel--{$item->value}" id="quickbar-panel-{$item->value}" data-quickbar-panel="{$item->value}" aria-label="{_'fcadmin.layout.quickbar.' . $item->value . '.title'}" hidden>
 		<header class="quickbar-panel-header">
-			<h2 class="quickbar-panel-title">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
+			<div class="quickbar-panel-heading">
+				<h2 class="quickbar-panel-title">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
+				{* Ve vlákně chatu místo nadpisu šipka zpět a protějšek, vykresluje quickbar.js *}
+				<div n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat" class="quickbar-chat-current" data-quickbar-chat-current
+					data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"></div>
+			</div>
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
 					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
@@ -59,9 +64,17 @@
 					<button type="submit" class="btn btn-sm btn-primary">{_fcadmin.global.buttons.add}</button>
 				</form>
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat}
-				<div class="quickbar-chats" data-quickbar-chats></div>
+				<div class="quickbar-chat-list">
+					<div class="quickbar-chat-search">
+						<div class="quickbar-search-field">
+							<i class="fa-regular fa-magnifying-glass"></i>
+							<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.search}" aria-label="{_fcadmin.layout.quickbar.chat.search}" data-quickbar-chat-query>
+						</div>
+					</div>
+					<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="{_fcadmin.layout.quickbar.chat.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
+				</div>
 				<div class="quickbar-thread" data-quickbar-thread></div>
-				<form class="quickbar-panel-form noajax" data-quickbar-form="chat">
+				<form class="quickbar-panel-form quickbar-chat-form noajax" data-quickbar-form="chat">
 					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.placeholder}" aria-label="{_fcadmin.layout.quickbar.chat.placeholder}">
 					<button type="submit" class="btn btn-icon btn-sm btn-primary" title="{_fcadmin.layout.quickbar.chat.send}"><i class="fa-regular fa-paper-plane"></i></button>
 				</form>

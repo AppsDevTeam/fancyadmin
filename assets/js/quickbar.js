@@ -5,7 +5,9 @@
 //   search(query) → [{ label, items: [{ label, meta?, initials?, icon?, tone?, badge?: { label, class }, href?, panel? }] }]
 //   notifications: { list() → [{ id, icon, tone?, title, text, time, unread }], read(id), readAll() }
 //   todos: { list() → [{ id, text, due?, done }], add(text) → todo, setDone(id, done) }
-//   chats: { list() → [{ id, name, unread }], messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
+//   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials? }] (od nejnovější zprávy),
+//            messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
+// Otevřený chat obnovuje projekt voláním refreshQuickbarChat() (polling, push).
 //
 // AI asistent zdroj nepotřebuje - panel hostí widget adt-ai-chat (assets/js/aiChat.js), konfiguraci dá AiPresenter.
 // Konverzace můžou nést volitelně `preview` (náhled poslední zprávy) a `unread` (nepřečtená odpověď).
@@ -24,6 +26,8 @@ const state = {
 	notifications: [],
 	todos: [],
 	chats: [],
+	chatView: 'list',
+	chatQuery: '',
 	activeChat: null,
 	messages: [],
 	ai: { config: null, historyUrl: null, view: 'chat', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread() },
@@ -53,6 +57,15 @@ function esc(value) {
 	return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
+// Hledání bez ohledu na velikost písmen a diakritiku
+function normalize(value) {
+	return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function initials(name) {
+	return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('');
+}
+
 // === Otevírání a zavírání ===
 
 function open(name) {
@@ -60,6 +73,8 @@ function open(name) {
 		return;
 	}
 	state.open = name;
+	// Chat se otevírá seznamem konverzací
+	state.chatView = 'list';
 	render();
 
 	if (name === 'search') {
@@ -69,7 +84,8 @@ function open(name) {
 		searchInput()?.blur();
 		panel(name).querySelector('.quickbar-panel-form input')?.focus();
 		if (name === 'chat') {
-			openChat(state.activeChat ?? state.chats[0]?.id ?? null);
+			panel('chat').querySelector('[data-quickbar-chat-query]')?.focus();
+			loadChats();
 		}
 		if (name === 'ai') {
 			openAi();
@@ -107,6 +123,7 @@ function render() {
 	document.querySelectorAll('[data-quickbar-panel]').forEach((el) => {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
 	});
+	panel('chat')?.classList.toggle('quickbar-panel--chat-thread', state.chatView === 'thread');
 	document.querySelectorAll('[data-quickbar-toggle]').forEach((button) => {
 		const active = button.dataset.quickbarToggle === state.open;
 		button.classList.toggle('btn-primary', active);
@@ -217,7 +234,7 @@ function renderNotifications() {
 	if (!$list) {
 		return;
 	}
-	$list.innerHTML = state.notifications.length
+	setHtml($list, state.notifications.length
 		? state.notifications.map((n) => `
 			<button type="button" class="quickbar-item quickbar-notification" data-quickbar-notification="${esc(n.id)}">
 				<span class="quickbar-item-icon quickbar-item-icon--tone-${esc(n.tone || 'muted')}"><i class="${esc(n.icon)}"></i></span>
@@ -228,7 +245,7 @@ function renderNotifications() {
 				</span>
 				${n.unread ? '<span class="quickbar-unread-dot"></span>' : ''}
 			</button>`).join('')
-		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`;
+		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`);
 }
 
 function readNotification(id) {
@@ -254,7 +271,7 @@ function renderTodos() {
 	if (!$list) {
 		return;
 	}
-	$list.innerHTML = state.todos.length
+	setHtml($list, state.todos.length
 		? state.todos.map((t) => `
 			<label class="quickbar-item quickbar-todo ${t.done ? 'quickbar-todo--done' : ''}">
 				<input type="checkbox" class="form-check-input" data-quickbar-todo="${esc(t.id)}" ${t.done ? 'checked' : ''}>
@@ -263,7 +280,7 @@ function renderTodos() {
 					${t.due ? `<span class="quickbar-item-meta"><i class="fa-regular fa-clock"></i> ${esc(t.due)}</span>` : ''}
 				</span>
 			</label>`).join('')
-		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`;
+		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`);
 }
 
 function setTodoDone(id, done) {
@@ -285,43 +302,141 @@ function addTodo(text) {
 
 // === Chat ===
 
+let renderedThread = { chat: null, count: 0 };
+
 function renderChat() {
-	const $chips = document.querySelector('[data-quickbar-chats]');
+	const $list = document.querySelector('[data-quickbar-chats]');
 	const $thread = document.querySelector('[data-quickbar-thread]');
-	if (!$chips || !$thread) {
+	if (!$list || !$thread) {
 		return;
 	}
-	$chips.innerHTML = state.chats.map((c) => `
-		<button type="button" class="quickbar-chip ${c.id === state.activeChat ? 'quickbar-chip--active' : ''}" data-quickbar-chat="${esc(c.id)}">
-			<span>${esc(c.name)}</span>
-			${c.unread ? `<span class="badge bg-danger">${esc(c.unread)}</span>` : ''}
-		</button>`).join('');
+	renderChatList($list);
+	renderChatCurrent();
 
-	$thread.innerHTML = state.messages.map((m) => `
+	setHtml($thread, state.messages.map((m) => `
 		<div class="quickbar-message ${m.mine ? 'quickbar-message--mine' : ''}">
 			<div class="quickbar-bubble">${esc(m.text)}</div>
 			<div class="quickbar-message-time">${esc(m.time)}</div>
-		</div>`).join('');
-	$thread.scrollTop = $thread.scrollHeight;
+		</div>`).join(''));
+	// Na konec jen při nové zprávě nebo jiné konverzaci - polling by jinak vracel čtenáře dolů
+	if (renderedThread.chat !== state.activeChat || renderedThread.count !== state.messages.length) {
+		$thread.scrollTop = $thread.scrollHeight;
+		renderedThread = { chat: state.activeChat, count: state.messages.length };
+	}
+}
+
+function renderChatList($list) {
+	const query = normalize(state.chatQuery.trim());
+	const chats = state.chats.filter((c) => !query || normalize(`${c.name} ${c.preview ?? ''}`).includes(query));
+	// Nepřečtené nahoře, jinak pořadí zdroje (od nejnovější zprávy)
+	const sorted = [...chats.filter((c) => c.unread), ...chats.filter((c) => !c.unread)];
+
+	if (!sorted.length) {
+		const text = query ? $list.dataset.noResults.replace('%query%', state.chatQuery.trim()) : $list.dataset.empty;
+		setHtml($list, `<div class="quickbar-empty">${esc(text)}</div>`);
+		return;
+	}
+	setHtml($list, sorted.map((c, index) => `
+		${index ? '<div class="quickbar-chat-divider"></div>' : ''}
+		<button type="button" class="quickbar-chat-row ${c.unread ? 'quickbar-chat-row--unread' : ''}" data-quickbar-chat="${esc(c.id)}">
+			${chatAvatar(c)}
+			<span class="quickbar-chat-text">
+				<span class="quickbar-chat-line">
+					<span class="quickbar-chat-name">${esc(c.name)}</span>
+					${c.time ? `<span class="quickbar-chat-time">${esc(c.time)}</span>` : ''}
+				</span>
+				<span class="quickbar-chat-line">
+					<span class="quickbar-chat-preview">${esc(c.preview ?? '')}</span>
+					${c.unread ? `<span class="badge bg-danger">${esc(c.unread)}</span>` : ''}
+				</span>
+			</span>
+		</button>`).join(''));
+}
+
+// Polling překresluje seznam i vlákno - beze změny DOM nesahat, jinak blikne najetí a ztratí se fokus
+const renderedHtml = new WeakMap();
+
+function setHtml($el, html) {
+	if (renderedHtml.get($el) !== html) {
+		renderedHtml.set($el, html);
+		$el.innerHTML = html;
+	}
+}
+
+function chatAvatar(chat, small = false) {
+	const classes = ['quickbar-chat-avatar', chat.kind === 'group' ? 'quickbar-chat-avatar--group' : '', small ? 'quickbar-chat-avatar--sm' : ''];
+	return `<span class="${classes.join(' ')}">${esc(chat.initials || initials(chat.name))}</span>`;
+}
+
+function renderChatCurrent() {
+	const $current = document.querySelector('[data-quickbar-chat-current]');
+	const chat = state.chats.find((c) => c.id === state.activeChat);
+	if (!$current || !chat) {
+		return;
+	}
+	setHtml($current, `
+		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.back)}" data-quickbar-chat-back><i class="fa-regular fa-arrow-left"></i></button>
+		${chatAvatar(chat, true)}
+		<span class="quickbar-chat-current-text">
+			<span class="quickbar-chat-current-name">${esc(chat.name)}</span>
+			<span class="quickbar-chat-current-sub">${esc(chat.kind === 'group' ? $current.dataset.group : $current.dataset.colleague)}</span>
+		</span>`);
+}
+
+function loadChats() {
+	return call('chats.list').then((list) => {
+		state.chats = list || [];
+		// Server označí konverzaci přečtenou až načtením zpráv, otevřená nesmí znovu ukázat počet
+		const open = state.chatView === 'thread' && state.chats.find((c) => c.id === state.activeChat);
+		if (open) {
+			open.unread = 0;
+		}
+		render();
+	});
+}
+
+function loadMessages(id) {
+	return call('chats.messages', id).then((messages) => {
+		if (state.activeChat === id) {
+			state.messages = messages || [];
+			render();
+		}
+	});
 }
 
 function openChat(id) {
 	if (id === null) {
 		return;
 	}
+	if (state.activeChat !== id) {
+		state.messages = [];
+	}
 	state.activeChat = id;
+	state.chatView = 'thread';
 	const chat = state.chats.find((c) => c.id === id);
 	if (chat && chat.unread) {
 		chat.unread = 0;
 		call('chats.read', id);
 	}
 	render();
-	call('chats.messages', id).then((messages) => {
-		if (state.activeChat === id) {
-			state.messages = messages || [];
-			render();
-		}
-	});
+	panel('chat')?.querySelector('.quickbar-panel-form input')?.focus();
+	loadMessages(id);
+}
+
+function backToChatList() {
+	state.chatView = 'list';
+	render();
+	// Náhled a pořadí po odeslané zprávě
+	loadChats();
+	panel('chat')?.querySelector('[data-quickbar-chat-query]')?.focus();
+}
+
+// Pro polling projektu: otevřený seznam načte znovu, otevřené vlákno jeho zprávy
+export function refreshQuickbarChat() {
+	if (!bar() || state.open !== 'chat') {
+		return;
+	}
+	state.chatView === 'thread' && state.activeChat !== null ? loadMessages(state.activeChat) : loadChats();
 }
 
 function sendMessage(text) {
@@ -512,9 +627,9 @@ function renderAi() {
 
 	const $list = $root.querySelector('[data-quickbar-ai-list]');
 	const conversations = state.ai.conversations;
-	$list.innerHTML = conversations.length
+	setHtml($list, conversations.length
 		? conversations.map((c) => aiConversationRow(c, $list)).join('')
-		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`;
+		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`);
 
 	const $all = $root.querySelector('[data-quickbar-ai-all]');
 	$all.hidden = !conversations.length || !state.ai.historyUrl;
@@ -616,6 +731,10 @@ document.addEventListener('click', (e) => {
 		toggleAiRecent();
 		return;
 	}
+	if (target.closest('[data-quickbar-chat-back]')) {
+		backToChatList();
+		return;
+	}
 	const aiConversation = target.closest('[data-quickbar-ai-conversation]');
 	if (aiConversation) {
 		const conversation = state.ai.conversations.find((c) => String(c.id) === aiConversation.dataset.quickbarAiConversation);
@@ -631,11 +750,10 @@ document.addEventListener('click', (e) => {
 		readNotification(notification.dataset.quickbarNotification);
 		return;
 	}
-	const chip = target.closest('[data-quickbar-chat]');
-	if (chip) {
-		const chat = state.chats.find((c) => String(c.id) === chip.dataset.quickbarChat);
+	const chatRow = target.closest('[data-quickbar-chat]');
+	if (chatRow) {
+		const chat = state.chats.find((c) => String(c.id) === chatRow.dataset.quickbarChat);
 		openChat(chat ? chat.id : null);
-		panel('chat')?.querySelector('.quickbar-panel-form input')?.focus();
 		return;
 	}
 	const result = target.closest('[data-quickbar-result]');
@@ -661,6 +779,11 @@ document.addEventListener('change', (e) => {
 });
 
 document.addEventListener('input', (e) => {
+	if (e.target.matches('[data-quickbar-chat-query]')) {
+		state.chatQuery = e.target.value;
+		renderChat();
+		return;
+	}
 	if (e.target.matches('[data-quickbar-search]')) {
 		state.query = e.target.value;
 		if (state.open !== 'search') {
@@ -700,7 +823,14 @@ document.addEventListener('keydown', (e) => {
 	}
 	if (e.key === 'Escape' && state.open !== null) {
 		e.preventDefault();
-		close();
+		// V podstavech vrací Esc nejdřív zpět, až pak zavře okno
+		if (state.open === 'chat' && state.chatView === 'thread') {
+			backToChatList();
+		} else if (state.open === 'ai' && state.ai.view === 'recent') {
+			toggleAiRecent();
+		} else {
+			close();
+		}
 		return;
 	}
 	const typing = e.target.closest('input, textarea, select, [contenteditable]');
