@@ -66,6 +66,14 @@ body.menu-wide.menu-collapsed {
 	--menu-wide-logo-height: 24px;
 }
 
+// Na mobilu je boční menu skryté (_theme.scss), obsah i okna lišty začínají u kraje
+@include media-breakpoint-down(sm) {
+	body.menu-wide,
+	body.menu-wide.menu-collapsed {
+		--side-panel-width: 0px;
+	}
+}
+
 body.menu-wide .side-panel-wide {
 	position: fixed;
 	top: 0;

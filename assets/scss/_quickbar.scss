@@ -30,16 +30,22 @@ body {
 	--quickbar-panel-bottom: calc(var(--quickbar-bottom) + 68px);
 }
 
-// Na mobilu nad spodním menu (.bottom-mobile-menu, 65 px)
+// Na mobilu lišta i okna 16 px od krajů; spodní menu fancyadminu se s lištou nevykresluje
 @include media-breakpoint-down(sm) {
 	body {
-		--quickbar-bottom: 77px;
+		--quickbar-width: calc(100vw - 32px);
+		--quickbar-width-open: var(--quickbar-width);
 	}
 }
 
 // Rezerva, aby lišta nepřekryla konec stránky („Načíst další")
 body:has(.quickbar) .container-main {
 	padding-bottom: 120px;
+}
+
+// Vodorovný scroll gridu pod lištu, ne za ni: 9 px vysoký a 5 px mezera
+body:has(.quickbar) .table-bottom-scroll {
+	bottom: calc(var(--quickbar-bottom) - 14px);
 }
 
 .quickbar {
@@ -71,6 +77,47 @@ body:has(.quickbar) .container-main {
 	&.quickbar--open-search {
 		border-color: var(--quickbar-primary);
 	}
+
+	@include media-breakpoint-down(sm) {
+		&:not(.quickbar--open-search) {
+			gap: 8px;
+			padding: 8px;
+		}
+
+		// Při hledání zůstane v liště jen pole
+		&.quickbar--open-search :is(.quickbar-menu-button, .quickbar-divider, .quickbar-buttons) {
+			display: none;
+		}
+	}
+
+	// Nejužší mobil: hledání jen jako ikona, lišta podle obsahu
+	@media (max-width: 339.98px) {
+		&.quickbar--with-search:not(.quickbar--open-search) {
+			width: auto;
+			gap: 6px;
+
+			:is(.quickbar-search, .quickbar-divider) {
+				display: none;
+			}
+		}
+	}
+}
+
+// Menu nahrazuje boční menu jen na mobilu
+@include media-breakpoint-up(sm) {
+	.quickbar .quickbar-menu-button {
+		display: none;
+	}
+}
+
+@media (min-width: 340px) {
+	.quickbar .quickbar-search-button {
+		display: none;
+	}
+}
+
+.quickbar--open-search .quickbar-search-button {
+	display: none;
 }
 
 .quickbar-search {
@@ -85,6 +132,16 @@ body:has(.quickbar) .container-main {
 	border-radius: $control-radius;
 	color: var(--quickbar-muted);
 	cursor: text;
+
+	@include media-breakpoint-down(sm) {
+		height: $control-height-sm;
+		padding: 0 8px;
+
+		// Zkratka na dotyku nedává smysl
+		.quickbar-key {
+			display: none;
+		}
+	}
 }
 
 .quickbar-search-input {
@@ -99,6 +156,10 @@ body:has(.quickbar) .container-main {
 
 	&::placeholder {
 		color: var(--quickbar-muted);
+	}
+
+	@include media-breakpoint-down(sm) {
+		font-size: 14px;
 	}
 }
 
@@ -199,6 +260,22 @@ body:has(.quickbar) .container-main {
 		--quickbar-panel-width: var(--quickbar-width-open);
 	}
 
+	// Na mobilu skoro celá výška obrazovky, AI na celou plochu tu není (quickbar.js)
+	@include media-breakpoint-down(sm) {
+		--quickbar-panel-inset: 16px;
+		max-height: calc(100dvh - var(--quickbar-panel-bottom) - 16px);
+
+		&.quickbar-panel--chat,
+		&.quickbar-panel--ai {
+			height: calc(100dvh - var(--quickbar-panel-bottom) - 16px);
+		}
+
+		.quickbar-ai-full-button,
+		.quickbar-panel-hint {
+			display: none;
+		}
+	}
+
 	// AI roztažené od bočního menu k okraji, lišta pod ním zůstává
 	&.quickbar-panel--full {
 		left: calc(var(--side-panel-width, 0px) + 16px);
@@ -230,7 +307,9 @@ body:has(.quickbar) .container-main {
 	}
 }
 
+// Dlouhý název se zkrátí, akce vpravo zůstanou
 .quickbar-panel-heading {
+	flex: 1;
 	min-width: 0;
 	display: flex;
 	align-items: center;
@@ -289,6 +368,7 @@ body:has(.quickbar) .container-main {
 }
 
 .quickbar-panel-actions {
+	flex: none;
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -1191,4 +1271,212 @@ body:has(.quickbar) .container-main {
 	.quickbar-ai-all {
 		padding: 0;
 	}
+}
+
+// === Menu - na mobilu místo bočního menu (@quickbarMenu.latte) ===
+
+.quickbar-panel-body.quickbar-menu {
+	gap: 2px;
+	padding: 8px;
+}
+
+// Řádek 1. úrovně; ikony ve sloupci 20 px, aby texty lícovaly i s avatarem a podmenu
+.quickbar-menu-item {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	min-height: 44px;
+	padding: 0 10px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	font-size: 15px;
+	font-weight: 500;
+	text-align: left;
+	text-decoration: none;
+	color: var(--quickbar-text-strong);
+	cursor: pointer;
+
+	> .fa-regular:first-child {
+		flex: none;
+		width: 20px;
+		text-align: center;
+		color: var(--quickbar-muted);
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-hover);
+		color: var(--quickbar-text-strong);
+	}
+
+	&.quickbar-menu-item--active {
+		background: var(--quickbar-tint);
+	}
+
+	// Rodič aktivní podstránky jen barvou, podklad patří vybrané podpoložce
+	&:is(.quickbar-menu-item--active, .quickbar-menu-item--active-parent) {
+		&,
+		> .fa-regular:first-child {
+			font-weight: 600;
+			color: var(--quickbar-primary);
+		}
+	}
+
+	&.quickbar-menu-item--empty {
+		cursor: default;
+
+		&:hover {
+			background: transparent;
+		}
+	}
+}
+
+.quickbar-menu-label {
+	flex: 1;
+	min-width: 0;
+}
+
+.quickbar-menu-chevron {
+	flex: none;
+	font-size: 12px;
+	color: var(--quickbar-muted);
+
+	[aria-expanded="true"] > & {
+		transform: rotate(180deg);
+	}
+}
+
+.quickbar-menu-heading {
+	padding: 10px 10px 6px;
+	font-size: 0.7rem;
+	font-weight: 800;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+	color: var(--menu-wide-subheading, var(--quickbar-muted));
+}
+
+.quickbar-menu-sub {
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 2px 0 6px;
+}
+
+// Nadpisy skupin podle .submenu-heading bočního menu
+.quickbar-menu-sub-heading {
+	@extend .quickbar-menu-heading;
+	padding-left: 42px;
+}
+
+// Odsazení uvnitř řádku, aby najetí i výběr šly přes celou šířku jako v bočním menu
+.quickbar-menu-sub-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	min-height: 40px;
+	padding: 0 10px 0 42px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	text-decoration: none;
+	color: var(--quickbar-text);
+	cursor: pointer;
+
+	> .fa-regular {
+		flex: none;
+		width: 20px;
+		text-align: center;
+		color: var(--quickbar-muted);
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-hover);
+		color: var(--quickbar-text);
+	}
+
+	&.quickbar-menu-sub-item--active {
+		background: var(--quickbar-tint);
+		font-weight: 600;
+		color: var(--quickbar-primary);
+	}
+
+	&.quickbar-menu-sub-item--danger {
+		&,
+		> .fa-regular {
+			color: var(--quickbar-danger);
+		}
+	}
+}
+
+.quickbar-menu-switch {
+	min-height: 0;
+	margin: 0 0 0 auto;
+	pointer-events: none;
+}
+
+// Čára lícuje s texty položek, ne přes celou šířku
+.quickbar-menu-divider {
+	flex: none;
+	height: 1px;
+	margin: 6px 10px;
+	background: var(--fa-line);
+}
+
+.quickbar-menu-item.quickbar-menu-user {
+	min-height: 52px;
+}
+
+// Avatar 28 px vycentrovaný ve sloupci ikon
+.quickbar-menu-avatar {
+	flex: none;
+	width: 20px;
+	display: flex;
+	justify-content: center;
+
+	> span {
+		flex: none;
+		width: 28px;
+		height: 28px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--bs-border-radius-pill);
+		background: var(--quickbar-tint);
+		font-size: 11px;
+		font-weight: 700;
+		color: var(--quickbar-primary);
+	}
+}
+
+.quickbar-menu-user-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.quickbar-menu-user-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--quickbar-text-strong);
+}
+
+.quickbar-menu-user-role {
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.3;
+	color: var(--quickbar-muted);
 }

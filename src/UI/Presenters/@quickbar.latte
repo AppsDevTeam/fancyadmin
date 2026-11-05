@@ -6,6 +6,8 @@
 
 <div class="quickbar-overlay" data-quickbar-close hidden></div>
 
+{include @quickbarMenu.latte}
+
 <section n:if="$hasSearch" class="quickbar-panel quickbar-panel--search" id="quickbar-panel-search" data-quickbar-panel="search" aria-label="{_fcadmin.layout.quickbar.search.title}" hidden>
 	<header class="quickbar-panel-header">
 		<h2 class="quickbar-panel-title">{_fcadmin.layout.quickbar.search.title}</h2>
@@ -30,7 +32,7 @@
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
 					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
 					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-recent-button" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
-					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.expand}" data-quickbar-ai-full
+					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-full-button" title="{_fcadmin.layout.quickbar.ai.expand}" data-quickbar-ai-full
 						data-expand="{_fcadmin.layout.quickbar.ai.expand}" data-shrink="{_fcadmin.layout.quickbar.ai.shrink}"><i class="fa-regular fa-up-right-and-down-left-from-center"></i></button>
 				{/if}
 				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-regular fa-check-double"></i></button>
@@ -101,6 +103,11 @@
 {/foreach}
 
 <div n:class="quickbar, $hasSearch ? quickbar--with-search" data-quickbar>
+	{* Menu a ikonové hledání jen na mobilu, viz _quickbar.scss *}
+	<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-menu-button" title="{_fcadmin.layout.quickbar.menu.label}" aria-label="{_fcadmin.layout.quickbar.menu.label}"
+		aria-controls="quickbar-panel-menu" aria-expanded="false" data-quickbar-toggle="menu"><i class="fa-regular fa-bars"></i></button>
+	<button n:if="$hasSearch" type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-search-button" title="{_fcadmin.layout.quickbar.search.placeholder}" aria-label="{_fcadmin.layout.quickbar.search.placeholder}"
+		aria-controls="quickbar-panel-search" data-quickbar-toggle="search"><i class="fa-regular fa-magnifying-glass"></i></button>
 	<label n:if="$hasSearch" class="quickbar-search">
 		<i class="fa-regular fa-magnifying-glass"></i>
 		<input type="text" class="quickbar-search-input" autocomplete="off"

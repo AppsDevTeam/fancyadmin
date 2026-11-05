@@ -10,6 +10,8 @@
 //            messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
 // Otevřený chat obnovuje projekt voláním refreshQuickbarChat() (polling, push).
 //
+// Na mobilu je v liště i Menu (@quickbarMenu.latte) místo bočního menu a AI se neroztahuje na celou plochu.
+//
 // AI asistent zdroj nepotřebuje - panel hostí widget adt-ai-chat (assets/js/aiChat.js), konfiguraci dá AiPresenter.
 // Konverzace můžou nést volitelně `preview` (náhled poslední zprávy) a `unread` (nepřečtená odpověď).
 
@@ -17,6 +19,9 @@ const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
 const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-ai-recent, .ai-chat__messages';
+
+// Zlom sm Bootstrapu, stejně jako media-breakpoint-down(sm) v _quickbar.scss
+const mobileQuery = window.matchMedia('(max-width: 575.98px)');
 
 let source = {};
 
@@ -53,6 +58,7 @@ function call(path, ...args) {
 const bar = () => document.querySelector('[data-quickbar]');
 const panel = (name) => document.querySelector(`[data-quickbar-panel="${name}"]`);
 const searchInput = () => document.querySelector('[data-quickbar-search]');
+const aiFull = () => state.ai.full && !mobileQuery.matches;
 
 function esc(value) {
 	return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -127,7 +133,7 @@ function render() {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
 	});
 	panel('chat')?.classList.toggle('quickbar-panel--chat-thread', state.chatView === 'thread');
-	panel('ai')?.classList.toggle('quickbar-panel--full', state.ai.full);
+	panel('ai')?.classList.toggle('quickbar-panel--full', aiFull());
 	document.querySelectorAll('[data-quickbar-toggle]').forEach((button) => {
 		const active = button.dataset.quickbarToggle === state.open;
 		button.classList.toggle('btn-primary', active);
@@ -531,7 +537,7 @@ function saveAiUnread() {
 }
 
 function isAiVisible(conversationId) {
-	return state.open === 'ai' && (state.ai.view === 'chat' || state.ai.full) && document.visibilityState === 'visible'
+	return state.open === 'ai' && (state.ai.view === 'chat' || aiFull()) && document.visibilityState === 'visible'
 		&& String(state.ai.conversationId) === String(conversationId);
 }
 
@@ -711,7 +717,7 @@ function renderAiHeader() {
 	// Na celé ploše je nadpisem název konverzace
 	const conversation = state.ai.conversations.find((c) => String(c.id) === String(state.ai.conversationId));
 	const $rows = $panel.querySelector('[data-quickbar-ai-list]');
-	$title.textContent = state.ai.full ? (conversation?.title || $rows.dataset.untitled) : $title.dataset.quickbarTitle;
+	$title.textContent = aiFull() ? (conversation?.title || $rows.dataset.untitled) : $title.dataset.quickbarTitle;
 
 	const $full = $panel.querySelector('[data-quickbar-ai-full]');
 	$full.title = state.ai.full ? $full.dataset.shrink : $full.dataset.expand;
@@ -726,7 +732,7 @@ document.addEventListener('ai-chat:conversation', (e) => {
 	}
 	state.ai.conversationId = id;
 	// Nová konverzace se má hned objevit v seznamu na celé ploše
-	if (e.detail.created && state.ai.full) {
+	if (e.detail.created && aiFull()) {
 		loadAiConversations();
 	}
 	if (aiWidget()?.loading) {
@@ -743,6 +749,50 @@ document.addEventListener('ai-chat:conversation', (e) => {
 
 document.addEventListener('visibilitychange', () => {
 	if (document.visibilityState === 'visible' && bar()) {
+		render();
+	}
+});
+
+// === Menu (jen mobil) ===
+
+function toggleMenuSub(button) {
+	const expand = button.getAttribute('aria-expanded') !== 'true';
+	// Otevřené je vždy jen jedno podmenu, profil se rozbaluje nezávisle
+	if (expand && button.dataset.quickbarMenuToggle !== 'user') {
+		button.closest('[data-quickbar-menu]').querySelectorAll('[data-quickbar-menu-toggle=""][aria-expanded="true"]').forEach((other) => setMenuSub(other, false));
+	}
+	setMenuSub(button, expand);
+	if (expand) {
+		revealMenuSub(button);
+	}
+}
+
+function setMenuSub(button, expanded) {
+	button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+	button.nextElementSibling.hidden = !expanded;
+}
+
+// Posune obsah okna, aby bylo rozbalené podmenu celé vidět; vyšší podmenu nechá rodiče nahoře
+function revealMenuSub(button) {
+	requestAnimationFrame(() => requestAnimationFrame(() => {
+		const box = button.closest('[data-quickbar-menu]');
+		const boxRect = box.getBoundingClientRect();
+		const buttonRect = button.getBoundingClientRect();
+		const overflow = button.nextElementSibling.getBoundingClientRect().bottom + 8 - boxRect.bottom;
+		if (overflow > 0) {
+			box.scrollTo({ top: box.scrollTop + Math.min(overflow, buttonRect.top - boxRect.top - 8), behavior: 'smooth' });
+		}
+	}));
+}
+
+// Menu na desktopu není, ostatní okna zůstanou otevřená
+mobileQuery.addEventListener('change', () => {
+	if (!bar()) {
+		return;
+	}
+	if (!mobileQuery.matches && state.open === 'menu') {
+		close();
+	} else {
 		render();
 	}
 });
@@ -832,6 +882,16 @@ document.addEventListener('click', (e) => {
 		input.value = '';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		input.focus();
+		return;
+	}
+	const menuToggle = target.closest('[data-quickbar-menu-toggle]');
+	if (menuToggle) {
+		toggleMenuSub(menuToggle);
+		return;
+	}
+	// Odkaz menu si naviguje sám, okno se jen zavře
+	if (target.closest('[data-quickbar-menu] a[href]')) {
+		close();
 		return;
 	}
 	if (target.closest('[data-quickbar-chat-back]')) {
@@ -934,7 +994,7 @@ document.addEventListener('keydown', (e) => {
 		// V podstavech vrací Esc nejdřív zpět, až pak zavře okno
 		if (state.open === 'chat' && state.chatView === 'thread') {
 			backToChatList();
-		} else if (state.open === 'ai' && state.ai.full) {
+		} else if (state.open === 'ai' && aiFull()) {
 			toggleAiFull();
 		} else if (state.open === 'ai' && state.ai.view === 'recent') {
 			toggleAiRecent();

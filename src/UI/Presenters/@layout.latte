@@ -118,7 +118,10 @@
 	{if $primaryTemplate}
 		{block menu}
 			{include @sideMenu.latte}
-			{include @mobileMenu.latte}
+			{* S rychlou lištou je navigace na mobilu v jejím okně Menu *}
+			{if empty($quickbarItems)}
+				{include @mobileMenu.latte}
+			{/if}
 		{/block}
 
 		<div class="container-fluid delay-animate container-main" data-app-container>

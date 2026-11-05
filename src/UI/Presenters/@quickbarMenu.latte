@@ -1,0 +1,87 @@
+{varType ADT\FancyAdmin\Model\Menu\NavbarMenu $navbarMenu}
+{varType ADT\FancyAdmin\Model\Menu\UserMenu $userMenu}
+{varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
+{* Okno Menu rychlé lišty - na mobilu nahrazuje boční menu, položky jsou stejné jako v @sideMenu.latte *}
+{var $identity = $user->getIdentity()}
+{var $roleNames = implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()))}
+{var $initials = implode('', array_map(fn($part) => mb_strtoupper(mb_substr($part, 0, 1)), array_slice(preg_split('/\s+/', trim($identity->getFullName())) ?: [], 0, 2)))}
+
+<section class="quickbar-panel quickbar-panel--menu" id="quickbar-panel-menu" data-quickbar-panel="menu" aria-label="{_fcadmin.layout.quickbar.menu.title}" hidden>
+	<header class="quickbar-panel-header">
+		<div class="quickbar-panel-heading">
+			<h2 class="quickbar-panel-title">{_fcadmin.layout.quickbar.menu.title}</h2>
+		</div>
+		<div class="quickbar-panel-actions">
+			<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-regular fa-xmark"></i></button>
+		</div>
+	</header>
+
+	<div class="quickbar-panel-body quickbar-menu" data-quickbar-menu>
+		{foreach $navbarMenu->getGroups() as $group}
+			<div n:if="$group['heading']" class="quickbar-menu-heading">{_$group['heading']->getLabel()}</div>
+			{foreach $group['items'] as $menuItem}
+				{if $menuItem->getLink()}
+					<a n:if="$menuItem->isVisible($user, $presenter)" href="{$presenter->link($menuItem->getLink(), $menuItem->getLinkArgs())}" n:class="quickbar-menu-item, $menuItem->isCurrent($presenter) ? quickbar-menu-item--active">
+						<i class="fa-regular fa-{$menuItem->getFaIcon()}"></i>
+						<span class="quickbar-menu-label">{_$menuItem->getLabel()}</span>
+					</a>
+				{elseif $menuItem->isEnabledSubmenu($user, $presenter)}
+					{if $menuItem->getSubmenu()}
+						<button type="button" n:class="quickbar-menu-item, $menuItem->isCurrent($presenter) ? quickbar-menu-item--active-parent" aria-expanded="false" data-quickbar-menu-toggle>
+							<i class="fa-regular fa-{$menuItem->getFaIcon()}"></i>
+							<span class="quickbar-menu-label">{_$menuItem->getLabel()}</span>
+							<i class="fa-regular fa-chevron-down quickbar-menu-chevron"></i>
+						</button>
+						<div class="quickbar-menu-sub" hidden>
+							{foreach $menuItem->getSubmenu()->getSubMenuItems() as $subMenuItem}
+								{if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
+									<div class="quickbar-menu-sub-heading">{_$subMenuItem->getLabel()}</div>
+								{elseif $subMenuItem->isVisible($user, $presenter)}
+									<a href="{$presenter->link($subMenuItem->getLink(), $subMenuItem->getLinkArgs())}" n:class="quickbar-menu-sub-item, $subMenuItem->isCurrent($presenter) ? quickbar-menu-sub-item--active">{_$subMenuItem->getLabel()}</a>
+								{/if}
+							{/foreach}
+						</div>
+					{else}
+						{* Položka bez odkazu i podmenu nikam nevede, stejně jako v bočním menu *}
+						<span class="quickbar-menu-item quickbar-menu-item--empty">
+							<i class="fa-regular fa-{$menuItem->getFaIcon()}"></i>
+							<span class="quickbar-menu-label">{_$menuItem->getLabel()}</span>
+						</span>
+					{/if}
+				{/if}
+			{/foreach}
+		{/foreach}
+
+		<div class="quickbar-menu-divider"></div>
+
+		<button type="button" class="quickbar-menu-item quickbar-menu-user" aria-expanded="false" data-quickbar-menu-toggle="user">
+			<span class="quickbar-menu-avatar"><span>{$initials}</span></span>
+			<span class="quickbar-menu-user-text">
+				<span class="quickbar-menu-user-name">{$identity->getFullName()}</span>
+				<span n:if="$roleNames" class="quickbar-menu-user-role">{$roleNames}</span>
+			</span>
+			<i class="fa-regular fa-chevron-down quickbar-menu-chevron"></i>
+		</button>
+		<div class="quickbar-menu-sub" hidden>
+			<a n:if="$userMenu->isAddMyProfileMenuItem()" n:href="Profile:default" class="quickbar-menu-sub-item">
+				<i class="fa-regular fa-user"></i>{_fcadmin.modules.web.navbar.profile.myProfile}
+			</a>
+			<a n:if="$userMenu->isAddMyAccountMenuItem() && $user->isMultiTenant() && $identity->getSelectedAccount() && $user->isAllowed(lcfirst(explode(':', $presenter->getName())[0]) . '.account')" n:href="Account:default" class="quickbar-menu-sub-item">
+				<i class="fa-regular fa-building"></i>{_fcadmin.modules.web.navbar.account.myAccount}
+			</a>
+			<a n:foreach="$userMenu->getMenuItems() as $item" href="{$presenter->link($item->getLink(), $item->getLinkArgs())}" class="quickbar-menu-sub-item">
+				<i class="fa-regular fa-{$item->getFaIcon()}"></i>{_$item->getLabel()}
+			</a>
+			{* Přepíná themeToggle.js stejně jako v uživatelském menu bočního panelu *}
+			<button type="button" class="quickbar-menu-sub-item" data-fancyadmin-theme-toggle role="switch" aria-checked="false">
+				<i class="fa-regular fa-moon"></i>{_fcadmin.layout.sideMenu.user.darkMode}
+				<span class="form-check form-switch quickbar-menu-switch">
+					<input class="form-check-input" type="checkbox" tabindex="-1" aria-hidden="true">
+				</span>
+			</button>
+			<a n:href=":Portal:Sign:out" class="quickbar-menu-sub-item quickbar-menu-sub-item--danger">
+				<i class="fa-regular fa-right-to-bracket"></i>{_fcadmin.layout.sideMenu.user.logout}
+			</a>
+		</div>
+	</div>
+</section>

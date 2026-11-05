@@ -60,6 +60,9 @@ layout:
       title: Moje úlohy
       placeholder: Pridať úlohu…
       empty: Žiadne úlohy
+    menu:
+      label: Menu
+      title: Menu
     chat:
       label: Chat
       title: Chat

@@ -37,6 +37,9 @@ a {
 			left: 0;
 			width: 100%;
 			padding-top: 15px;
+		}
+
+		&:has(.bottom-mobile-menu) .container-main {
 			bottom: 65px;
 		}
 
