@@ -326,7 +326,9 @@ input[type="color"]::-webkit-color-swatch {
 			content: ' ';
 			width: 20px;
 			height: 20px;
-			border: 2px solid $secondary;
+			// Rámeček a podklad jako pole - světlý $secondary na skle i na podkladu stránky splýval
+			border: var(--inputBorder, 1px solid var(--fa-border));
+			background-color: var(--inputBackground);
 			border-radius: var(--bs-border-radius-xxs);
 			transition: all .2s;
 			min-width: 20px;
@@ -334,10 +336,14 @@ input[type="color"]::-webkit-color-swatch {
 		}
 	}
 
+	label:hover:before {
+		border: var(--inputHoverBorder, var(--inputBorder, 1px solid var(--fa-border)));
+	}
+
 	input:checked+label, label:has(input:checked) {
 		&:before {
 			background-color: $primary;
-			border: 2px solid $primary;
+			border-color: $primary;
 		}
 
 		&:after {
