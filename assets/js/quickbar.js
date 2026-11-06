@@ -129,6 +129,7 @@ function render() {
 	$bar.classList.toggle('quickbar--open-search', state.open === 'search');
 	$bar.classList.toggle('quickbar--wide', state.open === 'search' || state.open === 'ai');
 	document.querySelector('.quickbar-overlay').hidden = state.open === null;
+	setColumnOpen(state.open !== null);
 	document.querySelectorAll('[data-quickbar-panel]').forEach((el) => {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
 	});
@@ -154,6 +155,19 @@ function render() {
 	renderChat();
 	renderAi();
 	scheduleMeasure();
+}
+
+// Na širší obrazovce je panel sloupec vpravo a stránka se o něj zúží (_quickbar.scss,
+// body.quickbar-column-open). Kalendář a grafy se přepočítají až po animaci šířky.
+let resizeTimer = null;
+
+function setColumnOpen(open) {
+	if (document.body.classList.contains('quickbar-column-open') === open) {
+		return;
+	}
+	document.body.classList.toggle('quickbar-column-open', open);
+	clearTimeout(resizeTimer);
+	resizeTimer = setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
 }
 
 function renderCounts() {

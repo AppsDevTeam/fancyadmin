@@ -286,6 +286,74 @@ body:has(.quickbar) .table-bottom-scroll {
 	}
 }
 
+// === Sloupec vpravo (od md) ===
+// Otevřený panel vyjede zprava přes celou výšku a stránka se o něj zúží: obsah (.container-main),
+// lišta i boční panel záznamu - nic nepřekrývá a se stránkou jde dál pracovat (překryv, který
+// panel zavíral kliknutím mimo, tu není; zavírá křížek, Esc a tlačítko v liště). Třídu
+// body.quickbar-column-open přepíná quickbar.js. Na mobilu zůstává panel nad lištou.
+@include media-breakpoint-up(md) {
+	body {
+		--quickbar-column-width: 440px;
+		--quickbar-column: 0px;
+	}
+
+	body.quickbar-column-open {
+		--quickbar-column: var(--quickbar-column-width);
+	}
+
+	.quickbar-overlay {
+		display: none;
+	}
+
+	// html a :has(.quickbar) kvůli síle selektoru - přebíjí šířku obsahu z _theme.scss
+	// i body.menu-wide z _sidepanel.scss
+	html body:has(.quickbar):has(.side-panel .menu) .container-main {
+		right: var(--quickbar-column);
+		width: auto;
+		transition: left 180ms ease, right .25s ease;
+	}
+
+	// Lišta uprostřed zúžené stránky
+	.quickbar {
+		left: calc(50% - var(--quickbar-column) / 2);
+		max-width: calc(100vw - var(--quickbar-column) - 32px);
+		transition: width .25s ease, left .25s ease, border-color .15s;
+	}
+
+	// Jen otevřený - zavřený je posunutý za pravý okraj o svou šířku
+	body.quickbar-column-open .side-panel-template-container--open {
+		right: calc(var(--quickbar-column) + 12px);
+	}
+
+	.quickbar-panel,
+	.quickbar-panel.quickbar-panel--chat,
+	.quickbar-panel.quickbar-panel--ai {
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: auto;
+		width: var(--quickbar-column-width);
+		height: auto;
+		max-height: none;
+		border-width: 0 0 0 1px;
+		border-radius: 0;
+		animation: quickbar-column-in .25s ease;
+	}
+
+	// AI na celé ploše: od bočního menu k okraji, přes stránku
+	.quickbar-panel.quickbar-panel--full {
+		left: var(--side-panel-width, 0px);
+		width: auto;
+		animation: none;
+	}
+}
+
+@keyframes quickbar-column-in {
+	from {
+		transform: translateX(100%);
+	}
+}
+
 .quickbar-panel-header {
 	flex: none;
 	display: flex;
