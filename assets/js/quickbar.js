@@ -747,6 +747,24 @@ document.addEventListener('ai-chat:conversation', (e) => {
 	}
 });
 
+// Stránka, kterou AI otevřela (nástroj s výsledkem navigate) nebo na kterou uživatel klikl
+// v odpovědi, se načte ajaxem za lištou - lišta je mimo snippet body, chat zůstane otevřený.
+// Odpověď, která dorazí do zavřeného panelu, nikam nepřesouvá.
+document.addEventListener('ai-chat:navigate', (e) => {
+	if (!e.target.closest?.('[data-quickbar-ai-chat]') || !$.nette?.ajax) {
+		return;
+	}
+	if (e.detail.auto && state.open !== 'ai') {
+		return;
+	}
+	e.preventDefault();
+	// Odkaz a klik jako původce požadavku (nette.ajax bez nich nevyplní settings.nette) -
+	// podle odkazu history.ajax.js zapíše URL do historie
+	const link = document.createElement('a');
+	link.href = e.detail.url;
+	$.nette.ajax({ url: link.href }, link, $.Event('click'));
+});
+
 document.addEventListener('visibilitychange', () => {
 	if (document.visibilityState === 'visible' && bar()) {
 		render();
@@ -846,7 +864,7 @@ function observePanels() {
 	document.querySelectorAll('[data-quickbar-panel]').forEach((el) => panelObserver.observe(el, { childList: true, subtree: true }));
 }
 
-// === Události (delegace na document - lišta je ve snippetu body a překresluje se) ===
+// === Události (delegace na document - menu lišty je snippet a překresluje se) ===
 
 document.addEventListener('click', (e) => {
 	if (!bar()) {
@@ -1012,7 +1030,8 @@ document.addEventListener('keydown', (e) => {
 	}
 });
 
-// Překreslený snippet body přinese novou (zavřenou) lištu - stav panelů srovnat s DOM
+// Lišta je mimo snippet body, ajax ji nepřekreslí - nová lišta přijde jen s jinou stránkou
+// bez ajaxu (nebo kdyby ji projekt měl ve vlastním snippetu); pak stav panelů srovnat s DOM
 function init() {
 	const $bar = bar();
 	if ($bar === currentBar) {

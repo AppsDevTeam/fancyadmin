@@ -203,6 +203,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'labels' => Expect::arrayOf('string', 'string')->default([]),
 					// poznámka pro AI na konci textu; null = výchozí ai-chat
 					'note' => Expect::string()->nullable()->default(null),
+					// řádek pro AI u kotvy, kterou může být víc subjektů (resolver s PiiSubjectCandidates),
+					// %1$s = kotva, %2$s = kotvy kandidátů; null = výchozí ai-chat
+					'candidatesNote' => Expect::string()->nullable()->default(null),
 					// OpenAI-kompatibilní LLM (qwen); bez url jen regulární výrazy a resolver
 					'detector' => Expect::structure([
 						'url' => Expect::string()->nullable()->default(null),
@@ -542,6 +545,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'subjectAnchor' => $pseudonymization->subjectAnchor,
 				'labels' => $pseudonymization->labels,
 				'note' => $pseudonymization->note,
+				'candidatesNote' => $pseudonymization->candidatesNote,
 			], static fn($_value): bool => $_value !== null && $_value !== []) + ['resolver' => null]);
 
 		$builder->addDefinition($this->prefix('ai.piiCheckListener'))

@@ -560,6 +560,7 @@ aiChat:
     welcomeSingle: Zeptejte se na cokoliv ohledně dat.
     exportCsv: Stáhnout CSV
     download: Stáhnout
+    open: Otevřít
     contextLabel: Kontext konverzace
     contextOk: Pamatuji si celou konverzaci.
     contextWarn: Konverzace je dlouhá, brzy začnu zapomínat její začátek.

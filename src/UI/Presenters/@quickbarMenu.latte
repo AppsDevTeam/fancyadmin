@@ -2,9 +2,6 @@
 {varType ADT\FancyAdmin\Model\Menu\UserMenu $userMenu}
 {varType ADT\FancyAdmin\Model\Security\SecurityUser $user}
 {* Okno Menu rychlé lišty - na mobilu nahrazuje boční menu, položky jsou stejné jako v @sideMenu.latte *}
-{var $identity = $user->getIdentity()}
-{var $roleNames = implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()))}
-{var $initials = implode('', array_map(fn($part) => mb_strtoupper(mb_substr($part, 0, 1)), array_slice(preg_split('/\s+/', trim($identity->getFullName())) ?: [], 0, 2)))}
 
 <section class="quickbar-panel quickbar-panel--menu" id="quickbar-panel-menu" data-quickbar-panel="menu" aria-label="{_fcadmin.layout.quickbar.menu.title}" hidden>
 	<header class="quickbar-panel-header">
@@ -16,7 +13,11 @@
 		</div>
 	</header>
 
-	<div class="quickbar-panel-body quickbar-menu" data-quickbar-menu>
+	<div class="quickbar-panel-body quickbar-menu" data-quickbar-menu n:snippet="quickbarMenu">
+		{* Proměnné až uvnitř snippetu - blok snippetu nevidí {var} před sebou *}
+		{var $identity = $user->getIdentity()}
+		{var $roleNames = implode(', ', array_map(fn($role) => $role->getName(), $identity->getRoles()))}
+		{var $initials = implode('', array_map(fn($part) => mb_strtoupper(mb_substr($part, 0, 1)), array_slice(preg_split('/\s+/', trim($identity->getFullName())) ?: [], 0, 2)))}
 		{foreach $navbarMenu->getGroups() as $group}
 			<div n:if="$group['heading']" class="quickbar-menu-heading">{_$group['heading']->getLabel()}</div>
 			{foreach $group['items'] as $menuItem}

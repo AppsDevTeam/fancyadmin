@@ -2907,6 +2907,13 @@ otevření načte jeho konfiguraci ze signálu `AiPresenterTrait::handleAiQuickb
 a nedávné konverzace bere z `urls.conversations` widgetu. Projekt musí importovat `@fancyadmin/js/aiChat`
 (sekce 30), jinak zůstane panel prázdný.
 
+**Stránka za lištou** — lišta je v layoutu mimo snippet `body`, ajaxový přechod na jinou stránku ji
+nepřekreslí: otevřený panel, konverzace AI i rozepsaný text zůstanou. Zvýraznění aktuální položky
+v okně Menu má vlastní snippet `quickbarMenu`. Když AI otevře stránku (výsledek nástroje
+`{type: navigate, url}` z adt/ai-chat, událost `ai-chat:navigate`) nebo uživatel klikne v odpovědi
+na odkaz do aplikace, lišta ji načte ajaxem za panelem (`$.nette.ajax` se zápisem do historie).
+Odpověď, která dorazí do zavřeného panelu, stránku nemění.
+
 **JS** — importovat modul (`app.js` fancyadminu ho importuje sám) a předat mu zdroj dat; bez něj jsou panely prázdné:
 
 ```js
@@ -3410,6 +3417,7 @@ fancyadmin:
 				email: EMAIL
 				# insurance_number, file_number, phone, address, birth_date, bank_account, document_number, other
 			# note: poznámka pro AI, co kotvy znamenají (%%1$s = ukázková kotva subjektu); výchozí anglicky
+			# candidatesNote: řádek pro AI u kotvy, kterou může být víc subjektů (resolver s PiiSubjectCandidates z adt/ai-chat 1.3), %%1$s = kotva, %%2$s = kotvy kandidátů
 			detector:                       # OpenAI-kompatibilní API, POST {url}/v1/chat/completions
 				url: %env.AI_URL%
 				model: %env.AI_MODEL%

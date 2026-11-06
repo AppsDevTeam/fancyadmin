@@ -221,6 +221,8 @@ trait BasePresenterTrait
 		if (!$this->isControlInvalid()) {
 			$this->redrawControl('title');
 			$this->redrawControl('body');
+			// Rychlá lišta je mimo body, překresluje se jen zvýraznění položky v jejím menu
+			$this->redrawControl('quickbarMenu');
 			$this->redrawControl('modals');
 		}
 	}

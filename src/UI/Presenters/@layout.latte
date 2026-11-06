@@ -189,9 +189,6 @@
 			{snippet sidePanelStacked}{/snippet}
 		</div>
 
-		{if !empty($quickbarItems)}
-			{include @quickbar.latte}
-		{/if}
 	{else}
 		<div class="bg-primary-variant container-login">
 			<div class="wrap-login">
@@ -237,6 +234,12 @@
 		</div>
 	</div>
 </div>
+{* Rychlá lišta mimo snippet body - ajaxový přechod na jinou stránku ji nepřekreslí, takže
+   otevřený panel (AI asistent, chat) i rozepsaný text zůstanou. Zvýraznění aktuální položky
+   menu lišty má vlastní snippet quickbarMenu. *}
+{if $primaryTemplate && !empty($quickbarItems)}
+	{include @quickbar.latte}
+{/if}
 {snippet modals}
 	{block modals}{/block}
 {/snippet}
