@@ -104,7 +104,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 	/** Výchozí řádek ke kandidátům (ai.pseudonymization.candidatesNote), %1$s = kotva, %2$s = kotvy kandidátů */
 	public const string AI_PSEUDONYMIZATION_CANDIDATES_NOTE = '[Poznámka systému: %1$s může být jeden ze záznamů %2$s - '
-		. 'když se úloha týká jednoho z nich, zeptej se uživatele, který myslí, a nabídni je jako kotvy '
+		. 'když se úloha týká jednoho z nich, zeptej se uživatele, který z nich myslí, a nabídni je jako kotvy '
 		. '(uživatel místo nich uvidí jména).]';
 
 	public const array AI_DEFAULT_EXCLUDED_ENTITIES = [
