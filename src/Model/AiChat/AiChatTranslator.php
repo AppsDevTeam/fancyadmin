@@ -15,7 +15,7 @@ class AiChatTranslator
 	/** Texty widgetu (assets/ai-chat.js, DEFAULT_LABELS), překládají se do konfigurace widgetu. */
 	public const array WIDGET_LABELS = [
 		'title', 'newConversation', 'noConversations', 'noTitle', 'placeholder', 'send', 'attach',
-		'removeFile', 'delete', 'deleteConfirm', 'loading', 'welcome', 'welcomeSingle', 'exportCsv',
+		'removeFile', 'delete', 'deleteConfirm', 'loading', 'welcome', 'welcomeSingle', 'exportCsv', 'download',
 		'contextLabel', 'contextOk', 'contextWarn', 'contextFull', 'contextSwitch', 'errorConnection', 'errorTimeout',
 		'errorUnavailable', 'errorUnknown', 'errorTooManyFiles', 'errorFileTooLarge', 'model', 'effort',
 		'modelHint', 'rateQuestion', 'rateUp', 'rateDown', 'rateComment', 'rateCommentUp', 'rateSave',

@@ -3175,6 +3175,14 @@ migraci (`migrations:diff`), znovu vygenerujte anonymizované pohledy a přebuil
 s widgetem v0.11.0. `ai.chat.pendingTurnSeconds` se počítá od poslední aktivity workeru -
 nechte ho nad `ai.turn.idleTimeoutSeconds`.
 
+**Aktualizace na adt/ai-chat 1.0.** Bez migrace. Tlačítko stažení souboru ze serveru má
+vlastní popisek `fcadmin.aiChat.label.download` („Stáhnout"; `exportCsv` zůstává u CSV
+tabulky) - projekty, které kvůli tomu přepisovaly `labels.exportCsv`, to můžou smazat.
+Projektové nástroje jde psát jako `ADT\AiChat\Tool\Tool` / `ExportTool` a skládat
+`CompositeToolExecutor` (soubor ke stažení pak vyřídí `handleAiExport` sám) a tah ve
+workeru pustit pod autorem zprávy přes `ChatService::setUserScope()` - viz README
+adt/ai-chat. Widget přebuildujte z v1.0.0.
+
 ### 30.4 Anonymizované schéma a read-only uživatel
 
 1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
@@ -3216,7 +3224,7 @@ registruje `AnonymizationPolicy` sám, musí seznam předat sám.
 ### 30.5 Frontend
 
 ```bash
-yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v0.11.0 marked dompurify chart.js
+yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v1.0.0 marked dompurify chart.js
 ```
 
 ```js
