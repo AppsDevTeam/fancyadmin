@@ -130,7 +130,7 @@
 .btn.btn-warning {
 	$bg: var(--fa-warning, #{$warning});
 	$hover: color-mix(in srgb, #{$bg} 85%, black);
-	$text: var(--fa-on-warning, #3a2408);
+	$text: var(--fa-on-warning, #fff);
 
 	@include button-colors($text, $bg, $bg, $text, $hover, $hover);
 }
