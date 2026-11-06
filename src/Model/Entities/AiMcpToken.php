@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\Model\Entities;
 
+use ADT\AiChat\Mcp\McpToken;
 use ADT\DoctrineComponents\Entities\Entity;
 use DateTimeImmutable;
 
 /**
- * Přístupový token k MCP serveru AI asistenta (adt/ai-chat, Mcp\McpServer). Patří
+ * Přístupový token k MCP serveru AI asistenta (adt/ai-chat, Mcp\McpToken). Patří
  * jedné identitě - MCP klient (Claude Code, Claude Desktop, ...) pracuje s jejími
- * právy, viz AiMcpEndpoint.
+ * právy, viz AiMcpTokenPolicy.
  */
-interface AiMcpToken extends Entity
+interface AiMcpToken extends Entity, McpToken
 {
 	public function getName(): string;
 	public function setName(string $name): static;

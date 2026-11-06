@@ -6,7 +6,10 @@ use ADT\AiChat\Mcp\McpServer;
 use ADT\AiChat\ToolExecutor;
 use ADT\DoctrineAnonymization\AnonymizationType;
 use ADT\DoctrineAnonymization\Attributes\Anonymize;
+use ADT\AiChat\Mcp\McpEndpoint;
+use ADT\AiChat\Mcp\McpTokenAuthenticator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
+use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
 use ADT\FancyAdmin\Model\Entities\AiMcpTokenTrait;
 use ADT\FancyAdmin\Model\Security\ApiKeyHasher;
 use ADT\FancyAdmin\Tests\Fixtures\FancyAdminFactory;
@@ -84,7 +87,10 @@ function mcpEndpoint(?TestIdentity $identity = null, array $fancyAdmin = []): ar
 	$em->getRepository(TestAiMcpToken::class)->entities = [$token];
 
 	$tools = new McpFakeTools();
-	$endpoint = new AiMcpEndpoint(new McpServer($tools), $em, FancyAdminFactory::create($fancyAdmin), TestAiMcpToken::class);
+	$endpoint = new AiMcpEndpoint(new McpEndpoint(
+		new McpServer($tools),
+		new McpTokenAuthenticator($em, TestAiMcpToken::class, new AiMcpTokenPolicy(FancyAdminFactory::create($fancyAdmin))),
+	));
 
 	return [$endpoint, $em, $token, $tools];
 }
