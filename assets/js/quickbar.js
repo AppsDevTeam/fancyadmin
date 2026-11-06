@@ -581,8 +581,9 @@ function destroyAi() {
 }
 
 function focusAi() {
-	// Widget se připojuje až v MutationObserveru aiChat.js
-	setTimeout(() => document.querySelector('[data-quickbar-ai-chat] textarea')?.focus(), 50);
+	// Widget se připojuje až v MutationObserveru aiChat.js. Pole zprávy podle třídy - v konverzaci
+	// s odpovědí je před ním v DOM skryté pole komentáře k hodnocení
+	setTimeout(() => document.querySelector('[data-quickbar-ai-chat] .ai-chat__textarea')?.focus(), 50);
 }
 
 function openAiConversation(conversationId) {
