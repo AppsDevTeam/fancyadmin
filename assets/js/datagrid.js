@@ -99,6 +99,11 @@ $(document).on('click', 'tbody tr:not(.row-item-detail) td:not(.col-action)', fu
 
 	let $tr = $(this).parent();
 
+	// Rozbalený smí být jen jeden detail — ostatní v tabulce zavřeme
+	$tr.closest('tbody').find('tr.row-item-detail.toggled').not($tr.next())
+		.removeClass('toggled')
+		.find('.item-detail-content').css('display', 'none');
+
 	if ($tr.next().hasClass('toggled')) {
 		$tr.next().removeClass('toggled');
 		$tr.next().find('.item-detail-content').css('display', 'none');
