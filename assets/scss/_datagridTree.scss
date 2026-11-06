@@ -260,17 +260,12 @@ $treeTextIndent: math.max($paddingTableRowX - $treeChevronWidth, 0px);
 		.datagrid-tree-item .datagrid-tree-item-content {
 			.datagrid-tree-item-left {
 				padding: $paddingTableRowY $paddingTableRowX $paddingTableRowY 0;
-				position: initial;
 			}
 
 			.datagrid-tree-item-right {
 				.datagrid-tree-item-right-columns .datagrid-tree-item-right-columns-column,
 				.datagrid-tree-item-right-actions {
 					padding: $paddingTableRowY $paddingTableRowX;
-				}
-
-				.datagrid-tree-item-right-actions {
-					position: initial;
 				}
 			}
 		}

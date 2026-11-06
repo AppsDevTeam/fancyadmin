@@ -85,10 +85,6 @@
 			width: 300px;
 			max-width: min(30%, 300px);
 
-			@include media-breakpoint-down(sm) {
-				position: initial;
-			}
-
 			> div:not(.item-detail-content) {
 				width: 300px;
 				max-width: min(30vw, 300px);
@@ -129,24 +125,22 @@
 			background-color: $background;
 		}
 
-		@include media-breakpoint-up(sm) {
-			.col-action {
-				width: 0;
-				position: sticky;
-				right: 0;
+		.col-action {
+			width: 0;
+			position: sticky;
+			right: 0;
 
-				&:before {
-					content: " ";
-					display: flex;
-					position: absolute;
-					left: calc(var(--actionShadowWidthRight) * -1);
-					width: var(--actionShadowWidthRight);
-					top: 0;
-					bottom: 0;
-					transition: all .2s;
-					box-shadow: inset calc(var(--actionShadowWidthRight) * -1) 0 calc(var(--actionShadowWidthRight) * .5) calc(var(--actionShadowWidthRight) * -1) #b3b3b3;
-					pointer-events: none;
-				}
+			&:before {
+				content: " ";
+				display: flex;
+				position: absolute;
+				left: calc(var(--actionShadowWidthRight) * -1);
+				width: var(--actionShadowWidthRight);
+				top: 0;
+				bottom: 0;
+				transition: all .2s;
+				box-shadow: inset calc(var(--actionShadowWidthRight) * -1) 0 calc(var(--actionShadowWidthRight) * .5) calc(var(--actionShadowWidthRight) * -1) #b3b3b3;
+				pointer-events: none;
 			}
 		}
 		.col-action {
@@ -248,8 +242,9 @@
 		}
 
 		tr:not(.row-item-detail):hover {
+			// Odstín je poloprůhledný — vrstvíme ho přes pozadí buňky, jinak pod sticky sloupci prosvítá obsah
 			td {
-				background-color: $row-hover;
+				background-image: linear-gradient($row-hover, $row-hover);
 			}
 		}
 
