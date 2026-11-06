@@ -498,6 +498,7 @@ aiChat:
     welcome: Vyberte konverzáciu alebo začnite novú.
     welcomeSingle: Opýtajte sa na čokoľvek ohľadom dát.
     exportCsv: Stiahnuť CSV
+    download: Stiahnuť
     contextLabel: Kontext konverzácie
     contextOk: Pamätám si celú konverzáciu.
     contextWarn: Konverzácia je dlhá, čoskoro začnem zabúdať jej začiatok.
