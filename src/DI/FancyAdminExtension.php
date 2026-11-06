@@ -11,7 +11,9 @@ use ADT\AiChat\ChatService;
 use ADT\AiChat\Client\GuzzleManagedAgentsClient;
 use ADT\AiChat\Dispatch\BackgroundQueueMessageDispatcher;
 use ADT\AiChat\Http\ChatEndpoint;
+use ADT\AiChat\Mcp\McpEndpoint;
 use ADT\AiChat\Mcp\McpServer;
+use ADT\AiChat\Mcp\McpTokenAuthenticator;
 use ADT\AiChat\PiiResponseFilter;
 use ADT\AiChat\PiiValueCollector;
 use ADT\AiChat\Pseudonymization\OpenAiCompatiblePiiDetector;
@@ -33,6 +35,7 @@ use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
+use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
 use ADT\FancyAdmin\Model\AiChat\AuditPiiCheckListener;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
@@ -474,8 +477,26 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'instructions' => $ai->mcp->instructions ?? McpServer::DEFAULT_INSTRUCTIONS,
 				]);
 
+			// pravidla vlastníka tokenu - projekt může službu přepsat (např. bezstavové přihlášení v runAs())
+			$builder->addDefinition($this->prefix('ai.mcpTokenPolicy'))
+				->setFactory(AiMcpTokenPolicy::class);
+
+			// ověření osobních tokenů AI - použitelné i pro vlastní API projektu pro jiné AI
+			$builder->addDefinition($this->prefix('ai.mcpTokenAuthenticator'))
+				->setFactory(McpTokenAuthenticator::class, [
+					'tokenClass' => $ai->mcp->tokenClass,
+					'policy' => $this->prefix('@ai.mcpTokenPolicy'),
+				]);
+
+			$builder->addDefinition($this->prefix('ai.mcpServerEndpoint'))
+				->setFactory(McpEndpoint::class, [
+					'server' => $this->prefix('@ai.mcpServer'),
+					'authenticator' => $this->prefix('@ai.mcpTokenAuthenticator'),
+				])
+				->setAutowired(false);
+
 			$builder->addDefinition($this->prefix('ai.mcpEndpoint'))
-				->setFactory(AiMcpEndpoint::class, ['tokenClass' => $ai->mcp->tokenClass]);
+				->setFactory(AiMcpEndpoint::class, ['endpoint' => $this->prefix('@ai.mcpServerEndpoint')]);
 		}
 
 		$builder->addDefinition($this->prefix('ai.provisionAgentCommand'))

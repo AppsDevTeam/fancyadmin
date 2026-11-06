@@ -3183,6 +3183,14 @@ Projektové nástroje jde psát jako `ADT\AiChat\Tool\Tool` / `ExportTool` a skl
 workeru pustit pod autorem zprávy přes `ChatService::setUserScope()` - viz README
 adt/ai-chat. Widget přebuildujte z v1.0.0.
 
+**adt/ai-chat 1.1 - tokeny MCP z knihovny.** Bez migrace (sloupce zůstávají). Ověření tokenu
+dělá `McpTokenAuthenticator` z adt/ai-chat (služba `fancyadmin.ai.mcpTokenAuthenticator`),
+pravidla vlastníka `AiMcpTokenPolicy` (služba `fancyadmin.ai.mcpTokenPolicy` - přepsáním jde
+např. v `runAs()` vlastníka bezstavově přihlásit, když nástroje potřebují přihlášeného
+uživatele). `AiMcpTokenTrait` používá `McpTokenTrait`, rozhraní `AiMcpToken` rozšiřuje
+`McpToken`. Vlastní API projektu pro jiné AI může ověřovat stejné tokeny přes
+`McpTokenAuthenticator::authenticate()` (`McpTokenException` s 401/403).
+
 ### 30.4 Anonymizované schéma a read-only uživatel
 
 1. Osobní údaje v entitách projektu označte `#[Anonymize(AnonymizationType::…)]` (traity
