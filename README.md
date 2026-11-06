@@ -2919,6 +2919,12 @@ v okně Menu má vlastní snippet `quickbarMenu`. Když AI otevře stránku (vý
 na odkaz do aplikace, lišta ji načte ajaxem za panelem (`$.nette.ajax` se zápisem do historie).
 Odpověď, která dorazí do zavřeného panelu, stránku nemění.
 
+**Diktování a zkratka AI** — pevná zkratka **Ctrl+Alt+Shift+A** otevře AI s kurzorem v poli
+zprávy a konverzací na konci (i u už otevřeného panelu). Posílá ji aplikace **ADT Diktování**
+pro macOS (`~/Development/desktop/adt-dictation`: podržená Fn → přepis lokálním Whisperem →
+text do pole a odeslání). Projekt s vlastními zkratkami volá totéž přes
+`import { openQuickbarAi } from '@fancyadmin/js/quickbar'`.
+
 **JS** — importovat modul (`app.js` fancyadminu ho importuje sám) a předat mu zdroj dat; bez něj jsou panely prázdné:
 
 ```js
@@ -3416,13 +3422,13 @@ fancyadmin:
 			pseudonymClass: App\Model\Entities\AiPseudonym
 			resolver: @App\Model\Ai\PatientPiiResolver   # nebo třída; volitelný
 			subjectAnchor: '[PACIENT #%%s]'  # %s = ID subjektu, v neonu jako %%s
-			labels:                         # druh údaje => název kotvy; výchozí anglicky
+			labels:                         # druh údaje => název kotvy; výchozí česky (AI_PSEUDONYMIZATION_LABELS)
 				name: OSOBA
 				birth_number: RČ
 				email: EMAIL
 				# insurance_number, file_number, phone, address, birth_date, bank_account, document_number, other
-			# note: poznámka pro AI, co kotvy znamenají (%%1$s = ukázková kotva subjektu); výchozí anglicky
-			# candidatesNote: řádek pro AI u kotvy, kterou může být víc subjektů (resolver s PiiSubjectCandidates z adt/ai-chat 1.3), %%1$s = kotva, %%2$s = kotvy kandidátů
+			# note: poznámka pro AI, co kotvy znamenají (%%1$s = ukázková kotva subjektu); výchozí česky (AI_PSEUDONYMIZATION_NOTE)
+			# candidatesNote: řádek pro AI u kotvy, kterou může být víc subjektů (resolver s PiiSubjectCandidates z adt/ai-chat 1.3), %%1$s = kotva, %%2$s = kotvy kandidátů; výchozí česky
 			detector:                       # OpenAI-kompatibilní API, POST {url}/v1/chat/completions
 				url: %env.AI_URL%
 				model: %env.AI_MODEL%

@@ -80,6 +80,33 @@ use Tracy\ILogger;
 class FancyAdminExtension extends CompilerExtension implements TranslationProviderInterface
 {
 	/** Viz getAiExcludedEntities(); neexistující třídy policy ignoruje. */
+	/** Výchozí české kotvy pseudonymizace (ai.pseudonymization.labels), projekt je může přepsat */
+	public const array AI_PSEUDONYMIZATION_LABELS = [
+		'name' => 'OSOBA',
+		'birth_number' => 'RČ',
+		'insurance_number' => 'POJIŠTĚNEC',
+		'file_number' => 'KARTA',
+		'phone' => 'TELEFON',
+		'email' => 'EMAIL',
+		'address' => 'ADRESA',
+		'birth_date' => 'NAROZENÍ',
+		'bank_account' => 'ÚČET',
+		'document_number' => 'DOKLAD',
+		'other' => 'ÚDAJ',
+	];
+
+	/** Výchozí poznámka pro AI (ai.pseudonymization.note), %1$s = ukázková kotva subjektu */
+	public const string AI_PSEUDONYMIZATION_NOTE = '[Poznámka systému: osobní údaje v textu jsou nahrazené kotvami. '
+		. '%1$s je záznam s ID 123 - toto ID používej v SQL i v nástrojích a kotvu piš i v odpovědi. '
+		. '[OSOBA_1], [RČ_1], [TELEFON_1], [ADRESA_1] a další kotvy ve tvaru [DRUH_číslo] jsou skryté údaje, '
+		. 'které systém nepřiřadil jednomu záznamu - kotvu piš i v odpovědi, uživatel místo ní uvidí původní údaj; '
+		. 'když údaj pro úlohu potřebuješ, zeptej se uživatele na upřesnění.]';
+
+	/** Výchozí řádek ke kandidátům (ai.pseudonymization.candidatesNote), %1$s = kotva, %2$s = kotvy kandidátů */
+	public const string AI_PSEUDONYMIZATION_CANDIDATES_NOTE = '[Poznámka systému: %1$s může být jeden ze záznamů %2$s - '
+		. 'když se úloha týká jednoho z nich, zeptej se uživatele, který myslí, a nabídni je jako kotvy '
+		. '(uživatel místo nich uvidí jména).]';
+
 	public const array AI_DEFAULT_EXCLUDED_ENTITIES = [
 		'ADT\\DoctrineLoggable\\Entity\\ChangeLog',
 		'ADT\\DoctrineAuthenticator\\StorageEntity',
@@ -199,12 +226,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'resolver' => Expect::anyOf(Expect::string(), Expect::type(Statement::class))->nullable()->default(null),
 					// formát kotvy subjektu s %s (např. '[PACIENT #%%s]'); null = výchozí ai-chat
 					'subjectAnchor' => Expect::string()->nullable()->default(null),
-					// druh údaje => název kotvy (name: OSOBA, …); prázdné = výchozí ai-chat
+					// druh údaje => název kotvy (name: OSOBA, …); prázdné = české výchozí AI_PSEUDONYMIZATION_LABELS
 					'labels' => Expect::arrayOf('string', 'string')->default([]),
-					// poznámka pro AI na konci textu; null = výchozí ai-chat
+					// poznámka pro AI na konci textu; null = česká výchozí AI_PSEUDONYMIZATION_NOTE
 					'note' => Expect::string()->nullable()->default(null),
 					// řádek pro AI u kotvy, kterou může být víc subjektů (resolver s PiiSubjectCandidates),
-					// %1$s = kotva, %2$s = kotvy kandidátů; null = výchozí ai-chat
+					// %1$s = kotva, %2$s = kotvy kandidátů; null = česká výchozí AI_PSEUDONYMIZATION_CANDIDATES_NOTE
 					'candidatesNote' => Expect::string()->nullable()->default(null),
 					// OpenAI-kompatibilní LLM (qwen); bez url jen regulární výrazy a resolver
 					'detector' => Expect::structure([
@@ -543,9 +570,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'detector' => $this->prefix('@ai.piiDetector'),
 				'resolver' => is_string($resolver) && !str_starts_with($resolver, '@') ? new Statement($resolver) : $resolver,
 				'subjectAnchor' => $pseudonymization->subjectAnchor,
-				'labels' => $pseudonymization->labels,
-				'note' => $pseudonymization->note,
-				'candidatesNote' => $pseudonymization->candidatesNote,
+				// České výchozí hodnoty fancyadminu, ai-chat má anglické
+				'labels' => $pseudonymization->labels ?: self::AI_PSEUDONYMIZATION_LABELS,
+				'note' => $pseudonymization->note ?? self::AI_PSEUDONYMIZATION_NOTE,
+				'candidatesNote' => $pseudonymization->candidatesNote ?? self::AI_PSEUDONYMIZATION_CANDIDATES_NOTE,
 			], static fn($_value): bool => $_value !== null && $_value !== []) + ['resolver' => null]);
 
 		$builder->addDefinition($this->prefix('ai.piiCheckListener'))

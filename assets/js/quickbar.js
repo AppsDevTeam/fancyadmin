@@ -488,6 +488,18 @@ function aiRequest(url) {
 		.then((response) => (response.ok ? response.json() : Promise.reject(response)));
 }
 
+/**
+ * AI asistent s kurzorem v poli zprávy a konverzací na konci - otevře panel, je-li zavřený.
+ * Pro klávesové zkratky projektu; pevnou zkratku Ctrl+Alt+Shift+A (DICTATION_CHORD) obsluhuje
+ * lišta sama.
+ */
+export function openQuickbarAi() {
+	if (!aiRoot()) {
+		return;
+	}
+	state.open === 'ai' ? focusAi() : open('ai');
+}
+
 function openAi() {
 	const $root = aiRoot();
 	if (!$root) {
@@ -783,6 +795,19 @@ document.addEventListener('ai-chat:navigate', (e) => {
 	link.href = e.detail.url;
 	$.nette.ajax({ url: link.href }, link, $.Event('click'));
 });
+
+// Pevná zkratka diktování: aplikace ADT Diktování (macOS, ~/Development/desktop/adt-dictation)
+// pošle Ctrl+Alt+Shift+A a přepis pak napíše do pole - funguje v každém projektu s AI v liště
+const DICTATION_CHORD = { code: 'KeyA', ctrlKey: true, altKey: true, shiftKey: true, metaKey: false };
+
+document.addEventListener('keydown', (e) => {
+	if (e.repeat || !aiRoot() || Object.entries(DICTATION_CHORD).some(([key, value]) => e[key] !== value)) {
+		return;
+	}
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	openQuickbarAi();
+}, true);
 
 document.addEventListener('visibilitychange', () => {
 	if (document.visibilityState === 'visible' && bar()) {
