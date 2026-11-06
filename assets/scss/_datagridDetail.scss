@@ -15,6 +15,8 @@ $grid-row-expander-offset: $grid-row-expander-size + $paddingTableRowX;
 
 	tbody > tr:has(+ tr.row-item-detail) > td:first-child > div {
 		position: relative;
+		// Prázdná buňka by měla nulovou výšku a ořez řádků z datagrid.js (overflow: hidden) by šipku skryl
+		min-height: 1lh;
 		padding-left: $grid-row-expander-offset;
 
 		// fa-chevron-right; na divu, ne na buňce — ta je podle režimu sticky i statická
