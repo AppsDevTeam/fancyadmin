@@ -33,6 +33,10 @@ class SidePanelControl extends Control
 
 	private ?string $title = null;
 
+	private ?string $subtitle = null;
+
+	private ?string $avatar = null;
+
 	/** Upravovaný záznam formuláře, z něj se odvodí nadpis */
 	private ?object $editedEntity = null;
 
@@ -77,6 +81,30 @@ class SidePanelControl extends Control
 	{
 		$this->title = $title;
 		return $this;
+	}
+
+	/** Řádek pod nadpisem (např. pohlaví a věk u osoby) */
+	public function setSubtitle(?string $subtitle): static
+	{
+		$this->subtitle = $subtitle;
+		return $this;
+	}
+
+	public function getSubtitle(): ?string
+	{
+		return $this->subtitle;
+	}
+
+	/** Kolečko s iniciálami vlevo od nadpisu */
+	public function setAvatar(?string $initials): static
+	{
+		$this->avatar = $initials;
+		return $this;
+	}
+
+	public function getAvatar(): ?string
+	{
+		return $this->avatar;
 	}
 
 	public function getTitle(): ?string

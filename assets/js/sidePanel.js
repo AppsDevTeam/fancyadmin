@@ -147,6 +147,12 @@ $(function () {
 		if (title) {
 			title.textContent = (config && config.dataset.title) || container.dataset.triggerTitle || '';
 		}
+		[['.side-panel-template-subtitle', 'subtitle'], ['.side-panel-template-avatar', 'avatar']].forEach(([selector, key]) => {
+			const el = container.querySelector(selector);
+			if (!el) return;
+			el.textContent = (config && config.dataset[key]) || '';
+			el.hidden = !el.textContent;
+		});
 	}
 
 	// Záložky ze začátku formuláře patří do hlavičky pod nadpis

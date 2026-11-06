@@ -390,6 +390,11 @@ $sidePanelStackedOffset: 48px;
   transition: border-color .15s;
 }
 
+.side-panel-template-heading {
+  flex: 1;
+  min-width: 0;
+}
+
 .side-panel-template-title {
   min-width: 0;
   margin: 0;
@@ -404,6 +409,110 @@ $sidePanelStackedOffset: 48px;
 .side-panel-template-close {
   flex: none;
   margin-left: auto;
+}
+
+// Hlavička záznamu osoby: avatar s iniciálami, větší jméno a řádek pod ním (setAvatar, setSubtitle)
+.side-panel-template-avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--bs-border-radius-pill);
+  background: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface)));
+  color: var(--primaryColor);
+  font-size: 14px;
+  font-weight: 600;
+
+  &[hidden] {
+    display: none;
+  }
+
+  + .side-panel-template-heading .side-panel-template-title {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+}
+
+.side-panel-template-subtitle {
+  font-size: 13px;
+  color: var(--fa-text-muted);
+}
+
+// === Přehled záznamu v panelu (bez formuláře) ===
+// Sekce s nadpisem verzálkami a odkazem vpravo, obsah v boxu na skle
+.side-panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-panel-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+
+  a {
+    font-size: 13px;
+  }
+}
+
+.side-panel-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--fa-text-muted);
+}
+
+.side-panel-box {
+  @include glass-box;
+}
+
+// Prázdný stav - jen obrys
+.side-panel-box--dashed {
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--fa-heading, var(--fa-text)) 14%, transparent);
+  box-shadow: none;
+}
+
+// Seznam údajů štítek - hodnota, řádky oddělené linkou
+.side-panel-info {
+  margin: 0;
+  padding: 2px 14px;
+
+  > div {
+    display: grid;
+    grid-template-columns: minmax(120px, 38%) minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+    padding: 10px 0;
+
+    + div {
+      border-top: 1px solid var(--glass-line);
+    }
+  }
+
+  dt {
+    font-weight: 400;
+    color: var(--fa-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--fa-text-strong, var(--fa-text));
+  }
+
+  .side-panel-info-empty {
+    font-weight: 400;
+    color: var(--fa-text-faint);
+  }
 }
 
 // Záložky pod nadpisem (přesouvá je sem sidePanel.js), linka je dráha záložek, proto vždy
