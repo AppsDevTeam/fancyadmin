@@ -2,12 +2,15 @@
 
 namespace ADT\FancyAdmin\Model\Menu;
 
+use ADT\FancyAdmin\Model\Menu\Traits\TCurrentLinkTrait;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use Nette\Application\UI\Component;
 use Nette\Security\Resource;
 
 class NavbarMenuItem
 {
+	use TCurrentLinkTrait;
+
 	protected string $label = 'Test';
 	protected string $faIcon = 'chart-simple';
 
@@ -132,7 +135,7 @@ class NavbarMenuItem
 			}
 		}
 
-		return $presenter->isLinkCurrent($this->getLink(), $this->getLinkArgs());
+		return $this->isMenuLinkCurrent($presenter, $this->getLink(), $this->getLinkArgs());
 	}
 
 	public function getAclResource(): ?Resource
