@@ -3058,6 +3058,23 @@ a mazat jde vždy jen vlastní konverzace. Konverzace se mažou měkce (`deleted
 Otevřená konverzace je v URL (`?conversation=ID`), odkaz jde poslat: stránka po načtení
 konverzaci rovnou otevře v bočním panelu (signál `aiOpen!`), pokud ji příjemce smí vidět.
 
+**Kontext stránky** (adt/ai-chat 1.6): widget posílá se zprávou cestu stránky (`page`), na které
+uživatel píše (rychlá lišta je na každé stránce). Presenter ji v `getAiPageContext(string $page): ?string`
+převede na poznámku pro AI - typicky otevřený záznam, aby „tento pacient" nebo jeho jméno
+mířilo na něj. AI ji dostane za zprávou jen v tomto tahu, do přepisu konverzace nejde. `page`
+je z prohlížeče: práva ověřit, záznam uvést kotvou subjektu (kontext se nepseudonymizuje):
+
+```php
+protected function getAiPageContext(string $page): ?string
+{
+	if (!preg_match('~^/client/(\d+)~', $page, $m) || !$this->getUser()->isAllowed('portalBackoffice.client')) {
+		return null;
+	}
+
+	return sprintf('[Poznámka systému: uživatel má otevřenou kartu klienta [KLIENT #%d].]', $m[1]);
+}
+```
+
 ### 30.3 Konfigurace
 
 ```neon

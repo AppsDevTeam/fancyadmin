@@ -151,7 +151,20 @@ trait AiPresenterTrait
 			$this->getAiParam('model') ?: null,
 			$this->getAiParam('effort') ?: null,
 			$this->getAiOwner(),
+			$this->getAiPageContext((string) $this->getHttpRequest()->getPost('page')),
 		));
+	}
+
+	/**
+	 * Poznámka pro AI ke stránce, na které uživatel píše (widget posílá `page` - cestu
+	 * a query), např. otevřená karta záznamu: „uživatel má otevřenou kartu [PACIENT #3]".
+	 * AI ji dostane za zprávou jen v tomto tahu, do přepisu konverzace nejde (adt/ai-chat,
+	 * Page context). Projekt ji přepíše; `page` je z prohlížeče - práva ověřit a záznam
+	 * uvést kotvou, ne jménem (kontext se nepseudonymizuje). Null = žádná poznámka.
+	 */
+	protected function getAiPageContext(string $page): ?string
+	{
+		return null;
 	}
 
 	/** Hodnocení 👍/👎 s komentářem - hodnotit jde jen vlastní konverzaci. */
