@@ -2894,8 +2894,9 @@ panel nezavře, zavírá křížek, Esc a tlačítko v liště). Třídu `body.q
 `quickbar.js` a po animaci pošle `resize` (kalendář, grafy). Na mobilu je panel nad lištou
 s překryvem. Šablona `src/UI/Presenters/@quickbar.latte` (layout ji
 vloží sám), styly `assets/scss/_quickbar.scss` (součást `app.scss`), chování `assets/js/quickbar.js`.
-Otevřený panel (kromě hledání) přežije obnovení stránky (F5) - AI i s otevřenou konverzací a režimem
-celé plochy; stav drží `sessionStorage` záložky, při přechodu na jinou stránku bez ajaxu se zapomene.
+Otevřený panel (kromě hledání) zůstane otevřený i na další stránce (i bez ajaxu) a po obnovení (F5) -
+AI i s otevřenou konverzací a režimem celé plochy, bez přesunu kurzoru do panelu. Stav drží
+`sessionStorage` záložky (ukládá se při `pagehide`), zavřený panel zůstane zavřený.
 
 **Zapnutí a položky** — řádek `quickbar` v tabulce `configuration` (Nastavení), zakládá ho
 migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). Výchozí je vypnutá:

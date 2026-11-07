@@ -78,7 +78,8 @@ function initials(name) {
 
 // === Otevírání a zavírání ===
 
-function open(name) {
+// focus: false - obnovené okno (jiná stránka, F5) nemá brát kurzor stránce
+function open(name, focus = true) {
 	if (!panel(name)) {
 		return;
 	}
@@ -92,14 +93,18 @@ function open(name) {
 		searchInput()?.focus();
 		search(state.query);
 	} else {
-		searchInput()?.blur();
-		panel(name).querySelector('.quickbar-panel-form input')?.focus();
+		if (focus) {
+			searchInput()?.blur();
+			panel(name).querySelector('.quickbar-panel-form input')?.focus();
+		}
 		if (name === 'chat') {
-			panel('chat').querySelector('[data-quickbar-chat-query]')?.focus();
+			if (focus) {
+				panel('chat').querySelector('[data-quickbar-chat-query]')?.focus();
+			}
 			loadChats();
 		}
 		if (name === 'ai') {
-			openAi();
+			openAi(focus);
 		}
 	}
 }
@@ -503,7 +508,7 @@ export function openQuickbarAi() {
 	state.open === 'ai' ? focusAi() : open('ai');
 }
 
-function openAi() {
+function openAi(focus = true) {
 	const $root = aiRoot();
 	if (!$root) {
 		return;
@@ -512,7 +517,9 @@ function openAi() {
 
 	if (state.ai.config) {
 		render();
-		focusAi();
+		if (focus) {
+			focusAi();
+		}
 		return;
 	}
 
@@ -533,7 +540,12 @@ function openAi() {
 				state.ai.full = true;
 			}
 			render();
-			focusAi();
+			if (focus) {
+				focusAi();
+			} else {
+				// Bez fokusu jen konverzaci na konec
+				setTimeout(() => aiWidget()?.scrollToBottom(), 50);
+			}
 		})
 		.catch(() => {
 			const $chat = document.querySelector('[data-quickbar-ai-chat]');
@@ -1164,6 +1176,8 @@ function init() {
 	if (!$bar) {
 		return;
 	}
+	// Okno otevřené na předchozí liště zůstane otevřené i na nové
+	const previous = openPanelState();
 	if (/Mac|iPhone|iPad/.test(navigator.platform)) {
 		$bar.querySelector('[data-quickbar-shortcut]')?.replaceChildren('⌘ K');
 	}
@@ -1175,45 +1189,55 @@ function init() {
 	state.ai.waiting.clear();
 	observePanels();
 	firstBar ? loadCounts() : render();
+	if (previous) {
+		restoreOpenPanel(previous);
+	}
 }
 
-// Otevřený panel přežije obnovení stránky (F5): při odchodu ze stránky si stav uložíme
-// a obnoví se jen při reloadu, ne při nové návštěvě. Hledání se neobnovuje.
+// Otevřené okno zůstane otevřené i na další stránce a po obnovení (F5): při odchodu
+// ze stránky si stav uložíme do sessionStorage záložky. Hledání se neobnovuje.
+function openPanelState() {
+	if (state.open === null || state.open === 'search') {
+		return null;
+	}
+	return { open: state.open, conversationId: state.ai.conversationId, full: state.ai.full };
+}
+
 function saveOpenPanel() {
 	try {
-		if (state.open === null || state.open === 'search') {
-			sessionStorage.removeItem(OPEN_KEY);
-		} else {
-			sessionStorage.setItem(OPEN_KEY, JSON.stringify({ open: state.open, conversationId: state.ai.conversationId, full: state.ai.full }));
-		}
+		const saved = openPanelState();
+		saved ? sessionStorage.setItem(OPEN_KEY, JSON.stringify(saved)) : sessionStorage.removeItem(OPEN_KEY);
 	} catch {
-		// Bez sessionStorage se panel po obnovení jen neotevře
+		// Bez sessionStorage se okno na další stránce jen neotevře
 	}
 }
 
-function restoreOpenPanel() {
-	let saved = null;
+function loadOpenPanel() {
 	try {
-		saved = JSON.parse(sessionStorage.getItem(OPEN_KEY) || 'null');
+		const saved = JSON.parse(sessionStorage.getItem(OPEN_KEY) || 'null');
 		sessionStorage.removeItem(OPEN_KEY);
+		return saved;
 	} catch {
-		return;
+		return null;
 	}
-	const navigation = performance.getEntriesByType?.('navigation')[0];
-	if (!saved || !panel(saved.open) || navigation?.type !== 'reload') {
+}
+
+function restoreOpenPanel(saved) {
+	if (!saved || !panel(saved.open)) {
 		return;
 	}
 	if (saved.open === 'ai') {
 		state.ai.restore = saved;
 	}
-	open(saved.open);
+	open(saved.open, false);
 }
 
 window.addEventListener('pagehide', saveOpenPanel);
 
 document.addEventListener('DOMContentLoaded', () => {
+	const saved = loadOpenPanel();
 	init();
-	restoreOpenPanel();
+	restoreOpenPanel(saved);
 });
 
 if ($.nette && $.nette.ext('live')) {
