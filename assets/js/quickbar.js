@@ -19,6 +19,7 @@ import * as speech from './quickbarSpeech.js';
 
 const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
+const OPEN_KEY = 'fancyadmin-quickbar-open';
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
 const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-ai-recent, .ai-chat__messages';
 
@@ -38,7 +39,7 @@ const state = {
 	chatQuery: '',
 	activeChat: null,
 	messages: [],
-	ai: { config: null, historyUrl: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread() },
+	ai: { config: null, historyUrl: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null },
 };
 
 let currentBar = null;
@@ -523,7 +524,14 @@ function openAi() {
 			return loadAiConversations();
 		})
 		.then(() => {
-			mountAi(state.ai.conversations[0]?.id ?? null);
+			// Po obnovení stránky konverzace, která byla otevřená (pokud ještě existuje)
+			const restore = state.ai.restore;
+			state.ai.restore = null;
+			const restoredId = restore && state.ai.conversations.some((c) => String(c.id) === String(restore.conversationId)) ? restore.conversationId : null;
+			mountAi(restoredId ?? state.ai.conversations[0]?.id ?? null);
+			if (restore?.full) {
+				state.ai.full = true;
+			}
 			render();
 			focusAi();
 		})
@@ -1169,7 +1177,44 @@ function init() {
 	firstBar ? loadCounts() : render();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Otevřený panel přežije obnovení stránky (F5): při odchodu ze stránky si stav uložíme
+// a obnoví se jen při reloadu, ne při nové návštěvě. Hledání se neobnovuje.
+function saveOpenPanel() {
+	try {
+		if (state.open === null || state.open === 'search') {
+			sessionStorage.removeItem(OPEN_KEY);
+		} else {
+			sessionStorage.setItem(OPEN_KEY, JSON.stringify({ open: state.open, conversationId: state.ai.conversationId, full: state.ai.full }));
+		}
+	} catch {
+		// Bez sessionStorage se panel po obnovení jen neotevře
+	}
+}
+
+function restoreOpenPanel() {
+	let saved = null;
+	try {
+		saved = JSON.parse(sessionStorage.getItem(OPEN_KEY) || 'null');
+		sessionStorage.removeItem(OPEN_KEY);
+	} catch {
+		return;
+	}
+	const navigation = performance.getEntriesByType?.('navigation')[0];
+	if (!saved || !panel(saved.open) || navigation?.type !== 'reload') {
+		return;
+	}
+	if (saved.open === 'ai') {
+		state.ai.restore = saved;
+	}
+	open(saved.open);
+}
+
+window.addEventListener('pagehide', saveOpenPanel);
+
+document.addEventListener('DOMContentLoaded', () => {
+	init();
+	restoreOpenPanel();
+});
 
 if ($.nette && $.nette.ext('live')) {
 	$.nette.ext('live').after(init);
