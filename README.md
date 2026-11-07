@@ -2920,8 +2920,8 @@ na odkaz do aplikace, lišta ji načte ajaxem za panelem (`$.nette.ajax` se záp
 Odpověď, která dorazí do zavřeného panelu, stránku nemění.
 
 **Diktování a zkratka AI** — pevná zkratka **Ctrl+Alt+Shift+A** otevře AI s kurzorem v poli
-zprávy a konverzací na konci (i u už otevřeného panelu). Posílá ji aplikace **ADT Diktování**
-pro macOS (`~/Development/desktop/adt-dictation`: podržená Fn → přepis lokálním Whisperem →
+zprávy a konverzací na konci (i u už otevřeného panelu). Posílá ji desktopová aplikace **ADTalk**
+(repozitář `adt/adtalk`, zatím prototyp pro macOS: podržená Fn → přepis lokálním Whisperem →
 text do pole a odeslání). Projekt s vlastními zkratkami volá totéž přes
 `import { openQuickbarAi } from '@fancyadmin/js/quickbar'`.
 

@@ -796,7 +796,7 @@ document.addEventListener('ai-chat:navigate', (e) => {
 	$.nette.ajax({ url: link.href }, link, $.Event('click'));
 });
 
-// Pevná zkratka diktování: aplikace ADT Diktování (macOS, ~/Development/desktop/adt-dictation)
+// Pevná zkratka diktování: aplikace ADTalk (adt/adtalk)
 // pošle Ctrl+Alt+Shift+A a přepis pak napíše do pole - funguje v každém projektu s AI v liště
 const DICTATION_CHORD = { code: 'KeyA', ctrlKey: true, altKey: true, shiftKey: true, metaKey: false };
 
