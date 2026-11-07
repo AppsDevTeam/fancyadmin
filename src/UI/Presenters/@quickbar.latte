@@ -30,6 +30,10 @@
 			</div>
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
+					{* Předčítání odpovědí aplikací ADTalk (quickbarSpeech.js) *}
+					<button type="button" class="btn btn-icon btn-sm btn-glass" data-quickbar-ai-speak
+						data-on="{_fcadmin.layout.quickbar.ai.speakOn}" data-off="{_fcadmin.layout.quickbar.ai.speakOff}" data-stop="{_fcadmin.layout.quickbar.ai.speakStop}"
+						data-unavailable="{_fcadmin.layout.quickbar.ai.speakUnavailable}"><i class="fa-regular fa-volume-xmark"></i></button>
 					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
 					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-recent-button" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
 					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-full-button" title="{_fcadmin.layout.quickbar.ai.expand}" data-quickbar-ai-full

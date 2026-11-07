@@ -2925,6 +2925,16 @@ zprávy a konverzací na konci (i u už otevřeného panelu). Posílá ji deskto
 text do pole a odeslání). Projekt s vlastními zkratkami volá totéž přes
 `import { openQuickbarAi } from '@fancyadmin/js/quickbar'`.
 
+**Předčítání odpovědí** — tlačítko s reproduktorem v hlavičce AI panelu (`quickbarSpeech.js`,
+zapnutí si pamatuje prohlížeč v `localStorage`). Zapnuté pošle každou novou odpověď (událost
+`ai-chat:reply` widgetu z adt/ai-chat 1.6) - jen text, bez tabulek, grafů, kódu a tlačítek -
+desktopové aplikaci **ADTalk** na `http://127.0.0.1:41730`. Ta ji přečte lokálně vlastním hlasem
+(Piper, Kasandra), na každém systému stejně; data, časy a částky převede na slova sama. Hlasy
+prohlížeče se nepoužívají (na každém OS jiné, Chrome nabízí i síťové). Proto `connect-src` v CSP
+(`config/security.neon`) povoluje `http://127.0.0.1:41730` - projekt, který `connect-src` přepisuje,
+ho musí uvést taky. Když ADTalk neběží, zapnuté tlačítko ukáže přeškrtnutý reproduktor. Během
+čtení je z tlačítka Zastavit, čtení ukončí i Esc a zkratka diktování (nový povel).
+
 **JS** — importovat modul (`app.js` fancyadminu ho importuje sám) a předat mu zdroj dat; bez něj jsou panely prázdné:
 
 ```js

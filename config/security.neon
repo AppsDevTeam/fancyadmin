@@ -35,7 +35,8 @@ http:
 		style-src: "'self' 'unsafe-inline'"
 		img-src: "'self' data:"
 		font-src: "'self'"
-		connect-src: "'self'"
+		# ADTalk (adt/adtalk) - předčítání odpovědí AI z rychlé lišty (assets/js/quickbarSpeech.js)
+		connect-src: "'self' http://127.0.0.1:41730"
 		frame-ancestors: "'none'"
 		object-src: "'none'"
 		base-uri: "'none'"

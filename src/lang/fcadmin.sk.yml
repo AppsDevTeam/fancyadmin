@@ -44,6 +44,10 @@ layout:
       unavailable: AI asistent teraz nie je dostupný.
       expand: Otvoriť na celú stránku
       shrink: Zmenšiť
+      speakOn: Čítať odpovede nahlas
+      speakOff: Vypnúť čítanie odpovedí
+      speakStop: Zastaviť čítanie
+      speakUnavailable: Čítanie potrebuje spustenú aplikáciu ADTalk
       search: Hľadať v konverzáciách
       noResults: Nič sme nenašli pre „%query%“.
       today: Dnes

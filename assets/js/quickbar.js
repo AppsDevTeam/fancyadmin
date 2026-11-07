@@ -15,6 +15,8 @@
 // AI asistent zdroj nepotřebuje - panel hostí widget adt-ai-chat (assets/js/aiChat.js), konfiguraci dá AiPresenter.
 // Konverzace můžou nést volitelně `preview` (náhled poslední zprávy) a `unread` (nepřečtená odpověď).
 
+import * as speech from './quickbarSpeech.js';
+
 const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
@@ -750,10 +752,67 @@ function renderAiHeader() {
 	const $rows = $panel.querySelector('[data-quickbar-ai-list]');
 	$title.textContent = aiFull() ? (conversation?.title || $rows.dataset.untitled) : $title.dataset.quickbarTitle;
 
+	renderAiSpeak();
 	const $full = $panel.querySelector('[data-quickbar-ai-full]');
 	$full.title = state.ai.full ? $full.dataset.shrink : $full.dataset.expand;
 	$full.querySelector('i').className = state.ai.full ? 'fa-regular fa-down-left-and-up-right-to-center' : 'fa-regular fa-up-right-and-down-left-from-center';
 }
+
+/**
+ * Tlačítko předčítání: zapnuto = aktivní (btn-primary), při čtení je to Zastavit. Čte aplikace
+ * ADTalk - když neběží, zapnuté tlačítko ukazuje přeškrtnutý reproduktor a v popisku proč.
+ */
+function renderAiSpeak() {
+	const $button = panel('ai')?.querySelector('[data-quickbar-ai-speak]');
+	if (!$button) {
+		return;
+	}
+	const enabled = speech.isEnabled();
+	const speaking = speech.isSpeaking();
+	const missing = enabled && speech.isAvailable() === false;
+	$button.classList.toggle('btn-primary', enabled);
+	$button.classList.toggle('btn-glass', !enabled);
+	$button.title = speaking ? $button.dataset.stop : (missing ? $button.dataset.unavailable : (enabled ? $button.dataset.off : $button.dataset.on));
+	$button.querySelector('i').className = speaking ? 'fa-regular fa-stop'
+		: (missing ? 'fa-regular fa-volume-slash' : (enabled ? 'fa-regular fa-volume-high' : 'fa-regular fa-volume-xmark'));
+	// Zapnuté předčítání ověří, že ADTalk běží (výsledek si modul chvíli pamatuje)
+	if (enabled && !speaking) {
+		const before = speech.isAvailable();
+		speech.checkAvailable().then((now) => now !== before && renderAiSpeak());
+	}
+}
+
+function toggleAiSpeak() {
+	// Během čtení tlačítko jen zastaví, předčítání zůstane zapnuté
+	if (speech.isSpeaking()) {
+		speech.stop();
+	} else {
+		speech.setEnabled(!speech.isEnabled());
+		// Po zapnutí hned zjistit, jestli ADTalk běží (mezitím ho šlo spustit)
+		if (speech.isEnabled()) {
+			speech.checkAvailable(true).then(renderAiSpeak);
+		}
+	}
+	renderAiSpeak();
+}
+
+function stopAiSpeech() {
+	if (!speech.isSpeaking()) {
+		return false;
+	}
+	speech.stop();
+	renderAiSpeak();
+
+	return true;
+}
+
+// Nová odpověď v liště se se zapnutým předčítáním přečte nahlas (i do zavřeného panelu)
+document.addEventListener('ai-chat:reply', (e) => {
+	if (!e.target.closest?.('[data-quickbar-ai-chat]') || !speech.isEnabled()) {
+		return;
+	}
+	speech.speakReply(e.detail.element, renderAiSpeak).then(renderAiSpeak);
+});
 
 // Widget hlásí odeslání (ještě čeká na odpověď) i doručenou odpověď
 document.addEventListener('ai-chat:conversation', (e) => {
@@ -806,6 +865,8 @@ document.addEventListener('keydown', (e) => {
 	}
 	e.preventDefault();
 	e.stopImmediatePropagation();
+	// Nový povel - předčítání předchozí odpovědi by se pletlo do nahrávání
+	stopAiSpeech();
 	openQuickbarAi();
 }, true);
 
@@ -923,6 +984,10 @@ document.addEventListener('click', (e) => {
 	const toggleButton = target.closest('[data-quickbar-toggle]');
 	if (toggleButton) {
 		toggle(toggleButton.dataset.quickbarToggle);
+		return;
+	}
+	if (target.closest('[data-quickbar-ai-speak]')) {
+		toggleAiSpeak();
 		return;
 	}
 	if (target.closest('[data-quickbar-ai-new]')) {
@@ -1049,6 +1114,11 @@ document.addEventListener('submit', (e) => {
 
 document.addEventListener('keydown', (e) => {
 	if (!bar()) {
+		return;
+	}
+	// Esc nejdřív zastaví předčítání, okno nechá
+	if (e.key === 'Escape' && stopAiSpeech()) {
+		e.preventDefault();
 		return;
 	}
 	if (e.key === 'Escape' && state.open !== null) {
