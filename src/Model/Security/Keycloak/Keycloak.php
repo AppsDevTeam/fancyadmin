@@ -947,8 +947,10 @@ class Keycloak
 
 			return null;
 		} catch (RequestException $e) {
-			// 409 Conflict = user already exists
-			if ($e->getResponse()?->getStatusCode() === 409) {
+			// 409 Conflict = user already exists; odpověď má Guzzle 7 u RequestException,
+			// Guzzle 8 jen u ResponseException (RequestException::getResponse() už nemá)
+			$response = method_exists($e, 'getResponse') ? $e->getResponse() : null;
+			if ($response?->getStatusCode() === 409) {
 				$this->cache->remove($this->instanceName . ':' . $email);
 				return $this->findUser($email);
 			}

@@ -41,7 +41,7 @@
   },
   "require-dev": {
     "nette/tester": "^2.5",
-    "guzzlehttp/guzzle": "^7.0"
+    "guzzlehttp/guzzle": "^7.0 || ^8.0.1"
   },
   "scripts": {
     "test": "tester -C tests"
