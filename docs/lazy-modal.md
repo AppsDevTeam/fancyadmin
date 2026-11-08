@@ -27,18 +27,21 @@ class PatientPresenter extends AuthPresenter
 			|| ($name === 'medicalRecordForm' && $this->editedRecord !== null);
 	}
 
+	// Akce jen levné věci (README: Akce jen levné věci, data šablony v renderu)
 	public function actionDetail(int $id): void
 	{
 		$this->detailEntity = ...;   // komponenta záznam potřebuje
+	}
+
+	public function renderDetail(): void
+	{
 		if ($this->isLazyComponentSignal()) {
-			return;                  // zbytek stránky se nepřekresluje
+			return;                  // překresluje se jen snippet modalu
 		}
-		...
+		...                          // data šablony
 	}
 }
 ```
-
-V `render*()` stejně přeskoč přípravu zbytku stránky přes `isLazyComponentSignal()`.
 
 ## Šablona
 

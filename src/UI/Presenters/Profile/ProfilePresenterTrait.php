@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\Profile;
 
-use ADT\FancyAdmin\UI\Presenters\SkipActionAttribute;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
 use ADT\FancyAdmin\DI\Injects\ChangePasswordFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
@@ -146,7 +145,6 @@ trait ProfilePresenterTrait
 	 * AJAX signal — vrátí PublicKeyCredentialCreationOptions pro registraci nového
 	 * klíče přihlášené identity (binárky base64url, challenge one-shot v session).
 	 */
-	#[SkipActionAttribute]
 	public function handlePasskeyRegisterArgs(): void
 	{
 		try {
@@ -162,7 +160,6 @@ trait ProfilePresenterTrait
 	 * AJAX signal — ověří odpověď autentikátoru (JSON tělo: {name, credential})
 	 * a uloží nový klíč. Vrací {redirect} pro reload stránky, nebo {error}.
 	 */
-	#[SkipActionAttribute]
 	public function handlePasskeyRegisterVerify(): void
 	{
 		try {

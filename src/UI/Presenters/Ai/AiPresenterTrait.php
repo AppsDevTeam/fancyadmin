@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\Ai;
 
-use ADT\FancyAdmin\UI\Presenters\SkipActionAttribute;
 use ADT\AiChat\AttachmentUpload;
 use ADT\AiChat\ChatService;
 use ADT\AiChat\Http\ChatEndpoint;
@@ -98,7 +97,6 @@ trait AiPresenterTrait
 	}
 
 	/** Konfigurace widgetu pro AI panel rychlé lišty (BasePresenterTrait::getQuickbarAiUrl). */
-	#[SkipActionAttribute]
 	public function handleAiQuickbar(): void
 	{
 		$this->checkAiTenantAccess();
@@ -119,14 +117,12 @@ trait AiPresenterTrait
 		$this['aiConversationGrid']->getGrid()->reload();
 	}
 
-	#[SkipActionAttribute]
 	public function handleAiConversations(): void
 	{
 		$this->checkAiTenantAccess();
 		$this->sendJson($this->_aiChatEndpoint->conversations($this->getAiOwner()));
 	}
 
-	#[SkipActionAttribute]
 	public function handleAiLoad(): void
 	{
 		$this->checkAiTenantAccess();
@@ -134,7 +130,6 @@ trait AiPresenterTrait
 		$this->sendJson($this->getAiChatEndpoint()->load($owner, $this->getAiParam('conversationId'), false, $own, $this->getAiOwner()));
 	}
 
-	#[SkipActionAttribute]
 	public function handleAiSend(): void
 	{
 		$this->checkAiTenantAccess();
@@ -175,7 +170,6 @@ trait AiPresenterTrait
 	}
 
 	/** Hodnocení 👍/👎 s komentářem - hodnotit jde jen vlastní konverzaci. */
-	#[SkipActionAttribute]
 	public function handleAiRate(): void
 	{
 		$this->checkAiTenantAccess();
@@ -193,7 +187,6 @@ trait AiPresenterTrait
 	}
 
 	/** Zastavení rozepsané odpovědi - smí ho každý, kdo do konverzace píše. */
-	#[SkipActionAttribute]
 	public function handleAiCancel(): void
 	{
 		$this->checkAiTenantAccess();
@@ -202,7 +195,6 @@ trait AiPresenterTrait
 		$this->sendJson($this->getAiChatEndpoint()->cancel($owner, $this->getAiParam('conversationId')));
 	}
 
-	#[SkipActionAttribute]
 	public function handleAiPoll(): void
 	{
 		$this->checkAiTenantAccess();
@@ -215,7 +207,6 @@ trait AiPresenterTrait
 		));
 	}
 
-	#[SkipActionAttribute]
 	public function handleAiDelete(): void
 	{
 		$this->checkAiTenantAccess();
@@ -223,7 +214,6 @@ trait AiPresenterTrait
 		$this->sendJson($this->_aiChatEndpoint->delete($this->getAiOwner(), $this->getAiParam('conversationId')));
 	}
 
-	#[SkipActionAttribute]
 	public function handleAiExport(): void
 	{
 		$this->checkAiTenantAccess();

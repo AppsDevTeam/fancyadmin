@@ -11,7 +11,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
  * name: <name>} si je načte assets/js/lazyModal.js.
  *
  * Akce stránky u signálu lazyComponent! běží (komponenta z ní obvykle potřebuje záznam),
- * zbytek stránky v ní i v renderu přeskoč přes isLazyComponentSignal().
+ * přípravu šablony v renderu přeskoč přes isLazyComponentSignal().
  */
 trait LazyComponentsTrait
 {

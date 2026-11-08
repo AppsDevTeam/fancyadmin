@@ -216,35 +216,6 @@ trait BasePresenterTrait
 		return $flash;
 	}
 
-	/**
-	 * Signál s #[SkipActionAttribute] přeskočí akci i render presenteru (viz atribut).
-	 */
-	protected function tryCall(string $method, array $params): bool
-	{
-		if (
-			($method === static::formatActionMethod($this->getAction()) || $method === static::formatRenderMethod($this->getView()))
-			&& $this->isSkipActionSignal()
-		) {
-			return false;
-		}
-
-		return parent::tryCall($method, $params);
-	}
-
-	/** Zpracovává se signál presenteru označený #[SkipActionAttribute] */
-	protected function isSkipActionSignal(): bool
-	{
-		[$receiver, $signal] = $this->getSignal() ?? [null, null];
-		if ($receiver !== '' || !is_string($signal)) {
-			return false;
-		}
-		$method = static::formatSignalMethod($signal);
-		$reflection = static::getReflection();
-
-		return $reflection->hasMethod($method)
-			&& $reflection->getMethod($method)->getAttributes(SkipActionAttribute::class) !== [];
-	}
-
 	public function afterRender(): void
 	{
 		if (!$this->isControlInvalid()) {

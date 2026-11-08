@@ -930,25 +930,22 @@ class DownloadPresenter extends BasePresenter
 Cíl v cookie **není svázaný s identitou** (na rozdíl od session backlinku), takže se na
 něm nesmí stavět autorizace — cílová akce si musí právo přihlášeného uživatele ověřit sama.
 
-### Signál bez akce stránky (`#[SkipActionAttribute]`)
+### Akce jen levné věci, data šablony v renderu
 
-Nette před signálem volá `action<Akce>()` stránky a po něm `render<View>()`. Signál, který
-odpoví sám (JSON, soubor) - data pro kalendář, polling, hledání - by tak pokaždé skládal celou
-stránku. S atributem na `handle*` metodě presenteru (`BasePresenterTrait`) se akce i render
-přeskočí, `startup()` a kontrola přístupu běží dál:
+Nette u signálu (`?do=…`) volá `action<Akce>()` stránky, pak signál a nakonec `render<View>()`.
+Render se ale **nezavolá**, když signál skončí odpovědí (`sendJson()`, soubor) nebo přesměrováním.
+Proto:
 
-```php
-use ADT\FancyAdmin\UI\Presenters\SkipActionAttribute;
+- **`action*()`** - jen to, co potřebuje každý požadavek včetně signálů: načíst hlavní záznam,
+  ověřit k němu přístup (404/403), připravit to, z čeho staví komponenty.
+- **`render*()`** - všechno pro šablonu: seznamy, časové osy, číselníky, statistiky.
+- **Komponenty a handlery** si data berou samy přes líné gettery (načtou jednou, pak vrací),
+  nespoléhají na to, že je akce připravila do vlastnosti.
 
-#[SkipActionAttribute]
-public function handleEvents(string $start, string $end): void
-{
-	$this->sendJson(...);
-}
-```
-
-Jen pro signály presenteru (ne komponent) a jen když handler nepotřebuje nic, co nastavuje akce
-(`$this->detailEntity` apod.). Signály AI widgetu (`AiPresenterTrait`) ho mají.
+JSON signál (kalendář, polling, hledání, AI widget) pak zaplatí jen levnou akci. Těžká příprava
+šablony v akci by se dělala u každého takového signálu znovu - na kartě záznamu desítky ms.
+Signál, který překresluje snippety, render spouští - příprava, kterou jeho snippety nepotřebují,
+se v renderu přeskočí (např. `isLazyComponentSignal()`).
 
 ### Formuláře v modalech až při otevření (`LazyComponentsTrait`)
 
