@@ -30,15 +30,20 @@ use Nette\Http\FileUpload;
  * jde taky psát (navázat na analýzu kolegy) - u zprávy se ukládá odesílatel.
  * Hodnotit a mazat jde jen vlastní konverzace.
  *
- * Otevřená konverzace je v URL (?conversation=ID), odkaz jde poslat - stránka pak
- * konverzaci rovnou otevře v bočním panelu (aiOpen!).
+ * Odkaz na konverzaci je stránka AI s parametrem gridu (?aiConversationGrid-id=ID) - stejná
+ * adresa, kterou nechá v adresním řádku otevření konverzace z gridu. Stránka ji po načtení
+ * otevře v bočním panelu (aiOpen!); lišta ho nabízí ke zkopírování. Widget do URL stránky
+ * nic nepíše - lišta je na každé stránce a parametr by se přidával k cizím adresám.
  */
 trait AiPresenterTrait
 {
 	use PresenterTrait;
 
-	/** Parametr URL s otevřenou konverzací (sdílený odkaz). */
-	private const string AI_URL_PARAM = 'conversation';
+	/** Parametr URL s konverzací (odkaz) - parametr id gridu konverzací, viz handleEdit gridu */
+	private const string AI_URL_PARAM = 'aiConversationGrid-id';
+
+	/** Dřívější parametr odkazů (widget ho psal do URL), staré odkazy dál fungují */
+	private const string AI_LEGACY_URL_PARAM = 'conversation';
 
 	#[Autowire]
 	protected ChatService $_aiChatService;
@@ -54,7 +59,7 @@ trait AiPresenterTrait
 	public function actionDefault(): void
 	{
 		$this->checkAiTenantAccess();
-		$conversationId = (string) $this->getHttpRequest()->getQuery(self::AI_URL_PARAM);
+		$conversationId = (string) ($this->getHttpRequest()->getQuery(self::AI_URL_PARAM) ?? $this->getHttpRequest()->getQuery(self::AI_LEGACY_URL_PARAM));
 		$this->template->aiOpenLink = $conversationId !== '' ? $this->link('aiOpen!', ['conversationId' => $conversationId]) : null;
 		$this->template->aiMcpTokensLink = $this->_securityUser->isAllowed(AclResourceNameEnum::BACKOFFICE_AI_MCP)
 			? $this->getAiMcpTokensLink()
@@ -75,7 +80,7 @@ trait AiPresenterTrait
 		$this->redrawSidePanel();
 	}
 
-	/** Konverzace z odkazu (?conversation=ID), volá assets/js/aiChat.js po načtení stránky. */
+	/** Konverzace z odkazu (?aiConversationGrid-id=ID), volá assets/js/aiChat.js po načtení stránky. */
 	public function handleAiOpen(string $conversationId): void
 	{
 		$this->checkAiTenantAccess();
@@ -107,6 +112,9 @@ trait AiPresenterTrait
 		$this->sendJson([
 			'chat' => $config,
 			'historyUrl' => $this->link('default'),
+			// Odkaz na konverzaci (tlačítko lišty Kopírovat odkaz) - lišta doplní parametr s ID
+			'shareUrl' => $this->link('//default'),
+			'shareParam' => self::AI_URL_PARAM,
 		]);
 	}
 
@@ -260,7 +268,6 @@ trait AiPresenterTrait
 		return [
 			'mode' => 'single',
 			'conversationId' => $conversation?->getId(),
-			'urlParam' => self::AI_URL_PARAM,
 			'readOnly' => false,
 			'canManage' => $conversation === null || $this->isOwnAiConversation($conversation),
 			'locale' => $this->getAiLocale(),

@@ -39,7 +39,7 @@ const state = {
 	chatQuery: '',
 	activeChat: null,
 	messages: [],
-	ai: { config: null, historyUrl: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
+	ai: { config: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
 let currentBar = null;
@@ -528,6 +528,7 @@ function openAi(focus = true) {
 		.then((payload) => {
 			state.ai.config = payload.chat;
 			state.ai.historyUrl = payload.historyUrl;
+			state.ai.share = payload.shareUrl ? { url: payload.shareUrl, param: payload.shareParam } : null;
 			return loadAiConversations();
 		})
 		.then(() => {
@@ -608,6 +609,7 @@ function mountAi(conversationId) {
 	element.dataset.adtFancyadminAiChat = JSON.stringify({ ...state.ai.config, conversationId });
 	document.querySelector('[data-quickbar-ai-chat]').replaceChildren(element);
 	state.ai.element = element;
+	renderAiHeader();
 }
 
 // Odpojený widget by jinak dál dotazoval server na odpověď
@@ -769,6 +771,7 @@ function renderAiHeader() {
 	if (!$title) {
 		return;
 	}
+	$panel.querySelector('[data-quickbar-ai-copy-link]').hidden = !aiConversationLink();
 	// Na celé ploše je nadpisem název konverzace
 	const conversation = state.ai.conversations.find((c) => String(c.id) === String(state.ai.conversationId));
 	const $rows = $panel.querySelector('[data-quickbar-ai-list]');
@@ -778,6 +781,38 @@ function renderAiHeader() {
 	const $full = $panel.querySelector('[data-quickbar-ai-full]');
 	$full.title = state.ai.full ? $full.dataset.shrink : $full.dataset.expand;
 	$full.querySelector('i').className = state.ai.full ? 'fa-regular fa-down-left-and-up-right-to-center' : 'fa-regular fa-up-right-and-down-left-from-center';
+}
+
+/** Odkaz na otevřenou konverzaci - stránka AI ji po načtení otevře; null = žádná není */
+function aiConversationLink() {
+	if (!state.ai.share || !state.ai.conversationId || state.ai.view !== 'chat') {
+		return null;
+	}
+	const url = new URL(state.ai.share.url, window.location.href);
+	url.searchParams.set(state.ai.share.param, state.ai.conversationId);
+	return url.toString();
+}
+
+function copyAiLink($button) {
+	const link = aiConversationLink();
+	if (!link) {
+		return;
+	}
+	// Schránka jen na HTTPS - jinde odkaz aspoň ukázat ke zkopírování
+	if (!navigator.clipboard) {
+		window.prompt($button.title, link);
+		return;
+	}
+	navigator.clipboard.writeText(link).then(() => {
+		const $icon = $button.querySelector('i');
+		const title = $button.title;
+		$icon.className = 'fa-regular fa-check';
+		$button.title = $button.dataset.copied;
+		setTimeout(() => {
+			$icon.className = 'fa-regular fa-link';
+			$button.title = title;
+		}, 1500);
+	}, () => window.prompt($button.title, link));
 }
 
 /**
@@ -843,6 +878,8 @@ document.addEventListener('ai-chat:conversation', (e) => {
 		return;
 	}
 	state.ai.conversationId = id;
+	// První zpráva nové konverzace - teprve teď na ni jde odkaz
+	renderAiHeader();
 	// Nová konverzace se má hned objevit v seznamu na celé ploše
 	if (e.detail.created && aiFull()) {
 		loadAiConversations();
@@ -1042,6 +1079,11 @@ document.addEventListener('click', (e) => {
 	}
 	if (target.closest('[data-quickbar-ai-speak]')) {
 		toggleAiSpeak();
+		return;
+	}
+	const copyLinkButton = target.closest('[data-quickbar-ai-copy-link]');
+	if (copyLinkButton) {
+		copyAiLink(copyLinkButton);
 		return;
 	}
 	if (target.closest('[data-quickbar-ai-new]')) {

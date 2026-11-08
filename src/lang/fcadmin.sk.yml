@@ -48,6 +48,8 @@ layout:
       speakOff: Vypnúť čítanie odpovedí
       speakStop: Zastaviť čítanie
       speakUnavailable: Čítanie potrebuje spustenú aplikáciu ADTalk
+      copyLink: Kopírovať odkaz na konverzáciu
+      linkCopied: Odkaz skopírovaný
       search: Hľadať v konverzáciách
       noResults: Nič sme nenašli pre „%query%“.
       today: Dnes

@@ -3119,8 +3119,11 @@ analýzu kolegy). U každé zprávy se ukládá odesílatel (`AiMessageTrait::$s
 ukazuje nad zprávou kolegy (jméno z `formatAiSender()`, výchozí `getFullName()`). Hodnotit
 a mazat jde vždy jen vlastní konverzace. Konverzace se mažou měkce (`deleted`).
 
-Otevřená konverzace je v URL (`?conversation=ID`), odkaz jde poslat: stránka po načtení
-konverzaci rovnou otevře v bočním panelu (signál `aiOpen!`), pokud ji příjemce smí vidět.
+Odkaz na konverzaci je stránka AI s parametrem gridu (`?aiConversationGrid-id=ID`, stejná adresa
+zůstane v adresním řádku po otevření konverzace z gridu): stránka po načtení konverzaci otevře
+v bočním panelu (signál `aiOpen!`), pokud ji příjemce smí vidět. V rychlé liště ho dá tlačítko
+Kopírovat odkaz. Widget do URL stránky nic nepíše - lišta je na každé stránce a parametr by se
+přidával k cizím adresám. Staré odkazy s `?conversation=ID` fungují dál.
 
 **Kontext stránky** (adt/ai-chat 1.6): widget posílá se zprávou cestu stránky (`page`), na které
 uživatel píše (rychlá lišta je na každé stránce). Presenter ji v `getAiPageContext(string $page): ?string`

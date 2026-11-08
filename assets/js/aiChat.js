@@ -3,8 +3,8 @@
 // a chart.js. Mimo src/UI/**/index.js, aby ho nebalily projekty bez AI.
 //
 // Widget se připojí na každý [data-adt-fancyadmin-ai-chat] (config v atributu),
-// i na ten, který přijde ajaxem ve snippetu panelu. Otevřená konverzace je v URL
-// (config.urlParam), po zavření panelu se z ní zase odebere.
+// i na ten, který přijde ajaxem ve snippetu panelu. Do URL stránky widget nic nepíše,
+// odkaz na konverzaci nabízí lišta (Kopírovat odkaz).
 
 import { AiChat } from 'adt-ai-chat';
 import 'adt-ai-chat/ai-chat.css';
@@ -44,23 +44,6 @@ function refreshGrid() {
 	ajax(holder.dataset.adtFancyadminAiGridRefresh);
 }
 
-// zavřený panel (nebo jiná konverzace v něm) - sdílený odkaz už neplatí
-function unmount(node) {
-	const elements = node.matches(SELECTOR) ? [node] : node.querySelectorAll?.(SELECTOR) ?? [];
-	elements.forEach((element) => {
-		const urlParam = JSON.parse(element.dataset.adtFancyadminAiChat || '{}').urlParam;
-		if (!urlParam) {
-			return;
-		}
-
-		const url = new URL(window.location.href);
-		if (url.searchParams.has(urlParam)) {
-			url.searchParams.delete(urlParam);
-			window.history.replaceState(window.history.state, '', url);
-		}
-	});
-}
-
 document.addEventListener('ai-chat:conversation', (event) => {
 	if (event.detail?.created) {
 		refreshGrid();
@@ -68,11 +51,6 @@ document.addEventListener('ai-chat:conversation', (event) => {
 });
 
 new MutationObserver((records) => {
-	records.forEach((record) => record.removedNodes.forEach((node) => {
-		if (node.nodeType === Node.ELEMENT_NODE) {
-			unmount(node);
-		}
-	}));
 	records.forEach((record) => record.addedNodes.forEach((node) => {
 		if (node.nodeType === Node.ELEMENT_NODE) {
 			if (node.matches(SELECTOR)) {
@@ -86,7 +64,7 @@ new MutationObserver((records) => {
 
 mount(document);
 
-// sdílený odkaz (?conversation=ID): otevřít konverzaci v bočním panelu - až po load,
+// odkaz na konverzaci (?aiConversationGrid-id=ID): otevřít konverzaci v bočním panelu - až po load,
 // kdy je nette.ajax inicializovaný
 window.addEventListener('load', () => {
 	const holder = document.querySelector(OPEN_SELECTOR);
