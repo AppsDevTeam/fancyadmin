@@ -930,6 +930,26 @@ class DownloadPresenter extends BasePresenter
 Cíl v cookie **není svázaný s identitou** (na rozdíl od session backlinku), takže se na
 něm nesmí stavět autorizace — cílová akce si musí právo přihlášeného uživatele ověřit sama.
 
+### Signál bez akce stránky (`#[SkipActionAttribute]`)
+
+Nette před signálem volá `action<Akce>()` stránky a po něm `render<View>()`. Signál, který
+odpoví sám (JSON, soubor) - data pro kalendář, polling, hledání - by tak pokaždé skládal celou
+stránku. S atributem na `handle*` metodě presenteru (`BasePresenterTrait`) se akce i render
+přeskočí, `startup()` a kontrola přístupu běží dál:
+
+```php
+use ADT\FancyAdmin\UI\Presenters\SkipActionAttribute;
+
+#[SkipActionAttribute]
+public function handleEvents(string $start, string $end): void
+{
+	$this->sendJson(...);
+}
+```
+
+Jen pro signály presenteru (ne komponent) a jen když handler nepotřebuje nic, co nastavuje akce
+(`$this->detailEntity` apod.). Signály AI widgetu (`AiPresenterTrait`) ho mají.
+
 ### CSRF ochrana signálů
 
 Stavové akce administrace se spouštějí signály (`?do=...`). SameSite cookie ani hlavička
