@@ -882,9 +882,10 @@ document.addEventListener('ai-chat:navigate', (e) => {
 const DICTATION_CHORD = { ctrlKey: true, altKey: true, shiftKey: true, metaKey: false };
 
 // Nadiktovaná zpráva míří do konverzace, která byla zrovna otevřená - o tom, jestli na ni
-// navazuje, nebo začne novou, rozhodne server (adt/ai-chat ConversationRouter). Platí pro
-// zprávu odeslanou do té doby po zkratce.
-const DICTATION_SEND_MS = 120000;
+// navazuje, nebo začne novou, rozhodne server (adt/ai-chat ConversationRouter). ADTalk pošle
+// zkratku znovu těsně před napsáním přepisu, zpráva tedy odchází do vteřiny; krátké okno
+// nechá psanou zprávu po povelu bez textu (zastav, zopakuj) tam, kam ji uživatel napsal.
+const DICTATION_SEND_MS = 15000;
 
 document.addEventListener('keydown', (e) => {
 	if (e.repeat || !aiRoot() || !['KeyA', 'KeyN'].includes(e.code) || Object.entries(DICTATION_CHORD).some(([key, value]) => e[key] !== value)) {
