@@ -950,6 +950,11 @@ public function handleEvents(string $start, string $end): void
 Jen pro signály presenteru (ne komponent) a jen když handler nepotřebuje nic, co nastavuje akce
 (`$this->detailEntity` apod.). Signály AI widgetu (`AiPresenterTrait`) ho mají.
 
+### Formuláře v modalech až při otevření (`LazyComponentsTrait`)
+
+Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`
+a `assets/js/lazyModal.js` je načtou až při prvním otevření modalu. Návod v `docs/lazy-modal.md`.
+
 ### CSRF ochrana signálů
 
 Stavové akce administrace se spouštějí signály (`?do=...`). SameSite cookie ani hlavička
