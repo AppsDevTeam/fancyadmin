@@ -39,8 +39,12 @@ trait LazyComponentsTrait
 		$this->redrawControl('lazy' . ucfirst($name));
 	}
 
+	/**
+	 * Požadavek načítá komponentu do modalu - v akci i v renderu (po zpracování signálu
+	 * už ho getSignal() nevrací, proto i podle toho, že handleLazyComponent() proběhl).
+	 */
 	protected function isLazyComponentSignal(): bool
 	{
-		return $this->getSignal() === ['', 'lazyComponent'];
+		return $this->requestedLazyComponent !== null || $this->getSignal() === ['', 'lazyComponent'];
 	}
 }
