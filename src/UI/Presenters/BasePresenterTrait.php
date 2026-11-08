@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\JsComponentsInject;
+use ADT\FancyAdmin\DI\Injects\PushInject;
 use ADT\FancyAdmin\DI\Injects\QuickbarSettingsInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Menu\StringResource;
@@ -27,6 +28,7 @@ trait BasePresenterTrait
 	use TranslatorInject;
 	use JsComponentsInject;
 	use QuickbarSettingsInject;
+	use PushInject;
 
 	protected bool $primaryTemplate = false;
 
@@ -51,6 +53,9 @@ trait BasePresenterTrait
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];
 		$this->getTemplate()->quickbarAiUrl = in_array(QuickbarItem::Ai, $this->getTemplate()->quickbarItems, true) ? $this->getQuickbarAiUrl() : null;
+		$pushTopics = $this->primaryTemplate && $this->getUser()->isLoggedIn() ? $this->getPushTopics() : [];
+		$pushSubscription = $pushTopics !== [] ? $this->_push->subscription($pushTopics) : null;
+		$this->getTemplate()->pushSubscription = $pushSubscription !== null ? Json::encode($pushSubscription) : null;
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
@@ -139,6 +144,17 @@ trait BasePresenterTrait
 		return in_array(QuickbarItem::Ai, $items, true) && $this->getQuickbarAiUrl() === null
 			? array_values(array_filter($items, fn(QuickbarItem $item) => $item !== QuickbarItem::Ai))
 			: $items;
+	}
+
+	/**
+	 * Topiky, jejichž změny stránka dostává pushem (docs/push.md), např. ['calendar', 'user/5'].
+	 * Projekt přepíše; prázdné = stránka nic neodebírá a polluje.
+	 *
+	 * @return list<string>
+	 */
+	protected function getPushTopics(): array
+	{
+		return [];
 	}
 
 	/**

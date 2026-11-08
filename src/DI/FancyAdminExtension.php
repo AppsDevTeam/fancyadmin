@@ -49,6 +49,8 @@ use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Quickbar\QuickbarSettings;
 use ADT\FancyAdmin\Model\Security\Authenticator;
 use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
+use ADT\FancyAdmin\Model\Push\NullPush;
+use ADT\FancyAdmin\Model\Push\Push;
 use ADT\FancyAdmin\Model\Security\LastLoginSubscriber;
 use ADT\FancyAdmin\Model\Security\Passkey\PasskeyService;
 use ADT\FancyAdmin\Model\Security\ReturnPath;
@@ -676,6 +678,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder = $this->getContainerBuilder();
 
 		$this->checkSignalCsrfRouter();
+
+		// Push do stránek (docs/push.md): bez hubu prázdná implementace, stránky pollují
+		if ($builder->getByType(Push::class) === null) {
+			$builder->addDefinition($this->prefix('push'))
+				->setFactory(NullPush::class);
+		}
 
 		if ($this->config->ai->enabled) {
 			$this->completeAiAnonymizationServices();

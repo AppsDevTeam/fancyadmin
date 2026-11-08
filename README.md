@@ -947,6 +947,11 @@ JSON signál (kalendář, polling, hledání, AI widget) pak zaplatí jen levnou
 Signál, který překresluje snippety, render spouští - příprava, kterou jeho snippety nepotřebují,
 se v renderu přeskočí (např. `isLazyComponentSignal()`).
 
+### Push změn do stránek (`Push`, `push.js`)
+
+Kalendář, úkoly nebo chat se mohou o změně dozvědět hned přes Mercure hub místo pollingu.
+Bez hubu (`NullPush`, výchozí) stránky pollují jako dřív. Návod v `docs/push.md`.
+
 ### Formuláře v modalech až při otevření (`LazyComponentsTrait`)
 
 Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`
