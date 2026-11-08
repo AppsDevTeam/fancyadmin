@@ -3,6 +3,14 @@
 // všechny topiky; zprávu (JSON s `topic`) dostanou posluchači onPush(). Kdo pushem nahrazuje
 // polling, ptá se isPushConnected() a poslouchá onPushState() - bez hubu nebo po výpadku
 // spojení stránka polluje dál.
+//
+// Změnu, kterou udělala tahle stránka, si stránka obnoví sama (např. kalendář po uložení) - push
+// o ní by obnovil podruhé (kalendář by dvakrát problikl). Stránka má proto své ID, posílá ho
+// s každým AJAXem přes jQuery (hlavička X-Fancyadmin-Push-Client), server ho dá do zprávy
+// (`origin`) a zprávy s vlastním ID se přeskočí. Ostatní stránky a záložky je dostanou.
+
+const CLIENT_HEADER = 'X-Fancyadmin-Push-Client';
+const clientId = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
 const listeners = [];
 const stateListeners = [];
@@ -32,6 +40,9 @@ function setOpen(value) {
 }
 
 function dispatch(data) {
+	if (data.origin === clientId) {
+		return;
+	}
 	listeners
 		.filter(({ topic }) => data.topic === topic || data.topic?.startsWith(topic + '/'))
 		.forEach(({ callback }) => callback(data));
@@ -111,6 +122,12 @@ function start() {
 		return;
 	}
 	started = true;
+	// Jen požadavky na vlastní server - cizí doména by kvůli hlavičce chtěla CORS preflight
+	window.jQuery?.ajaxPrefilter((options, originalOptions, xhr) => {
+		if (!options.crossDomain) {
+			xhr.setRequestHeader(CLIENT_HEADER, clientId);
+		}
+	});
 	read(config);
 }
 

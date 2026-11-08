@@ -32,10 +32,12 @@ final class MercurePush implements Push
 	public function publish(string $topic, array $data = []): void
 	{
 		$fullTopic = $this->fullTopic($topic);
-		// Topik jde i do dat - SSE stream Mercure ho u zprávy neuvádí a stránka odebírá víc topiků
+		// Topik jde i do dat - SSE stream Mercure ho u zprávy neuvádí a stránka odebírá víc topiků;
+		// origin = stránka, jejíž požadavek změnu udělal (push.js zprávu sám sobě přeskočí)
+		$origin = self::origin();
 		$body = http_build_query([
 			'topic' => $fullTopic,
-			'data' => json_encode(['topic' => $topic] + $data, JSON_THROW_ON_ERROR),
+			'data' => json_encode(['topic' => $topic] + $data + ($origin !== null ? ['origin' => $origin] : []), JSON_THROW_ON_ERROR),
 			'private' => 'on',
 		]);
 		$context = stream_context_create(['http' => [
@@ -69,6 +71,14 @@ final class MercurePush implements Push
 			'topics' => $fullTopics,
 			'token' => $this->jwt('subscribe', $fullTopics, $this->tokenTtlSeconds, $this->subscriberKey),
 		];
+	}
+
+	/** ID stránky z hlavičky push.js; v CLI (joby, cron) a u požadavků bez ní null */
+	public static function origin(): ?string
+	{
+		$origin = $_SERVER['HTTP_X_FANCYADMIN_PUSH_CLIENT'] ?? null;
+
+		return is_string($origin) && preg_match('/^[a-z0-9]{8,40}$/', $origin) === 1 ? $origin : null;
 	}
 
 	private function fullTopic(string $topic): string

@@ -49,6 +49,17 @@ test('odběr má topiky s prefixem projektu a token jen na ně', function () use
 });
 
 
+test('původce změny je stránka z hlavičky push.js, jen platné ID', function () {
+	unset($_SERVER['HTTP_X_FANCYADMIN_PUSH_CLIENT']);
+	Assert::null(MercurePush::origin(), 'CLI, job');
+	$_SERVER['HTTP_X_FANCYADMIN_PUSH_CLIENT'] = 'abc123def456';
+	Assert::same('abc123def456', MercurePush::origin());
+	$_SERVER['HTTP_X_FANCYADMIN_PUSH_CLIENT'] = '<script>';
+	Assert::null(MercurePush::origin());
+	unset($_SERVER['HTTP_X_FANCYADMIN_PUSH_CLIENT']);
+});
+
+
 test('bez topiků není odběr', function () use ($push) {
 	Assert::null($push->subscription([]));
 });

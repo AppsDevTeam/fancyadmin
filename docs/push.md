@@ -60,6 +60,12 @@ setInterval(() => { if (!isPushConnected()) refresh(); }, 30000);
 onPushState((connected) => { if (!connected) refresh(); });   // po výpadku dohnat zmeškané
 ```
 
+**Vlastní změny stránka nedostane.** Stránka, která změnu udělala, si ji obnoví sama (kalendář po
+uložení) - push o ní by ji obnovil podruhé. `push.js` posílá s každým AJAXem přes jQuery ID stránky
+(hlavička `X-Fancyadmin-Push-Client`), `MercurePush` ho přidá do zprávy (`origin`) a stránka zprávu
+se svým ID přeskočí. Ostatní stránky a záložky téhož uživatele ji dostanou. Požadavky přes `fetch`
+hlavičku nemají - po nich přijde push i stránce, která změnu udělala.
+
 Jedno spojení na stránku (fetch se streamem, token v hlavičce `Authorization` - hub ho v URL
 ani cookie nepřijme). Po výpadku se připojí znovu (1 s až 30 s). Každá zpráva je i DOM událost
 `fancyadmin:push` (`event.detail`).
