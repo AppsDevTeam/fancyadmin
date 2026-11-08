@@ -947,6 +947,25 @@ JSON signál (kalendář, polling, hledání, AI widget) pak zaplatí jen levnou
 Signál, který překresluje snippety, render spouští - příprava, kterou jeho snippety nepotřebují,
 se v renderu přeskočí (např. `isLazyComponentSignal()`).
 
+### JS, které čte URL (`onPageReady()`)
+
+Fancyadmin dělá ajaxem všechny odkazy a URL mění až rozšíření `history` (`pushState` v `success`),
+tedy **po** překreslení snippetů a po `live.after`. Kód, který čte parametry z URL (otevřít záložku
+z `?activeTab`, modal z `?editRecordId`) a běží v `live.after`, proto u odkazu bez redirectu dostane
+ještě starou adresu. Takový kód se registruje přes `onPageReady()` - běží po načtení stránky
+a po každém AJAX požadavku, až když je URL nová:
+
+```js
+import { onPageReady } from '@fancyadmin/js/pageReady';
+
+onPageReady(() => {
+	const tab = new URLSearchParams(window.location.search).get('activeTab');
+	// ...
+});
+```
+
+Inicializace prvků z nových snippetů (Select2, datum, tooltipy) zůstává v `live.after` - ta URL nečte.
+
 ### Push změn do stránek (`Push`, `push.js`)
 
 Kalendář, úkoly nebo chat se mohou o změně dozvědět hned přes Mercure hub místo pollingu.

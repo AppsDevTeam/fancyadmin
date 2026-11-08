@@ -62,6 +62,8 @@ if ($.nette.ext('history')) {
 	$.nette.ext('history').cache = false; // TODO: kvůli tomuto se všechny AJAX requesty posílají 2x, ale nevíme proč!
 }
 
+import './pageReady';
+
 $.nette.ext('live').after(function($el) {
 	$('[data-dependentselectbox]').dependentSelectBox();
 });
