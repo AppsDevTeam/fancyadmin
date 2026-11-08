@@ -2926,7 +2926,12 @@ Odpověď, která dorazí do zavřeného panelu, stránku nemění.
 zprávy a konverzací na konci (i u už otevřeného panelu). Posílá ji desktopová aplikace **ADTalk**
 (repozitář `adt/adtalk`, zatím prototyp pro macOS: podržená Fn → přepis lokálním Whisperem →
 text do pole a odeslání). Projekt s vlastními zkratkami volá totéž přes
-`import { openQuickbarAi } from '@fancyadmin/js/quickbar'`.
+`import { openQuickbarAi } from '@fancyadmin/js/quickbar'`. Zpráva odeslaná do dvou minut po
+zkratce jde s `routeConversation` (událost `ai-chat:before-send` z adt/ai-chat 1.8): uživatel ji
+nemířil do konkrétní konverzace, a když projekt registruje `ADT\AiChat\ConversationRouter`
+(služba v DI, autowiring), server rozhodne, jestli navazuje na otevřenou konverzaci, nebo začne
+novou - widget pak ukáže tu novou. Bez routeru zůstane v otevřené. Zkratka **Ctrl+Alt+Shift+N**
+(povel „nový chat“ v ADTalk) otevře AI s prázdnou novou konverzací.
 
 **Předčítání odpovědí** — tlačítko s reproduktorem v hlavičce AI panelu (`quickbarSpeech.js`,
 zapnutí si pamatuje prohlížeč v `localStorage`). Zapnuté pošle každou novou odpověď (událost

@@ -39,7 +39,7 @@ const state = {
 	chatQuery: '',
 	activeChat: null,
 	messages: [],
-	ai: { config: null, historyUrl: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null },
+	ai: { config: null, historyUrl: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
 let currentBar = null;
@@ -535,7 +535,9 @@ function openAi(focus = true) {
 			const restore = state.ai.restore;
 			state.ai.restore = null;
 			const restoredId = restore && state.ai.conversations.some((c) => String(c.id) === String(restore.conversationId)) ? restore.conversationId : null;
-			mountAi(restoredId ?? state.ai.conversations[0]?.id ?? null);
+			// Povel „nový chat“ z ADTalk přišel dřív, než se AI načetla
+			mountAi(state.ai.startNew ? null : (restoredId ?? state.ai.conversations[0]?.id ?? null));
+			state.ai.startNew = false;
 			if (restore?.full) {
 				state.ai.full = true;
 			}
@@ -875,20 +877,51 @@ document.addEventListener('ai-chat:navigate', (e) => {
 	$.nette.ajax({ url: link.href }, link, $.Event('click'));
 });
 
-// Pevná zkratka diktování: aplikace ADTalk (adt/adtalk)
-// pošle Ctrl+Alt+Shift+A a přepis pak napíše do pole - funguje v každém projektu s AI v liště
-const DICTATION_CHORD = { code: 'KeyA', ctrlKey: true, altKey: true, shiftKey: true, metaKey: false };
+// Pevné zkratky diktování: aplikace ADTalk (adt/adtalk) pošle Ctrl+Alt+Shift+A a přepis pak
+// napíše do pole; povel „nový chat“ je Ctrl+Alt+Shift+N - funguje v každém projektu s AI v liště
+const DICTATION_CHORD = { ctrlKey: true, altKey: true, shiftKey: true, metaKey: false };
+
+// Nadiktovaná zpráva míří do konverzace, která byla zrovna otevřená - o tom, jestli na ni
+// navazuje, nebo začne novou, rozhodne server (adt/ai-chat ConversationRouter). Platí pro
+// zprávu odeslanou do té doby po zkratce.
+const DICTATION_SEND_MS = 120000;
 
 document.addEventListener('keydown', (e) => {
-	if (e.repeat || !aiRoot() || Object.entries(DICTATION_CHORD).some(([key, value]) => e[key] !== value)) {
+	if (e.repeat || !aiRoot() || !['KeyA', 'KeyN'].includes(e.code) || Object.entries(DICTATION_CHORD).some(([key, value]) => e[key] !== value)) {
 		return;
 	}
 	e.preventDefault();
 	e.stopImmediatePropagation();
 	// Nový povel - předčítání předchozí odpovědi by se pletlo do nahrávání
 	stopAiSpeech();
+	if (e.code === 'KeyN') {
+		newAiConversation();
+		return;
+	}
+	state.ai.dictatedAt = Date.now();
 	openQuickbarAi();
 }, true);
+
+document.addEventListener('ai-chat:before-send', (e) => {
+	if (!e.target.closest?.('[data-quickbar-ai-chat]') || Date.now() - state.ai.dictatedAt > DICTATION_SEND_MS) {
+		return;
+	}
+	state.ai.dictatedAt = 0;
+	e.detail.body.append('routeConversation', '1');
+});
+
+function newAiConversation() {
+	if (!state.ai.config) {
+		// AI se teprve načte - místo poslední konverzace prázdná
+		state.ai.startNew = true;
+		openQuickbarAi();
+		return;
+	}
+	if (state.open !== 'ai') {
+		open('ai');
+	}
+	openAiConversation(null);
+}
 
 document.addEventListener('visibilitychange', () => {
 	if (document.visibilityState === 'visible' && bar()) {

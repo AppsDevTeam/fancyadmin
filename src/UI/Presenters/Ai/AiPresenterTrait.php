@@ -152,6 +152,8 @@ trait AiPresenterTrait
 			$this->getAiParam('effort') ?: null,
 			$this->getAiOwner(),
 			$this->getAiPageContext((string) $this->getHttpRequest()->getPost('page')),
+			// Nadiktovaný povel (lišta po zkratce ADTalk) - navázat, nebo nová konverzace, rozhodne ConversationRouter
+			(bool) $this->getHttpRequest()->getPost('routeConversation'),
 		));
 	}
 
