@@ -7,29 +7,6 @@ use Symfony\Component\Translation\TranslatorBagInterface;
 
 class JsComponents extends \ADT\Utils\JsComponents
 {
-	public function setFirebaseLink(string $key, string $value): static
-	{
-		$this->components['notifications'][$key] = $value;
-		return $this;
-	}
-
-	public function setFirebaseKnownTokens(array $tokens): static
-	{
-		$this->components['notifications']['knownTokens'] = array_values($tokens);
-		return $this;
-	}
-
-	public function setFirebaseConfig(array $firebaseConfig): void
-	{
-		$this->components['notifications'] = [
-			'initializeConfig' => $firebaseConfig,
-		];
-
-		$this->components['messaging'] = [
-			'initializeConfig' => $firebaseConfig,
-		];
-	}
-
 	public function setTranslateConfig(TranslatorBagInterface $translator): void
 	{
 		$this->components['translate'] = [

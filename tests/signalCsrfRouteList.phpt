@@ -38,12 +38,12 @@ test('bezna adresa token neodnese', function () {
 
 test('adresa signalu token nese', function () {
 	$url = createRouter()->constructUrl(
-		['presenter' => 'Devices', 'action' => 'default', 'do' => 'removeAllFirebaseTokens', '_sec' => 'tajnytoken'],
+		['presenter' => 'Devices', 'action' => 'default', 'do' => 'deleteDevice', '_sec' => 'tajnytoken'],
 		new UrlScript('https://admin.example.com/'),
 	);
 
 	Assert::contains('_sec=tajnytoken', (string) $url);
-	Assert::contains('do=removeAllFirebaseTokens', (string) $url);
+	Assert::contains('do=deleteDevice', (string) $url);
 });
 
 

@@ -104,8 +104,6 @@ AdtJsComponents.init('fancyadmin-passkey-form', '~UI/Components/Forms/Passkey');
 // AdtJsComponents.init('companySitePlanDetail', 'UI/Portal/Presenters/CompanySitePlans');
 // AdtJsComponents.init('dashboard', 'UI/Portal/Presenters/Dashboard');
 // AdtJsComponents.init('dashboard', 'assets/js/dashboard');
-AdtJsComponents.init('messaging', 'Messaging');
-AdtJsComponents.init('notifications', 'Notifications');
 AdtJsComponents.init('translate', 'Translate');
 
 // AdtJsComponents.init('print-dashboard', 'assets/js/printDashboard');

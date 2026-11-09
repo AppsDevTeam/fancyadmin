@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@firebase/messaging": "^0.12.11",
     "@popperjs/core": "^2.11.8",
     "@regru/jquery-menu-aim": "^1.0.0",
     "adt-js-components": "^1.7.0",
@@ -12,7 +11,6 @@
     "codemirror": "^5",
     "daterangepicker": "^3.1.0",
     "fabric": "^6.5.3",
-    "firebase": "8.10.1",
     "forms-replicator": "github:AppsDevTeam/replicator#master",
     "jquery": "^3.7.1",
     "jquery-ui-bundle": "^1.12.1-migrate",

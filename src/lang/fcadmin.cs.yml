@@ -615,11 +615,6 @@ sidePanels:
     closeConfirm: "Opravdu zavřít bez uložení?"
     close: "Zavřít"
 
-firebase:
-  notifications:
-    flashes:
-      success: Notifikace úspěšně povoleny.
-      disabled: Notifikace úspěšně zrušeny.
 
 keycloak:
   logout:

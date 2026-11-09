@@ -6,5 +6,5 @@
 import AdtJsComponents from 'adt-js-components';
 
 AdtJsComponents.registerModules({
-	builtin: import.meta.glob('../../node_modules/adt-js-components/src/{Messaging,Notifications,Translate}/index.js'),
+	builtin: import.meta.glob('../../node_modules/adt-js-components/src/{Translate}/index.js'),
 });

@@ -57,14 +57,6 @@ trait BasePresenterTrait
 		$pushSubscription = $pushTopics !== [] ? $this->_push->subscription($pushTopics) : null;
 		$this->getTemplate()->pushSubscription = $pushSubscription !== null ? Json::encode($pushSubscription) : null;
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
-		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
-		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
-		$this->_jsComponents->setFirebaseLink('removeAllFirebaseTokensLink', $this->getPresenter()->link('removeAllFirebaseTokens!'));
-		$this->_jsComponents->setFirebaseLink('syncFirebaseTokenLink', $this->getPresenter()->link('syncFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
-		$identity = $this->getUser()->isLoggedIn() ? $this->getUser()->getIdentity() : null;
-		$this->_jsComponents->setFirebaseKnownTokens(
-			$identity !== null && method_exists($identity, 'getFirebaseTokens') ? $identity->getFirebaseTokens() : []
-		);
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 
 		// Keycloak — dynamický frame-src CSP header pro silent SSO iframe
@@ -286,43 +278,5 @@ trait BasePresenterTrait
 
 		return $parts['scheme'] . '://' . $parts['host']
 			. (isset($parts['port']) ? ':' . $parts['port'] : '');
-	}
-
-	public function handleSetFirebaseToken(string $firebaseToken): void
-	{
-		$this->getUser()->getIdentity()
-			->addFirebaseToken($firebaseToken);
-
-		$this->em->flush();
-
-		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.success');
-	}
-
-	public function handleSyncFirebaseToken(string $firebaseToken): void
-	{
-		$this->getUser()->getIdentity()
-			->addFirebaseToken($firebaseToken);
-
-		$this->em->flush();
-	}
-
-	public function handleRemoveFirebaseToken(string $firebaseToken): void
-	{
-		$this->getUser()->getIdentity()
-			->removeFirebaseToken($firebaseToken);
-
-		$this->em->flush();
-
-		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled');
-	}
-
-	public function handleRemoveAllFirebaseTokens(): void
-	{
-		$this->getUser()->getIdentity()
-			->setFirebaseTokens([]);
-
-		$this->em->flush();
-
-		$this->flashMessageSuccess('fcadmin.firebase.notifications.flashes.disabled');
 	}
 }

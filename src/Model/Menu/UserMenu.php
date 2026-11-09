@@ -10,7 +10,6 @@ class UserMenu
 
 	protected bool $addMyAccountMenuItem = false;
 
-	protected bool $addFirebaseMenuItem = true;
 
 	protected ?string $profileLink = null;
 
@@ -81,17 +80,6 @@ class UserMenu
 	public function isAddMyAccountMenuItem(): bool
 	{
 		return $this->addMyAccountMenuItem;
-	}
-
-	public function setFirebaseMenuItem(bool $value): self
-	{
-		$this->addFirebaseMenuItem = $value;
-		return $this;
-	}
-
-	public function isFirebaseMenuItem(): bool
-	{
-		return $this->addFirebaseMenuItem;
 	}
 
 	public function setProfileLink(string $profileLink): self
