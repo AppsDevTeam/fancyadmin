@@ -138,7 +138,9 @@ test('zapnuta pseudonymizace registruje detektor, pseudonymizer a audit', functi
 	Assert::same(TestAiPseudonym::class, $arguments['pseudonymClass']);
 	Assert::same('@patientResolver', $arguments['resolver']);
 	Assert::same('[PACIENT #%s]', $arguments['subjectAnchor']);
-	Assert::false(isset($arguments['note']), 'null = výchozí poznámka ai-chat');
+	// null = česká výchozí poznámka fancyadminu (ne anglická z ai-chat)
+	Assert::same(FancyAdminExtension::AI_PSEUDONYMIZATION_NOTE, $arguments['note']);
+	Assert::same(FancyAdminExtension::AI_PSEUDONYMIZATION_CANDIDATES_NOTE, $arguments['candidatesNote']);
 
 	Assert::same(AuditPiiCheckListener::class, $builder->getDefinition('fancyadmin.ai.piiCheckListener')->getFactory()->getEntity());
 });

@@ -204,7 +204,8 @@ test('tlacitko pro vrstveny panel umi popisek a vlastni ikonu', function () {
 test('layout obsahuje snippet i zaviraci tlacitko vrstveneho panelu', function () {
 	$layout = file_get_contents(__DIR__ . '/../src/UI/Presenters/@layout.latte');
 
-	Assert::match('~<div class="side-panel-template-container side-panel-template-container--stacked">\s*\{snippet sidePanelStacked\}\{/snippet\}\s*<button type="button" class="btn-close"></button>~', $layout);
+	// Zavírací tlačítko je v hlavičce panelu (nadpis, avatar), snippet až pod ní
+	Assert::match('~<div class="side-panel-template-container side-panel-template-container--stacked">\s*<div class="side-panel-template-header">.*?side-panel-template-close.*?</div>\s*\{snippet sidePanelStacked\}\{/snippet\}\s*</div>~s', $layout);
 	Assert::contains('<div class="side-panel-template-backdrop side-panel-template-backdrop--stacked"></div>', $layout);
 });
 

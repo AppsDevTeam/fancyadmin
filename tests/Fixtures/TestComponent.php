@@ -19,6 +19,16 @@ final class TestComponent extends Control
 
 	public function isLinkCurrent(?string $destination = null, $args = []): bool
 	{
+		// Jako Nette: 'Presenter:*' = kterákoli akce presenteru
+		if ($destination !== null && str_ends_with($destination, ':*')) {
+			foreach ($this->currentLinks as $_link) {
+				if (str_starts_with($_link, substr($destination, 0, -1))) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 		return in_array($destination, $this->currentLinks, true);
 	}
 }

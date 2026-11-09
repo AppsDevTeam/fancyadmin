@@ -207,6 +207,8 @@ test('aktualni je polozka, na jejiz odkaz se uzivatel diva', function () {
 	$item = new NavbarMenuItem()->setLink('Orders:default');
 
 	Assert::true($item->isCurrent(new TestComponent(['Orders:default'])));
+	// Položka bez parametrů svítí na všech akcích svého presenteru (detail, úprava)
+	Assert::true($item->isCurrent(new TestComponent(['Orders:detail'])));
 	Assert::false($item->isCurrent(new TestComponent(['Identities:default'])));
 });
 
