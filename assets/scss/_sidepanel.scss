@@ -32,20 +32,20 @@ body.menu-wide {
 	// prohodí, mix zůstane čitelný). Projekt může přepsat, když chce jinou.
 	--menu-wide-divider: color-mix(in srgb, var(--menu-wide-text) 15%, var(--menu-wide-bg));
 	--menu-wide-text: #{$text-primary};
-	--menu-wide-muted: #878787;
+	--menu-wide-muted: var(--fa-text-muted);
 	// Verzálkové podnadpisy submenu — nádech primární barvy je odliší od šedých položek
 	--menu-wide-subheading: color-mix(in srgb, var(--primaryColor) 60%, var(--menu-wide-muted));
 	--menu-wide-text-strong: #{$heading-color};
-	--menu-wide-hover-bg: #f7f4f5;
+	--menu-wide-hover-bg: var(--fa-surface-hover);
 	--menu-wide-hover-text: var(--primaryColorDark);
 	--menu-wide-active-bg: var(--primaryColor);
 	--menu-wide-active-text: #fff;
 	--menu-wide-item-radius: var(--bs-border-radius-xs);
 	--menu-wide-popover-radius: var(--overlay-radius);
 	--menu-wide-popover-bg: #{$background};
-	--menu-wide-popover-border: #f0eeef;
+	--menu-wide-popover-border: var(--fa-line);
 	--menu-wide-popover-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
-	--menu-wide-avatar-bg: #f4e1f8;
+	--menu-wide-avatar-bg: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 12%, var(--fa-surface)));
 	--menu-wide-avatar-icon: var(--primaryColor);
 	--menu-wide-danger: #{$error};
 }
@@ -120,13 +120,16 @@ body.menu-wide .side-panel-wide {
 		padding: 0;
 		margin: 0;
 
+		// Široké logo se ve sbaleném menu zmenší na šířku pásu, místo aby přeteklo přes okraj
 		.logo {
 			display: inline-flex;
 			align-items: center;
+			max-width: 100%;
 
 			img,
 			svg {
 				max-height: var(--menu-wide-logo-height);
+				max-width: 100%;
 				width: auto;
 				transition: max-height 180ms ease;
 			}
