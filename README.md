@@ -3582,3 +3582,12 @@ projektu má přednost.
 **Migrace** (adt/ai-chat 0.8): sloupec `ai_message.sent_content` (`LONGTEXT NULL`; mapuje ho
 `AiMessageTrait` vždy, plní se jen při pseudonymizaci) a tabulka entity kotev. Vygenerujte přes
 `migrations-diff`.
+
+## Vývoj fancyadminu: testy
+
+- **PHP** (Nette Tester, `tests/*.phpt`): `composer test`.
+- **JS** (vitest + jsdom, `tests/js/*.test.js`): `bin/yarn test` (Node z `NODE_VERSION` v `.env`).
+  Testy načtou skutečné jQuery, nette.ajax.js a skripty z `assets/js` a odpovědi serveru
+  simulují přes `$.ajaxTransport`. jsdom nemá layout, takže co závisí na rozměrech (scroll),
+  si test emuluje sám. Chování v opravdovém prohlížeči pokrývají akceptační testy projektů
+  (např. `AjaxNavigationCest` v adt-dent).
