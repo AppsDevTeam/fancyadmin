@@ -11,9 +11,14 @@ use Tracy\ILogger;
  * Push přes Mercure hub (např. FrankenPHP). Topiky dostanou prefix projektu - hub může sdílet
  * víc projektů nebo klinik a token jedné nesmí odebírat cizí. Publikuje i odebírá se s JWT
  * (HS256, typ at+jwt, authorization_details podle RFC 9396 - moderní režim Mercure).
+ *
+ * Víc serverů za jednou doménou: každý má svůj hub a prohlížeč je připojený k tomu, kam ho
+ * poslala proxy. publishUrl je pak seznam hubů všech serverů oddělený čárkou - změna jde
+ * do každého, aby došla všem odběratelům bez ohledu na server.
  */
 final class MercurePush implements Push
 {
+	/** @param string $publishUrl hub pro publikování, víc hubů oddělených čárkou */
 	public function __construct(
 		private readonly string $publishUrl,
 		private readonly string $subscribeUrl,
@@ -51,12 +56,20 @@ final class MercurePush implements Push
 			'ignore_errors' => true,
 		]]);
 
-		$response = @file_get_contents($this->publishUrl, false, $context); // @ - selhání řeší log níž
-		$headers = function_exists('http_get_last_response_headers') ? http_get_last_response_headers() : null;
-		$status = (string) ($headers[0] ?? '');
-		if ($response === false || !str_contains($status, ' 200')) {
-			Debugger::log(sprintf('Mercure: změna %s se neodeslala (%s).', $fullTopic, $status !== '' ? $status : 'bez odpovědi'), ILogger::WARNING);
+		foreach ($this->getPublishUrls() as $url) {
+			$response = @file_get_contents($url, false, $context); // @ - selhání řeší log níž
+			$headers = function_exists('http_get_last_response_headers') ? http_get_last_response_headers() : null;
+			$status = (string) ($headers[0] ?? '');
+			if ($response === false || !str_contains($status, ' 200')) {
+				Debugger::log(sprintf('Mercure: změna %s se do %s neodeslala (%s).', $fullTopic, $url, $status !== '' ? $status : 'bez odpovědi'), ILogger::WARNING);
+			}
 		}
+	}
+
+	/** @return list<string> */
+	public function getPublishUrls(): array
+	{
+		return array_values(array_filter(array_map('trim', explode(',', $this->publishUrl))));
 	}
 
 	public function subscription(array $topics): ?array

@@ -22,6 +22,11 @@ services:
 	)
 ```
 
+**Víc serverů za jednou doménou** (proxy rozkládá požadavky): hub na každém serveru, nginx
+každého serveru posílá `/.well-known/mercure` na svůj hub a `publishUrl` je seznam hubů všech
+serverů oddělený čárkou (např. přes porty nginx serverů) - změna jde do každého hubu, takže dojde
+i odběratelům připojeným přes jiný server. Publikovat jde jen s JWT podepsaným klíčem vydavatele.
+
 Změnu oznámí kód, který ji udělal (typicky Doctrine listener po `flush`):
 
 ```php

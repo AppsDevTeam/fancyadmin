@@ -60,6 +60,12 @@ test('původce změny je stránka z hlavičky push.js, jen platné ID', function
 });
 
 
+test('víc hubů (víc serverů) oddělených čárkou', function () {
+	$push = new MercurePush(' http://s1:9157/.well-known/mercure , http://s2:9157/.well-known/mercure,', '/.well-known/mercure', 'p', 's', 'x');
+	Assert::same(['http://s1:9157/.well-known/mercure', 'http://s2:9157/.well-known/mercure'], $push->getPublishUrls());
+});
+
+
 test('bez topiků není odběr', function () use ($push) {
 	Assert::null($push->subscription([]));
 });
