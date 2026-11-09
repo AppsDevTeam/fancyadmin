@@ -1,0 +1,27 @@
+// Tablety (TabletsPresenterTrait, docs/tablets.md): spárování - QR kód vlevo, postup vpravo,
+// na úzkém displeji pod sebou
+.tablet-pairing {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem;
+	align-items: flex-start;
+
+	.tablet-pairing-qr svg {
+		width: 220px;
+		height: auto;
+		background: #fff; // QR kód potřebuje světlé pozadí i v tmavém režimu
+	}
+
+	.tablet-pairing-title {
+		font-size: 1.1rem;
+		font-weight: 600;
+	}
+
+	.tablet-pairing-steps {
+		padding-left: 1.25rem;
+	}
+
+	a {
+		word-break: break-all;
+	}
+}

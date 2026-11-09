@@ -1,0 +1,34 @@
+{define title}{_fcadmin.tablets.title}{/define}
+
+{*
+  Tablety pro vyplnění a podpis formulářů (TabletsPresenterTrait). Tablet se spáruje QR
+  kódem (jednorázový odkaz, snippet pairing, v DB je jen hash) a pak mu formuláře chodí push
+  notifikací.
+*}
+{block content}
+
+<div class="header">
+	<h1 class="header-title">{_fcadmin.tablets.title}</h1>
+
+	<div class="header-actions">
+		<a n:if="$presenter->canEditTablets()" n:href="new!" class="btn btn-new btn-primary">{_fcadmin.tablets.newTablet}</a>
+	</div>
+</div>
+
+{snippet pairing}
+	<div n:if="$pairingTablet" class="alert alert-info tablet-pairing">
+		<div class="tablet-pairing-qr">{$pairingQrSvg|noescape}</div>
+		<div>
+			<h2 class="tablet-pairing-title">{_fcadmin.tablets.pairing.title, [name: $pairingTablet->getName()]}</h2>
+			<ol class="tablet-pairing-steps">
+				<li>{_fcadmin.tablets.pairing.scan}</li>
+				<li>{_fcadmin.tablets.pairing.enable|noescape}</li>
+				<li>{_fcadmin.tablets.pairing.keepOpen}</li>
+			</ol>
+			<p class="mb-0 small">{_fcadmin.tablets.pairing.ipad}</p>
+			<p class="mb-0 small"><a href="{$pairingUrl}" target="_blank">{$pairingUrl}</a></p>
+		</div>
+	</div>
+{/snippet}
+
+{control tabletGrid}

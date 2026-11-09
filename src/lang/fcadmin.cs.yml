@@ -678,6 +678,60 @@ passkeys:
     lastKeyRequired: Poslední přihlašovací klíč nelze smazat, váš účet vyžaduje přihlášení klíčem.
     passwordSessionRevoked: Byli jste odhlášeni. Váš účet vyžaduje přihlášení přihlašovacím klíčem.
 
+tablets:
+  title: Tablety
+  newTablet: Nový tablet
+  pairing:
+    title: 'Spárování tabletu %name%'
+    scan: Na tabletu naskenujte QR kód (odkaz platí 15 minut a jen pro jedno spárování).
+    enable: 'Na otevřené stránce klepněte na <strong>Povolit notifikace</strong>.'
+    keepOpen: Stránku nechte otevřenou - formuláře se na ní otevřou samy.
+    ipad: Na iPadu nejdřív stránku přidejte na plochu (Sdílet → Přidat na plochu) a otevřete ji z plochy, jinak iPad notifikace nepovolí.
+  grid:
+    name: Název
+    state: Stav
+    lastSeenAt: Naposledy připojen
+    ready: Připraven
+    notificationsDisabled: Notifikace nepovolené
+    notificationsDisabledHint: Na tabletu otevřete čekací stránku a povolte notifikace.
+    notPaired: Nespárovaný
+    pair: Spárovat
+    pairTitle: Spárovat tablet (QR kód)
+    disconnect: Odpojit
+    disconnectTitle: Odpojit tablet
+    disconnectConfirm: Opravdu odpojit tablet? Formuláře mu přestanou chodit, dokud ho znovu nespárujete.
+  form:
+    name: Název
+    namePlaceholder: např. Tablet recepce
+    submit: Uložit
+    errors:
+      nameRequired: Vyplňte název tabletu.
+      nameExists: 'Tablet %name% už existuje.'
+  messages:
+    disconnected: 'Tablet %name% byl odpojen.'
+    notificationsDisabled: 'Tablet %name% nemá povolené notifikace - otevřete na něm čekací stránku a povolte je.'
+    subscriptionExpired: 'Tablet %name% už notifikace nepřijímá - otevřete na něm čekací stránku a povolte je znovu.'
+    pushNotConfigured: Push notifikace nejsou na serveru nastavené - formulář otevřete na tabletu jinak (např. QR kódem) a dejte vědět správci.
+    sendFailed: Formulář se do tabletu nepodařilo odeslat. Zkuste to znovu, případně ho otevřete na tabletu jinak (např. QR kódem).
+  device:
+    title: Tablet
+    loading: Připojuji tablet…
+    ready: Čekám na formulář.
+    readyHint: Stránku nechte otevřenou, formulář se otevře sám.
+    permission: Aby sem šlo posílat formuláře, povolte notifikace.
+    enable: Povolit notifikace
+    denied: Notifikace jsou v prohlížeči zakázané. Povolte je v nastavení prohlížeče pro tuto stránku a stránku obnovte.
+    unsupported: Tento prohlížeč notifikace nepodporuje.
+    unsupportedHint: Na iPadu přidejte stránku na plochu (Sdílet → Přidat na plochu) a otevřete ji z plochy. Na Androidu použijte Chrome.
+    error: Tablet se nepodařilo připojit. Zkontrolujte připojení k internetu a stránku obnovte.
+    notPaired: Tablet není spárovaný
+    notPairedHint: V administraci otevřete Tablety, u tabletu zvolte Spárovat a QR kód naskenujte tímto tabletem.
+    invalidPairingTitle: Neplatný odkaz
+    invalidPairing: Párovací odkaz je neplatný nebo vypršel
+    invalidPairingHint: Odkaz platí 15 minut a jen pro jedno spárování. V administraci (Tablety) zvolte u tabletu znovu Spárovat a naskenujte nový QR kód.
+    notificationForm: Formulář k vyplnění
+    notificationOpenForm: Klepněte pro otevření formuláře.
+    notificationOpenWaiting: Klepněte pro otevření čekací stránky.
 modules:
   web:
     navbar:

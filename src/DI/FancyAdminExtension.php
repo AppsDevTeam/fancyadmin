@@ -36,6 +36,8 @@ use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
+use ADT\FancyAdmin\Model\Tablet\TabletService;
+use ADT\FancyAdmin\Model\WebPush\WebPushSender;
 use ADT\FancyAdmin\Model\AiChat\AuditPiiCheckListener;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
 use ADT\DoctrineAuthenticator\DoctrineAuthenticator;
@@ -175,6 +177,19 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			// Klíč pro šifrování tajných hodnot v DB (konfigurace typu secret), typicky z env.
 			// Bez něj nejde tajnou hodnotu uložit ani přečíst. README, Konfigurace - tajné hodnoty
 			'secretKey' => Expect::string()->nullable()->default(null),
+			// Web Push (VAPID): privátní klíč EC P-256 jako PEM v base64, '' = push se neposílá
+			'webPush' => Expect::structure([
+				'vapidPrivateKey' => Expect::string()->default(''),
+				// kontakt na provozovatele pro push služby prohlížečů (mailto: nebo https:)
+				'subject' => Expect::string()->default(''),
+			]),
+			// Tablety pro vyplnění a podpis formulářů (docs/tablets.md)
+			'tablet' => Expect::structure([
+				'enabled' => Expect::bool()->default(false),
+				'cookieName' => Expect::string()->default('fancyadmin_tablet'),
+				// = rozsah service workeru, musí pokrýt čekací stránku i stránky formulářů
+				'cookiePath' => Expect::string()->default('/'),
+			]),
 			// AI asistent nad daty projektu (adt/ai-chat), README, AI asistent
 			'ai' => Expect::structure([
 				'enabled' => Expect::bool()->default(false),
@@ -356,6 +371,21 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		$builder->addDefinition($this->prefix('secretCipher'))
 			->setFactory(SecretCipher::class, ['secretKey' => $this->config->secretKey]);
+
+		$builder->addDefinition($this->prefix('webPushSender'))
+			->setFactory(WebPushSender::class, [
+				'privateKey' => $this->config->webPush->vapidPrivateKey,
+				'subject' => $this->config->webPush->subject,
+			]);
+
+		// Potřebuje projektovou entitu Tablet a TabletQueryFactory, proto jen na požádání
+		if ($this->config->tablet->enabled) {
+			$builder->addDefinition($this->prefix('tabletService'))
+				->setFactory(TabletService::class, [
+					'cookieName' => $this->config->tablet->cookieName,
+					'cookiePath' => $this->config->tablet->cookiePath,
+				]);
+		}
 
 		// Cíl "kam po přihlášení" v cookie, aby nepřihlášenému nevznikala session
 		$builder->addDefinition($this->prefix('returnPath'))

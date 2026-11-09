@@ -971,6 +971,12 @@ Inicializace prvků z nových snippetů (Select2, datum, tooltipy) zůstává v 
 Kalendář, úkoly nebo chat se mohou o změně dozvědět hned přes Mercure hub místo pollingu.
 Bez hubu (`NullPush`, výchozí) stránky pollují jako dřív. Návod v `docs/push.md`.
 
+### Tablety pro vyplnění a podpis formulářů (`TabletService`, `tablet.js`)
+
+Tablet se jednou spáruje QR kódem a pak mu formuláře chodí přes Web Push (VAPID, bez Firebase).
+Správa tabletů (`TabletsPresenterTrait`), čekací stránka tabletu (`TabletDevicePresenterTrait`)
+se service workerem a vázání odkazu na tablet. Návod v `docs/tablets.md`.
+
 ### Formuláře v modalech až při otevření (`LazyComponentsTrait`)
 
 Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`

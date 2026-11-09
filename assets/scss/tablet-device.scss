@@ -1,0 +1,59 @@
+// Čekací stránka tabletu (TabletDevicePresenterTrait, docs/tablets.md). Veřejná stránka
+// v layoutu projektu - ten si soubor naimportuje do svého bundlu
+// (@use '@fancyadmin/scss/tablet-device'). Barvy jen z proměnných Bootstrapu.
+
+.tablet-device {
+	max-width: 520px;
+	margin: 1rem auto 0;
+	padding: 2.5rem 2rem;
+	text-align: center;
+	background: var(--bs-body-bg);
+	border-radius: var(--bs-border-radius-xxl);
+	box-shadow: var(--bs-box-shadow);
+
+	h1 {
+		font-size: 1.5rem;
+		font-weight: 700;
+	}
+
+	p {
+		color: var(--bs-secondary-color);
+	}
+}
+
+.tablet-device-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	margin-bottom: 1.25rem;
+	border-radius: 50%;
+	font-size: 2rem;
+
+	&.is-success {
+		background: var(--bs-success-bg-subtle);
+		color: var(--bs-success-text-emphasis);
+	}
+
+	&.is-warning {
+		background: var(--bs-warning-bg-subtle);
+		color: var(--bs-warning-text-emphasis);
+	}
+}
+
+// Stav přepíná tablet.js atributem data-tablet-state - vidět je jen odpovídající blok
+.tablet-state {
+	display: none;
+}
+
+@each $state in loading, ready, permission, denied, unsupported, error {
+	[data-tablet-state="#{$state}"] .tablet-state-#{$state} {
+		display: block;
+	}
+}
+
+// Po odeslání formuláře - odkaz zpět na čekací stránku (tablet.js na ni sám přejde)
+.tablet-return {
+	margin-top: 1.5rem;
+}

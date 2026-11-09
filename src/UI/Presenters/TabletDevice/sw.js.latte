@@ -1,0 +1,78 @@
+{contentType javascript}
+// Service worker tabletu (TabletDevicePresenterTrait::actionSw, docs/tablets.md). Push zpráva je prázdná - jen
+// probudí tablet. Odeslaný formulář si worker vyzvedne u serveru (takeForm!, cookie tabletu)
+// a otevře ho na čekací stránce, když je vidět; jinak ukáže notifikaci, klepnutí ho otevře.
+// Prohlížeče chtějí ke každé push zprávě viditelnou reakci - proto i bez formuláře notifikace.
+
+const TAKE_FORM_URL = {link takeForm!};
+
+// Jen odkaz na stejný web - nic jiného tablet otevírat nemá
+function sameOrigin(url) {
+	try {
+		return new URL(url, self.location.origin).origin === self.location.origin;
+	} catch {
+		return false;
+	}
+}
+
+async function openUrl(url) {
+	const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+	const client = clients.find((c) => 'navigate' in c);
+	if (client) {
+		try {
+			await client.focus();
+			await client.navigate(url);
+			return;
+		} catch {
+			// Stránka mimo rozsah workeru - otevřít nové okno
+		}
+	}
+	await self.clients.openWindow(url);
+}
+
+async function handlePush() {
+	let form = null;
+	try {
+		const response = await fetch(TAKE_FORM_URL, { method: 'POST', credentials: 'same-origin' });
+		form = response.ok ? (await response.json()).form : null;
+	} catch {
+		// Bez sítě - notifikace níž stránku aspoň otevře
+	}
+
+	if (form && sameOrigin(form.url)) {
+		// Čekací stránka svítí - formulář rovnou na ní, bez notifikace
+		const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+		const visible = clients.find((c) => c.visibilityState === 'visible' && 'navigate' in c);
+		if (visible) {
+			try {
+				await visible.navigate(form.url);
+				return;
+			} catch {
+				// Nepovedlo se - notifikace
+			}
+		}
+	}
+
+	await self.registration.showNotification(form ? (form.title || {_fcadmin.tablets.device.notificationForm}) : {_fcadmin.tablets.device.title}, {
+		body: form ? {_fcadmin.tablets.device.notificationOpenForm} : {_fcadmin.tablets.device.notificationOpenWaiting},
+		tag: 'fancyadmin-tablet-form',
+		requireInteraction: true,
+		data: { url: form && sameOrigin(form.url) ? form.url : {link default} },
+	});
+}
+
+self.addEventListener('push', (event) => {
+	event.waitUntil(handlePush());
+});
+
+self.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const url = event.notification.data && event.notification.data.url;
+	if (url && sameOrigin(url)) {
+		event.waitUntil(openUrl(url));
+	}
+});
+
+// Nová verze workeru převezme tablet hned, ne až po zavření všech oken
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
