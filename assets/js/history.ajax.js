@@ -118,34 +118,9 @@
 						ui: this.cache ? findSnippets() : null
 					}, document.title, pushUrl);
 
-					$('a.nav-link').map((i, el) => {
-						if ($(el).attr('href') === '/') {
-							$(el).toggleClass('active', url.pathname === $(el).attr('href'))
-						} else {
-							$(el).toggleClass('active', url.pathname.includes($(el).attr('href')))
-						}
-					});
-
-					$('.sub-menu > a').map((i, el) => {
-						if ($(el).attr('href') === '/') {
-							$(el).toggleClass('active', url.pathname === $(el).attr('href'))
-						} else {
-							$(el).toggleClass('active', url.pathname.includes($(el).attr('href')))
-						}
-					});
-
-					$('.bottom-mobile-menu a:not(.sub-menu-toggle)').map((i, el) => {
-						const isOpened = $(el).attr('href') === '/'
-							? (url.pathname === '/')
-							: (url.pathname.includes($(el).attr('href')));
-						if (isOpened) {
-							$('.bottom-mobile-menu a').map((i, el) => {
-								$(el).toggleClass('isOpened', false)
-							});
-						}
-
-						$(el).toggleClass('isOpened', isOpened)
-					});
+					// Zvýraznění menu ani záložek tady nepřepínat (active, isOpened dolního mobilního menu):
+					// přišly v překresleném snippetu body a server je určil správně. Odhad podle prefixu cesty
+					// je přepsal i tam, kde je adresa jedné položky prefixem jiné.
 				}
 			}
 

@@ -202,3 +202,25 @@ if ($.nette && $.nette.ext('live')) {
 		applyState();
 	});
 }
+
+// Menu je ve snippetu body, takže ho každý ajaxový přechod vymění za nový element a odscrollované
+// menu by skočilo nahoru. Zvýraznění položek ale musí dál počítat server, proto se menu překresluje
+// a jen se mu vrátí scroll.
+if ($.nette && $.nette.ext('snippets')) {
+	let menuScrollTop = null;
+
+	$.nette.ext('snippets').before(function ($el) {
+		const menuBody = $el.find('.side-panel-wide .menu-body').get(0);
+		if (menuBody) {
+			menuScrollTop = menuBody.scrollTop;
+		}
+	});
+
+	$.nette.ext('snippets').after(function ($el) {
+		const menuBody = $el.find('.side-panel-wide .menu-body').get(0);
+		if (menuBody && menuScrollTop !== null) {
+			menuBody.scrollTop = menuScrollTop;
+			menuScrollTop = null;
+		}
+	});
+}
