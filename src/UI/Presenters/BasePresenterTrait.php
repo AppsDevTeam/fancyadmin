@@ -43,6 +43,8 @@ trait BasePresenterTrait
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->project = $this->_fancyAdmin->getProject();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
+		// Jen prihlasena cast ma layout, ktery panel kresli - jinde se projekt na nic nepta
+		$this->getTemplate()->persistentNotice = $this->primaryTemplate ? $this->getPersistentNotice() : null;
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
@@ -173,7 +175,21 @@ trait BasePresenterTrait
 			$this->redrawControl('title');
 			$this->redrawControl('body');
 			$this->redrawControl('modals');
+		} elseif ($this->primaryTemplate) {
+			// Ajax, ktery prekresluje jen cast stranky (pretazeny radek gridu, ulozeny bocni panel),
+			// muze panel zalozit i zrusit. Prekresluje se az tady, ne v beforeRender(): tam by
+			// zneplatnil presenter u kazdeho ajaxu a body by se pak neprekreslilo nikdy.
+			$this->redrawControl('persistentNotice');
 		}
+	}
+
+	/**
+	 * Trvaly panel v layoutu prihlasene casti portalu, viz {@see PersistentNotice}. Vola se
+	 * pri kazdem vykresleni, i ajaxovem.
+	 */
+	protected function getPersistentNotice(): ?PersistentNotice
+	{
+		return null;
 	}
 
 	/**
