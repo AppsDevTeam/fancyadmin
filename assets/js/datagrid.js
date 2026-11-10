@@ -56,6 +56,24 @@ $.nette.ext('live').after(function (el) {
     return datagridSortable(el);
 });
 
+/**
+ * Pri tazeni radku vlozi jQuery UI sortable na jeho misto placeholder s prazdnou bunkou na kazdy sloupec, ale bez trid
+ * bunek. Skryty sloupec (d-none) se v nem ukazal, tabulka se rozsirila a cela poskocila. Bunky placeholderu proto
+ * prebiraji tridy bunek tazeneho radku.
+ *
+ * Delegovane, ne v konfiguraci sortable: sortable gridu inicializuje i datagrid/datagrid.js (vlastni kopie
+ * datagridSortable bez teto volby), takze takhle oprava plati at uz gridu nastavil sortable kdokoli.
+ */
+$(document).on('sortstart', '.datagrid [data-sortable]', (e, ui) => {
+	const cells = ui.item.children();
+	ui.placeholder.children().each((index, cell) => {
+		const source = cells.get(index);
+		if (source) {
+			cell.className = source.className;
+		}
+	});
+});
+
 $(document).on('hidden.bs.collapse', '.datagrid form > .collapse', (e) => {
 	$(e.currentTarget).closest('form').find('.reset-filter').click();
 });
