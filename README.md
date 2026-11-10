@@ -951,6 +951,58 @@ Co je kolem toho potřeba vědět:
   je popsané u `BaseFormTrait::registerCsrfProtection()`. Formuláře odesílané GETem (filtry)
   a hromadné akce gridů vlastní token nemají, ty na skriptu závisí vždy.
 
+### Trvalý panel v layoutu
+
+Na rozdíl od flash zprávy panel nezmizí, dokud platí. Hodí se třeba na hlášku „Změny
+katalogu se do pokladen odešlou v 14:30" s tlačítkem „Odeslat hned". Layout ho kreslí na každé
+stránce přihlášené části portálu (jen v primární šabloně) vpravo nahoře, v řádku s výběrem
+účtu a odkazem zpět. Pod breakpointem `lg` je dole přes celou šířku.
+
+Panel vrací presenter z `getPersistentNotice()`. Výchozí implementace v `BasePresenterTrait`
+vrací `null`:
+
+```php
+use ADT\FancyAdmin\UI\Presenters\PersistentNotice;
+
+abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI\Presenters\AuthPresenter
+{
+	use AuthPresenterTrait;
+
+	protected function getPersistentNotice(): ?PersistentNotice
+	{
+		$scheduledAt = $this->getSelectedAccount()?->getCatalogueUpdateScheduledAt();
+		if (!$scheduledAt) {
+			return null;
+		}
+
+		return new PersistentNotice(
+			'app.catalogueUpdate.panel.scheduled',
+			['time' => $scheduledAt->format('H:i')],
+			link: $this->link('sendCatalogueUpdate!'),
+			linkLabel: 'app.catalogueUpdate.panel.sendNow',
+		);
+	}
+}
+```
+
+- **Text a popisek odkazu jsou klíče překladu**, stejně jako u flash zpráv. Text dostane
+  parametry `$parameters`. Výsledek se escapuje. Panel s HTML dostanete jen předáním
+  `Nette\Utils\Html` místo řetězce, to se nepřekládá ani neescapuje.
+- **Odkaz je hotová adresa**, typicky `$this->link('signal!')`. Token CSRF signálu (viz výše)
+  se do ní doplní sám. Odkaz bez `linkLabel` vyhodí výjimku. Odkaz se vykreslí jako
+  `btn btn-primary btn-sm`, s `ajax: true` dostane navíc třídu `ajax`.
+- **Překreslení řeší fancyadmin.** `getPersistentNotice()` se volá při každém vykreslení
+  přihlášené části, i ajaxovém. Ajax, který jinak nic nepřekresluje, překreslí celé `body`
+  i s panelem. Ajax, který překresluje jen část stránky (přetažený řádek gridu, uložený
+  boční panel), překreslí v `BasePresenterTrait::afterRender()` navíc snippet
+  `persistentNotice`. Projekt tak `redrawControl()` volat nemusí. Platí to ale jen tehdy,
+  když `afterRender()` z traitu běží, takže projekt, který ho přepisuje, ho musí zavolat.
+- **Signál z odkazu** může po akci při ajaxu překreslit `flashes`, jinak `redirect('this')`.
+  Panel se v obou případech obnoví sám.
+- **Vzhled** je třída `.persistent-notice` v `assets/scss/_layout.scss`: bílé pozadí, stín
+  jako flash zpráva, barva textu z `--bs-body-color`. Panel leží pod flash zprávami
+  (`z-index` 998 proti 999).
+
 ---
 
 ## 15. NEON konfigurace
