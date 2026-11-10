@@ -56,6 +56,24 @@ $.nette.ext('live').after(function (el) {
     return datagridSortable(el);
 });
 
+/**
+ * Pri tazeni radku vlozi jQuery UI sortable na jeho misto placeholder s prazdnou bunkou na kazdy sloupec, ale bez trid
+ * bunek. Skryty sloupec (d-none) se v nem ukazal, tabulka se rozsirila a cela poskocila. Bunky placeholderu proto
+ * prebiraji tridy bunek tazeneho radku.
+ *
+ * Delegovane, ne v konfiguraci sortable: sortable gridu inicializuje i datagrid/datagrid.js (vlastni kopie
+ * datagridSortable bez teto volby), takze takhle oprava plati at uz gridu nastavil sortable kdokoli.
+ */
+$(document).on('sortstart', '.datagrid [data-sortable]', (e, ui) => {
+	const cells = ui.item.children();
+	ui.placeholder.children().each((index, cell) => {
+		const source = cells.get(index);
+		if (source) {
+			cell.className = source.className;
+		}
+	});
+});
+
 $(document).on('hidden.bs.collapse', '.datagrid form > .collapse', (e) => {
 	$(e.currentTarget).closest('form').find('.reset-filter').click();
 });
@@ -84,6 +102,41 @@ $(document).on('click', '.click-line-detail-no-link table tbody td:not(.col-acti
  */
 $(document).on('click', '.click-line-detail-no-link-im-the-link', (e) => {
 	$(e.currentTarget).find('a').click();
+});
+
+/**
+ * Proklik na detail ve stromovem gridu (DataGridTree.latte). Strom nema tabulku, radek je .datagrid-tree-item-content,
+ * prvni sloupec (obdoba col-name) je .datagrid-tree-item-left a vedle odkazu na detail je v nem odkaz sipky
+ * [data-toggle-tree]. Detail je prvni odkaz v .datagrid-tree-item-left, ktery neni sipka.
+ *
+ * Klik na odkaz (i sipku), tlacitko, input, select nebo akce (.datagrid-tree-item-right-actions) dela dal svoje.
+ * Stejne jako u tabulky click-line-detail ignoruje sloupce s tlacitky, inputy a selecty, click-line-detail-no-link
+ * navic i sloupce s odkazem.
+ *
+ * Odkaz se klika nativne (link.click()), jQuery .click() na <a> nenaviguje.
+ */
+const treeRowSelector = '.datagrid-tree-item:not(.datagrid-tree-header) > .datagrid-tree-item-content';
+
+const openTreeRowDetail = (e, ignoredColumnSelector) => {
+	const $target = $(e.target);
+	if ($target.closest('a, button, input, select, textarea, label, .datagrid-tree-item-right-actions', e.currentTarget).length) {
+		return;
+	}
+	if ($target.closest('.datagrid-tree-item-right-columns-column', e.currentTarget).is(ignoredColumnSelector)) {
+		return;
+	}
+	const link = $(e.currentTarget).find('.datagrid-tree-item-left a:not([data-toggle-tree])').get(0);
+	if (link) {
+		link.click();
+	}
+};
+
+$(document).on('click', '.click-line-detail ' + treeRowSelector, (e) => {
+	openTreeRowDetail(e, ':has(button, input, select)');
+});
+
+$(document).on('click', '.click-line-detail-no-link ' + treeRowSelector, (e) => {
+	openTreeRowDetail(e, ':has(a, button, input, select)');
 });
 
 $(document).on('click', 'a.link-confirmation', function (e) {
