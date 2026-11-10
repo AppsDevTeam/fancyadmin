@@ -168,7 +168,10 @@
 				}
 			}
 
-			.btn:has(> .fa) {
+			// Uchyt razeni (.handle-sort z DataGrid.latte) nese ikonu `fas fa-arrows-v`, ne `.fa`, a bez toho by si
+			// nechal plnou vysku tlacitka a natahl radek.
+			.btn:has(> .fa),
+			.btn.handle-sort {
 				padding: 0;
 				height: initial;
 				color: inherit;
