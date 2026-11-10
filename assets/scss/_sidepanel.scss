@@ -18,7 +18,8 @@ body.menu-wide {
 	// (1rem) - odstup první položky menu od loga pak sedí s odstupem obsahu od lišty.
 	// Pás pro logo se z těch dvou čísel dopočítá, aby se zarovnání nerozsypalo při
 	// ladění paddingů uvnitř hlavičky.
-	--menu-wide-logo-height: 40px;
+	--menu-wide-logo-height: 32px;
+	--menu-wide-logo-max-width: 100%;
 	--menu-wide-logo-gap: 18px;
 
 	// Palette (projekt může přepsat na vlastní design tokeny)
@@ -64,6 +65,8 @@ body.menu-wide.menu-collapsed {
 	--menu-wide-collapsed-item-height: 56px;
 	// Menší logo, mezera kolem něj zůstává stejná - pás nad položkami je proto nižší
 	--menu-wide-logo-height: 24px;
+	// Široké logo by jinak vyplnilo celý pás
+	--menu-wide-logo-max-width: 45px;
 }
 
 // Na mobilu je boční menu skryté (_theme.scss), obsah i okna lišty začínají u kraje
@@ -120,7 +123,6 @@ body.menu-wide .side-panel-wide {
 		padding: 0;
 		margin: 0;
 
-		// Široké logo se ve sbaleném menu zmenší na šířku pásu, místo aby přeteklo přes okraj
 		.logo {
 			display: inline-flex;
 			align-items: center;
@@ -129,7 +131,7 @@ body.menu-wide .side-panel-wide {
 			img,
 			svg {
 				max-height: var(--menu-wide-logo-height);
-				max-width: 100%;
+				max-width: var(--menu-wide-logo-max-width);
 				width: auto;
 				transition: max-height 180ms ease;
 			}
