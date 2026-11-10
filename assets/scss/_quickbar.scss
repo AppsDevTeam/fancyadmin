@@ -49,8 +49,8 @@ body:has(.quickbar) .table-bottom-scroll {
 }
 
 .quickbar {
-	// Lišta je vždy o 17 bodů průhlednější než panely nad ní
-	@include glass(53%, 70%, 85%);
+	// Ve světlém o 17 bodů průhlednější než panely nad ní, ve tmavém sytější, jinak splyne se stránkou
+	@include glass(53%, 70%, 85%, $dark-alpha: 84%);
 	position: fixed;
 	left: 50%;
 	bottom: var(--quickbar-bottom);
@@ -172,6 +172,22 @@ body:has(.quickbar) .table-bottom-scroll {
 	font-size: 12px;
 	color: var(--quickbar-faint);
 	white-space: nowrap;
+}
+
+// Tmavý režim: lupa a „Hledat“ napůl k textu, aby byly čitelné i nad světlým obsahem pod sklem
+:root[data-bs-theme="dark"] .quickbar-search {
+	$readable: color-mix(in srgb, var(--quickbar-text) 50%, var(--quickbar-muted));
+	color: $readable;
+
+	.quickbar-search-input::placeholder {
+		color: $readable;
+		opacity: 1;
+	}
+
+	.quickbar-key {
+		border-color: color-mix(in srgb, #fff 22%, transparent);
+		color: var(--quickbar-muted);
+	}
 }
 
 .quickbar-divider {

@@ -1,5 +1,8 @@
+@use 'sass:math';
+
 // Sklo - sdílí ho rychlá lišta a boční panel. Na body kvůli značkovým barvám.
 body {
+	--glass-base: var(--fa-surface);
 	--glass-filter: blur(40px) saturate(180%);
 	--glass-shadow: 0 0 2px rgba(5, 5, 6, 0.16), 0 0 4px rgba(5, 5, 6, 0.16), 0 0 32px rgba(5, 5, 6, 0.12);
 	// Pole na skle jsou poloprůhledná jako sklo panelu, bílé by z něj vystupovaly
@@ -9,13 +12,31 @@ body {
 	--glass-hover: color-mix(in srgb, var(--fa-heading, var(--fa-text)) 6%, transparent);
 }
 
+// Tmavé sklo by na tmavé stránce zmizelo - plocha se zesvětlí a stín ho odlepí od podkladu
+:root[data-bs-theme="dark"] body {
+	--glass-base: color-mix(in srgb, var(--fa-surface) 86%, #fff);
+	--glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 4px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 0, 0, 0.6);
+	--glass-input-background: color-mix(in srgb, #fff 6%, transparent);
+}
+
 // Poloprůhledná plocha s rozostřením; parametry jsou krytí plochy, rámečku a vrchní hrany
-@mixin glass($alpha, $border: 60%, $highlight: 80%) {
+@mixin glass($alpha, $border: 60%, $highlight: 80%, $dark-alpha: $alpha) {
+	// Přes proměnné, aby tmavý režim nepřebil rámeček daný stavem (hledání v liště)
+	--glass-alpha: #{$alpha};
+	--glass-border: color-mix(in srgb, var(--fa-surface) #{$border}, transparent);
+	--glass-highlight: color-mix(in srgb, var(--fa-surface) #{$highlight}, transparent);
 	backdrop-filter: var(--glass-filter);
 	-webkit-backdrop-filter: var(--glass-filter);
-	background: color-mix(in srgb, var(--fa-surface) #{$alpha}, transparent);
-	border: 1px solid color-mix(in srgb, var(--fa-surface) #{$border}, transparent);
-	box-shadow: var(--glass-shadow), inset 0 1px 0 color-mix(in srgb, var(--fa-surface) #{$highlight}, transparent);
+	background: color-mix(in srgb, var(--glass-base) var(--glass-alpha), transparent);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+
+	// Ve tmavém jsou rámeček a hrana ze světla, krytí šestinové
+	:root[data-bs-theme="dark"] & {
+		--glass-alpha: #{$dark-alpha};
+		--glass-border: color-mix(in srgb, #fff #{math.round(math.div($border, 6))}, transparent);
+		--glass-highlight: color-mix(in srgb, #fff #{math.round(math.div($highlight, 6))}, transparent);
+	}
 }
 
 // Plocha uvnitř skleněného panelu; stupeň zaoblení o jeden menší než panel
