@@ -870,6 +870,20 @@ body:has(.quickbar) .table-bottom-scroll {
 	}
 }
 
+// Odkaz ve zprávě (link ze zdroje) - barvu bere z bubliny, čitelný i ve vlastní zprávě na primární barvě
+.quickbar-bubble-link {
+	color: inherit;
+	font-weight: 600;
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 2px;
+
+	&:hover {
+		color: inherit;
+		text-decoration-thickness: 2px;
+	}
+}
+
 .quickbar-message-time {
 	padding: 0 4px;
 	font-size: 11px;

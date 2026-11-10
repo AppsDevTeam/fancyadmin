@@ -7,7 +7,8 @@
 //   todos: { list() → [{ id, text, due?, done }], add(text) → todo, setDone(id, done) }
 //   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials?, contact? }] (od nejnovější zprávy;
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
-//            messages(chatId) → [{ mine, text, time }], send(chatId, text) → message, read(chatId) }
+//            messages(chatId) → [{ mine, text, time, link?: { text, href } }], send(chatId, text) → message, read(chatId) }
+//            link = část textu zprávy jako odkaz (např. jméno pacienta na jeho kartu)
 // Otevřený chat obnovuje projekt voláním refreshQuickbarChat() (polling, push).
 //
 // Na mobilu je v liště i Menu (@quickbarMenu.latte) místo bočního menu a AI se neroztahuje na celou plochu.
@@ -65,6 +66,19 @@ const aiFull = () => state.ai.full && !mobileQuery.matches;
 
 function esc(value) {
 	return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+// Text zprávy s prvním výskytem link.text jako odkazem; bez shody (text se mezitím změnil) prostý text
+function messageHtml(message) {
+	const text = String(message.text ?? '');
+	const link = message.link;
+	const at = link?.text ? text.indexOf(link.text) : -1;
+	if (at < 0) {
+		return esc(text);
+	}
+	return esc(text.slice(0, at))
+		+ `<a class="quickbar-bubble-link" href="${esc(link.href)}">${esc(link.text)}</a>`
+		+ esc(text.slice(at + link.text.length));
 }
 
 // Hledání bez ohledu na velikost písmen a diakritiku
@@ -347,7 +361,7 @@ function renderChat() {
 
 	setHtml($thread, state.messages.map((m) => `
 		<div class="quickbar-message ${m.mine ? 'quickbar-message--mine' : ''}">
-			<div class="quickbar-bubble">${esc(m.text)}</div>
+			<div class="quickbar-bubble">${messageHtml(m)}</div>
 			<div class="quickbar-message-time">${esc(m.time)}</div>
 		</div>`).join(''));
 	// Na konec jen při nové zprávě nebo jiné konverzaci - polling by jinak vracel čtenáře dolů
@@ -1140,6 +1154,11 @@ document.addEventListener('click', (e) => {
 	if (chatRow) {
 		const chat = state.chats.find((c) => String(c.id) === chatRow.dataset.quickbarChat);
 		openChat(chat ? chat.id : null);
+		return;
+	}
+	// Odkaz ve zprávě chatu naviguje sám (nette.ajax), lišta se jen zavře
+	if (target.closest('.quickbar-bubble-link')) {
+		close();
 		return;
 	}
 	const result = target.closest('[data-quickbar-result]');
