@@ -86,6 +86,41 @@ $(document).on('click', '.click-line-detail-no-link-im-the-link', (e) => {
 	$(e.currentTarget).find('a').click();
 });
 
+/**
+ * Proklik na detail ve stromovem gridu (DataGridTree.latte). Strom nema tabulku, radek je .datagrid-tree-item-content,
+ * prvni sloupec (obdoba col-name) je .datagrid-tree-item-left a vedle odkazu na detail je v nem odkaz sipky
+ * [data-toggle-tree]. Detail je prvni odkaz v .datagrid-tree-item-left, ktery neni sipka.
+ *
+ * Klik na odkaz (i sipku), tlacitko, input, select nebo akce (.datagrid-tree-item-right-actions) dela dal svoje.
+ * Stejne jako u tabulky click-line-detail ignoruje sloupce s tlacitky, inputy a selecty, click-line-detail-no-link
+ * navic i sloupce s odkazem.
+ *
+ * Odkaz se klika nativne (link.click()), jQuery .click() na <a> nenaviguje.
+ */
+const treeRowSelector = '.datagrid-tree-item:not(.datagrid-tree-header) > .datagrid-tree-item-content';
+
+const openTreeRowDetail = (e, ignoredColumnSelector) => {
+	const $target = $(e.target);
+	if ($target.closest('a, button, input, select, textarea, label, .datagrid-tree-item-right-actions', e.currentTarget).length) {
+		return;
+	}
+	if ($target.closest('.datagrid-tree-item-right-columns-column', e.currentTarget).is(ignoredColumnSelector)) {
+		return;
+	}
+	const link = $(e.currentTarget).find('.datagrid-tree-item-left a:not([data-toggle-tree])').get(0);
+	if (link) {
+		link.click();
+	}
+};
+
+$(document).on('click', '.click-line-detail ' + treeRowSelector, (e) => {
+	openTreeRowDetail(e, ':has(button, input, select)');
+});
+
+$(document).on('click', '.click-line-detail-no-link ' + treeRowSelector, (e) => {
+	openTreeRowDetail(e, ':has(a, button, input, select)');
+});
+
 $(document).on('click', 'a.link-confirmation', function (e) {
 	if (!confirm($(this).data('confirm-text'))){
 		event.preventDefault();
