@@ -58,6 +58,13 @@ trait TabletDevicePresenterTrait
 	 */
 	public function actionSw(): void
 	{
+		// Worker volá signál na téhle adrese ({link takeForm!} = sw?do=takeForm) a Nette pouští
+		// akci před signálem - odpověď odsud by signál přeskočila a worker by místo formuláře
+		// dostal sám sebe (JSON se nepřečte, tablet ukáže jen notifikaci s čekací stránkou)
+		if ($this->getSignal() !== null) {
+			return;
+		}
+
 		/** @var \Nette\Bridges\ApplicationLatte\Template $template */
 		$template = $this->createTemplate();
 		$template->setFile(__DIR__ . '/sw.js.latte');

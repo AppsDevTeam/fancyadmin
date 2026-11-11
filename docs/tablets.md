@@ -142,8 +142,9 @@ class TabletPresenter extends Presenter   // AutowireProperties (kdyby/autowired
 ```
 
 Akce `default` (čekací stránka), `pair` (odkaz z QR), `sw` (service worker), signály
-`registerPush!` a `takeForm!`. Šablony `default.latte` a `pair.latte` (bloky `title` a
-`content`) jde přebít vlastními u presenteru projektu. Do bundlu veřejné části:
+`registerPush!` a `takeForm!`. Signály workeru jdou na adresu `sw` (`sw?do=takeForm`), akce
+`sw` je proto při signálu přeskočí a odpoví až signál (JSON). Šablony `default.latte` a
+`pair.latte` (bloky `title` a `content`) jde přebít vlastními u presenteru projektu. Do bundlu veřejné části:
 
 ```scss
 @use '@fancyadmin/scss/tablet-device';
