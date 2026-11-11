@@ -32,13 +32,37 @@ final class NoticeTranslator implements Translator
 }
 
 
+/**
+ * Presenter s BasePresenterTrait bez DI. Signal a vykresleni volaji tytez metody traitu jako
+ * processSignal() a beforeRender(), jen bez zbytku zivotniho cyklu presenteru.
+ */
 final class NoticePresenter extends Presenter
 {
 	use BasePresenterTrait;
 
+	public ?PersistentNotice $notice = null;
+
 	public function setPrimaryTemplate(bool $primaryTemplate): void
 	{
 		$this->primaryTemplate = $primaryTemplate;
+	}
+
+	/** Ajaxovy signal, ktery muze panel zmenit. */
+	public function ajaxSignal(callable $handler): void
+	{
+		$this->rememberPersistentNoticeBeforeSignal();
+		$handler($this);
+	}
+
+	public function renderPage(): void
+	{
+		$this->loadRenderedPersistentNotice();
+		$this->afterRender();
+	}
+
+	protected function getPersistentNotice(): ?PersistentNotice
+	{
+		return $this->notice;
 	}
 }
 
@@ -109,34 +133,103 @@ test('layout kresli panel ve snippetu jen v primarni sablone', function () {
 });
 
 
-test('ajax, ktery nic neprekresluje, prekresli cele body i s panelem', function () {
+test('navigace ajaxem bez prekresleni prekresli cele body i s panelem', function () {
 	$presenter = new NoticePresenter();
 	$presenter->setPrimaryTemplate(true);
+	$presenter->notice = new PersistentNotice('app.notice');
 
-	$presenter->afterRender();
+	$presenter->renderPage();
 
 	Assert::true($presenter->isControlInvalid('body'));
 	Assert::false($presenter->isControlInvalid('persistentNotice'));
 });
 
 
-test('ajax, ktery prekresluje cast stranky, prekresli i panel', function () {
+test('signal, ktery panel zalozi, ho prekresli i pri castecnem prekresleni', function () {
 	$presenter = new NoticePresenter();
 	$presenter->setPrimaryTemplate(true);
-	$presenter->redrawControl('flashes');
 
-	$presenter->afterRender();
+	$presenter->ajaxSignal(function (NoticePresenter $presenter) {
+		$presenter->notice = new PersistentNotice('app.notice', ['time' => '14:30']);
+		$presenter->redrawControl('flashes');
+	});
+	$presenter->renderPage();
 
 	Assert::true($presenter->isControlInvalid('persistentNotice'));
 	Assert::false($presenter->isControlInvalid('body'));
 });
 
 
-test('mimo prihlasenou cast se panel neprekresluje', function () {
-	$presenter = new NoticePresenter();
-	$presenter->redrawControl('flashes');
+test('signal, ktery panel zrusi nebo zmeni, ho prekresli', function () {
+	foreach ([null, new PersistentNotice('app.notice', ['time' => '15:00']), new PersistentNotice('app.notice', ['time' => '14:30'], ajax: true)] as $after) {
+		$presenter = new NoticePresenter();
+		$presenter->setPrimaryTemplate(true);
+		$presenter->notice = new PersistentNotice('app.notice', ['time' => '14:30']);
 
-	$presenter->afterRender();
+		$presenter->ajaxSignal(function (NoticePresenter $presenter) use ($after) {
+			$presenter->notice = $after;
+			$presenter->redrawControl('flashes');
+		});
+		$presenter->renderPage();
+
+		Assert::true($presenter->isControlInvalid('persistentNotice'));
+	}
+});
+
+
+/**
+ * Rozbaleni vetve stromu gridu (getChildren) vlozi kazdy snippet odpovedi mezi radky jako polozku
+ * stromu. Panel, ktery se nezmenil, v odpovedi byt nesmi.
+ */
+test('castecne prekresleni bez zmeny panelu panel neprekresli', function () {
+	$presenter = new NoticePresenter();
+	$presenter->setPrimaryTemplate(true);
+	$presenter->notice = new PersistentNotice('app.notice', ['time' => '14:30'], link: '/portal?do=send&_sec=abc', linkLabel: 'app.sendNow');
+
+	$presenter->ajaxSignal(function (NoticePresenter $presenter) {
+		// getPersistentNotice() vraci pokazde novou instanci se stejnymi hodnotami
+		$presenter->notice = new PersistentNotice('app.notice', ['time' => '14:30'], link: '/portal?do=send&_sec=abc', linkLabel: 'app.sendNow');
+		$presenter->redrawControl('items');
+	});
+	$presenter->renderPage();
 
 	Assert::false($presenter->isControlInvalid('persistentNotice'));
+	Assert::false($presenter->isControlInvalid('body'));
+});
+
+
+test('castecne prekresleni bez signalu panel neprekresli', function () {
+	$presenter = new NoticePresenter();
+	$presenter->setPrimaryTemplate(true);
+	$presenter->notice = new PersistentNotice('app.notice');
+	$presenter->redrawControl('flashes');
+
+	$presenter->renderPage();
+
+	Assert::false($presenter->isControlInvalid('persistentNotice'));
+});
+
+
+test('mimo prihlasenou cast se panel neprekresluje', function () {
+	$presenter = new NoticePresenter();
+
+	$presenter->ajaxSignal(function (NoticePresenter $presenter) {
+		$presenter->notice = new PersistentNotice('app.notice');
+		$presenter->redrawControl('flashes');
+	});
+	$presenter->renderPage();
+
+	Assert::false($presenter->isControlInvalid('persistentNotice'));
+});
+
+
+test('panel pred signalem si pamatuje processSignal() traitu a CSRF kontrola zustava', function () {
+	$method = new ReflectionMethod(NoticePresenter::class, 'processSignal');
+
+	Assert::contains('rememberPersistentNoticeBeforeSignal', implode('', array_slice(
+		file($method->getFileName()),
+		$method->getStartLine() - 1,
+		$method->getEndLine() - $method->getStartLine() + 1,
+	)));
+	Assert::true(method_exists(NoticePresenter::class, 'signalCsrfProcessSignal'));
 });
