@@ -12,5 +12,6 @@ interface TabletQuery extends BaseQuery
 {
 	public function byPairingTokenHash(string $hash): static;
 	public function byDeviceSecretHash(string $hash): static;
+	public function byPaired(): static;
 	public function byCanReceiveForms(): static;
 }

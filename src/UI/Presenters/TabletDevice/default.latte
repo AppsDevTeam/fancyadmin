@@ -3,7 +3,8 @@
 {*
   Čekací stránka tabletu (TabletDevicePresenterTrait). Stav (povolení notifikací, čekání)
   přepíná @fancyadmin/js/tablet podle data-tablet-state; formulář po push zprávě otevře
-  service worker (sw.js.latte).
+  service worker (sw.js.latte). S dotazováním (data-poll-seconds) si ho otevřená stránka
+  vyzvedne i sama - proto se i bez notifikací ukazuje, že formulář dorazí.
 *}
 {block content}
 
@@ -13,6 +14,8 @@
 		data-sw-url="{link sw}"
 		data-sw-scope="{$swScope}"
 		data-register-url="{link registerPush!}"
+		data-take-form-url="{link takeForm!}"
+		data-poll-seconds="{$pollInterval}"
 		data-tablet-state="loading">
 		<span class="tablet-device-icon is-success"><i class="fa-solid fa-tablet-screen-button"></i></span>
 		<h1>{$tablet->getName()}</h1>
@@ -38,6 +41,8 @@
 		<div class="tablet-state tablet-state-error">
 			<p class="mt-3 mb-0">{_fcadmin.tablets.device.error}</p>
 		</div>
+		{* Bez notifikací formulář přijde jen na otevřenou stránku (dotazování) *}
+		<p n:if="$pollInterval > 0" class="tablet-polling-hint mt-3 mb-0">{_fcadmin.tablets.device.pollingHint}</p>
 	</div>
 {else}
 	<div class="tablet-device">

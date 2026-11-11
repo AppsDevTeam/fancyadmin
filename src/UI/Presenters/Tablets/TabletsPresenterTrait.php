@@ -85,6 +85,12 @@ trait TabletsPresenterTrait
 		$this['tabletGrid']->getGrid()->reload();
 	}
 
+	/** Dotazování čekací stránky (fancyadmin: tablet: pollInterval) - formulář dorazí i bez notifikací */
+	public function isTabletPollingEnabled(): bool
+	{
+		return $this->_tabletService->getPollInterval() > 0;
+	}
+
 	/** Párování, odpojení a úpravy - projekt přepíše podle svých oprávnění */
 	public function canEditTablets(): bool
 	{

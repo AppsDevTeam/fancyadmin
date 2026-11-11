@@ -53,6 +53,18 @@
 	}
 }
 
+// Dotazování: bez notifikací formulář dorazí jen na otevřenou stránku - říct to tam, kde
+// stránka jinak hlásí jen potíž s notifikacemi (u ready a loading to není potřeba)
+.tablet-polling-hint {
+	display: none;
+}
+
+@each $state in permission, denied, unsupported, error {
+	[data-tablet-state="#{$state}"] .tablet-polling-hint {
+		display: block;
+	}
+}
+
 // Po odeslání formuláře - odkaz zpět na čekací stránku (tablet.js na ni sám přejde)
 .tablet-return {
 	margin-top: 1.5rem;

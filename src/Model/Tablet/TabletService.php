@@ -25,6 +25,11 @@ use Tracy\Debugger;
  * cookie tabletu) a otevře ho na čekací stránce, nebo ukáže notifikaci. Odkaz tak nejde
  * přes push službu prohlížeče.
  *
+ * Záložní dotazování: otevřená čekací stránka se na čekající formulář ptá i sama (každých
+ * $pollInterval sekund, tablet.js) a přitom o sobě dává vědět (markSeen). Formulář tak dorazí
+ * i na tablet bez notifikací (starý prohlížeč, zakázané notifikace, iPad bez stránky na
+ * ploše) nebo když se push ztratí - stačí, že na něm čekací stránka svítí.
+ *
  * Odkaz na formulář patří projektu. Ten ho má svázat s tabletem (getCurrentTablet() na
  * stránce formuláře) a zneplatnit ho v $onRelease - tablet se vrátil na čekací stránku
  * nebo byl odpojený, takže to, co mu bylo posláno, už nemá jít otevřít (historie prohlížeče,
@@ -36,6 +41,15 @@ class TabletService
 
 	/** Jak dlouho si tablet může odeslaný formulář vyzvednout (zhasnutý, chvíli offline) */
 	public const string PENDING_FORM_LIFETIME = '+10 minutes';
+
+	/** Výchozí rozestup dotazů čekací stránky (s), viz fancyadmin: tablet: pollInterval */
+	public const int DEFAULT_POLL_INTERVAL = 5;
+
+	/** Kolik rozestupů dotazování smí čekací stránka mlčet, než ji přestaneme mít za otevřenou */
+	private const int ONLINE_POLL_COUNT = 3;
+
+	/** Rezerva na pomalou síť a přibrzděné časovače prohlížeče (s) */
+	private const int ONLINE_GRACE = 10;
 
 	private const string COOKIE_EXPIRE = '+5 years';
 
@@ -53,12 +67,50 @@ class TabletService
 		private readonly string $cookieName = 'fancyadmin_tablet',
 		/** Cesta cookie = rozsah service workeru: musí pokrýt čekací stránku i stránky formulářů */
 		private readonly string $cookiePath = '/',
+		/** Rozestup dotazů čekací stránky na čekající formulář (s), 0 = jen push */
+		private readonly int $pollInterval = self::DEFAULT_POLL_INTERVAL,
 	) {
 	}
 
 	public function getCookiePath(): string
 	{
 		return $this->cookiePath;
+	}
+
+	/** Rozestup dotazů čekací stránky (s), 0 = dotazování je vypnuté a formuláře chodí jen přes push */
+	public function getPollInterval(): int
+	{
+		return max(0, $this->pollInterval);
+	}
+
+	/**
+	 * Čekací stránka se právě zeptala na formulář (dotazování) - tablet ji má otevřenou.
+	 * Čas se zapisuje nejvýš jednou za rozestup dotazování, ať dotaz bez změny nepíše do DB.
+	 */
+	public function markSeen(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): void
+	{
+		$lastSeenAt = $tablet->getLastSeenAt();
+		if ($lastSeenAt !== null && $lastSeenAt > $now->modify('-' . max(1, $this->getPollInterval()) . ' seconds')) {
+			return;
+		}
+
+		$tablet->setLastSeenAt($now);
+		$this->em->flush();
+	}
+
+	/**
+	 * Má tablet otevřenou čekací stránku? Pozná se podle dotazování, bez něj (pollInterval 0)
+	 * se to zjistit nedá a vrací false.
+	 */
+	public function isWaitingPageOpen(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): bool
+	{
+		$interval = $this->getPollInterval();
+		$lastSeenAt = $tablet->getLastSeenAt();
+		if ($interval === 0 || !$tablet->isPaired() || $lastSeenAt === null) {
+			return false;
+		}
+
+		return $lastSeenAt >= $now->modify('-' . ($interval * self::ONLINE_POLL_COUNT + self::ONLINE_GRACE) . ' seconds');
 	}
 
 	/** Nový párovací token - vrací ho jen tady (do QR), předchozí token tabletu tím propadne */
@@ -203,36 +255,63 @@ class TabletService
 	}
 
 	/**
-	 * Odeslání odkazu na formulář do tabletu. Vrací chybu pro obsluhu, null = odesláno.
+	 * Odeslání odkazu na formulář do tabletu. Vrací hlášku pro obsluhu, null = odesláno.
 	 * Neplatný odběr (tablet odvolal notifikace) se z tabletu smaže.
+	 *
+	 * S dotazováním (pollInterval > 0) formulář čeká i na tablet, kterému push nejde poslat -
+	 * vyzvedne si ho otevřená čekací stránka. Když ji tablet otevřenou nemá, vrátí se hláška,
+	 * ať ji obsluha otevře; formulář přitom čeká dál (PENDING_FORM_LIFETIME), neposílá se znovu.
 	 */
 	public function sendForm(Tablet $tablet, string $url, string $formName, \DateTimeImmutable $now = new \DateTimeImmutable()): ?string
 	{
+		$name = ['name' => $tablet->getName()];
+		$polling = $this->getPollInterval() > 0;
 		$endpoint = $tablet->getPushEndpoint();
-		if (!$tablet->isPaired() || $endpoint === null || $endpoint === '') {
-			return $this->translator->translate('fcadmin.tablets.messages.notificationsDisabled', ['name' => $tablet->getName()]);
+		$push = $endpoint !== null && $endpoint !== '';
+
+		if (!$tablet->isPaired() || (!$push && !$polling)) {
+			return $this->translator->translate('fcadmin.tablets.messages.notificationsDisabled', $name);
 		}
-		if (!$this->webPushSender->isConfigured()) {
-			Debugger::log(sprintf('Chybí klíč VAPID (fancyadmin: webPush: vapidPrivateKey), formulář %s do tabletu %s neodešel.', $formName, $tablet->getName()), 'webpush');
-			return $this->translator->translate('fcadmin.tablets.messages.pushNotConfigured');
+		if ($push && !$this->webPushSender->isConfigured()) {
+			Debugger::log(sprintf('Chybí klíč VAPID (fancyadmin: webPush: vapidPrivateKey), formulář %s do tabletu %s neodešel přes push.', $formName, $tablet->getName()), 'webpush');
+			if (!$polling) {
+				return $this->translator->translate('fcadmin.tablets.messages.pushNotConfigured');
+			}
+			$push = false;
 		}
+
+		// Než se uloží čekající formulář: svítí na tabletu čekací stránka?
+		$waitingPageOpen = $this->isWaitingPageOpen($tablet, $now);
 
 		// Odkaz čeká u nás, push jen probudí tablet, aby si ho vyzvedl
 		$tablet->setPendingForm($url, mb_substr($formName, 0, 255), $now->modify(self::PENDING_FORM_LIFETIME));
 		$this->em->flush();
 
-		try {
-			if (!$this->webPushSender->send($endpoint)) {
-				$tablet->setPushEndpoint(null)->setPendingForm(null, null, null);
+		if ($push) {
+			try {
+				if ($this->webPushSender->send($endpoint)) {
+					return null;
+				}
+
+				// Odběr už neplatí - bez dotazování formulář nemá kdo vyzvednout
+				$tablet->setPushEndpoint(null);
+				if (!$polling) {
+					$tablet->setPendingForm(null, null, null);
+				}
 				$this->em->flush();
-				return $this->translator->translate('fcadmin.tablets.messages.subscriptionExpired', ['name' => $tablet->getName()]);
+				if (!$polling) {
+					return $this->translator->translate('fcadmin.tablets.messages.subscriptionExpired', $name);
+				}
+			} catch (\Throwable $e) {
+				Debugger::log($e, 'webpush');
+				if (!$polling) {
+					return $this->translator->translate('fcadmin.tablets.messages.sendFailed');
+				}
 			}
-		} catch (\Throwable $e) {
-			Debugger::log($e, 'webpush');
-			return $this->translator->translate('fcadmin.tablets.messages.sendFailed');
 		}
 
-		return null;
+		// Push nedorazil (nebo ho tablet nemá) - formulář si vyzvedne otevřená čekací stránka
+		return $waitingPageOpen ? null : $this->translator->translate('fcadmin.tablets.messages.waitingPageClosed', $name);
 	}
 
 	/** 256 bitů z CSPRNG v base64url (do URL i cookie bez escapování) */

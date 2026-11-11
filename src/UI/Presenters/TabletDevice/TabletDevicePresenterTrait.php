@@ -17,6 +17,9 @@ use Nette\Http\IResponse;
  * formulář vyzvedne (takeForm!) a otevře ho, nebo ukáže notifikaci. Na tabletu, který drží
  * zákazník, tak není přihlášený žádný účet.
  *
+ * Záložní dotazování: otevřená čekací stránka volá takeForm! i sama (fancyadmin: tablet:
+ * pollInterval), takže formulář dorazí i bez notifikací nebo když se push ztratí.
+ *
  * Projekt: presenter s vlastním layoutem (blok content, define title) a routou v rozsahu
  * cookie tabletu (fancyadmin: tablet: cookiePath), na stránce JS `@fancyadmin/js/tablet`.
  * Šablony jde přebít vlastními (default.latte, pair.latte u presenteru projektu).
@@ -28,6 +31,14 @@ trait TabletDevicePresenterTrait
 
 	public function actionDefault(): void
 	{
+		// Signály čekací stránky (registerPush!, takeForm! při dotazování) jdou na její adresu
+		// a Nette pouští akci před signálem. Dotaz na formulář ale není otevření čekací stránky:
+		// returnToWaiting() by tablet znovu uvolnil ($onRelease) a projekt by zneplatnil odkaz,
+		// který si mezitím vyzvedl service worker po push zprávě.
+		if ($this->getSignal() !== null) {
+			return;
+		}
+
 		$tablet = $this->_tabletService->getCurrentTablet();
 		if ($tablet !== null) {
 			$this->_tabletService->returnToWaiting($tablet);
@@ -37,6 +48,8 @@ trait TabletDevicePresenterTrait
 		// Bez klíče VAPID (testy) se tablet k odběru nepřihlásí a ukáže chybu
 		$this->template->vapidPublicKey = $this->_webPushSender->isConfigured() ? $this->_webPushSender->getPublicKey() : null;
 		$this->template->swScope = $this->_tabletService->getCookiePath();
+		// Rozestup dotazů čekací stránky na čekající formulář (s), 0 = jen push
+		$this->template->pollInterval = $this->_tabletService->getPollInterval();
 		$this->setTabletDeviceTemplateFile(__DIR__ . '/default.latte');
 	}
 
@@ -92,10 +105,16 @@ trait TabletDevicePresenterTrait
 		$this->sendJson(['ok' => true]);
 	}
 
-	/** Service worker po push zprávě: odeslaný formulář (jen jednou), null = nic nečeká */
+	/**
+	 * Odeslaný formulář (jen jednou), null = nic nečeká. Ptá se service worker po push zprávě
+	 * a čekací stránka při dotazování (POST poll=1) - ta tím zároveň hlásí, že je otevřená.
+	 */
 	public function handleTakeForm(): void
 	{
 		$tablet = $this->requirePostFromTablet();
+		if ($this->getHttpRequest()->getPost('poll') !== null) {
+			$this->_tabletService->markSeen($tablet);
+		}
 		$this->sendJson(['ok' => true, 'form' => $this->_tabletService->takePendingForm($tablet)]);
 	}
 

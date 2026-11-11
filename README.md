@@ -974,6 +974,8 @@ Bez hubu (`NullPush`, výchozí) stránky pollují jako dřív. Návod v `docs/p
 ### Tablety pro vyplnění a podpis formulářů (`TabletService`, `tablet.js`)
 
 Tablet se jednou spáruje QR kódem a pak mu formuláře chodí přes Web Push (VAPID, bez Firebase).
+Otevřená čekací stránka se na formulář navíc ptá sama (záložní dotazování, `tablet: pollInterval`),
+takže dorazí i na tablet bez notifikací.
 Správa tabletů (`TabletsPresenterTrait`), čekací stránka tabletu (`TabletDevicePresenterTrait`)
 se service workerem a vázání odkazu na tablet. Návod v `docs/tablets.md`.
 

@@ -52,7 +52,7 @@ trait TabletTrait
 	#[ORM\Column(nullable: true)]
 	protected ?\DateTimeImmutable $pairedAt = null;
 
-	/** Kdy tablet naposledy otevřel čekací stránku */
+	/** Kdy tablet naposledy otevřel čekací stránku nebo se z ní zeptal na formulář (dotazování) */
 	#[ORM\Column(nullable: true)]
 	protected ?\DateTimeImmutable $lastSeenAt = null;
 
@@ -147,7 +147,11 @@ trait TabletTrait
 		return $this->pendingFormExpiresAt;
 	}
 
-	/** Spárovaný tablet s povolenými notifikacemi - jen na ten jde poslat formulář */
+	/**
+	 * Spárovaný tablet s povolenými notifikacemi - formulář ho probudí push zprávou. Bez
+	 * notifikací jde formulář poslat jen s dotazováním (fancyadmin: tablet: pollInterval)
+	 * a dorazí jen na otevřenou čekací stránku, viz TabletService::sendForm().
+	 */
 	public function canReceiveForms(): bool
 	{
 		return $this->isPaired() && $this->pushEndpoint !== null;
