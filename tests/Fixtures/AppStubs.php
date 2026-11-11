@@ -96,6 +96,11 @@ namespace ADT\FancyAdmin\Tests\Fixtures {
 			return true;
 		}
 
+		public function canSelectAccount(): bool
+		{
+			return true;
+		}
+
 		public function isLoggedIn(): bool
 		{
 			return $this->isLoggedIn;

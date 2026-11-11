@@ -14,8 +14,12 @@
                         <img src="{$user->getIdentity()->getGravatar()}" alt="gravatar" />
                     </div>
                     <div class="col-auto">
-                        <div>{$user->getIdentity()->getFirstName()}</div>
-                        <div>{$user->getIdentity()->getEmail()}</div>
+                        {if $userMenu->getHeaderLines() !== null}
+                            <div n:foreach="$userMenu->getHeaderLines() as $line">{$line}</div>
+                        {else}
+                            <div>{$user->getIdentity()->getFirstName()}</div>
+                            <div>{$user->getIdentity()->getEmail()}</div>
+                        {/if}
                     </div>
                 </div>
             </li>

@@ -563,6 +563,10 @@ class SecurityUser extends \ADT\DoctrineAuthenticator\SecurityUser
 
 **Důležité:** Rozšiřuje `ADT\DoctrineAuthenticator\SecurityUser` (ne `Nette\Security\User` přímo), protože ten má kompatibilní (ne-final) `getAuthorizator()`.
 
+Metody rozhraní `SecurityUser` (`isAllowedFullDataAclResource()`, `isMultiTenant()`,
+`canSelectAccount()`…) implementuje `SecurityUserTrait`. Vlastní implementace bez traitu
+(např. testovací stub) je musí doplnit sama.
+
 ---
 
 ## 9. Security — Permission
@@ -883,6 +887,49 @@ jako zákaz (viz sekce 16).
 > Entita `Account`, `AccountQuery`, `AccountGrid`, `AccountForm`, presenter `Accounts`
 > ani routovací parametr `selectedAccount` se nemění. URL se mění z `/<id>/account`
 > na `/<id>/profile`; migrace nejsou potřeba.
+
+### Menu (`NavbarMenuFactory`, `UserMenuFactory`)
+
+Factory menu modulu (`<modul>\Presenters\NavbarMenuFactory`, `UserMenuFactory`) skládá
+`AuthPresenterTrait` přes DI kontejner (`Container::createInstance()`), takže si v konstruktoru
+může injectnout služby — přihlášeného uživatele, překladač… Factory bez konstruktoru vznikne
+stejně jako dřív přes `new`.
+
+Hlavička uživatelského menu ukazuje vedle avataru jméno a e-mail uživatele. Projekt ji může
+nahradit vlastními řádky přes `UserMenu::setHeaderLines()`: první řádek je zvýrazněný titulek,
+ostatní jsou pod ním. Texty se vypisují tak, jak jsou — překlad udělá factory. `null` (výchozí)
+nechá jméno a e-mail.
+
+```php
+class UserMenuFactory implements \ADT\FancyAdmin\Model\Menu\UserMenuFactory
+{
+	public function __construct(
+		private readonly SecurityUser $securityUser,
+		private readonly Translator $translator,
+	) {
+	}
+
+	public function create(): UserMenu
+	{
+		$userMenu = new UserMenu();
+
+		// Uživatel s jediným účtem nemá výběr účtu - ukážeme mu zákaznické číslo
+		if (!$this->securityUser->canSelectAccount()) {
+			$userMenu->setHeaderLines([
+				$this->securityUser->getIdentity()->getFirstName(),
+				$this->translator->translate('app.customerNumber'),
+				$this->securityUser->getIdentity()->getSelectedAccount()->getCustomerNumber(),
+			]);
+		}
+
+		return $userMenu;
+	}
+}
+```
+
+`SecurityUser::canSelectAccount()` říká, jestli uživatel vidí v layoutu výběr účtu: v multi-tenant
+projektu, když má víc účtů (včetně podúčtů) nebo smí do všech účtů (plná data, backoffice).
+Layout se podle ní řídí taky, takže se podmínka nerozejde.
 
 ### Kam se uživatel vrátí po přihlášení
 

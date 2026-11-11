@@ -319,7 +319,16 @@ test('uzivatelske menu ma vychozi polozky zapnute', function () {
 	Assert::true($menu->isAddMyProfileMenuItem());
 	Assert::true($menu->isFirebaseMenuItem());
 	Assert::null($menu->getProfileLink());
+	Assert::null($menu->getHeaderLines());
 	Assert::same([], $menu->getMenuItems());
+});
+
+
+test('hlavicka uzivatelskeho menu bere radky od projektu', function () {
+	$menu = new UserMenu()->setHeaderLines([2 => 'Jan', 5 => 'Zakaznicke cislo', 7 => '542-354-1912']);
+
+	Assert::same(['Jan', 'Zakaznicke cislo', '542-354-1912'], $menu->getHeaderLines());
+	Assert::null($menu->setHeaderLines(null)->getHeaderLines());
 });
 
 
