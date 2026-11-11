@@ -980,6 +980,7 @@ abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI
 			['time' => $scheduledAt->format('H:i')],
 			link: $this->link('sendCatalogueUpdate!'),
 			linkLabel: 'app.catalogueUpdate.panel.sendNow',
+			expiresAt: $scheduledAt,
 		);
 	}
 }
@@ -998,7 +999,7 @@ abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI
   - Ajax, který překresluje jen část stránky (přetažený řádek gridu, uložený boční panel),
     překreslí v `BasePresenterTrait::afterRender()` snippet `persistentNotice` jen tehdy,
     když signál panel změnil. Panel před signálem a při vykreslení se porovnává hodnotově
-    (text, parametry, odkaz, popisek, `ajax`), takže `getPersistentNotice()` může vracet
+    (text, parametry, odkaz, popisek, `ajax`, `expiresAt`), takže `getPersistentNotice()` může vracet
     pokaždé novou instanci.
   - Nezměněný panel se nepřekresluje schválně. Některé částečné odpovědi nejsou stránka:
     strom gridu vloží každý snippet odpovědi `getChildren` mezi řádky jako položku stromu.
@@ -1006,6 +1007,14 @@ abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI
     spadlo, takže by podkategorie nešly přetahovat.
   - Funguje to jen tehdy, když běží `afterRender()` i `processSignal()` z traitu. Projekt,
     který je přepisuje, je musí zavolat.
+- **Platnost** (`expiresAt`, nepovinná): okamžik, kdy panel přestane platit. Na otevřené
+  stránce panel v ten okamžik zmizí sám, i když se stránka mezitím nepřekreslí – jinak by
+  zůstal, dokud ji uživatel neobnoví nebo nepřejde jinam. Šablona ho vypíše jako
+  `data-expires-at` (unix čas v ms, nezávislý na časové zóně) a `assets/js/persistentNotice.js`
+  panel odstraní. Čas kontroluje po načtení stránky, po každém ajaxu a po návratu na kartu
+  (časovač v neaktivní kartě prohlížeč zdržuje). Server o vypršení neví: hodí se tam, kde
+  stav k danému času sám skončí (úloha fronty odešle změny), a po dalším vykreslení ho
+  `getPersistentNotice()` stejně nevrátí.
 - **Signál z odkazu** může po akci při ajaxu překreslit `flashes`, jinak `redirect('this')`.
   Panel se v obou případech obnoví sám.
 - **Vzhled** je třída `.persistent-notice` v `assets/scss/_layout.scss`: bílé pozadí, stín

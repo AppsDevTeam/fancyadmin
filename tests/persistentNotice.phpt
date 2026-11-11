@@ -118,6 +118,23 @@ test('odkaz javascript: Latte do href nepusti', function () {
 });
 
 
+test('platnost se vykresli jako unix cas v ms, bez ni atribut chybi', function () {
+	$html = renderNotice(new PersistentNotice('app.notice', expiresAt: new DateTimeImmutable('2026-11-11 14:30:00 UTC')));
+
+	Assert::contains('data-expires-at="' . (1794407400 * 1000) . '"', $html);
+	Assert::notContains('data-expires-at', renderNotice(new PersistentNotice('app.notice')));
+});
+
+
+test('panely se stejnou platnosti se rovnaji, s jinou ne', function () {
+	$at = new DateTimeImmutable('2026-11-11 14:30:00');
+
+	Assert::true(new PersistentNotice('app.notice', expiresAt: $at) == new PersistentNotice('app.notice', expiresAt: new DateTimeImmutable('2026-11-11 14:30:00')));
+	Assert::false(new PersistentNotice('app.notice', expiresAt: $at) == new PersistentNotice('app.notice', expiresAt: $at->modify('+1 minute')));
+	Assert::false(new PersistentNotice('app.notice', expiresAt: $at) == new PersistentNotice('app.notice'));
+});
+
+
 test('odkaz bez popisku nejde', function () {
 	Assert::exception(
 		fn() => new PersistentNotice('app.notice', link: '/portal?do=send'),

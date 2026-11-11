@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
+use DateTimeInterface;
 use InvalidArgumentException;
 use Nette\HtmlStringable;
 
@@ -23,6 +24,8 @@ final readonly class PersistentNotice
 	 * @param array<string, mixed> $parameters parametry prekladu textu
 	 * @param string|null $link hotova adresa odkazu, napr. `$this->link('sendNow!')`
 	 * @param bool $ajax odkaz se posle ajaxem (trida `ajax`); panel i flash zpravy se pak prekresli samy
+	 * @param DateTimeInterface|null $expiresAt kdy panel prestane platit: na otevrene strance v ten
+	 *     okamzik zmizi sam (assets/js/persistentNotice.js), i kdyz se stranka mezitim neprekresli
 	 */
 	public function __construct(
 		public string|HtmlStringable $message,
@@ -30,6 +33,7 @@ final readonly class PersistentNotice
 		public ?string $link = null,
 		public ?string $linkLabel = null,
 		public bool $ajax = false,
+		public ?DateTimeInterface $expiresAt = null,
 	) {
 		if ($this->link !== null && $this->linkLabel === null) {
 			throw new InvalidArgumentException('PersistentNotice: odkaz potrebuje popisek (linkLabel).');
