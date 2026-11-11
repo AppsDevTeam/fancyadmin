@@ -2,7 +2,8 @@
    persistentNotice kolem nej je v @layout.latte, aby ho BasePresenterTrait::afterRender() mohl prekreslit. *}
 {varType ADT\FancyAdmin\UI\Presenters\PersistentNotice|null $persistentNotice}
 {default $persistentNotice = null}
-<div n:if="$persistentNotice" class="persistent-notice">
+{* data-expires-at je unix cas v milisekundach, nezavisly na casove zone; cte ho assets/js/persistentNotice.js *}
+<div n:if="$persistentNotice" class="persistent-notice" n:attr="data-expires-at => $persistentNotice->expiresAt ? $persistentNotice->expiresAt->getTimestamp() * 1000 : null">
 	{* Html z Nette\Utils\Html se nepreklada ani neescapuje, ostatni je klic prekladu *}
 	<span class="persistent-notice-text">{if $persistentNotice->message instanceof Nette\HtmlStringable}{$persistentNotice->message}{else}{_$persistentNotice->message, $persistentNotice->parameters}{/if}</span>
 	<a n:if="$persistentNotice->link !== null" href="{$persistentNotice->link}" n:class="btn, btn-primary, btn-sm, $persistentNotice->ajax ? ajax">{_$persistentNotice->linkLabel}</a>

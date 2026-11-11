@@ -111,6 +111,7 @@ AdtJsComponents.init('translate', 'Translate');
 //
 // import './netteForm';
 import './flashes';
+import './persistentNotice';
 // import './userDropdown';
 import './tableActionsShadow';
 // import './_datagrid';
