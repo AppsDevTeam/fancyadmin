@@ -83,10 +83,6 @@
 			{include @mobileMenu.latte}
 		{/block}
 
-		{snippet persistentNotice}
-			{include @persistentNotice.latte}
-		{/snippet}
-
 		<div class="container-fluid delay-animate container-main" data-app-container>
 			{if $presenter->getAction() === 'detail'}
 				<nav style="height: 70px" class="d-flex">
@@ -101,6 +97,12 @@
 					</div>
 				</nav>
 			{/if}
+
+			{* Trvaly panel v toku stranky nad obsahem: plovouci by zakryl tlacitka hlavicky stranky
+			   (bez radku s vyberem uctu) nebo spodni navigaci na mobilu. *}
+			{snippet persistentNotice}
+				{include @persistentNotice.latte}
+			{/snippet}
 
 			<div id="content">
 				{include content}

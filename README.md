@@ -955,8 +955,9 @@ Co je kolem toho potřeba vědět:
 
 Na rozdíl od flash zprávy panel nezmizí, dokud platí. Hodí se třeba na hlášku „Změny
 katalogu se do pokladen odešlou v 14:30" s tlačítkem „Odeslat hned". Layout ho kreslí na každé
-stránce přihlášené části portálu (jen v primární šabloně) vpravo nahoře, v řádku s výběrem
-účtu a odkazem zpět. Pod breakpointem `lg` je dole přes celou šířku.
+stránce přihlášené části portálu (jen v primární šabloně) nad obsahem stránky, pod řádkem
+s výběrem účtu nebo odkazem zpět. Je v toku stránky, ne plovoucí: plovoucí panel by bez řádku
+s výběrem účtu zakryl tlačítka hlavičky stránky a na mobilu spodní navigaci.
 
 Panel vrací presenter z `getPersistentNotice()`. Výchozí implementace v `BasePresenterTrait`
 vrací `null`:
@@ -1017,9 +1018,8 @@ abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI
   `getPersistentNotice()` stejně nevrátí.
 - **Signál z odkazu** může po akci při ajaxu překreslit `flashes`, jinak `redirect('this')`.
   Panel se v obou případech obnoví sám.
-- **Vzhled** je třída `.persistent-notice` v `assets/scss/_layout.scss`: bílé pozadí, stín
-  jako flash zpráva, barva textu z `--bs-body-color`. Panel leží pod flash zprávami
-  (`z-index` 998 proti 999).
+- **Vzhled** je třída `.persistent-notice` v `assets/scss/_layout.scss`: bílý pruh přes šířku
+  obsahu, text vlevo, tlačítko vpravo, barva textu z `--bs-body-color`.
 
 ---
 
