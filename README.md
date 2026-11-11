@@ -992,11 +992,20 @@ abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI
   se do ní doplní sám. Odkaz bez `linkLabel` vyhodí výjimku. Odkaz se vykreslí jako
   `btn btn-primary btn-sm`, s `ajax: true` dostane navíc třídu `ajax`.
 - **Překreslení řeší fancyadmin.** `getPersistentNotice()` se volá při každém vykreslení
-  přihlášené části, i ajaxovém. Ajax, který jinak nic nepřekresluje, překreslí celé `body`
-  i s panelem. Ajax, který překresluje jen část stránky (přetažený řádek gridu, uložený
-  boční panel), překreslí v `BasePresenterTrait::afterRender()` navíc snippet
-  `persistentNotice`. Projekt tak `redrawControl()` volat nemusí. Platí to ale jen tehdy,
-  když `afterRender()` z traitu běží, takže projekt, který ho přepisuje, ho musí zavolat.
+  přihlášené části, i ajaxovém, a u ajaxového signálu ještě před ním. Projekt tak
+  `redrawControl()` volat nemusí.
+  - Ajax, který jinak nic nepřekresluje (navigace), překreslí celé `body` i s panelem.
+  - Ajax, který překresluje jen část stránky (přetažený řádek gridu, uložený boční panel),
+    překreslí v `BasePresenterTrait::afterRender()` snippet `persistentNotice` jen tehdy,
+    když signál panel změnil. Panel před signálem a při vykreslení se porovnává hodnotově
+    (text, parametry, odkaz, popisek, `ajax`), takže `getPersistentNotice()` může vracet
+    pokaždé novou instanci.
+  - Nezměněný panel se nepřekresluje schválně. Některé částečné odpovědi nejsou stránka:
+    strom gridu vloží každý snippet odpovědi `getChildren` mezi řádky jako položku stromu.
+    Panel by se tam objevil jako falešná položka a jQuery UI sortable by pak ve stromu
+    spadlo, takže by podkategorie nešly přetahovat.
+  - Funguje to jen tehdy, když běží `afterRender()` i `processSignal()` z traitu. Projekt,
+    který je přepisuje, je musí zavolat.
 - **Signál z odkazu** může po akci při ajaxu překreslit `flashes`, jinak `redirect('this')`.
   Panel se v obou případech obnoví sám.
 - **Vzhled** je třída `.persistent-notice` v `assets/scss/_layout.scss`: bílé pozadí, stín

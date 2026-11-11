@@ -17,13 +17,20 @@ use stdClass;
 trait BasePresenterTrait
 {
 	use PresenterTrait;
-	use SignalCsrfProtection;
+	use SignalCsrfProtection {
+		SignalCsrfProtection::processSignal as signalCsrfProcessSignal;
+	}
 	use FancyAdminInject;
 	use EntityManagerInject;
 	use TranslatorInject;
 	use JsComponentsInject;
 
 	protected bool $primaryTemplate = false;
+
+	/** Trvaly panel tak, jak ho nasel signal, a jak se vykreslil - viz afterRender(). */
+	private ?PersistentNotice $persistentNoticeBeforeSignal = null;
+	private bool $persistentNoticeBeforeSignalKnown = false;
+	private ?PersistentNotice $renderedPersistentNotice = null;
 
 	#[Persistent]
 	public string $backlink = '';
@@ -43,8 +50,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->project = $this->_fancyAdmin->getProject();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
-		// Jen prihlasena cast ma layout, ktery panel kresli - jinde se projekt na nic nepta
-		$this->getTemplate()->persistentNotice = $this->primaryTemplate ? $this->getPersistentNotice() : null;
+		$this->getTemplate()->persistentNotice = $this->loadRenderedPersistentNotice();
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->_jsComponents->setFirebaseLink('setFirebaseTokenLink', $this->getPresenter()->link('setFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
 		$this->_jsComponents->setFirebaseLink('removeFirebaseTokenLink', $this->getPresenter()->link('removeFirebaseToken!', ['firebaseToken' => '__firebaseToken__']));
@@ -175,21 +181,64 @@ trait BasePresenterTrait
 			$this->redrawControl('title');
 			$this->redrawControl('body');
 			$this->redrawControl('modals');
-		} elseif ($this->primaryTemplate) {
+		} elseif ($this->primaryTemplate && $this->isPersistentNoticeChangedBySignal()) {
 			// Ajax, ktery prekresluje jen cast stranky (pretazeny radek gridu, ulozeny bocni panel),
-			// muze panel zalozit i zrusit. Prekresluje se az tady, ne v beforeRender(): tam by
-			// zneplatnil presenter u kazdeho ajaxu a body by se pak neprekreslilo nikdy.
+			// muze panel zalozit i zrusit. Prekresli se ale jen pri zmene: nektere castecne odpovedi
+			// nejsou stranka - strom gridu vlozi kazdy snippet odpovedi getChildren mezi radky jako
+			// polozku stromu, a ta pak rozbije razeni. Prekresluje se az tady, ne v beforeRender():
+			// tam by zneplatnil presenter u kazdeho ajaxu a body by se pak neprekreslilo nikdy.
 			$this->redrawControl('persistentNotice');
 		}
 	}
 
 	/**
+	 * Zapamatuje si trvaly panel pred signalem, aby afterRender() poznal, jestli ho signal zmenil.
+	 * Panel muze zmenit jen signal (i odeslani formulare a akce gridu jsou signaly) a tady uz
+	 * probehl startup() i action*() projektu, takze se getPersistentNotice() vola nad pripravenym
+	 * presenterem stejne jako pri vykresleni.
+	 */
+	public function processSignal(): void
+	{
+		if ($this->getSignal() !== null && $this->isAjax()) {
+			$this->rememberPersistentNoticeBeforeSignal();
+		}
+
+		$this->signalCsrfProcessSignal();
+	}
+
+	/**
 	 * Trvaly panel v layoutu prihlasene casti portalu, viz {@see PersistentNotice}. Vola se
-	 * pri kazdem vykresleni, i ajaxovem.
+	 * pri kazdem vykresleni, i ajaxovem, a u ajaxoveho signalu jeste pred nim.
 	 */
 	protected function getPersistentNotice(): ?PersistentNotice
 	{
 		return null;
+	}
+
+	private function rememberPersistentNoticeBeforeSignal(): void
+	{
+		if ($this->primaryTemplate) {
+			$this->persistentNoticeBeforeSignal = $this->getPersistentNotice();
+			$this->persistentNoticeBeforeSignalKnown = true;
+		}
+	}
+
+	/** Jen prihlasena cast ma layout, ktery panel kresli - jinde se projekt na nic nepta. */
+	private function loadRenderedPersistentNotice(): ?PersistentNotice
+	{
+		$this->renderedPersistentNotice = $this->primaryTemplate ? $this->getPersistentNotice() : null;
+
+		return $this->renderedPersistentNotice;
+	}
+
+	/**
+	 * Hodnotove porovnani (text, parametry, odkaz, popisek, ajax). Odkaz na signal nese token
+	 * `_sec`, ktery je v ramci relace stejny, takze porovnani nerozbije.
+	 */
+	private function isPersistentNoticeChangedBySignal(): bool
+	{
+		return $this->persistentNoticeBeforeSignalKnown
+			&& $this->persistentNoticeBeforeSignal != $this->renderedPersistentNotice;
 	}
 
 	/**
