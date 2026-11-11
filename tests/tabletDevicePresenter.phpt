@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use ADT\DoctrineComponents\Entities\Traits\Identifier;
 use ADT\FancyAdmin\Model\Entities\Tablet;
+use ADT\FancyAdmin\Model\Entities\TabletTrait;
 use ADT\FancyAdmin\Model\Tablet\TabletService;
 use ADT\FancyAdmin\Tests\Fixtures\TestHttpResponse;
 use ADT\FancyAdmin\UI\Presenters\TabletDevice\TabletDevicePresenterTrait;
@@ -42,6 +44,45 @@ final class NoTabletService extends TabletService
 }
 
 
+final class PairedTestTablet implements Tablet
+{
+	use Identifier;
+	use TabletTrait;
+}
+
+
+/** Spárovaný tablet bez DB - zaznamená, že se čekací stránka ohlásila (dotazování) */
+final class PairedTabletService extends TabletService
+{
+	public int $seen = 0;
+
+	public function __construct(private readonly Tablet $tablet)
+	{
+	}
+
+	public function getCurrentTablet(): ?Tablet
+	{
+		return $this->tablet;
+	}
+
+	public function markSeen(Tablet $tablet, DateTimeImmutable $now = new DateTimeImmutable()): void
+	{
+		$this->seen++;
+	}
+
+	/** Dotaz na formulář není otevření čekací stránky - tablet se jím nesmí uvolnit ($onRelease) */
+	public function returnToWaiting(Tablet $tablet, DateTimeImmutable $now = new DateTimeImmutable()): void
+	{
+		throw new LogicException('Signál čekací stránky nesmí tablet vracet na čekací stránku.');
+	}
+
+	public function takePendingForm(Tablet $tablet, DateTimeImmutable $now = new DateTimeImmutable()): ?array
+	{
+		return ['url' => '/klient/formular/1', 'title' => 'Souhlas'];
+	}
+}
+
+
 final class TestTabletDevicePresenter extends Presenter
 {
 	use TabletDevicePresenterTrait;
@@ -73,4 +114,43 @@ test('signál takeForm na adrese workeru vrátí JSON, ne kód workeru', functio
 	Assert::same(['ok' => false], $response->getPayload());
 	Assert::same(400, $httpResponse->code);
 	Assert::notContains('application/javascript', $httpResponse->headers['Content-Type'] ?? '');
+});
+
+
+/** takeForm! na čekací stránce: s poll=1 se ptá stránka (dotazování), bez něj service worker */
+function takeForm(PairedTabletService $service, array $post): JsonResponse
+{
+	$presenter = new TestTabletDevicePresenter();
+	$presenter->injectPrimary(
+		new Request(
+			new UrlScript('https://localhost/klient/tablet?do=takeForm'),
+			post: $post,
+			cookies: [Helpers::StrictCookieName => '1'],
+			method: 'POST',
+		),
+		new TestHttpResponse(),
+	);
+	$presenter->setTabletService($service);
+
+	return $presenter->run(new AppRequest('TabletDevice', 'POST', ['action' => 'default', 'do' => 'takeForm'], $post));
+}
+
+
+test('dotaz čekací stránky vydá formulář a ohlásí, že stránka svítí', function () {
+	$service = new PairedTabletService((new PairedTestTablet())->setName('Recepce'));
+
+	$response = takeForm($service, ['poll' => '1']);
+
+	Assert::same(['ok' => true, 'form' => ['url' => '/klient/formular/1', 'title' => 'Souhlas']], $response->getPayload());
+	Assert::same(1, $service->seen);
+});
+
+
+test('service worker po push zprávě formulář dostane, čekací stránku tím ale neohlásí', function () {
+	$service = new PairedTabletService((new PairedTestTablet())->setName('Recepce'));
+
+	$response = takeForm($service, []);
+
+	Assert::same(['ok' => true, 'form' => ['url' => '/klient/formular/1', 'title' => 'Souhlas']], $response->getPayload());
+	Assert::same(0, $service->seen);
 });

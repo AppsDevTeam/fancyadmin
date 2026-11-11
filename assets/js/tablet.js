@@ -4,6 +4,8 @@
 // - [data-tablet-device]: čekací stránka (TabletDevicePresenterTrait) - povolení notifikací
 //   a přihlášení k odběru Web Push. Formulář, který obsluha pošle, otevře service worker
 //   (sw.js.latte): push ho probudí, formulář si vyzvedne u serveru a otevře ho tady.
+//   Záložní dotazování (data-poll-seconds): otevřená čekací stránka se na formulář ptá i sama,
+//   takže dorazí i bez notifikací (starý prohlížeč, zakázané notifikace) nebo když se push ztratí.
 // - a[data-tablet-return="10"]: stránka po odeslání formuláře - za 10 s zpět na čekací stránku.
 // - [data-tablet-idle-return="<url>"]: stránka formuláře na tabletu - po nečinnosti
 //   (data-tablet-idle-seconds, výchozí 300) zpět na čekací stránku, ať formulář nezůstane
@@ -33,10 +35,102 @@ function waitForActive(registration) {
 	});
 }
 
+// S fungujícími notifikacemi je dotazování jen pojistka pro ztracený push - ptá se řidčeji
+const POLL_SLOWDOWN_WITH_PUSH = 6;
+
+// Jen odkaz na stejný web - nic jiného tablet otevírat nemá (stejně jako service worker)
+function sameOrigin(url) {
+	try {
+		return new URL(url, window.location.origin).origin === window.location.origin;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Záložní dotazování čekací stránky: každých data-poll-seconds sekund (s notifikacemi řidčeji)
+ * se zeptá serveru na odeslaný formulář (takeForm!, cookie tabletu) a otevře ho. Ptá se jen
+ * viditelná stránka - server podle dotazů pozná, že ji tablet má otevřenou. Formulář se vydává
+ * jen jednou, takže ho otevře buď stránka, nebo service worker po push zprávě, ne oba.
+ *
+ * @param navigate otevření formuláře (v testech se podstrkuje)
+ * @returns {{ stop: Function }|null} null = dotazování je vypnuté (data-poll-seconds="0")
+ */
+export function initTabletPolling(element, navigate = (url) => window.location.assign(url)) {
+	const url = element.dataset.takeFormUrl;
+	const interval = Number(element.dataset.pollSeconds || 0) * 1000;
+	if (!url || !(interval > 0)) {
+		return null;
+	}
+
+	let timer = null;
+	let busy = false;
+	let stopped = false;
+
+	const schedule = () => {
+		clearTimeout(timer);
+		if (!stopped) {
+			timer = setTimeout(poll, interval * (element.dataset.tabletState === 'ready' ? POLL_SLOWDOWN_WITH_PUSH : 1));
+		}
+	};
+
+	// Tablet se probudil nebo se na stránku někdo vrátil - zeptat se hned, ne až za rozestup
+	const onVisibilityChange = () => {
+		if (document.visibilityState === 'visible') {
+			poll();
+		}
+	};
+
+	const stop = () => {
+		stopped = true;
+		clearTimeout(timer);
+		document.removeEventListener('visibilitychange', onVisibilityChange);
+	};
+
+	async function poll() {
+		if (stopped || busy || document.visibilityState !== 'visible') {
+			schedule();
+			return;
+		}
+
+		busy = true;
+		try {
+			const body = new FormData();
+			body.append('poll', '1');
+			const response = await fetch(url, { method: 'POST', body, credentials: 'same-origin' });
+			if (response.status === 400) {
+				// Tablet mezitím někdo odpojil nebo spároval jinde - stránka to po načtení řekne
+				stop();
+				window.location.reload();
+				return;
+			}
+			const form = response.ok ? (await response.json()).form : null;
+			if (form && sameOrigin(form.url)) {
+				stop();
+				navigate(form.url);
+				return;
+			}
+		} catch {
+			// Bez sítě - další pokus za chvíli
+		} finally {
+			busy = false;
+		}
+		schedule();
+	}
+
+	document.addEventListener('visibilitychange', onVisibilityChange);
+	poll();
+
+	return { stop };
+}
+
 export async function initTabletDevice(element) {
 	const setState = (state) => {
 		element.dataset.tabletState = state;
 	};
+
+	// Dotazování běží i bez podpory notifikací - právě pro takové tablety tu je
+	initTabletPolling(element);
 
 	if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
 		setState('unsupported');

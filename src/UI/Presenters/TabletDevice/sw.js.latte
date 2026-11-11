@@ -3,6 +3,8 @@
 // probudí tablet. Odeslaný formulář si worker vyzvedne u serveru (takeForm!, cookie tabletu)
 // a otevře ho na čekací stránce, když je vidět; jinak ukáže notifikaci, klepnutí ho otevře.
 // Prohlížeče chtějí ke každé push zprávě viditelnou reakci - proto i bez formuláře notifikace.
+// Výjimka: formulář si mezitím vyzvedla sama čekací stránka (dotazování, tablet.js) a svítí -
+// reakce je vidět na ní a notifikace by na tabletu jen zůstala viset.
 
 const TAKE_FORM_URL = {link takeForm!};
 
@@ -39,10 +41,11 @@ async function handlePush() {
 		// Bez sítě - notifikace níž stránku aspoň otevře
 	}
 
+	const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+	const visible = clients.find((c) => c.visibilityState === 'visible' && 'navigate' in c);
+
 	if (form && sameOrigin(form.url)) {
 		// Čekací stránka svítí - formulář rovnou na ní, bez notifikace
-		const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-		const visible = clients.find((c) => c.visibilityState === 'visible' && 'navigate' in c);
 		if (visible) {
 			try {
 				await visible.navigate(form.url);
@@ -51,6 +54,9 @@ async function handlePush() {
 				// Nepovedlo se - notifikace
 			}
 		}
+	} else if (!form && visible) {
+		// Nic nečeká a tablet svítí - formulář už otevřela čekací stránka sama (dotazování)
+		return;
 	}
 
 	await self.registration.showNotification(form ? (form.title || {_fcadmin.tablets.device.notificationForm}) : {_fcadmin.tablets.device.title}, {
