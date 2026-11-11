@@ -14,10 +14,33 @@ class UserMenu
 
 	protected ?string $profileLink = null;
 
+	/** @var string[]|null */
+	protected ?array $headerLines = null;
+
 	/** @var UserMenuItem[] */
 	protected array $menuItems = [];
 
 	protected LinkGenerator $linkGenerator;
+
+	/**
+	 * Řádky v hlavičce menu vedle avataru - první je zvýrazněný titulek, ostatní pod ním.
+	 * Texty se vypisují tak, jak jsou (bez překladu). Null = výchozí jméno a e-mail uživatele.
+	 *
+	 * @param string[]|null $headerLines
+	 */
+	public function setHeaderLines(?array $headerLines): self
+	{
+		$this->headerLines = $headerLines !== null ? array_values($headerLines) : null;
+		return $this;
+	}
+
+	/**
+	 * @return string[]|null
+	 */
+	public function getHeaderLines(): ?array
+	{
+		return $this->headerLines;
+	}
 
 	public function addMenuItem(UserMenuItem $menuItem): self
 	{

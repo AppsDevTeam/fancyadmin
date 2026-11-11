@@ -63,6 +63,16 @@ final class TestSecurityUser implements SecurityUser
 		return $this->isMultiTenant;
 	}
 
+	public function canSelectAccount(): bool
+	{
+		return $this->isMultiTenant
+			&& (
+				$this->isAllowedFullDataAclResource()
+				|| $this->isAllowedBackoffice()
+				|| count($this->identity?->getAccounts() ?? []) + count($this->identity?->getSubaccounts() ?? []) > 1
+			);
+	}
+
 	public function isLoggedIn(): bool
 	{
 		return $this->isLoggedIn;

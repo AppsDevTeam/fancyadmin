@@ -230,3 +230,52 @@ test('admin projde vzdy', function () {
 
 	Assert::noError(fn() => $authenticator->callValidateIdentity(new TestIdentity()->addRole(new TestAclRole('admin', isAdmin: true))));
 });
+
+
+function createSelectingUser(TestIdentity $identity, array $allowed = [], bool $multiTenant = true): TestSecurityUserTraitHost
+{
+	$user = new TestSecurityUserTraitHost($identity, createAuthorizator($allowed));
+	$user->setFullDataAclResource(AclResourceNameEnum::FULL_DATA);
+	$user->setBackofficeAclResource(AclResourceNameEnum::BACKOFFICE_DASHBOARD);
+	$user->setMultiTenant($multiTenant);
+
+	return $user;
+}
+
+
+test('vyber uctu nema uzivatel s jedinym uctem', function () {
+	$identity = new TestIdentity();
+	new TestProfile($identity, new TestAccount('Firma'));
+
+	Assert::false(createSelectingUser($identity)->canSelectAccount());
+});
+
+
+test('vyber uctu ma uzivatel s vic ucty nebo s subucty', function () {
+	$withTwoAccounts = new TestIdentity();
+	new TestProfile($withTwoAccounts, new TestAccount('Firma'));
+	new TestProfile($withTwoAccounts, new TestAccount('Druha firma'));
+
+	$withSubaccount = new TestIdentity();
+	new TestProfile($withSubaccount, new TestAccount('Holding')->addSubaccount(new TestAccount('Pobocka')));
+
+	Assert::true(createSelectingUser($withTwoAccounts)->canSelectAccount());
+	Assert::true(createSelectingUser($withSubaccount)->canSelectAccount());
+});
+
+
+test('vyber uctu ma uzivatel s pravem do vsech uctu i s jedinym uctem', function () {
+	$identity = new TestIdentity()->addRole(new TestAclRole('podpora'));
+	new TestProfile($identity, new TestAccount('Firma'));
+
+	Assert::true(createSelectingUser($identity, ['podpora' => ['fullData']])->canSelectAccount());
+});
+
+
+test('single-tenant vyber uctu nema', function () {
+	$identity = new TestIdentity();
+	new TestProfile($identity, new TestAccount('Firma'));
+	new TestProfile($identity, new TestAccount('Druha firma'));
+
+	Assert::false(createSelectingUser($identity, multiTenant: false)->canSelectAccount());
+});

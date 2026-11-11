@@ -1369,7 +1369,7 @@ iframe {
 					line-height: normal;
 				}
 
-				> div:last-child {
+				> div:not(:first-child) {
 					font-size: 14px;
 					font-weight: 400;
 					line-height: normal;
