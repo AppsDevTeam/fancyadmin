@@ -148,6 +148,10 @@ function render() {
 		return;
 	}
 
+	// Šířka zavřené lišty pro animaci roztažení na mobilu (_quickbar.scss)
+	if (state.open === 'search' && !$bar.classList.contains('quickbar--open-search')) {
+		$bar.style.setProperty('--quickbar-closed-width', `${$bar.offsetWidth}px`);
+	}
 	$bar.classList.toggle('quickbar--open-search', state.open === 'search');
 	$bar.classList.toggle('quickbar--wide', state.open === 'search' || state.open === 'ai');
 	document.querySelector('.quickbar-overlay').hidden = state.open === null;

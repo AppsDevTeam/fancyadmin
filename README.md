@@ -3032,8 +3032,9 @@ může dodat backend polem `unread` u konverzace (stejně jako náhled `preview`
 **Mobil** (pod 576 px, zlom `sm`) — boční menu je skryté a spodní mobilní menu (`@mobileMenu.latte`) se s lištou
 nevykresluje. Navigaci nahrazuje tlačítko **Menu** vlevo v liště: okno `@quickbarMenu.latte` má položky bočního
 menu (podmenu se rozbaluje, otevřené je jen jedno) a pod čarou uživatele s Můj profil, Tmavý režim a Odhlásit se.
-Lišta i okna jsou 16 px od krajů, při hledání zůstane v liště jen pole, AI na celou plochu na mobilu není.
-Pod 340 px je hledání jen ikona.
+V liště 46 px vysoké je šest ikonových tlačítek 52 × 36 px bez rámečků (Menu, Hledat, AI, Notifikace, Úkoly, Chat), otevřené má podbarvení;
+pod 400 px je lišta přes celou šířku a tlačítka se dělí rovným dílem. Hledání lištu roztáhne na pole, okna jsou 16 px
+od krajů, AI na celou plochu na mobilu není.
 
 **Linky panelů** pod hlavičkou a nad patičkou se ukážou, jen když je obsah posunutý pod hlavičku
 nebo pod patičkou ještě pokračuje (třídy `quickbar-panel--scrolled` / `--more`, jako boční panel).

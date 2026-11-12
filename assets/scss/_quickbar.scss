@@ -84,46 +84,70 @@ body:has(.quickbar) .table-bottom-scroll {
 		border-color: var(--quickbar-primary);
 	}
 
+	// Mobil: šest ikonových tlačítek, hledání jen jako ikona
 	@include media-breakpoint-down(sm) {
 		&:not(.quickbar--open-search) {
-			gap: 8px;
-			padding: 8px;
+			width: auto;
+			gap: 0;
+			padding: 4px;
+
+			:is(.quickbar-search, .quickbar-divider) {
+				display: none;
+			}
+
+			// Tlačítka AI–Chat jako přímé položky lišty, jinak by se pod 400 px nedělila rovným dílem
+			.quickbar-buttons {
+				display: contents;
+			}
+		}
+
+		// Hledání lištu jen roztáhne, výška zůstává; ze šířky auto nejde přechod, proto animace od změřené šířky
+		&.quickbar--open-search {
+			padding: 4px;
+			animation: quickbar-search-open .25s ease;
+
+			.quickbar-search {
+				animation: quickbar-search-field .2s ease;
+			}
 		}
 
 		// Při hledání zůstane v liště jen pole
-		&.quickbar--open-search :is(.quickbar-menu-button, .quickbar-divider, .quickbar-buttons) {
+		&.quickbar--open-search :is(.quickbar-menu-button, .quickbar-search-button, .quickbar-divider, .quickbar-buttons) {
 			display: none;
 		}
 	}
 
-	// Nejužší mobil: hledání jen jako ikona, lišta podle obsahu
-	@media (max-width: 339.98px) {
-		&.quickbar--with-search:not(.quickbar--open-search) {
-			width: auto;
-			gap: 6px;
+	// Úzký mobil: lišta přes celou šířku, tlačítka stejné díly
+	@media (max-width: 399.98px) {
+		&:not(.quickbar--open-search) {
+			width: var(--quickbar-width);
 
-			:is(.quickbar-search, .quickbar-divider) {
-				display: none;
+			.quickbar-button.btn:is(.btn-glass, .btn-primary) {
+				flex: 1 1 0;
+				width: auto;
+				min-width: 0;
 			}
 		}
 	}
 }
 
-// Menu nahrazuje boční menu jen na mobilu
+@keyframes quickbar-search-open {
+	from {
+		width: var(--quickbar-closed-width, var(--quickbar-width));
+	}
+}
+
+@keyframes quickbar-search-field {
+	from {
+		opacity: 0;
+	}
+}
+
+// Menu a ikonové hledání jsou jen na mobilu
 @include media-breakpoint-up(sm) {
-	.quickbar .quickbar-menu-button {
+	.quickbar :is(.quickbar-menu-button, .quickbar-search-button) {
 		display: none;
 	}
-}
-
-@media (min-width: 340px) {
-	.quickbar .quickbar-search-button {
-		display: none;
-	}
-}
-
-.quickbar--open-search .quickbar-search-button {
-	display: none;
 }
 
 .quickbar-search {
@@ -140,7 +164,7 @@ body:has(.quickbar) .table-bottom-scroll {
 	cursor: text;
 
 	@include media-breakpoint-down(sm) {
-		height: $control-height-sm;
+		height: 36px;
 		padding: 0 8px;
 
 		// Zkratka na dotyku nedává smysl
@@ -231,6 +255,57 @@ body:has(.quickbar) .table-bottom-scroll {
 	font-size: 10px;
 	// Prstenec, aby byl badge vidět i na aktivním (primárním) tlačítku
 	box-shadow: 0 0 0 2px var(--quickbar-surface);
+}
+
+// Mobil: tlačítka bez rámečku a podkladu, otevřené má tint; selektor 0,4,0 přebije i tmavé .btn-glass
+@include media-breakpoint-down(sm) {
+	.quickbar .quickbar-button.btn:is(.btn-glass, .btn-primary) {
+		--bs-btn-color: var(--quickbar-text-strong);
+		--bs-btn-bg: transparent;
+		--bs-btn-border-color: transparent;
+		--bs-btn-hover-color: var(--quickbar-text-strong);
+		--bs-btn-hover-bg: var(--quickbar-hover);
+		--bs-btn-hover-border-color: transparent;
+		--bs-btn-active-color: var(--quickbar-text-strong);
+		--bs-btn-active-bg: var(--quickbar-hover);
+		--bs-btn-active-border-color: transparent;
+		width: 52px;
+		height: 36px;
+		border: 0;
+		// Ovál podle DS: tlačítka lišty jsou navigační položky bez rámečku
+		border-radius: var(--bs-border-radius-pill);
+		box-shadow: none;
+		// Navigační lišta bez rámečků má ikonu větší než škála tlačítek (handoff mobil v2)
+		--btn-icon-size: 18px;
+		transition: background-color .15s, color .15s, transform .1s;
+		-webkit-tap-highlight-color: transparent;
+
+		&:active {
+			transform: scale(0.94);
+		}
+
+		&.btn-primary {
+			--bs-btn-color: var(--quickbar-primary);
+			--bs-btn-bg: var(--quickbar-tint);
+			--bs-btn-hover-color: var(--quickbar-primary);
+			--bs-btn-hover-bg: var(--quickbar-tint);
+			--bs-btn-active-color: var(--quickbar-primary);
+			--bs-btn-active-bg: var(--quickbar-tint);
+		}
+
+		&.quickbar-button--ai {
+			--bs-btn-color: var(--quickbar-primary);
+			--bs-btn-hover-color: var(--quickbar-primary);
+			--bs-btn-active-color: var(--quickbar-primary);
+		}
+
+		// Odznak u ikony, ať leží celý v podbarvení
+		.quickbar-badge {
+			top: 3px;
+			right: auto;
+			left: calc(50% + 3px);
+		}
+	}
 }
 
 // === Panely nad lištou ===
