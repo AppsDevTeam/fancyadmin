@@ -39,13 +39,14 @@
 	// Rámeček mají všechny varianty (plné průhledný), aby měly stejnou výšku
 	border: 1px solid var(--bs-btn-border-color);
 	border-radius: var(--control-radius);
-	// min-height, ne height: tlačítko s delším popiskem se musí umět zalomit,
-	// jednořádkové vyjde na přesnou výšku stupně (7 + 24 + 7 + 2× rámeček = 40)
+	// Výška stupně = 7 + 24 + 7 + 2× rámeček = 40
 	height: auto;
 	min-height: var(--control-height);
 	padding: 7px 18px;
 	font-size: var(--control-font);
 	line-height: 1.5;
+	// Zalomený popisek vypadá jako rozbité tlačítko; kde se nevejde, má být kratší nebo jen ikona
+	white-space: nowrap;
 	transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 

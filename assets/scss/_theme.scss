@@ -752,6 +752,17 @@ $bottomSubMenuHeight: 45px;
 		font-size: calc(var(--control-height, #{$control-height}) * 0.4);
 		content: "+";
 	}
+
+	// Na mobilu jen plusko; text zůstává jako přístupný název (čtečky, testy)
+	@include media-breakpoint-down(sm) {
+		@include control-square;
+		gap: 0;
+		font-size: 0;
+
+		&.dropdown-toggle:after {
+			display: none;
+		}
+	}
 }
 
 .back-link {
