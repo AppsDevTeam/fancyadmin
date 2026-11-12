@@ -169,6 +169,10 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
   --fa-line: #F0F0F1;
   --fa-input-focus: #F2F3F6;
   --fa-shadow-color: rgba(0, 0, 0, 0.15);
+  // Linka a stín u okraje vodorovně rolovaného gridu (sticky sloupec, akce)
+  --fa-scroll-edge: var(--fa-border);
+  --fa-scroll-shadow-extra: transparent;
+  --fa-scroll-shadow: rgba(0, 0, 0, 0.2);
   --fa-backdrop: rgba(0, 0, 0, 0.3);
 }
 
@@ -190,6 +194,10 @@ $bg-danger-dark-10: color.adjust($bg-danger, $lightness: -10%);
   --fa-line: #2b2830;
   --fa-input-focus: #2b2830;
   --fa-shadow-color: rgba(0, 0, 0, 0.5);
+  // Na tmavé ploše jedna vrstva černého stínu skoro zaniká
+  --fa-scroll-edge: var(--fa-border);
+  --fa-scroll-shadow-extra: #000;
+  --fa-scroll-shadow: #000;
   --fa-backdrop: rgba(0, 0, 0, 0.55);
 
   --bs-body-bg: #17161a;

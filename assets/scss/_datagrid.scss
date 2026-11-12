@@ -112,7 +112,7 @@
 				top: 0;
 				bottom: 0;
 				transition: all 0.2s;
-				box-shadow: inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) #b3b3b3;
+				box-shadow: inset 1px 0 0 var(--fa-scroll-edge), inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) var(--fa-scroll-shadow-extra), inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) var(--fa-scroll-shadow);
 				pointer-events: none;
 			}
 		}
@@ -139,7 +139,7 @@
 				top: 0;
 				bottom: 0;
 				transition: all .2s;
-				box-shadow: inset calc(var(--actionShadowWidthRight) * -1) 0 calc(var(--actionShadowWidthRight) * .5) calc(var(--actionShadowWidthRight) * -1) #b3b3b3;
+				box-shadow: inset -1px 0 0 var(--fa-scroll-edge), inset calc(var(--actionShadowWidthRight) * -1) 0 calc(var(--actionShadowWidthRight) * .5) calc(var(--actionShadowWidthRight) * -1) var(--fa-scroll-shadow-extra), inset calc(var(--actionShadowWidthRight) * -1) 0 calc(var(--actionShadowWidthRight) * .5) calc(var(--actionShadowWidthRight) * -1) var(--fa-scroll-shadow);
 				pointer-events: none;
 			}
 		}
