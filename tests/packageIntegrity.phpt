@@ -22,6 +22,16 @@ const SRC_DIR = __DIR__ . '/../src';
  */
 const NENACITATELNY_NAMESPACE = 'ADT\FancyAdmin\Migrations\\';
 
+/**
+ * Typy postavene na volitelnem balicku adt/biometric-signature (podepsany dokument, podpis na
+ * tabletu) - bez nej se nacist nedaji. S nainstalovanym balickem se kontroluji jako ostatni.
+ */
+const TYPY_BIOMETRICKEHO_PODPISU = [
+	'ADT\FancyAdmin\Model\Entities\SignedDocument',
+	'ADT\FancyAdmin\Model\Entities\SignedDocumentTrait',
+	'ADT\FancyAdmin\Model\Tablet\TabletSigningHandler',
+];
+
 /** @return list<SplFileInfo> */
 function sourceFiles(string $extension = 'php'): array
 {
@@ -70,6 +80,10 @@ test('vsechny tridy, rozhrani, traity i enumy se daji nacist', function () {
 
 	foreach (declaredTypes() as $type => ['kind' => $kind, 'file' => $file]) {
 		if (str_starts_with($type, NENACITATELNY_NAMESPACE)) {
+			continue;
+		}
+
+		if (in_array($type, TYPY_BIOMETRICKEHO_PODPISU, true) && !interface_exists(\ADT\BiometricSignature\SigningHandler::class)) {
 			continue;
 		}
 

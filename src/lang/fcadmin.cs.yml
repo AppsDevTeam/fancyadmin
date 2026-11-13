@@ -735,6 +735,20 @@ tablets:
     notificationForm: Formulář k vyplnění
     notificationOpenForm: Klepněte pro otevření formuláře.
     notificationOpenWaiting: Klepněte pro otevření čekací stránky.
+    privacyPolicy: Zásady zpracování a ochrany osobních údajů
+    install:
+      title: Přidejte si tablet na plochu
+      hint: Stránka se pak otevírá jako samostatná aplikace přes celou obrazovku.
+      button: Přidat na plochu
+      ios: V Safari klepněte na Sdílet a zvolte Přidat na plochu. Stránku pak otevírejte z plochy - jen tak půjdou povolit notifikace.
+  sign:
+    label: Podpis
+    required: Podepište se prosím.
+    submit: Podepsat
+    failed: Podpis se nepodařilo uložit. Zkuste to prosím znovu.
+    done: Podepsáno
+    doneThanks: Děkujeme. Tablet prosím vraťte obsluze.
+    doneBack: Zpět na čekací stránku
 modules:
   web:
     navbar:

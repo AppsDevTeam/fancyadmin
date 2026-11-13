@@ -1,0 +1,341 @@
+/*
+ * Stránky tabletu (čekací stránka, podpis dokumentu, poděkování) - docs/tablets.md.
+ * Samostatný styl bez Bootstrapu a bez bundlu projektu: stránky vypadají ve všech projektech
+ * stejně, projekt dodává jen logo a odkaz na zásady zpracování osobních údajů. Soubor servíruje
+ * presenter tabletu (TabletDevicePresenterTrait::actionAsset).
+ */
+
+:root {
+	--tablet-background: #f4f5f7;
+	--tablet-surface: #fff;
+	--tablet-text: #1f2933;
+	--tablet-muted: #6c757d;
+	--tablet-border: #d5d9de;
+	--tablet-primary: #0b6bcb;
+	--tablet-primary-text: #fff;
+	--tablet-danger: #b42318;
+	--tablet-success-background: #d1e7dd;
+	--tablet-success-text: #0a3622;
+	--tablet-warning-background: #fff3cd;
+	--tablet-warning-text: #664d03;
+	--tablet-radius: 16px;
+	--tablet-shadow: 0 2px 12px rgba(0, 0, 0, .08);
+	--signature-pen-color: #14213d;
+	--signature-height: 240px;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	height: 100%;
+	background: var(--tablet-background);
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
+	margin: 0;
+	color: var(--tablet-text);
+	font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	background: var(--tablet-background);
+}
+
+/* Logo, obsah a odkaz pod ním drží pohromadě a jako celek jsou na středu obrazovky */
+.tablet-main {
+	display: flex;
+	flex: 1 0 auto;
+	flex-direction: column;
+	justify-content: center;
+	padding: 24px 16px;
+}
+
+.tablet-logo {
+	flex: none;
+	margin: 0 0 20px;
+	text-align: center;
+}
+
+.tablet-logo img {
+	max-width: min(260px, 70%);
+	max-height: 64px;
+}
+
+.tablet-privacy {
+	margin: 16px 0 0;
+	font-size: 13px;
+	text-align: center;
+}
+
+.tablet-privacy a {
+	color: #9aa0a6;
+	text-decoration: underline;
+}
+
+/* --- karta (čekací stránka, poděkování, hlášky) ------------------------------------------- */
+
+.tablet-device,
+.tablet-install {
+	width: 100%;
+	max-width: 520px;
+	margin: 0 auto;
+	text-align: center;
+	background: var(--tablet-surface);
+	border-radius: var(--tablet-radius);
+	box-shadow: var(--tablet-shadow);
+}
+
+.tablet-device {
+	padding: 40px 32px;
+}
+
+.tablet-device h1 {
+	margin: 0;
+	font-size: 24px;
+	font-weight: 700;
+}
+
+.tablet-device p,
+.tablet-install p {
+	margin: 16px 0 0;
+	color: var(--tablet-muted);
+}
+
+.tablet-device-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	margin-bottom: 20px;
+	border-radius: 50%;
+}
+
+.tablet-device-icon svg {
+	width: 34px;
+	height: 34px;
+}
+
+.tablet-device-icon.is-success {
+	color: var(--tablet-success-text);
+	background: var(--tablet-success-background);
+}
+
+.tablet-device-icon.is-warning {
+	color: var(--tablet-warning-text);
+	background: var(--tablet-warning-background);
+}
+
+/* Stav přepíná tablet.js atributem data-tablet-state - vidět je jen odpovídající blok */
+.tablet-state,
+.tablet-reload-hint {
+	display: none;
+}
+
+[data-tablet-state="loading"] .tablet-state-loading,
+[data-tablet-state="ready"] .tablet-state-ready,
+[data-tablet-state="permission"] .tablet-state-permission,
+[data-tablet-state="denied"] .tablet-state-denied,
+[data-tablet-state="unsupported"] .tablet-state-unsupported,
+[data-tablet-state="error"] .tablet-state-error,
+[data-tablet-state="permission"] .tablet-reload-hint,
+[data-tablet-state="denied"] .tablet-reload-hint,
+[data-tablet-state="unsupported"] .tablet-reload-hint,
+[data-tablet-state="error"] .tablet-reload-hint {
+	display: block;
+}
+
+/* Nabídka přidání na plochu - jen v prohlížeči, ne v aplikaci spuštěné z plochy (tablet.js) */
+.tablet-install {
+	display: none;
+	margin-top: 16px;
+	padding: 24px 32px;
+}
+
+.tablet-install h2 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.tablet-install-prompt,
+.tablet-install-ios {
+	display: none;
+}
+
+[data-tablet-install="prompt"],
+[data-tablet-install="ios"],
+[data-tablet-install="prompt"] .tablet-install-prompt,
+[data-tablet-install="ios"] .tablet-install-ios {
+	display: block;
+}
+
+/* --- tlačítka ----------------------------------------------------------------------------- */
+
+.tablet-btn {
+	display: inline-flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: center;
+	margin-top: 16px;
+	padding: 10px 24px;
+	color: var(--tablet-text);
+	font: inherit;
+	font-size: 18px;
+	text-decoration: none;
+	cursor: pointer;
+	background: var(--tablet-surface);
+	border: 1px solid var(--tablet-border);
+	border-radius: 10px;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.tablet-btn svg {
+	width: 18px;
+	height: 18px;
+}
+
+.tablet-btn-primary {
+	color: var(--tablet-primary-text);
+	background: var(--tablet-primary);
+	border-color: var(--tablet-primary);
+}
+
+.tablet-btn-lg {
+	width: 100%;
+	max-width: 360px;
+	padding: 14px 24px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.tablet-btn[disabled] {
+	opacity: .6;
+	cursor: default;
+}
+
+.tablet-spinner {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	vertical-align: -3px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: tablet-spin .8s linear infinite;
+}
+
+@keyframes tablet-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* --- podpis dokumentu --------------------------------------------------------------------- */
+
+/* Dokument drží nahoře pod logem (obsah se jinak svisle centruje) */
+.tablet-sign {
+	width: 100%;
+	max-width: 840px;
+	margin: 0 auto auto;
+}
+
+.tablet-sign h1 {
+	margin: 0 0 16px;
+	font-size: 22px;
+	font-weight: 700;
+	text-align: center;
+}
+
+.tablet-alert {
+	margin: 0 0 16px;
+	padding: 12px 16px;
+	color: var(--tablet-danger);
+	background: #fdecea;
+	border-radius: 10px;
+}
+
+.tablet-sign-back {
+	margin: 0;
+	text-align: center;
+}
+
+.tablet-document-page {
+	display: block;
+	width: 100%;
+	height: auto;
+	margin: 0 auto 12px;
+	background: #fff;
+	border: 1px solid var(--tablet-border);
+}
+
+.tablet-document-loading,
+.tablet-document-error {
+	padding: 40px 0;
+	color: var(--tablet-muted);
+	text-align: center;
+}
+
+.tablet-document-text {
+	margin: 0 0 12px;
+	padding: 20px 24px;
+	white-space: pre-line;
+	background: var(--tablet-surface);
+	border: 1px solid var(--tablet-border);
+}
+
+.tablet-sign-form {
+	margin-top: 20px;
+	padding: 24px;
+	text-align: center;
+	background: var(--tablet-surface);
+	border-radius: var(--tablet-radius);
+	box-shadow: var(--tablet-shadow);
+}
+
+.tablet-sign-label {
+	display: block;
+	margin: 0 0 8px;
+	font-weight: 600;
+	text-align: left;
+}
+
+.tablet-error {
+	margin: 8px 0 0;
+	color: var(--tablet-danger);
+	text-align: left;
+}
+
+/* Pole s biometrickým podpisem (BiometricSignatureInput) - plátno musí mít výšku z CSS */
+.biometric-signature-canvas {
+	display: block;
+	width: 100%;
+	height: var(--signature-height);
+	touch-action: none;
+	background: #fff;
+	border: 2px solid var(--tablet-text);
+	border-radius: 8px;
+}
+
+.biometric-signature-actions {
+	margin-top: 8px;
+	text-align: right;
+}
+
+.biometric-signature-actions button {
+	padding: 6px 14px;
+	color: var(--tablet-muted);
+	font: inherit;
+	font-size: 15px;
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid var(--tablet-border);
+	border-radius: 8px;
+}

@@ -1,0 +1,49 @@
+{*
+  Samostatný layout stránek tabletu (čekací stránka, podpis, poděkování) - docs/tablets.md.
+  Nezávisí na layoutu, stylech ani bundlu projektu: stránky vypadají všude stejně a projekt
+  dodává jen logo a odkaz na zásady zpracování osobních údajů (TabletDevicePresenterTrait:
+  getTabletLogoUrl(), getTabletPrivacyPolicyUrl()). Styl a skripty servíruje presenter (asset).
+*}
+<!DOCTYPE html>
+<html lang="{$tabletLang}">
+<head>
+	<meta charset="utf-8">
+	<meta name="robots" content="noindex, nofollow, noai, noimageai">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	{* iPad: stránka přidaná na plochu se otevře jako samostatná aplikace - jen té Safari povolí notifikace *}
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="theme-color" content="#f4f5f7">
+	<link rel="manifest" href="{link manifest}">
+	<link n:if="$tabletAppleIconUrl" rel="apple-touch-icon" href="{$tabletAppleIconUrl}">
+
+	<title>{ifset title}{include title|stripHtml|trim} | {/ifset}{$tabletAppName}</title>
+
+	<link rel="stylesheet" href="{$tabletAssets['tablet.css']}">
+	{* Adresy přibalených knihoven pro skripty stránek (import "pdfjs", "signature_pad" …) *}
+	<script type="importmap" n:nonce>{$tabletImportMap|noescape}</script>
+</head>
+
+<body>
+	<main class="tablet-main">
+		<div n:if="$tabletLogoUrl" class="tablet-logo">
+			<img src="{$tabletLogoUrl}" alt="{$tabletAppName}">
+		</div>
+
+		{include content}
+
+		{* nové okno - čekací stránka musí zůstat otevřená (čeká na dokument k podpisu) *}
+		<p n:if="$tabletPrivacyPolicyUrl" class="tablet-privacy">
+			<a href="{$tabletPrivacyPolicyUrl}" target="_blank" rel="noopener">{_fcadmin.tablets.device.privacyPolicy}</a>
+		</p>
+	</main>
+
+	{* čekací stránka: notifikace a vyzvednutí formuláře; formulář: návrat po nečinnosti / po odeslání *}
+	<script type="module" n:nonce>
+		import { initTabletPage } from {$tabletAssets['tablet.js']};
+
+		initTabletPage();
+	</script>
+	{ifset scripts}{include scripts}{/ifset}
+</body>
+</html>

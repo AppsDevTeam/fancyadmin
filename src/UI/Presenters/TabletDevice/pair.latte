@@ -1,12 +1,13 @@
+{import 'icons.latte'}
 {define title}{_fcadmin.tablets.device.invalidPairingTitle}{/define}
 
 {* Sem se dostane jen neplatný párovací odkaz - platný přesměruje na čekací stránku *}
 {block content}
 
 <div class="tablet-device">
-	<span class="tablet-device-icon is-warning"><i class="fa-solid fa-exclamation-triangle"></i></span>
+	<span class="tablet-device-icon is-warning">{include icon, name: 'warning'}</span>
 	<h1>{_fcadmin.tablets.device.invalidPairing}</h1>
-	<p class="mt-3 mb-0">{_fcadmin.tablets.device.invalidPairingHint}</p>
+	<p>{_fcadmin.tablets.device.invalidPairingHint}</p>
 </div>
 
 {/block}

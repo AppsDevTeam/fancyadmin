@@ -36,7 +36,9 @@ use ADT\FancyAdmin\Core\SignalCsrfRouteList;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
+use ADT\FancyAdmin\Model\Tablet\DoctrineTabletSignRequests;
 use ADT\FancyAdmin\Model\Tablet\TabletService;
+use ADT\FancyAdmin\Model\Tablet\TabletSigning;
 use ADT\FancyAdmin\Model\WebPush\WebPushSender;
 use ADT\FancyAdmin\Model\AiChat\AuditPiiCheckListener;
 use ADT\FancyAdmin\Model\Audit\AuditActor;
@@ -193,6 +195,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'cookieName' => Expect::string()->default('fancyadmin_tablet'),
 				// = rozsah service workeru, musí pokrýt čekací stránku i stránky formulářů
 				'cookiePath' => Expect::string()->default('/'),
+				// Entita žádosti o podpis projektu (implements TabletSignRequest), povinná s enabled
+				'signRequestEntity' => Expect::string()->nullable()->default(null),
+				// Entita podepsaného dokumentu projektu (implements SignedDocument) - zapíná podpis
+				// dokumentu na tabletu, potřebuje adt/biometric-signature a službu TabletSignHandler
+				'signedDocumentEntity' => Expect::string()->nullable()->default(null),
 			]),
 			// Biometrický podpis (adt/biometric-signature, docs/biometric-signature.md)
 			'biometricSignature' => Expect::structure([
@@ -397,6 +404,22 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 
 		// Potřebuje projektovou entitu Tablet a TabletQueryFactory, proto jen na požádání
 		if ($this->config->tablet->enabled) {
+			if ($this->config->tablet->signRequestEntity === null) {
+				throw new RuntimeException('fancyadmin: tablet.enabled je zapnuté, ale chybí tablet.signRequestEntity - entita žádosti o podpis projektu (implements TabletSignRequest, use TabletSignRequestTrait). Viz docs/tablets.md.');
+			}
+
+			$builder->addDefinition($this->prefix('tabletSignRequests'))
+				->setFactory(DoctrineTabletSignRequests::class, ['entityClass' => $this->config->tablet->signRequestEntity]);
+
+			if ($this->config->tablet->signedDocumentEntity !== null && !class_exists(BiometricSigning::class)) {
+				throw new RuntimeException('fancyadmin: tablet.signedDocumentEntity zapíná podpis dokumentu na tabletu, ale chybí balíček adt/biometric-signature (composer require adt/biometric-signature). Viz docs/tablets.md.');
+			}
+
+			// Podpis dokumentu na tabletu - TabletSignHandler projektu si služba autowiruje;
+			// bez něj nebo bez entity je podpis vypnutý (TabletSigning::isEnabled())
+			$builder->addDefinition($this->prefix('tabletSigning'))
+				->setFactory(TabletSigning::class, ['signedDocumentClass' => $this->config->tablet->signedDocumentEntity]);
+
 			$builder->addDefinition($this->prefix('tabletService'))
 				->setFactory(TabletService::class, [
 					'cookieName' => $this->config->tablet->cookieName,

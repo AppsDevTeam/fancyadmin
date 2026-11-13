@@ -10,8 +10,8 @@ use DateTimeImmutable;
 /**
  * Tablet, na kterém zákazníci (pacienti, klienti) vyplňují a podepisují formuláře.
  * Do administrace se nepřihlašuje: jednou se spáruje QR kódem a dostane klíč zařízení
- * (cookie), formuláře mu pak chodí přes Web Push. Sloupce a metody dává TabletTrait,
- * logiku TabletService, viz docs/tablets.md.
+ * (cookie), formuláře mu pak chodí jako žádosti o podpis (TabletSignRequest), na které ho
+ * upozorní Web Push. Sloupce a metody dává TabletTrait, logiku TabletService, viz docs/tablets.md.
  */
 interface Tablet extends Entity
 {
@@ -30,11 +30,6 @@ interface Tablet extends Entity
 	public function getPushEndpoint(): ?string;
 	public function setPushEndpoint(?string $pushEndpoint): static;
 	public function canReceiveForms(): bool;
-
-	public function setPendingForm(?string $url, ?string $title, ?DateTimeImmutable $expiresAt): static;
-	public function getPendingFormUrl(): ?string;
-	public function getPendingFormTitle(): ?string;
-	public function getPendingFormExpiresAt(): ?DateTimeImmutable;
 
 	public function getPairedAt(): ?DateTimeImmutable;
 	public function getLastSeenAt(): ?DateTimeImmutable;

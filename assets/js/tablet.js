@@ -11,6 +11,9 @@
 //   (data-tablet-idle-seconds, výchozí 300) zpět na čekací stránku, ať formulář nezůstane
 //   otevřený dalšímu zákazníkovi. Čekací stránka odkaz na formulář zneplatní (TabletService::$onRelease).
 //
+// - [data-tablet-install]: nabídka přidání čekací stránky na plochu - tablet ji má používat jako
+//   aplikaci (celá obrazovka, na iPadu jen tak jdou povolit notifikace). V aplikaci z plochy se neukáže.
+//
 // Zpět se jde přes location.replace(), stránka formuláře tak v historii nezůstane.
 //
 
@@ -244,6 +247,49 @@ export function initTabletIdleReturn(element) {
 	});
 }
 
+/**
+ * Nabídka přidání na plochu, když stránka běží v prohlížeči (ne jako aplikace z plochy).
+ * Stav v data-tablet-install: "prompt" = prohlížeč umí instalaci nabídnout sám (Chrome, Edge,
+ * Samsung) - tlačítko [data-tablet-install-button] ji vyvolá; "ios" = návod pro Safari.
+ */
+export function initTabletInstall(element) {
+	const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+	if (standalone) {
+		return;
+	}
+
+	// iPad se od iPadOS 13 hlásí jako Mac - pozná se podle dotykové obrazovky
+	if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+		element.dataset.tabletInstall = 'ios';
+	}
+
+	let installEvent = null;
+
+	// Prohlížeč stránku uznal za instalovatelnou (manifest, https) - dialog jde vyvolat jen z klepnutí
+	window.addEventListener('beforeinstallprompt', (event) => {
+		event.preventDefault();
+		installEvent = event;
+		element.dataset.tabletInstall = 'prompt';
+	});
+
+	element.querySelector('[data-tablet-install-button]')?.addEventListener('click', async () => {
+		if (!installEvent) {
+			return;
+		}
+		installEvent.prompt();
+		const choice = await installEvent.userChoice;
+		// událost jde použít jen jednou; po odmítnutí pošle prohlížeč novou, až bude instalaci zase nabízet
+		installEvent = null;
+		if (choice.outcome === 'accepted') {
+			element.dataset.tabletInstall = '';
+		}
+	});
+
+	window.addEventListener('appinstalled', () => {
+		element.dataset.tabletInstall = '';
+	});
+}
+
 /** Inicializace všech částí tabletu na stránce */
 export function initTabletPage(root = document) {
 	const device = root.querySelector('[data-tablet-device]');
@@ -253,6 +299,10 @@ export function initTabletPage(root = document) {
 	const returnLink = root.querySelector('a[data-tablet-return]');
 	if (returnLink) {
 		initTabletReturn(returnLink);
+	}
+	const install = root.querySelector('[data-tablet-install]');
+	if (install) {
+		initTabletInstall(install);
 	}
 	const idle = root.querySelector('[data-tablet-idle-return]');
 	if (idle) {

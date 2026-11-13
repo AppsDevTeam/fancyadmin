@@ -976,8 +976,11 @@ Bez hubu (`NullPush`, výchozí) stránky pollují jako dřív. Návod v `docs/p
 Tablet se jednou spáruje QR kódem a pak mu formuláře chodí přes Web Push (VAPID, bez Firebase).
 Formulář čeká u serveru a čekací stránka si ho vyzvedne při načtení a po push zprávě, takže
 na tablet bez notifikací dorazí po obnovení stránky.
-Správa tabletů (`TabletsPresenterTrait`), čekací stránka tabletu (`TabletDevicePresenterTrait`)
-se service workerem a vázání odkazu na tablet. Návod v `docs/tablets.md`.
+Každé odeslání je žádost o podpis ve vlastní tabulce (evidence), dokument jde na tabletu rovnou
+podepsat biometrickým podpisem a uloží se jako podepsaný dokument (`signed_document`).
+Správa tabletů (`TabletsPresenterTrait`) a samostatné stránky tabletu (`TabletDevicePresenterTrait`:
+čekací stránka, podpis dokumentu) - stejné ve všech projektech, projekt dodá jen logo a odkaz
+na zásady zpracování osobních údajů. Návod v `docs/tablets.md`.
 
 ### Biometrický podpis (`BiometricSignatureInput`, `biometricSignature.js`)
 

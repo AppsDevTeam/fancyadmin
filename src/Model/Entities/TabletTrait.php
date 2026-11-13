@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Sloupce tabletu (rozhraní Tablet). V DB jsou jen SHA-256 hashe párovacího tokenu a klíče
- * zařízení, adresa odběru i čekající odkaz jsou tajné (anonymizace je přepíše).
+ * zařízení, adresa odběru je tajná (anonymizace ji přepíše).
  * Projektová entita: #[ORM\Entity] #[ORM\Table(name: 'tablet')] + implements Tablet + use TabletTrait.
  */
 trait TabletTrait
@@ -38,14 +38,19 @@ trait TabletTrait
 	#[Anonymize(AnonymizationType::SECRET)]
 	protected ?string $pushEndpoint = null;
 
-	/** Formulář čekající na vyzvednutí service workerem (jednorázový odkaz projektu) */
+	/**
+	 * @deprecated čekající formulář je žádost o podpis (TabletSignRequest); sloupec zůstává
+	 *             jen proto, aby ho migrace projektů nemazaly, nic ho nečte ani nezapisuje
+	 */
 	#[ORM\Column(type: 'text', nullable: true)]
 	#[Anonymize(AnonymizationType::SECRET)]
 	protected ?string $pendingFormUrl = null;
 
+	/** @deprecated viz $pendingFormUrl */
 	#[ORM\Column(length: 255, nullable: true)]
 	protected ?string $pendingFormTitle = null;
 
+	/** @deprecated viz $pendingFormUrl */
 	#[ORM\Column(nullable: true)]
 	protected ?\DateTimeImmutable $pendingFormExpiresAt = null;
 
@@ -95,7 +100,6 @@ trait TabletTrait
 		$this->deviceSecretHash = $deviceSecretHash;
 		$this->pairedAt = $at;
 		$this->pushEndpoint = null;
-		$this->setPendingForm(null, null, null);
 		return $this->setPairingToken(null, null);
 	}
 
@@ -104,7 +108,6 @@ trait TabletTrait
 		$this->deviceSecretHash = null;
 		$this->pairedAt = null;
 		$this->pushEndpoint = null;
-		$this->setPendingForm(null, null, null);
 		return $this->setPairingToken(null, null);
 	}
 
@@ -122,29 +125,6 @@ trait TabletTrait
 	{
 		$this->pushEndpoint = $pushEndpoint;
 		return $this;
-	}
-
-	public function setPendingForm(?string $url, ?string $title, ?\DateTimeImmutable $expiresAt): static
-	{
-		$this->pendingFormUrl = $url;
-		$this->pendingFormTitle = $title;
-		$this->pendingFormExpiresAt = $expiresAt;
-		return $this;
-	}
-
-	public function getPendingFormUrl(): ?string
-	{
-		return $this->pendingFormUrl;
-	}
-
-	public function getPendingFormTitle(): ?string
-	{
-		return $this->pendingFormTitle;
-	}
-
-	public function getPendingFormExpiresAt(): ?\DateTimeImmutable
-	{
-		return $this->pendingFormExpiresAt;
 	}
 
 	/**

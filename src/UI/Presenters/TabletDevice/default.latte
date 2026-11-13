@@ -1,10 +1,9 @@
-{define title}{_fcadmin.tablets.device.title}{/define}
-
+{import 'icons.latte'}
 {*
-  Čekací stránka tabletu (TabletDevicePresenterTrait). Stav (povolení notifikací, čekání)
-  přepíná @fancyadmin/js/tablet podle data-tablet-state. Odeslaný formulář si stránka vyzvedne
-  a otevře při načtení a po push zprávě (řekne jí to service worker, sw.js.latte) - bez
-  notifikací ji proto stačí obnovit (tlačítko Obnovit, aplikace z plochy jiné nemá).
+  Čekací stránka tabletu (TabletDevicePresenterTrait) - titulek je jen název aplikace tabletu. Stav (povolení notifikací, čekání)
+  přepíná tablet.js podle data-tablet-state. Odeslaný formulář si stránka vyzvedne a otevře
+  při načtení a po push zprávě (řekne jí to service worker, sw.js.latte) - bez notifikací ji
+  proto stačí obnovit (tlačítko Obnovit, aplikace z plochy jiné nemá).
 *}
 {block content}
 
@@ -16,39 +15,55 @@
 		data-register-url="{link registerPush!}"
 		data-take-form-url="{link takeForm!}"
 		data-tablet-state="loading">
-		<span class="tablet-device-icon is-success"><i class="fa-solid fa-tablet-screen-button"></i></span>
+		<span class="tablet-device-icon is-success">{include icon, name: 'tablet'}</span>
 		<h1>{$tablet->getName()}</h1>
+		<p n:if="$tabletSubtitle !== null">{$tabletSubtitle}</p>
 
 		<div class="tablet-state tablet-state-loading">
-			<p class="mt-3 mb-0"><i class="fa-solid fa-spinner fa-spin me-2"></i>{_fcadmin.tablets.device.loading}</p>
+			<p><span class="tablet-spinner"></span> {_fcadmin.tablets.device.loading}</p>
 		</div>
 		<div class="tablet-state tablet-state-ready">
-			<p class="mt-3">{_fcadmin.tablets.device.ready}</p>
-			<p class="mb-0">{_fcadmin.tablets.device.readyHint}</p>
+			<p>{_fcadmin.tablets.device.ready}</p>
+			<p>{_fcadmin.tablets.device.readyHint}</p>
 		</div>
 		<div class="tablet-state tablet-state-permission">
-			<p class="mt-3">{_fcadmin.tablets.device.permission}</p>
-			<button type="button" class="btn btn-primary" data-tablet-enable>{_fcadmin.tablets.device.enable}</button>
+			<p>{_fcadmin.tablets.device.permission}</p>
+			<button type="button" class="tablet-btn tablet-btn-primary" data-tablet-enable>{_fcadmin.tablets.device.enable}</button>
 		</div>
 		<div class="tablet-state tablet-state-denied">
-			<p class="mt-3 mb-0">{_fcadmin.tablets.device.denied}</p>
+			<p>{_fcadmin.tablets.device.denied}</p>
 		</div>
 		<div class="tablet-state tablet-state-unsupported">
-			<p class="mt-3">{_fcadmin.tablets.device.unsupported}</p>
-			<p class="mb-0">{_fcadmin.tablets.device.unsupportedHint}</p>
+			<p>{_fcadmin.tablets.device.unsupported}</p>
+			<p>{_fcadmin.tablets.device.unsupportedHint}</p>
 		</div>
 		<div class="tablet-state tablet-state-error">
-			<p class="mt-3 mb-0">{_fcadmin.tablets.device.error}</p>
+			<p>{_fcadmin.tablets.device.error}</p>
 		</div>
 		{* Bez notifikací se formulář ukáže až po obnovení stránky *}
-		<p class="tablet-reload-hint mt-3 mb-0">{_fcadmin.tablets.device.reloadHint}</p>
-		<button type="button" class="btn btn-outline-secondary mt-3" data-tablet-reload><i class="fa-solid fa-rotate me-2"></i>{_fcadmin.tablets.device.reload}</button>
+		<p class="tablet-reload-hint">{_fcadmin.tablets.device.reloadHint}</p>
+		<button type="button" class="tablet-btn" data-tablet-reload>{include icon, name: 'reload'} {_fcadmin.tablets.device.reload}</button>
+	</div>
+
+	{*
+	  Tablet má stránku používat jako aplikaci z plochy (celá obrazovka, na iPadu jen tak jdou
+	  povolit notifikace). Otevřená v prohlížeči proto nabídne přidání na plochu (tablet.js).
+	*}
+	<div class="tablet-install" data-tablet-install>
+		<h2>{_fcadmin.tablets.device.install.title}</h2>
+		<div class="tablet-install-prompt">
+			<p>{_fcadmin.tablets.device.install.hint}</p>
+			<button type="button" class="tablet-btn tablet-btn-primary" data-tablet-install-button>{_fcadmin.tablets.device.install.button}</button>
+		</div>
+		<div class="tablet-install-ios">
+			<p>{_fcadmin.tablets.device.install.ios}</p>
+		</div>
 	</div>
 {else}
 	<div class="tablet-device">
-		<span class="tablet-device-icon is-warning"><i class="fa-solid fa-tablet-screen-button"></i></span>
+		<span class="tablet-device-icon is-warning">{include icon, name: 'tablet'}</span>
 		<h1>{_fcadmin.tablets.device.notPaired}</h1>
-		<p class="mt-3 mb-0">{_fcadmin.tablets.device.notPairedHint}</p>
+		<p>{_fcadmin.tablets.device.notPairedHint}</p>
 	</div>
 {/if}
 

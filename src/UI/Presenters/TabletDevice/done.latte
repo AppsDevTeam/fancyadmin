@@ -1,0 +1,14 @@
+{import 'icons.latte'}
+{define title}{_fcadmin.tablets.sign.done}{/define}
+
+{* Po podpisu: poděkování, tablet.js se za chvíli sám vrátí na čekací stránku (data-tablet-return) *}
+{block content}
+
+<div class="tablet-device">
+	<span class="tablet-device-icon is-success">{include icon, name: 'check'}</span>
+	<h1>{_fcadmin.tablets.sign.done}</h1>
+	<p>{_fcadmin.tablets.sign.doneThanks}</p>
+	<a href="{link default}" class="tablet-btn" data-tablet-return="{$returnAfter}">{_fcadmin.tablets.sign.doneBack}</a>
+</div>
+
+{/block}

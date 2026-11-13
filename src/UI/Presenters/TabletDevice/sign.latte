@@ -1,0 +1,45 @@
+{define title}{$document->title}{/define}
+
+{*
+  Podpis dokumentu na tabletu (TabletDevicePresenterTrait::actionSign). Stránku otevře jen
+  spárovaný tablet se svou otevřenou žádostí o podpis; po nečinnosti se tablet vrátí na čekací
+  stránku (tablet.js) a žádost se tím zruší. Náhled dokumentu a plátno podpisu: tabletSign.js.
+*}
+{block content}
+
+<div data-tablet-idle-return="{link default}" data-tablet-idle-seconds="{$idleSeconds}"></div>
+
+<div class="tablet-sign">
+	<h1>{$document->title}</h1>
+
+	<div n:if="$document->hasPdf()" data-tablet-document="{link document}" data-pdf-worker="{$tabletAssets['pdf.worker.mjs']}">
+		<p class="tablet-document-loading" data-tablet-document-loading><span class="tablet-spinner"></span></p>
+	</div>
+	<div n:if="$document->text !== null" class="tablet-document-text">{$document->text}</div>
+
+	{if $document->error !== null}
+		<p class="tablet-alert">{$document->error}</p>
+		<p class="tablet-sign-back"><a href="{link default}" class="tablet-btn">{_fcadmin.tablets.sign.doneBack}</a></p>
+	{else}
+	<form n:name="tabletSignForm" class="tablet-sign-form" data-tablet-sign-form>
+		<p n:foreach="$form->getOwnErrors() as $error" class="tablet-alert">{$error}</p>
+
+		<span class="tablet-sign-label">{_fcadmin.tablets.sign.label}</span>
+		{input signature}
+		<p class="tablet-error" n:foreach="$form['signature']->getErrors() as $error">{$error}</p>
+		<p class="tablet-error" data-tablet-sign-required hidden>{_fcadmin.tablets.sign.required}</p>
+
+		<button n:name="submit" class="tablet-btn tablet-btn-primary tablet-btn-lg">{_fcadmin.tablets.sign.submit}</button>
+	</form>
+	{/if}
+</div>
+
+{/block}
+
+{define scripts}
+<script type="module" n:nonce>
+	import { initTabletSignPage } from {$tabletAssets['tabletSign.js']};
+
+	initTabletSignPage();
+</script>
+{/define}

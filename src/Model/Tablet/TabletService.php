@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\Model\Tablet;
 
 use ADT\DoctrineComponents\EntityManager;
 use ADT\FancyAdmin\Model\Entities\Tablet;
+use ADT\FancyAdmin\Model\Entities\TabletSignRequest;
 use ADT\FancyAdmin\Model\Queries\Factories\TabletQueryFactory;
 use ADT\FancyAdmin\Model\WebPush\WebPushSender;
 use Nette\Http\IRequest;
@@ -20,17 +21,20 @@ use Tracy\Debugger;
  * dostane klíč zařízení, který si drží v cookie a kterým se pak prokazuje. V DB jsou jen
  * SHA-256 hashe obou hodnot.
  *
- * Formulář: odkaz se uloží k tabletu jako čekající (PENDING_FORM_LIFETIME) a vyzvedne si ho
- * čekací stránka tabletu (takePendingForm, ověřeno cookie tabletu) - odkaz tak nejde přes push
- * službu prohlížeče. Stránka se ptá při načtení, po návratu do popředí a když jí to řekne service
- * worker: toho probudí prázdná push zpráva, ukáže notifikaci (peekPendingForm) a formulář nechá
- * na stránce. Formulář tak dorazí i na tablet bez notifikací nebo když se push ztratí - stačí
- * na něm čekací stránku otevřít nebo obnovit. V rozestupu se stránka sama neptá.
+ * Formulář: každé odeslání je žádost o podpis (TabletSignRequest, vlastní tabulka) - podle
+ * nevyzvednuté žádosti tablet pozná, že má co otevřít, a zároveň je to evidence, kdo, kdy a co
+ * na tablet poslal a kdy se to podepsalo. Odkaz si vyzvedne čekací stránka tabletu
+ * (takePendingForm, ověřeno cookie tabletu) - nejde tak přes push službu prohlížeče. Stránka
+ * se ptá při načtení, po návratu do popředí a když jí to řekne service worker: toho probudí
+ * prázdná push zpráva, ukáže notifikaci (peekPendingForm) a formulář nechá na stránce. Formulář
+ * tak dorazí i na tablet bez notifikací nebo když se push ztratí - stačí na něm čekací stránku
+ * otevřít nebo obnovit. V rozestupu se stránka sama neptá.
  *
- * Odkaz na formulář patří projektu. Ten ho má svázat s tabletem (getCurrentTablet() na
- * stránce formuláře) a zneplatnit ho v $onRelease - tablet se vrátil na čekací stránku
- * nebo byl odpojený, takže to, co mu bylo posláno, už nemá jít otevřít (historie prohlížeče,
- * další zákazník).
+ * Tablet má nejvýš jednu nevyřízenou žádost: nová zruší předchozí. Žádost končí podpisem
+ * (finish) nebo zrušením (release) - tablet se vrátil na čekací stránku, byl znovu spárován
+ * nebo odpojen. Stránka formuláře má ověřit, že ji otevírá tablet se svou otevřenou žádostí
+ * (getCurrentRequest()), ať odkaz nejde otevřít jinde ani později (historie prohlížeče,
+ * další zákazník). Co dalšího má projekt při uvolnění tabletu udělat, patří do $onRelease.
  */
 class TabletService
 {
@@ -41,7 +45,7 @@ class TabletService
 
 	private const string COOKIE_EXPIRE = '+5 years';
 
-	/** @var array<callable(Tablet): void> tablet je zpátky na čekací stránce nebo odpojený */
+	/** @var array<callable(Tablet): void> tablet je zpátky na čekací stránce, znovu spárovaný nebo odpojený */
 	public array $onRelease = [];
 
 	public function __construct(
@@ -51,6 +55,7 @@ class TabletService
 		private readonly Translator $translator,
 		private readonly IRequest $httpRequest,
 		private readonly IResponse $httpResponse,
+		private readonly TabletSignRequests $signRequests,
 		/** Cookie s klíčem zařízení */
 		private readonly string $cookieName = 'fancyadmin_tablet',
 		/** Cesta cookie = rozsah service workeru: musí pokrýt čekací stránku i stránky formulářů */
@@ -96,7 +101,7 @@ class TabletService
 			return null;
 		}
 
-		$this->release($tablet);
+		$this->release($tablet, $now);
 		$deviceSecret = self::generateSecret();
 		$tablet->pair(self::hash($deviceSecret), $now)->setLastSeenAt($now);
 		$this->em->flush();
@@ -162,22 +167,30 @@ class TabletService
 	}
 
 	/**
-	 * Vyzvednutí čekajícího formuláře čekací stránkou (ta ho i otevře) - vydá se jen jednou
-	 * a jen do vypršení.
+	 * Vyzvednutí čekající žádosti čekací stránkou (ta ji i otevře) - vydá se jen jednou a jen
+	 * do vypršení. Od vyzvednutí je žádost otevřená (getOpenRequest()).
+	 */
+	public function takePendingRequest(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): ?TabletSignRequest
+	{
+		$request = $this->signRequests->findPending($tablet, $now);
+		if ($request === null) {
+			return null;
+		}
+
+		$request->markOpened($now);
+		$this->em->flush();
+
+		return $request;
+	}
+
+	/**
+	 * Vyzvednutí čekajícího formuláře pro čekací stránku tabletu (takeForm!).
 	 *
 	 * @return array{url: string, title: string}|null
 	 */
 	public function takePendingForm(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): ?array
 	{
-		if ($tablet->getPendingFormUrl() === null && $tablet->getPendingFormExpiresAt() === null) {
-			return null;
-		}
-
-		$form = $this->peekPendingForm($tablet, $now);
-		$tablet->setPendingForm(null, null, null);
-		$this->em->flush();
-
-		return $form;
+		return self::toForm($this->takePendingRequest($tablet, $now));
 	}
 
 	/**
@@ -190,16 +203,35 @@ class TabletService
 	 */
 	public function peekPendingForm(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): ?array
 	{
-		$url = $tablet->getPendingFormUrl();
-		$expiresAt = $tablet->getPendingFormExpiresAt();
+		return self::toForm($this->signRequests->findPending($tablet, $now));
+	}
 
-		return $url !== null && $expiresAt !== null && $expiresAt > $now
-			? ['url' => $url, 'title' => (string) $tablet->getPendingFormTitle()]
-			: null;
+	/** Žádost, kterou tablet právě zobrazuje (vyzvednutá, nepodepsaná, nezrušená) */
+	public function getOpenRequest(Tablet $tablet): ?TabletSignRequest
+	{
+		return $this->signRequests->findOpen($tablet);
 	}
 
 	/**
-	 * Tablet otevřel čekací stránku, takže je volný - pokud na něj už nečeká další formulář
+	 * Otevřená žádost tabletu, ze kterého přišel požadavek (cookie zařízení) - pro stránku
+	 * formuláře: bez ní (jiné zařízení, tablet už je volný) formulář nemá jít otevřít.
+	 */
+	public function getCurrentRequest(): ?TabletSignRequest
+	{
+		$tablet = $this->getCurrentTablet();
+
+		return $tablet === null ? null : $this->getOpenRequest($tablet);
+	}
+
+	/** Podepsáno (formulář odeslán) - žádost je vyřízená */
+	public function finish(TabletSignRequest $request, \DateTimeImmutable $now = new \DateTimeImmutable()): void
+	{
+		$request->markSigned($now);
+		$this->em->flush();
+	}
+
+	/**
+	 * Tablet otevřel čekací stránku, takže je volný - pokud na něj už nečeká další žádost
 	 * (stránka se načetla mezi odesláním a vyzvednutím, třeba po probuzení tabletu).
 	 */
 	public function returnToWaiting(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): void
@@ -207,55 +239,70 @@ class TabletService
 		$tablet->setLastSeenAt($now);
 		$this->em->flush();
 
-		$pendingUntil = $tablet->getPendingFormExpiresAt();
-		if ($pendingUntil === null || $pendingUntil <= $now) {
-			$this->release($tablet);
+		if ($this->signRequests->findPending($tablet, $now) === null) {
+			$this->release($tablet, $now);
 		}
 	}
 
-	/** Projekt v $onRelease zneplatní odkazy, které tabletu poslal */
-	public function release(Tablet $tablet): void
+	/**
+	 * Tablet je volný: jeho nevyřízené žádosti (čekající i otevřená) se ruší, takže to, co mu
+	 * bylo posláno, už nejde otevřít. Co dalšího má projekt udělat, patří do $onRelease.
+	 */
+	public function release(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): void
 	{
+		$this->cancelUnfinished($tablet, $now);
+		$this->em->flush();
+
 		foreach ($this->onRelease as $callback) {
 			$callback($tablet);
 		}
 	}
 
-	public function disconnect(Tablet $tablet): void
+	public function disconnect(Tablet $tablet, \DateTimeImmutable $now = new \DateTimeImmutable()): void
 	{
-		$this->release($tablet);
+		$this->release($tablet, $now);
 		$tablet->disconnect();
 		$this->em->flush();
 	}
 
 	/**
-	 * Odeslání odkazu na formulář do tabletu. Vrací hlášku pro obsluhu, null = odesláno
-	 * (push odešel, tablet ukáže notifikaci a otevřená čekací stránka formulář rovnou otevře).
+	 * Odeslání odkazu na formulář do tabletu: založí žádost o podpis a tablet probudí push
+	 * zprávou. Hláška ve výsledku říká obsluze, co dál, null = odesláno (tablet ukáže notifikaci
+	 * a otevřená čekací stránka formulář rovnou otevře).
 	 *
-	 * Formulář čeká na spárovaný tablet (PENDING_FORM_LIFETIME) i tehdy, když push neodešel -
+	 * Žádost čeká na spárovaný tablet (PENDING_FORM_LIFETIME) i tehdy, když push neodešel -
 	 * tablet nemá povolené notifikace, odběr už neplatí, push služba neodpovídá, chybí klíč
-	 * VAPID. Čekací stránka si ho vyzvedne při načtení, takže ji na tabletu stačí otevřít nebo
-	 * obnovit; to obsluze říká vrácená hláška. Neplatný odběr se z tabletu smaže.
+	 * VAPID. Čekací stránka si ji vyzvedne při načtení, takže ji na tabletu stačí otevřít nebo
+	 * obnovit; to obsluze říká hláška. Neplatný odběr se z tabletu smaže. Předchozí nevyřízené
+	 * žádosti tabletu se ruší.
+	 *
+	 * @param (callable(TabletSignRequest): void)|null $configure doplnění žádosti před uložením:
+	 *        co se podepisuje (setSubject) a kdo ji poslal (setRequester)
 	 */
-	public function sendForm(Tablet $tablet, string $url, string $formName, \DateTimeImmutable $now = new \DateTimeImmutable()): ?string
+	public function send(Tablet $tablet, string $url, string $title, ?callable $configure = null, \DateTimeImmutable $now = new \DateTimeImmutable()): TabletSendResult
 	{
 		$name = ['name' => $tablet->getName()];
 		if (!$tablet->isPaired()) {
-			return $this->translator->translate('fcadmin.tablets.messages.notPaired', $name);
+			return new TabletSendResult(null, $this->translator->translate('fcadmin.tablets.messages.notPaired', $name));
 		}
 
 		// Odkaz čeká u nás, push jen probudí tablet
-		$tablet->setPendingForm($url, mb_substr($formName, 0, 255), $now->modify(self::PENDING_FORM_LIFETIME));
+		$this->cancelUnfinished($tablet, $now);
+		$request = $this->signRequests->create($tablet, $url, $title, $now, $now->modify(self::PENDING_FORM_LIFETIME));
+		if ($configure !== null) {
+			$configure($request);
+		}
+		$this->signRequests->add($request);
 		$this->em->flush();
 
 		$endpoint = $tablet->getPushEndpoint();
 		if ($endpoint !== null && $endpoint !== '') {
 			if (!$this->webPushSender->isConfigured()) {
-				Debugger::log(sprintf('Chybí klíč VAPID (fancyadmin: webPush: vapidPrivateKey), formulář %s do tabletu %s neodešel přes push.', $formName, $tablet->getName()), 'webpush');
+				Debugger::log(sprintf('Chybí klíč VAPID (fancyadmin: webPush: vapidPrivateKey), formulář %s do tabletu %s neodešel přes push.', $title, $tablet->getName()), 'webpush');
 			} else {
 				try {
 					if ($this->webPushSender->send($endpoint)) {
-						return null;
+						return new TabletSendResult($request, null);
 					}
 
 					// Odběr už neplatí (tablet odvolal notifikace)
@@ -267,7 +314,26 @@ class TabletService
 			}
 		}
 
-		return $this->translator->translate('fcadmin.tablets.messages.notNotified', $name);
+		return new TabletSendResult($request, $this->translator->translate('fcadmin.tablets.messages.notNotified', $name));
+	}
+
+	/** Odeslání formuláře bez dalších údajů žádosti - vrací jen hlášku pro obsluhu, viz send() */
+	public function sendForm(Tablet $tablet, string $url, string $formName, \DateTimeImmutable $now = new \DateTimeImmutable()): ?string
+	{
+		return $this->send($tablet, $url, $formName, null, $now)->message;
+	}
+
+	private function cancelUnfinished(Tablet $tablet, \DateTimeImmutable $now): void
+	{
+		foreach ($this->signRequests->findUnfinished($tablet, $now) as $request) {
+			$request->cancel($now);
+		}
+	}
+
+	/** @return array{url: string, title: string}|null */
+	private static function toForm(?TabletSignRequest $request): ?array
+	{
+		return $request === null ? null : ['url' => $request->getUrl(), 'title' => $request->getTitle()];
 	}
 
 	/** 256 bitů z CSPRNG v base64url (do URL i cookie bez escapování) */
