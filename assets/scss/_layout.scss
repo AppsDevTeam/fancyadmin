@@ -63,93 +63,146 @@ body:has(.side-panel) .container {
   }
 }
 
-.snippet-flashes {
+// Balíček flash zpráv, rozmístění a časování řídí flashes.js (docs/flashes.md)
+.flash-stack {
   position: fixed;
   bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9030;
+  width: 500px;
+  max-width: calc(100vw - 32px);
+  height: 0;
+  transition: height .3s cubic-bezier(.2, .8, .2, 1);
+}
+
+.flash {
+  --flash-color: var(--fa-success, #{$success});
+
+  position: absolute;
   left: 0;
   right: 0;
-  z-index: 999;
+  bottom: 0;
+  transform-origin: bottom center;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--flash-color) 7%, var(--fa-surface));
+  border: 1px solid color-mix(in oklab, var(--flash-color) 30%, var(--fa-line));
+  border-radius: var(--bs-border-radius);
+  box-shadow: 0 8px 24px -4px var(--fa-shadow-color);
+  opacity: 0;
+  transition: transform .35s cubic-bezier(.2, .8, .2, 1), opacity .25s ease, height .3s cubic-bezier(.2, .8, .2, 1);
+
+  &.flash-info {
+    --flash-color: #{$primary};
+  }
+
+  &.flash-warning {
+    --flash-color: var(--fa-warning, #{$warning});
+  }
+
+  &.flash-danger {
+    --flash-color: var(--fa-danger, #{$error});
+  }
+
+  // Zprávy vzadu ve sbaleném balíčku jsou jen okraj, klikat se na ně nedá
+  &.flash--behind {
+    pointer-events: none;
+  }
+}
+
+.flash-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 8px 12px 12px;
+  transition: opacity .2s ease;
+}
+
+.flash-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+}
+
+.flash-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--bs-border-radius-xs);
+  background: color-mix(in oklab, var(--flash-color) 14%, transparent);
+  color: var(--flash-color);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.flash-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
-  pointer-events: none;
+  gap: 1px;
+}
 
-  .alert {
-    border-radius: var(--bs-border-radius);
-    border: 0;
-    display: inline-flex;
-    align-items: stretch;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 500;
-    line-height: normal;
-    pointer-events: all;
-    max-width: min(calc(100vw - 50px), 1300px);
-    box-shadow: 0px 0px 20px 0px rgba(109, 109, 109, 0.45);
-    padding: 20px 30px;
-    gap: 30px;
+.flash-title {
+  color: var(--fa-text-strong, var(--fa-text));
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  text-wrap: pretty;
+}
 
-    &:before {
-      margin: 10px 0;
-      font-size: 30px;
-      font-family: "Font Awesome 6 Pro";
-    }
+.flash-text {
+  color: var(--fa-text-muted);
+  font-size: 14px;
+  line-height: 19px;
+  text-wrap: pretty;
+}
 
-    &.alert-success {
-      background-color: $success;
-      color: white;
+.flash-close {
+  flex: none;
+  align-self: flex-start;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fa-text-faint);
+  font-size: 16px;
+  line-height: 1;
+  transition: color .15s ease;
 
-      .alert-close-btn {
-        display: none;
-      }
+  &:hover,
+  &:focus-visible {
+    color: var(--fa-text-strong, var(--fa-text));
+  }
+}
 
-      &:before {
-        content: "";
-      }
-    }
+// Lícuje s textem (ikona 36 px + mezera 12 px)
+.flash-actions {
+  display: flex;
+  gap: 8px;
+  padding-left: 48px;
+}
 
-    &.alert-warning {
-      background-color: $warning;
-      color: white;
+.flash-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--flash-color);
+  opacity: .55;
+  transition: width .1s linear;
+}
 
-      &:before {
-        content: "\f05a";
-      }
-    }
-
-    &.alert-danger {
-      background-color: $error;
-      color: white;
-
-      &:before {
-        content: "\f057";
-      }
-    }
-
-    .alert-text {
-      display: flex;
-      align-items: center;
-      height: 100%;
-      padding-top: 17px;
-      margin-bottom: 10px;
-    }
-
-    .alert-close-btn {
-      display: flex;
-      width: 161px;
-      padding: 10px 25px;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-      border: 0;
-      margin-top: 6px;
-
-      border-radius: var(--control-radius, #{$control-radius});
-      background: $background;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .flash-stack,
+  .flash {
+    transition: opacity .25s ease;
   }
 }
 

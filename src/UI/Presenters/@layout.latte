@@ -223,15 +223,9 @@
 		</div>
 	{/if}
 
-	<div n:snippet="flashes" class="snippet-flashes" data-close-label="{_fcadmin.global.flashes.close}" data-sortable-error="{_fcadmin.global.flashes.sortableError}">
-		<div n:foreach="$flashes as $flash" n:class="alert, 'alert-' . $flash->type" data-close-duration={$flash->closeDuration}>
-			<div class="alert-text d-block">{$flash->message|noescape}</div>
-			<div class="alert-close-btn-wrapper">
-				<button class="alert-close-btn">
-					{_fcadmin.global.flashes.close}
-				</button>
-			</div>
-		</div>
+	{* Jen data pro flashes.js, ten z nich udělá zprávy v .flash-stack *}
+	<div n:snippet="flashes" class="flash-source" hidden>
+		<div n:foreach="$flashes as $flash" class="flash-source-item" data-type={$flash->type} data-close-duration={$flash->closeDuration}>{$flash->message|noescape}</div>
 	</div>
 </div>
 {* Rychlá lišta mimo snippet body - ajaxový přechod na jinou stránku ji nepřekreslí, takže
@@ -240,6 +234,8 @@
 {if $primaryTemplate && !empty($quickbarItems)}
 	{include @quickbar.latte}
 {/if}
+{* Flash zprávy mimo snippet body - ajaxový přechod je nezavře *}
+<div class="flash-stack" aria-live="polite" data-action-label="{_fcadmin.global.flashes.close}" data-close-label="{_fcadmin.global.flashes.dismiss}" data-sortable-error="{_fcadmin.global.flashes.sortableError}"></div>
 {snippet modals}
 	{block modals}{/block}
 {/snippet}

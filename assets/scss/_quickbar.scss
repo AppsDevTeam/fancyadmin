@@ -45,10 +45,9 @@ body:has(.quickbar) .container-main {
 	padding-bottom: 120px;
 }
 
-// Flash zprávy nad lištou (jinak je překryje) a nad bočním panelem, který po uložení zůstává otevřený
-body:has(.quickbar) .snippet-flashes {
+// Flash zprávy nad lištou, jinak je překryje
+body:has(.quickbar) .flash-stack {
 	bottom: var(--quickbar-panel-bottom);
-	z-index: 9030;
 }
 
 // Vodorovný scroll gridu pod lištu, ne za ni: 9 px vysoký a 5 px mezera
