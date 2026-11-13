@@ -27,7 +27,7 @@ const getStack = () => document.querySelector('.flash-stack');
  * Hlášku z jednoho textu rozdělí na nadpis (první věta) a text (zbytek). Zprávy s HTML
  * zůstávají celé v nadpisu, dělením by se rozbily značky.
  */
-const splitMessage = (node) => {
+export const splitMessage = (node) => {
 	if (node.children.length) {
 		return { title: node.innerHTML.trim(), text: '', isHtml: true };
 	}
@@ -240,13 +240,32 @@ const addFlash = (type, node, closeDuration) => {
 	}
 };
 
+let serverFlashInterceptor = null;
+
+/**
+ * Převzetí zpráv ze serveru před zobrazením - boční panel si po uložení bere úspěšnou
+ * zprávu sám (sidePanel.js). Funkce dostane i prázdný seznam, vrací true, když zprávy
+ * převzala; nepřevzaté zobrazí sama přes showServerFlash().
+ *
+ * @param {?function(Array<{type: string, node: Element, closeDuration: ?string}>): boolean} interceptor
+ */
+export const interceptServerFlashes = (interceptor) => {
+	serverFlashInterceptor = interceptor;
+};
+
+export const showServerFlash = (item) => addFlash(item.type, item.node, item.closeDuration);
+
 // Zprávy ze serveru (snippet flashes) přesune do balíčku; zdroj se vyprázdní, aby se
 // při dalším AJAXu bez překreslení snippetu nezobrazily znovu
 const adoptServerFlashes = () => {
-	document.querySelectorAll('.flash-source .flash-source-item').forEach((item) => {
-		addFlash(item.dataset.type, item, item.dataset.closeDuration);
+	const items = [...document.querySelectorAll('.flash-source .flash-source-item')].map((item) => {
 		item.remove();
+		return { type: item.dataset.type, node: item, closeDuration: item.dataset.closeDuration };
 	});
+	if (serverFlashInterceptor && serverFlashInterceptor(items)) {
+		return;
+	}
+	items.forEach(showServerFlash);
 };
 
 /**

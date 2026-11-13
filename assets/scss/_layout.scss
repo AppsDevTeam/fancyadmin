@@ -430,6 +430,102 @@ $sidePanelStackedOffset: 48px;
   filter: brightness(0.9);
 }
 
+// Potvrzení uložení přes celý panel, sidePanel.js ho kreslí na kopii panelu (docs/flashes.md)
+@keyframes side-panel-saved-pop {
+  0% { transform: scale(.6); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes side-panel-saved-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes side-panel-saved-up {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes side-panel-saved-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.side-panel-saved {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  border-radius: inherit;
+  text-align: center;
+  opacity: 0;
+  transition: opacity .2s ease;
+
+  &.side-panel-saved--visible {
+    opacity: 1;
+  }
+}
+
+// Pozadí potvrzení je sklo panelu, hlavička pod ním zmizí
+.side-panel-template-container--saved .side-panel-template-header {
+  transition: opacity .2s ease;
+}
+
+.side-panel-template-container--saved:has(.side-panel-saved--visible) .side-panel-template-header {
+  opacity: 0;
+}
+
+.side-panel-saved-check {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--fa-success, #{$success}) 14%, transparent);
+  color: var(--fa-success, #{$success});
+  animation: side-panel-saved-pop .45s cubic-bezier(.2, .8, .2, 1) both;
+
+  path {
+    stroke-dasharray: 22;
+    stroke-dashoffset: 22;
+    animation: side-panel-saved-draw .4s .2s cubic-bezier(.65, 0, .35, 1) forwards;
+  }
+}
+
+.side-panel-saved-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: side-panel-saved-up .35s .25s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.side-panel-saved-title {
+  color: var(--fa-text-strong, var(--fa-text));
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 26px;
+}
+
+.side-panel-saved-subtitle {
+  color: var(--fa-text-muted);
+  font-size: 15px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-panel-saved-check {
+    animation-name: side-panel-saved-fade;
+  }
+
+  .side-panel-saved-text {
+    animation-name: side-panel-saved-fade;
+  }
+}
+
 // Hlavička: nadpis vlevo, ikonová tlačítka vpravo (poslední je Zavřít)
 .side-panel-template-header {
   flex: none;

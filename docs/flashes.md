@@ -28,6 +28,18 @@ pište jako krátké shrnutí a za ním, co dělat dál. Zpráva s HTML se nedě
 - Zprávy žijí v `.flash-stack` mimo snippet `body`, takže je ajaxový přechod nezavře. Snippet
   `flashes` nese jen data (`.flash-source`), JS je po načtení stránky i po každém AJAXu převezme.
 
+## Uložení v bočním panelu
+
+Formulář odeslaný z bočního panelu neukáže úspěšnou zprávu jako toast. Přes celý panel se ukáže
+potvrzení (kolečko s fajfkou, nadpis a podtitul rozdělené stejně jako u toastu) a panel se po
+1,5 s zavře; klik na pozadí nebo křížek ho zavře hned. Ostatní zprávy z téže odpovědi se ukážou
+jako toasty až po zavření panelu (po 300 ms, další po 200 ms). Chyby validace zůstávají u polí,
+panel se nezavírá. Formuláře ve vlastní šabloně panelu (`setBodyTemplate()`) se netýká.
+
+Odpověď panel překreslí hned (snippet panelu, po přesměrování celé `body`), proto `sidePanel.js`
+těsně před překreslením udělá kopii panelu (`.side-panel-template-container--saved`, jen hlavička)
+a potvrzení kreslí na ni. Zprávy převezme přes `interceptServerFlashes()` z `flashes.js`.
+
 ## Z JS
 
 ```js

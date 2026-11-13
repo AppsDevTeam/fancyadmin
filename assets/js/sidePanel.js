@@ -1,3 +1,5 @@
+import { interceptServerFlashes, showServerFlash, splitMessage } from './flashes';
+
 $(function () {
 	const panels = {
 		'snippet--sidePanel': { isDirty: false },
@@ -5,6 +7,8 @@ $(function () {
 	};
 
 	let $stackedTarget = null;
+
+	const hasContent = (container) => !!container && !!container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-body, .side-panel-loading)');
 
 	function getPanelId(el) {
 		const $snippet = $(el).closest('.side-panel-template-container').find('[id^="snippet--sidePanel"]').first();
@@ -72,6 +76,10 @@ $(function () {
 			const panelId = getFormPanelId(settings);
 			if (panelId) {
 				panels[panelId].isDirty = false;
+				// Formulář ve vlastní šabloně panelu (AI chat) panel nezavírá
+				if (!settings.nette.form.closest('.side-panel-body').length) {
+					pendingSave = { container: document.getElementById(panelId).closest('.side-panel-template-container'), at: Date.now() };
+				}
 			}
 		},
 		success: function (payload, status, xhr, settings) {
@@ -98,6 +106,125 @@ $(function () {
 				$stackedTarget = null;
 			}
 		}
+	});
+
+	// Potvrzení uložení (docs/flashes.md): úspěšná zpráva po uložení z panelu se ukáže přes
+	// panel a ten se zavře až po chvíli. Odpověď ale panel překreslí hned (vlastní snippet,
+	// nebo po přesměrování celé body), proto se potvrzení kreslí na kopii panelu.
+	const SAVED_DURATION = 1500;
+	const SAVED_CLOSE_DURATION = 420;
+	const SAVED_FLASH_DELAY = 300;
+	const SAVED_FLASH_STEP = 200;
+	// Odeslání z panelu čeká na odpověď, po přesměrování až na následný požadavek
+	const PENDING_SAVE_TIMEOUT = 15000;
+	let pendingSave = null;
+	let savedGhost = null;
+
+	// Kopie panelu s pozadím, jen hlavička - klonovaný formulář by zdvojil pole i komponenty
+	function createSavedGhost(container) {
+		const ghost = container.cloneNode(true);
+		ghost.style.setProperty('--width', getComputedStyle(container).maxWidth);
+		ghost.querySelectorAll('[id^="snippet--sidePanel"]').forEach((snippet) => snippet.replaceChildren());
+		ghost.querySelectorAll('.side-panel-template-tabs').forEach((tabs) => tabs.remove());
+		ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+		ghost.classList.add('side-panel-template-container--saved');
+
+		const original = container.previousElementSibling;
+		const backdrop = original && original.classList.contains('side-panel-template-backdrop') ? original.cloneNode(false) : null;
+		if (backdrop) {
+			backdrop.removeAttribute('id');
+			backdrop.classList.add('side-panel-template-backdrop--saved');
+			document.body.append(backdrop);
+		}
+		document.body.append(ghost);
+		return { ghost, backdrop, closeTimer: null, closing: false, rest: [] };
+	}
+
+	function removeSavedGhost(saved) {
+		saved.ghost.remove();
+		if (saved.backdrop) saved.backdrop.remove();
+	}
+
+	function closeSavedGhost(saved) {
+		if (saved.closing) return;
+		saved.closing = true;
+		clearTimeout(saved.closeTimer);
+		saved.ghost.classList.remove('side-panel-template-container--open');
+		if (saved.backdrop) saved.backdrop.classList.remove('side-panel-template-backdrop--open');
+		setTimeout(() => removeSavedGhost(saved), SAVED_CLOSE_DURATION);
+		// Ostatní zprávy z téže odpovědi až po zavření panelu, postupně
+		saved.rest.forEach((item, i) => setTimeout(() => showServerFlash(item), SAVED_FLASH_DELAY + i * SAVED_FLASH_STEP));
+	}
+
+	function showSaved(saved, item) {
+		const parts = splitMessage(item.node);
+		const layer = document.createElement('div');
+		layer.className = 'side-panel-saved';
+		layer.setAttribute('role', 'status');
+		layer.setAttribute('aria-live', 'polite');
+		layer.innerHTML =
+			'<div class="side-panel-saved-check">' +
+				'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+					'<path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+				'</svg>' +
+			'</div>' +
+			'<div class="side-panel-saved-text"><div class="side-panel-saved-title"></div></div>';
+
+		const title = layer.querySelector('.side-panel-saved-title');
+		if (parts.isHtml) {
+			title.innerHTML = parts.title;
+		} else {
+			title.textContent = parts.title;
+		}
+		if (parts.text) {
+			const subtitle = document.createElement('div');
+			subtitle.className = 'side-panel-saved-subtitle';
+			subtitle.textContent = parts.text;
+			title.after(subtitle);
+		}
+
+		saved.ghost.append(layer);
+		// Klik na pozadí nebo křížek zavře panel hned
+		saved.ghost.addEventListener('click', (e) => {
+			if (e.target.closest('.side-panel-template-close')) closeSavedGhost(saved);
+		});
+		if (saved.backdrop) saved.backdrop.addEventListener('click', () => closeSavedGhost(saved));
+		requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('side-panel-saved--visible')));
+		saved.closeTimer = setTimeout(() => closeSavedGhost(saved), SAVED_DURATION);
+	}
+
+	$.nette.ext('snippets').before(function ($el) {
+		if (!pendingSave || savedGhost) return;
+		if (Date.now() - pendingSave.at > PENDING_SAVE_TIMEOUT) {
+			pendingSave = null;
+			return;
+		}
+		const el = $el[0];
+		const container = pendingSave.container;
+		if (el && (el.contains(container) || container.contains(el))) {
+			savedGhost = createSavedGhost(container);
+		}
+	});
+
+	// Volá se po každé odpovědi (i bez zpráv), až po překreslení snippetů
+	interceptServerFlashes((items) => {
+		const saved = savedGhost;
+		if (!saved) return false;
+		savedGhost = null;
+		pendingSave = null;
+
+		const stacked = saved.ghost.classList.contains('side-panel-template-container--stacked');
+		const real = document.querySelector('.side-panel-template-container' + (stacked ? '--stacked' : ':not(.side-panel-template-container--stacked)') + ':not(.side-panel-template-container--saved)');
+		const success = items.find((item) => item.type === 'success');
+		// Panel zůstal otevřený (chyby validace, nový obsah) nebo není co potvrdit
+		if (hasContent(real) || !success) {
+			removeSavedGhost(saved);
+			return false;
+		}
+
+		saved.rest = items.filter((item) => item !== success);
+		showSaved(saved, success);
+		return true;
 	});
 
 	$.nette.ext('sidePanelStackedOpen', {
@@ -281,11 +408,10 @@ $(function () {
 	// kontejneru (velikost panelu) a změna třídy ve stejném snímku by přechod zahodila.
 	// Sleduje se celé body, protože panely jsou uvnitř snippetu body.
 	function applyPanelState() {
-		const main = document.querySelector('.side-panel-template-container:not(.side-panel-template-container--stacked)');
-		const stacked = document.querySelector('.side-panel-template-container--stacked');
-		const isOpen = (container) => !!container && !!container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-body, .side-panel-loading)');
-		const mainOpen = isOpen(main);
-		const stackedOpen = isOpen(stacked);
+		const main = document.querySelector('.side-panel-template-container:not(.side-panel-template-container--stacked, .side-panel-template-container--saved)');
+		const stacked = document.querySelector('.side-panel-template-container--stacked:not(.side-panel-template-container--saved)');
+		const mainOpen = hasContent(main);
+		const stackedOpen = hasContent(stacked);
 
 		[[main, mainOpen], [stacked, stackedOpen]].forEach(([container, open]) => {
 			if (!container) return;
@@ -316,7 +442,7 @@ $(function () {
 	// zúžil. Šířku podržíme inline hned v callbacku observeru (ještě před vykreslením).
 	function holdClosingWidth() {
 		document.querySelectorAll('.side-panel-template-container--open').forEach((container) => {
-			if (container.dataset.openWidth && !container.querySelector('[id^="snippet--sidePanel"] :is(form, .side-panel-body, .side-panel-loading)')) {
+			if (container.dataset.openWidth && !hasContent(container)) {
 				container.style.setProperty('--width', container.dataset.openWidth);
 			}
 		});
