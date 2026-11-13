@@ -10,6 +10,7 @@ use Nette\Forms\Container;
 use Nette\Forms\Controls\BaseControl;
 use Nette\Forms\Form;
 use Nette\Forms\Helpers;
+use Nette\Forms\Rule;
 use Nette\Utils\Html;
 
 /**
@@ -35,6 +36,8 @@ class BiometricSignatureInput extends BaseControl
 
 	private string|\Stringable $clearCaption = 'fcadmin.biometricSignature.clear';
 
+	private Rule $invalidRule;
+
 	public function __construct(string|\Stringable|null $label = null)
 	{
 		parent::__construct($label);
@@ -44,6 +47,19 @@ class BiometricSignatureInput extends BaseControl
 		// Podpis, který prohlížeč poslal, ale nejde přijmout. Hláška jen „podepište
 		// se znovu“ - důvod (obrázek / biometrika) uživateli nic neřekne.
 		$this->addRule([self::class, 'validateSignature'], 'fcadmin.biometricSignature.invalid');
+		$rules = iterator_to_array($this->getRules(), false);
+		$this->invalidRule = end($rules);
+	}
+
+	/**
+	 * Hláška pro podpis, který nejde přijmout (výchozí přeložená „Podpis se nepodařilo
+	 * zachytit…“) - pro formulář s vlastními texty, např. v jazyce šablony.
+	 */
+	public function setInvalidMessage(string|\Stringable $message): static
+	{
+		$this->invalidRule->message = $message;
+
+		return $this;
 	}
 
 	/**

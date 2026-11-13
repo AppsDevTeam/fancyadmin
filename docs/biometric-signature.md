@@ -59,6 +59,7 @@ services:
 $form->addBiometricSignature('signature', 'Podpis')
 	->setRequired('Podepište se prosím.');
 	// ->setClearCaption('Clear signature')  - jiný popisek tlačítka (výchozí přeložený)
+	// ->setInvalidMessage('The signature could not be captured…')  - jiná hláška neplatného podpisu
 
 // processForm
 /** @var SignatureCapture|null $capture */
