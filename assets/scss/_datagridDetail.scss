@@ -54,6 +54,23 @@ $grid-row-expander-offset: $grid-row-expander-size + $paddingTableRowX;
 		box-shadow: inset 0 -1px 0 var(--fa-border);
 	}
 
+	// Buňka přes všechny sloupce není první sloupec: nelepí se ani nemá jeho stín, s posunem tabulky se nehýbe obsah
+	tr.row-item-detail > td:first-child {
+		position: static;
+		width: auto;
+		max-width: none;
+
+		&::after {
+			content: none;
+		}
+
+		> .item-detail-content {
+			position: sticky;
+			left: 0;
+			width: var(--datagridViewportWidth, auto);
+		}
+	}
+
 	tr:hover + tr.row-item-detail > td,
 	tr.row-item-detail:hover > td,
 	tr:has(+ tr.row-item-detail:hover) > td {

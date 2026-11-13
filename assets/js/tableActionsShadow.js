@@ -15,13 +15,21 @@ $.nette.ext('live').after(function (el) {
 
 			$(el).find('> table, > .datagrid-tree').css({
 				'--actionShadowWidthRight': showRightShadow ? '30px' : '0px',
-				'--actionShadowWidthLeft': showLeftShadow ? '30px' : '0px'
+				'--actionShadowWidthLeft': showLeftShadow ? '30px' : '0px',
+				// Šířka rozbaleného detailu řádku, který s tabulkou neroluje (_datagridDetail.scss)
+				'--datagridViewportWidth': clientWidth + 'px'
 			});
 		}).trigger('scroll');
+
+		// Šířka se mění i bez resize okna (boční menu, panel)
+		if (!el.dataset.shadowObserved) {
+			el.dataset.shadowObserved = '1';
+			new ResizeObserver(() => $(el).trigger('scroll')).observe(el);
+		}
 	});
 
 	$(window).on('resize', () => {
-		$('.table-responsive tr > td:first-child > div').map((i, el) => {
+		$('.table-responsive tr > td:first-child > div:not(.item-detail-content)').map((i, el) => {
 			clamp(el, {
 				clamp: 2,
 			});

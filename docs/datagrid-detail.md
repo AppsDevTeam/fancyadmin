@@ -10,7 +10,9 @@ mini-detail pod řádkem. Vzhled i chování dává fancyadmin (`_datagridDetail
 - otevřený řádek s detailem je uzavřený blok — linka `--fa-border` nahoře i dole, hover
   podbarví oba řádky;
 - otevřený je vždy jen jeden detail v tabulce, klik na jiný řádek předchozí zavře;
-- otevření animuje výšku (0,25 s), zavření je okamžité.
+- otevření animuje výšku (0,25 s), zavření je okamžité;
+- detail je široký jako viditelná část gridu a při vodorovném rolování stojí, roluje jen řádek nad ním;
+  stíny lepených sloupců (první sloupec, akce) má jen řádek, detail ne.
 
 Šablona detailu (`$grid->setItemsDetail(__DIR__ . '/XyGridDetail.latte')`):
 
