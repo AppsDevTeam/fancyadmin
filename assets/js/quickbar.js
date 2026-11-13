@@ -33,6 +33,11 @@ const state = {
 	open: null,
 	query: '',
 	searchRequest: 0,
+	// Poslední hledání, jehož výsledky jsou vidět, a hledání, na jehož výsledky čeká stisknutý Enter
+	searchShown: 0,
+	enterRequest: 0,
+	// Výsledek vybraný šipkami (index v resultItems), -1 = žádný
+	selected: -1,
 	notifications: [],
 	todos: [],
 	chats: [],
@@ -172,6 +177,9 @@ function render() {
 	if (input) {
 		input.setAttribute('aria-expanded', state.open === 'search' ? 'true' : 'false');
 		input.placeholder = state.open === 'search' ? input.dataset.placeholderOpen : input.dataset.placeholderClosed;
+		if (state.open !== 'search') {
+			input.removeAttribute('aria-activedescendant');
+		}
 	}
 
 	readVisibleAi();
@@ -232,6 +240,10 @@ function search(query) {
 		call('search', query.trim()).then((groups) => {
 			if (request === state.searchRequest && state.open === 'search') {
 				renderResults(groups || [], query.trim());
+				state.searchShown = request;
+				if (state.enterRequest === request) {
+					openSelectedResult();
+				}
 			}
 		});
 	}, query ? SEARCH_DEBOUNCE_MS : 0);
@@ -250,14 +262,17 @@ function renderResults(groups, query) {
 	if (!groups.length) {
 		const text = query ? $results.dataset.noResults.replace('%query%', query) : $results.dataset.empty;
 		$results.innerHTML = `<div class="quickbar-empty">${esc(text)}</div>`;
+		selectResult(-1);
 		return;
 	}
 
 	let index = 0;
 	$results.innerHTML = groups.map((group) => `
-		<div class="quickbar-group-title">${esc(group.label)}</div>
+		<div class="quickbar-group-title" role="presentation">${esc(group.label)}</div>
 		${group.items.map((item) => resultItem(item, index++)).join('')}
 	`).join('');
+	// Nové výsledky = vybraný první, Enter ho rovnou otevře
+	selectResult(0);
 }
 
 function resultItem(item, index) {
@@ -267,14 +282,54 @@ function resultItem(item, index) {
 		? `<span class="quickbar-avatar">${esc(item.initials)}</span>`
 		: `<span class="quickbar-item-icon quickbar-item-icon--tone-${esc(item.tone || 'muted')}"><i class="${esc(item.icon)}"></i></span>`;
 
-	return `<${tag} class="quickbar-item" ${attrs} data-quickbar-result="${index}">
+	return `<${tag} class="quickbar-item" ${attrs} id="quickbar-result-${index}" role="option" aria-selected="false" data-quickbar-result="${index}">
 		${leading}
 		<span class="quickbar-item-text">
 			<span class="quickbar-item-label ${item.meta ? 'quickbar-item-label--strong' : ''}">${esc(item.label)}</span>
 			${item.meta ? `<span class="quickbar-item-meta">${esc(item.meta)}</span>` : ''}
 		</span>
 		${item.badge ? `<span class="badge ${esc(item.badge.class)}">${esc(item.badge.label)}</span>` : ''}
+		<kbd class="quickbar-key quickbar-item-enter" aria-hidden="true">↵</kbd>
 	</${tag}>`;
+}
+
+// Výběr výsledku šipkami nebo myší: kurzor zůstává v poli hledání (dá se psát dál), vybraný
+// řádek se jen označí a čtečce ho ohlásí aria-activedescendant pole
+function selectResult(index, reveal = true) {
+	state.selected = index;
+	let $selected = null;
+	document.querySelectorAll('[data-quickbar-result]').forEach((el) => {
+		const selected = Number(el.dataset.quickbarResult) === index;
+		el.classList.toggle('quickbar-item--selected', selected);
+		el.setAttribute('aria-selected', selected ? 'true' : 'false');
+		if (selected) {
+			$selected = el;
+		}
+	});
+	const input = searchInput();
+	$selected ? input?.setAttribute('aria-activedescendant', $selected.id) : input?.removeAttribute('aria-activedescendant');
+
+	if ($selected && reveal) {
+		// U prvního výsledku skupiny ukázat i její nadpis
+		const title = $selected.previousElementSibling;
+		if (title?.classList.contains('quickbar-group-title')) {
+			title.scrollIntoView({ block: 'nearest' });
+		}
+		$selected.scrollIntoView({ block: 'nearest' });
+	}
+}
+
+// Šipky se na konci seznamu zastaví (držená šipka nepřeskočí zpět na začátek)
+function moveSelection(step) {
+	if (resultItems.length) {
+		selectResult(Math.min(Math.max(state.selected + step, 0), resultItems.length - 1));
+	}
+}
+
+// Otevře vybraný výsledek stejně jako klik - odkaz jde přes nette.ajax, panel přes obsluhu kliku níž
+function openSelectedResult() {
+	state.enterRequest = 0;
+	document.querySelector(`[data-quickbar-result="${state.selected}"]`)?.click();
 }
 
 // === Notifikace ===
@@ -1180,6 +1235,22 @@ document.addEventListener('click', (e) => {
 	}
 });
 
+// Najetí myší vybere výsledek jako šipky, jinak by byly označené dva řádky. Jen skutečný pohyb:
+// posun seznamu šipkami pod stojící myší výběr přebít nesmí.
+let lastPointer = null;
+
+document.addEventListener('mousemove', (e) => {
+	const pointer = `${e.screenX},${e.screenY}`;
+	if (pointer === lastPointer) {
+		return;
+	}
+	lastPointer = pointer;
+	const result = e.target.closest?.('[data-quickbar-result]');
+	if (result && Number(result.dataset.quickbarResult) !== state.selected) {
+		selectResult(Number(result.dataset.quickbarResult), false);
+	}
+});
+
 document.addEventListener('change', (e) => {
 	const checkbox = e.target.closest('[data-quickbar-todo]');
 	if (checkbox) {
@@ -1253,6 +1324,26 @@ document.addEventListener('keydown', (e) => {
 			close();
 		}
 		return;
+	}
+	// Šipky vybírají výsledek hledání, Enter ho otevře; kurzor zůstává v poli
+	const plainKey = !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.isComposing;
+	if (plainKey && state.open === 'search' && e.target.matches('[data-quickbar-search]')) {
+		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+			e.preventDefault();
+			moveSelection(e.key === 'ArrowDown' ? 1 : -1);
+			return;
+		}
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			// Výsledky dopsaného textu ještě nedorazily (debounce, síť) - otevře se první z nich,
+			// až přijdou, ne výsledek předchozího hledání
+			if (state.searchShown === state.searchRequest) {
+				openSelectedResult();
+			} else {
+				state.enterRequest = state.searchRequest;
+			}
+			return;
+		}
 	}
 	const typing = e.target.closest('input, textarea, select, [contenteditable]');
 	if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') || (e.key === '/' && !typing)) {

@@ -13,8 +13,11 @@
 		<h2 class="quickbar-panel-title">{_fcadmin.layout.quickbar.search.title}</h2>
 		{include closeButton}
 	</header>
-	<div class="quickbar-panel-body" data-quickbar-results data-empty="{_fcadmin.layout.quickbar.search.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
+	{* Výsledky vybírají šipky z pole hledání (quickbar.js), kurzor v poli zůstává *}
+	<div class="quickbar-panel-body" role="listbox" aria-label="{_fcadmin.layout.quickbar.search.title}" data-quickbar-results data-empty="{_fcadmin.layout.quickbar.search.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
 	<footer class="quickbar-panel-hint">
+		<span><kbd class="quickbar-key">↑↓</kbd>{_fcadmin.layout.quickbar.search.select}</span>
+		<span><kbd class="quickbar-key">↵</kbd>{_fcadmin.layout.quickbar.search.open}</span>
 		<span><kbd class="quickbar-key">Esc</kbd>{_fcadmin.layout.quickbar.close}</span>
 	</footer>
 </section>
@@ -121,7 +124,7 @@
 			placeholder="{_fcadmin.layout.quickbar.search.placeholder}"
 			data-placeholder-closed="{_fcadmin.layout.quickbar.search.placeholder}"
 			data-placeholder-open="{_fcadmin.layout.quickbar.search.placeholderOpen}"
-			aria-label="{_fcadmin.layout.quickbar.search.title}" aria-controls="quickbar-panel-search" aria-expanded="false"
+			role="combobox" aria-autocomplete="list" aria-label="{_fcadmin.layout.quickbar.search.title}" aria-controls="quickbar-panel-search" aria-expanded="false"
 			data-quickbar-search>
 		<kbd class="quickbar-key" data-quickbar-shortcut>Ctrl K</kbd>
 	</label>

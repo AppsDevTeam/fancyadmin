@@ -2962,6 +2962,14 @@ migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). V
 Čte ho `QuickbarSettings::getItems()`; `BasePresenterTrait::getQuickbarItems()` jde v projektu přepsat
 (např. položky podle oprávnění). Ikony jsou v pořadí AI, Notifikace, Úkoly, Chat, hledání vždy vlevo.
 
+**Hledání z klávesnice** — kurzor zůstává v poli hledání, výsledky se vybírají šipkami ↑ ↓ (na konci
+seznamu se zastaví) a Enter vybraný otevře stejně jako klik. Vybraný řádek má podklad
+`--quickbar-selected` a vpravo klávesu ↵ (`.quickbar-item--selected`, `.quickbar-item-enter`); najetí
+myší výsledek vybere taky, takže je označený vždy jen jeden. Každé nové hledání vybere první výsledek.
+Enter stisknutý dřív, než dorazí výsledky dopsaného textu, počká na ně a otevře první z nich (ne výsledek
+předchozího hledání). Pole je `role="combobox"`, výsledky `role="listbox"` a vybraný řádek ohlašuje
+`aria-activedescendant`.
+
 **AI asistent** se v liště ukáže jen se zapnutým `fancyadmin.ai` (sekce 30), právem k AI presenteru
 (`<modul>.ai`) a v multi-tenant režimu s plnými daty. Panel hostí widget adt-ai-chat: lišta si při prvním
 otevření načte jeho konfiguraci ze signálu `AiPresenterTrait::handleAiQuickbar()` (presenter hledá jako

@@ -29,6 +29,8 @@ layout:
       placeholderOpen: Hľadať…
       empty: Začnite písať a hľadajte.
       noResults: Pre „%query%“ sme nič nenašli.
+      select: Vybrať
+      open: Otvoriť
     ai:
       label: AI asistent
       title: AI asistent

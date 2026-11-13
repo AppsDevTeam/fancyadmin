@@ -624,6 +624,28 @@ body:has(.quickbar) .table-bottom-scroll {
 	}
 }
 
+// Výsledek hledání vybraný šipkami nebo myší (quickbar.js) - kurzor zůstává v poli, Enter ho otevře.
+// Myš výběr posouvá taky, vlastní podklad při najetí by ukázal dva označené řádky.
+.quickbar-panel--search .quickbar-item {
+	&:hover {
+		background: transparent;
+	}
+
+	&.quickbar-item--selected {
+		background: var(--quickbar-selected);
+	}
+}
+
+// Klávesa Enter jen u vybraného výsledku
+.quickbar-item-enter {
+	flex: none;
+	display: none;
+
+	.quickbar-item--selected > & {
+		display: block;
+	}
+}
+
 .quickbar-item-icon {
 	flex: none;
 	width: 32px;
