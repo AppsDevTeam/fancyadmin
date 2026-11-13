@@ -2971,8 +2971,9 @@ migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). V
 
 **Hledání z klávesnice** — kurzor zůstává v poli hledání, výsledky se vybírají šipkami ↑ ↓ (na konci
 seznamu se zastaví) a Enter vybraný otevře stejně jako klik. Vybraný řádek má podklad
-`--quickbar-selected` a vpravo klávesu ↵ (`.quickbar-item--selected`, `.quickbar-item-enter`); najetí
-myší výsledek vybere taky, takže je označený vždy jen jeden. Každé nové hledání vybere první výsledek.
+`--quickbar-selected` a vpravo klávesu ↵ (`.quickbar-item--selected`, `.quickbar-item-enter`). Místo pro ni
+má každý řádek, u nevybraných je průhledná, takže text ani badge při změně výběru neodskočí; na mobilu
+(pod `sm`) je skrytá. Najetí myší výsledek vybere taky, takže je označený vždy jen jeden. Každé nové hledání vybere první výsledek.
 Enter stisknutý dřív, než dorazí výsledky dopsaného textu, počká na ně a otevře první z nich (ne výsledek
 předchozího hledání). Pole je `role="combobox"`, výsledky `role="listbox"` a vybraný řádek ohlašuje
 `aria-activedescendant`.
