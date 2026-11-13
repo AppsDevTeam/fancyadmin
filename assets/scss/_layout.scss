@@ -471,12 +471,12 @@ $sidePanelStackedOffset: 48px;
   }
 }
 
-// Pozadí potvrzení je sklo panelu, hlavička pod ním zmizí
-.side-panel-template-container--saved .side-panel-template-header {
+// Pozadí potvrzení je sklo panelu, hlavička a záložky pod ním zmizí
+.side-panel-template-container--saved > :not(.side-panel-saved) {
   transition: opacity .2s ease;
 }
 
-.side-panel-template-container--saved:has(.side-panel-saved--visible) .side-panel-template-header {
+.side-panel-template-container--saved:has(.side-panel-saved--visible) > :not(.side-panel-saved) {
   opacity: 0;
 }
 
@@ -514,6 +514,10 @@ $sidePanelStackedOffset: 48px;
 .side-panel-saved-subtitle {
   color: var(--fa-text-muted);
   font-size: 15px;
+
+  &:empty {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

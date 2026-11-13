@@ -108,122 +108,69 @@ $(function () {
 		}
 	});
 
-	// Potvrzení uložení (docs/flashes.md): úspěšná zpráva po uložení z panelu se ukáže přes
-	// panel a ten se zavře až po chvíli. Odpověď ale panel překreslí hned (vlastní snippet,
-	// nebo po přesměrování celé body), proto se potvrzení kreslí na kopii panelu.
-	const SAVED_DURATION = 1500;
-	const SAVED_CLOSE_DURATION = 420;
-	const SAVED_FLASH_DELAY = 300;
-	const SAVED_FLASH_STEP = 200;
-	// Odeslání z panelu čeká na odpověď, po přesměrování až na následný požadavek
-	const PENDING_SAVE_TIMEOUT = 15000;
+	// Potvrzení uložení (docs/flashes.md). Odpověď panel překreslí hned (snippet panelu, po
+	// přesměrování celé body), proto se potvrzení kreslí na kopii panelu s pozadím.
 	let pendingSave = null;
-	let savedGhost = null;
-
-	// Kopie panelu s pozadím, jen hlavička - klonovaný formulář by zdvojil pole i komponenty
-	function createSavedGhost(container) {
-		const ghost = container.cloneNode(true);
-		ghost.style.setProperty('--width', getComputedStyle(container).maxWidth);
-		ghost.querySelectorAll('[id^="snippet--sidePanel"]').forEach((snippet) => snippet.replaceChildren());
-		ghost.querySelectorAll('.side-panel-template-tabs').forEach((tabs) => tabs.remove());
-		ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-		ghost.classList.add('side-panel-template-container--saved');
-
-		const original = container.previousElementSibling;
-		const backdrop = original && original.classList.contains('side-panel-template-backdrop') ? original.cloneNode(false) : null;
-		if (backdrop) {
-			backdrop.removeAttribute('id');
-			backdrop.classList.add('side-panel-template-backdrop--saved');
-			document.body.append(backdrop);
-		}
-		document.body.append(ghost);
-		return { ghost, backdrop, closeTimer: null, closing: false, rest: [] };
-	}
-
-	function removeSavedGhost(saved) {
-		saved.ghost.remove();
-		if (saved.backdrop) saved.backdrop.remove();
-	}
-
-	function closeSavedGhost(saved) {
-		if (saved.closing) return;
-		saved.closing = true;
-		clearTimeout(saved.closeTimer);
-		saved.ghost.classList.remove('side-panel-template-container--open');
-		if (saved.backdrop) saved.backdrop.classList.remove('side-panel-template-backdrop--open');
-		setTimeout(() => removeSavedGhost(saved), SAVED_CLOSE_DURATION);
-		// Ostatní zprávy z téže odpovědi až po zavření panelu, postupně
-		saved.rest.forEach((item, i) => setTimeout(() => showServerFlash(item), SAVED_FLASH_DELAY + i * SAVED_FLASH_STEP));
-	}
-
-	function showSaved(saved, item) {
-		const parts = splitMessage(item.node);
-		const layer = document.createElement('div');
-		layer.className = 'side-panel-saved';
-		layer.setAttribute('role', 'status');
-		layer.setAttribute('aria-live', 'polite');
-		layer.innerHTML =
-			'<div class="side-panel-saved-check">' +
-				'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-					'<path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
-				'</svg>' +
-			'</div>' +
-			'<div class="side-panel-saved-text"><div class="side-panel-saved-title"></div></div>';
-
-		const title = layer.querySelector('.side-panel-saved-title');
-		if (parts.isHtml) {
-			title.innerHTML = parts.title;
-		} else {
-			title.textContent = parts.title;
-		}
-		if (parts.text) {
-			const subtitle = document.createElement('div');
-			subtitle.className = 'side-panel-saved-subtitle';
-			subtitle.textContent = parts.text;
-			title.after(subtitle);
-		}
-
-		saved.ghost.append(layer);
-		// Klik na pozadí nebo křížek zavře panel hned
-		saved.ghost.addEventListener('click', (e) => {
-			if (e.target.closest('.side-panel-template-close')) closeSavedGhost(saved);
-		});
-		if (saved.backdrop) saved.backdrop.addEventListener('click', () => closeSavedGhost(saved));
-		requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('side-panel-saved--visible')));
-		saved.closeTimer = setTimeout(() => closeSavedGhost(saved), SAVED_DURATION);
-	}
+	let saved = null;
 
 	$.nette.ext('snippets').before(function ($el) {
-		if (!pendingSave || savedGhost) return;
-		if (Date.now() - pendingSave.at > PENDING_SAVE_TIMEOUT) {
-			pendingSave = null;
-			return;
-		}
-		const el = $el[0];
+		// Po přesměrování se čeká až na následný požadavek
+		if (!pendingSave || saved || Date.now() - pendingSave.at > 15000) return;
 		const container = pendingSave.container;
-		if (el && (el.contains(container) || container.contains(el))) {
-			savedGhost = createSavedGhost(container);
-		}
+		if (!$el[0].contains(container) && !container.contains($el[0])) return;
+
+		// Bez obsahu - klonovaný formulář by zdvojil pole i komponenty; šířka z něj se drží inline
+		const ghost = container.cloneNode(true);
+		ghost.style.setProperty('--width', getComputedStyle(container).maxWidth);
+		ghost.querySelector('[id^="snippet--sidePanel"]').replaceChildren();
+		ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+		ghost.classList.add('side-panel-template-container--saved');
+		const backdrop = container.previousElementSibling.cloneNode(false);
+		document.body.append(backdrop, ghost);
+		saved = { backdrop, ghost };
 	});
 
 	// Volá se po každé odpovědi (i bez zpráv), až po překreslení snippetů
 	interceptServerFlashes((items) => {
-		const saved = savedGhost;
 		if (!saved) return false;
-		savedGhost = null;
+		const { backdrop, ghost } = saved;
+		saved = null;
 		pendingSave = null;
 
-		const stacked = saved.ghost.classList.contains('side-panel-template-container--stacked');
-		const real = document.querySelector('.side-panel-template-container' + (stacked ? '--stacked' : ':not(.side-panel-template-container--stacked)') + ':not(.side-panel-template-container--saved)');
+		// Skutečný panel je v DOM před kopií
+		const real = document.querySelector(ghost.matches('.side-panel-template-container--stacked') ? '.side-panel-template-container--stacked' : '.side-panel-template-container:not(.side-panel-template-container--stacked)');
 		const success = items.find((item) => item.type === 'success');
-		// Panel zůstal otevřený (chyby validace, nový obsah) nebo není co potvrdit
+		// Panel zůstal otevřený (chyby validace) nebo není co potvrdit
 		if (hasContent(real) || !success) {
-			removeSavedGhost(saved);
+			backdrop.remove();
+			ghost.remove();
 			return false;
 		}
 
-		saved.rest = items.filter((item) => item !== success);
-		showSaved(saved, success);
+		const { title, text, isHtml } = splitMessage(success.node);
+		const layer = document.createElement('div');
+		layer.className = 'side-panel-saved';
+		layer.setAttribute('role', 'status');
+		layer.innerHTML =
+			'<div class="side-panel-saved-check"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+				'<path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+			'</svg></div>' +
+			'<div class="side-panel-saved-text"><div class="side-panel-saved-title"></div><div class="side-panel-saved-subtitle"></div></div>';
+		layer.querySelector('.side-panel-saved-title')[isHtml ? 'innerHTML' : 'textContent'] = title;
+		layer.querySelector('.side-panel-saved-subtitle').textContent = text;
+		ghost.append(layer);
+		requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('side-panel-saved--visible')));
+
+		// Zavře se jako běžný panel, ostatní zprávy z odpovědi až potom a postupně
+		setTimeout(() => {
+			ghost.classList.remove('side-panel-template-container--open');
+			backdrop.classList.remove('side-panel-template-backdrop--open');
+			setTimeout(() => {
+				backdrop.remove();
+				ghost.remove();
+			}, 420);
+			items.filter((item) => item !== success).forEach((item, i) => setTimeout(() => showServerFlash(item), 300 + i * 200));
+		}, 1500);
 		return true;
 	});
 
