@@ -979,6 +979,13 @@ na tablet bez notifikací dorazí po obnovení stránky.
 Správa tabletů (`TabletsPresenterTrait`), čekací stránka tabletu (`TabletDevicePresenterTrait`)
 se service workerem a vázání odkazu na tablet. Návod v `docs/tablets.md`.
 
+### Biometrický podpis (`BiometricSignatureInput`, `biometricSignature.js`)
+
+Podpis prstem nebo perem se záznamem průběhu psaní, potvrzený kódem z SMS nebo personálem na místě,
+s důkazním záznamem (otisk SHA-256 do PDF). Logika je v knihovně `adt/biometric-signature`
+(volitelná závislost), fancyadmin k ní dává služby (`biometricSignature: enabled`), pole
+`$form->addBiometricSignature()`, JS a styly. Návod v `docs/biometric-signature.md`.
+
 ### Formuláře v modalech až při otevření (`LazyComponentsTrait`)
 
 Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`

@@ -1,0 +1,25 @@
+// Pole s biometrickým podpisem (BiometricSignatureInput, docs/biometric-signature.md).
+// Samostatný soubor jako tablet-device.scss - podpis bývá na veřejné stránce v layoutu
+// projektu, ten si ho naimportuje (@use '@fancyadmin/scss/biometric-signature').
+// Barvy jen z proměnných Bootstrapu, projekt je přepíše proměnnými níže.
+
+.biometric-signature {
+	max-width: var(--signature-max-width, 600px);
+}
+
+.biometric-signature-canvas {
+	display: block;
+	width: 100%;
+	// Rozlišení plátna nastaví JS podle rozměrů z CSS - výška musí být daná
+	height: var(--signature-height, 200px);
+	border: 1.5px dashed var(--signature-border-color, var(--bs-border-color));
+	border-radius: var(--bs-border-radius);
+	background: var(--signature-background, var(--bs-tertiary-bg));
+	touch-action: none; // tah prstem nesmí scrollovat stránku
+	cursor: crosshair;
+}
+
+.biometric-signature-actions {
+	margin-top: 0.5rem;
+	text-align: right;
+}

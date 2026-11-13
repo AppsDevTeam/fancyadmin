@@ -752,3 +752,9 @@ modules:
           pageTitle: "Obnova hesla"
       flashFraud: "Bolo detegované podozrivé správanie."
       flashWrongToken: "Neplatný token"
+
+
+# Pole s biometrickým podpisom (BiometricSignatureInput, docs/biometric-signature.md)
+biometricSignature:
+  clear: "Vymazať podpis"
+  invalid: "Podpis sa nepodarilo zachytiť. Vymažte ho, prosím, a podpíšte sa znova."

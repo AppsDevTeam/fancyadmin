@@ -61,7 +61,11 @@ use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
+use ADT\FancyAdmin\UI\Components\Forms\BiometricSignature\BiometricSignatureInput;
 use ADT\Forms\Controls\PasswordRevealInput;
+use ADT\BiometricSignature\BiometricSigning;
+use ADT\BiometricSignature\Evidence\EvidenceVerifier;
+use ADT\BiometricSignature\SigningPolicy;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
 use Contributte\Datagrid\Datagrid;
 use Contributte\Translation\DI\TranslationProviderInterface;
@@ -189,6 +193,19 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'cookieName' => Expect::string()->default('fancyadmin_tablet'),
 				// = rozsah service workeru, musí pokrýt čekací stránku i stránky formulářů
 				'cookiePath' => Expect::string()->default('/'),
+			]),
+			// Biometrický podpis (adt/biometric-signature, docs/biometric-signature.md)
+			'biometricSignature' => Expect::structure([
+				'enabled' => Expect::bool()->default(false),
+				// Limity ověření kódem (SigningPolicy), null = výchozí hodnota knihovny
+				'policy' => Expect::structure([
+					'linkValidMinutes' => Expect::int()->nullable()->default(null),
+					'codeValidMinutes' => Expect::int()->nullable()->default(null),
+					'maxCodeAttempts' => Expect::int()->nullable()->default(null),
+					'maxCodeSends' => Expect::int()->nullable()->default(null),
+					'resendCooldownSeconds' => Expect::int()->nullable()->default(null),
+					'codeLength' => Expect::int()->nullable()->default(null),
+				]),
 			]),
 			// AI asistent nad daty projektu (adt/ai-chat), README, AI asistent
 			'ai' => Expect::structure([
@@ -385,6 +402,23 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'cookieName' => $this->config->tablet->cookieName,
 					'cookiePath' => $this->config->tablet->cookiePath,
 				]);
+		}
+
+		// Biometrický podpis - služby knihovny. SigningHandler (SMS, obsah důkazního
+		// záznamu, PDF) dodává projekt jako vlastní službu, BiometricSigning si ho autowiruje.
+		if ($this->config->biometricSignature->enabled) {
+			if (!class_exists(BiometricSigning::class)) {
+				throw new RuntimeException('fancyadmin: biometricSignature.enabled je zapnuté, ale chybí balíček adt/biometric-signature (composer require adt/biometric-signature). Viz docs/biometric-signature.md.');
+			}
+
+			$builder->addDefinition($this->prefix('biometricSignature.policy'))
+				->setFactory(SigningPolicy::class, array_filter((array) $this->config->biometricSignature->policy, fn($value) => $value !== null));
+
+			$builder->addDefinition($this->prefix('biometricSignature.signing'))
+				->setFactory(BiometricSigning::class);
+
+			$builder->addDefinition($this->prefix('biometricSignature.evidenceVerifier'))
+				->setFactory(EvidenceVerifier::class);
 		}
 
 		// Cíl "kam po přihlášení" v cookie, aby nepřihlášenému nevznikala session
@@ -886,6 +920,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		// method - musí se zaregistrovat za běhu, jinak by ji každý projekt musel
 		// registrovat sám ve svém Bootstrapu.
 		$this->getInitialization()->addBody(PasswordRevealInput::class . '::register();');
+
+		// $form->addBiometricSignature() - jen s nainstalovaným adt/biometric-signature,
+		// bez něj by pole nemělo z čeho skládat hodnotu (SignatureCapture)
+		if (class_exists(\ADT\BiometricSignature\SignatureCapture::class)) {
+			$this->getInitialization()->addBody(BiometricSignatureInput::class . '::register();');
+		}
 
 		// Datagrid má výchozí solid ('fas fa-'), UI fancyadminu používá obrysové ikony
 		$this->getInitialization()->addBody(Datagrid::class . '::$iconPrefix = ?;', ['fa-regular fa-']);

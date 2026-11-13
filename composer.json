@@ -34,6 +34,7 @@
     "adt/ai-chat": "^1.9"
   },
   "suggest": {
+    "adt/biometric-signature": "Biometric signature form field and services (fancyadmin: biometricSignature), see docs/biometric-signature.md",
     "guzzlehttp/guzzle": "Required for Keycloak SSO integration and the AI chat (ADT\\AiChat\\Client\\GuzzleManagedAgentsClient)",
     "firebase/php-jwt": "Required for Keycloak SSO integration (backchannel logout token validation)",
     "doctrine/migrations": "Used by fancyadmin:generate-missing-acl-resources to find the migrations namespace and directory",
