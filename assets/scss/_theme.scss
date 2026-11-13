@@ -111,7 +111,9 @@ a {
 	}
 }
 
-.form-label {
+// Popisek skupiny checkboxů a radií renderer bez form-label nechá
+.form-label,
+label:has(+ .form-check) {
 	font-size: 14px;
 	line-height: 18px;
 	color: var(--labelColor, #{$text-muted});
