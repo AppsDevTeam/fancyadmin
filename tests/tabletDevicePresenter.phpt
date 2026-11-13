@@ -76,7 +76,16 @@ final class PairedTabletService extends TabletService
 		throw new LogicException('Signál čekací stránky nesmí tablet vracet na čekací stránku.');
 	}
 
+	public int $taken = 0;
+
 	public function takePendingForm(Tablet $tablet, DateTimeImmutable $now = new DateTimeImmutable()): ?array
+	{
+		$this->taken++;
+
+		return ['url' => '/klient/formular/1', 'title' => 'Souhlas'];
+	}
+
+	public function peekPendingForm(Tablet $tablet, DateTimeImmutable $now = new DateTimeImmutable()): ?array
 	{
 		return ['url' => '/klient/formular/1', 'title' => 'Souhlas'];
 	}
@@ -117,7 +126,7 @@ test('signál takeForm na adrese workeru vrátí JSON, ne kód workeru', functio
 });
 
 
-/** takeForm! na čekací stránce: s poll=1 se ptá stránka (dotazování), bez něj service worker */
+/** takeForm! na čekací stránce: s poll=1 si formulář vyzvedává stránka, s peek=1 se service worker jen dívá */
 function takeForm(PairedTabletService $service, array $post): JsonResponse
 {
 	$presenter = new TestTabletDevicePresenter();
@@ -146,11 +155,23 @@ test('dotaz čekací stránky vydá formulář a ohlásí, že stránka svítí'
 });
 
 
-test('service worker po push zprávě formulář dostane, čekací stránku tím ale neohlásí', function () {
+test('vyzvednutí bez poll=1 formulář vydá, čekací stránku tím ale neohlásí', function () {
 	$service = new PairedTabletService((new PairedTestTablet())->setName('Recepce'));
 
 	$response = takeForm($service, []);
 
 	Assert::same(['ok' => true, 'form' => ['url' => '/klient/formular/1', 'title' => 'Souhlas']], $response->getPayload());
+	Assert::same(0, $service->seen);
+	Assert::same(1, $service->taken);
+});
+
+
+test('service worker se po push zprávě na formulář jen dívá - vyzvedne si ho až čekací stránka', function () {
+	$service = new PairedTabletService((new PairedTestTablet())->setName('Recepce'));
+
+	$response = takeForm($service, ['peek' => '1']);
+
+	Assert::same(['ok' => true, 'form' => ['url' => '/klient/formular/1', 'title' => 'Souhlas']], $response->getPayload());
+	Assert::same(0, $service->taken);
 	Assert::same(0, $service->seen);
 });

@@ -1,70 +1,79 @@
 {contentType javascript}
 // Service worker tabletu (TabletDevicePresenterTrait::actionSw, docs/tablets.md). Push zpráva je prázdná - jen
-// probudí tablet. Odeslaný formulář si worker vyzvedne u serveru (takeForm!, cookie tabletu)
-// a otevře ho na čekací stránce, když je vidět; jinak ukáže notifikaci, klepnutí ho otevře.
-// Prohlížeče chtějí ke každé push zprávě viditelnou reakci - proto i bez formuláře notifikace.
-// Výjimka: formulář si mezitím vyzvedla sama čekací stránka (dotazování, tablet.js) a svítí -
-// reakce je vidět na ní a notifikace by na tabletu jen zůstala viset.
+// probudí tablet, odeslaný formulář čeká u serveru (takeForm!, cookie tabletu).
+//
+// Formulář vyzvedává a otevírá jen čekací stránka (tablet.js): worker ukáže notifikaci a stránce
+// řekne, ať se zeptá hned. Sám si ho nevyzvedává - otevřít ho totiž spolehlivě neumí: iOS po
+// klepnutí na notifikaci otevře aplikaci na čekací stránce, ne na odkazu z workeru, a vyzvednutý
+// formulář by pak už stránka nedostala. Na formulář se jen dívá (peek), aby ho v notifikaci
+// pojmenoval. Notifikaci ukazuje ke každé push zprávě (prohlížeče to chtějí, Safari jinak odběr
+// zruší); stránka ji po vyzvednutí formuláře zavře.
 
 const TAKE_FORM_URL = {link takeForm!};
+const WAITING_URL = {link default};
 
-// Jen odkaz na stejný web - nic jiného tablet otevírat nemá
-function sameOrigin(url) {
+// Stejné hodnoty má tablet.js: zpráva čekací stránce "zeptej se hned" a značka notifikace, kterou stránka zavírá
+const PICK_UP_MESSAGE = 'fancyadmin-tablet-form';
+const NOTIFICATION_TAG = 'fancyadmin-tablet-form';
+
+function windowClients() {
+	return self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+}
+
+// Čekající formulář bez vyzvednutí (peek) - dál čeká na čekací stránku
+async function peekForm() {
 	try {
-		return new URL(url, self.location.origin).origin === self.location.origin;
+		const body = new FormData();
+		body.append('peek', '1');
+		const response = await fetch(TAKE_FORM_URL, { method: 'POST', body, credentials: 'same-origin' });
+		return response.ok ? (await response.json()).form : null;
 	} catch {
-		return false;
+		// Bez sítě - notifikace stránku aspoň otevře
+		return null;
 	}
 }
 
-async function openUrl(url) {
-	const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-	const client = clients.find((c) => 'navigate' in c);
-	if (client) {
-		try {
-			await client.focus();
-			await client.navigate(url);
-			return;
-		} catch {
-			// Stránka mimo rozsah workeru - otevřít nové okno
-		}
-	}
-	await self.clients.openWindow(url);
+function askToPickUp(clients) {
+	clients.forEach((client) => client.postMessage({ type: PICK_UP_MESSAGE }));
 }
 
 async function handlePush() {
-	let form = null;
-	try {
-		const response = await fetch(TAKE_FORM_URL, { method: 'POST', credentials: 'same-origin' });
-		form = response.ok ? (await response.json()).form : null;
-	} catch {
-		// Bez sítě - notifikace níž stránku aspoň otevře
+	const form = await peekForm();
+	const clients = await windowClients();
+
+	// Bez notifikace jen když nic nečeká a tablet svítí - formulář už čekací stránka otevřela
+	// (vyzvedla si ho při načtení). Nejdřív notifikace, pak zpráva - stránka ji po vyzvednutí zavře.
+	if (form || !clients.some((client) => client.visibilityState === 'visible')) {
+		try {
+			await self.registration.showNotification(form ? (form.title || {_fcadmin.tablets.device.notificationForm}) : {_fcadmin.tablets.device.title}, {
+				body: form ? {_fcadmin.tablets.device.notificationOpenForm} : {_fcadmin.tablets.device.notificationOpenWaiting},
+				tag: NOTIFICATION_TAG,
+				requireInteraction: true,
+			});
+		} catch {
+			// Notifikace mezitím zakázané - otevřená stránka formulář vyzvedne i tak
+		}
 	}
 
-	const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-	const visible = clients.find((c) => c.visibilityState === 'visible' && 'navigate' in c);
+	// Stránce se říká vždy - i když se worker na formulář nedoptal (výpadek sítě, chyba serveru)
+	askToPickUp(clients);
+}
 
-	if (form && sameOrigin(form.url)) {
-		// Čekací stránka svítí - formulář rovnou na ní, bez notifikace
-		if (visible) {
-			try {
-				await visible.navigate(form.url);
-				return;
-			} catch {
-				// Nepovedlo se - notifikace
-			}
-		}
-	} else if (!form && visible) {
-		// Nic nečeká a tablet svítí - formulář už otevřela čekací stránka sama (dotazování)
+// Klepnutí na notifikaci: tablet na čekací stránku, ta si formulář vyzvedne a otevře. Otevřená
+// stránka se nikam nepřesměrovává - může to být formulář, který zákazník právě vyplňuje.
+async function openWaitingPage() {
+	const clients = await windowClients();
+	if (clients.length === 0) {
+		await self.clients.openWindow(WAITING_URL);
 		return;
 	}
 
-	await self.registration.showNotification(form ? (form.title || {_fcadmin.tablets.device.notificationForm}) : {_fcadmin.tablets.device.title}, {
-		body: form ? {_fcadmin.tablets.device.notificationOpenForm} : {_fcadmin.tablets.device.notificationOpenWaiting},
-		tag: 'fancyadmin-tablet-form',
-		requireInteraction: true,
-		data: { url: form && sameOrigin(form.url) ? form.url : {link default} },
-	});
+	try {
+		await (clients.find((client) => client.visibilityState === 'visible') || clients[0]).focus();
+	} catch {
+		// Do popředí ji dostane systém sám (klepnutí na notifikaci aplikaci otevře)
+	}
+	askToPickUp(clients);
 }
 
 self.addEventListener('push', (event) => {
@@ -73,10 +82,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
 	event.notification.close();
-	const url = event.notification.data && event.notification.data.url;
-	if (url && sameOrigin(url)) {
-		event.waitUntil(openUrl(url));
-	}
+	event.waitUntil(openWaitingPage());
 });
 
 // Nová verze workeru převezme tablet hned, ne až po zavření všech oken

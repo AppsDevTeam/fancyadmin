@@ -2,9 +2,9 @@
 
 {*
   Čekací stránka tabletu (TabletDevicePresenterTrait). Stav (povolení notifikací, čekání)
-  přepíná @fancyadmin/js/tablet podle data-tablet-state; formulář po push zprávě otevře
-  service worker (sw.js.latte). S dotazováním (data-poll-seconds) si ho otevřená stránka
-  vyzvedne i sama - proto se i bez notifikací ukazuje, že formulář dorazí.
+  přepíná @fancyadmin/js/tablet podle data-tablet-state. Odeslaný formulář si stránka vyzvedne
+  a otevře při načtení a po push zprávě (řekne jí to service worker, sw.js.latte) - bez
+  notifikací ji proto stačí obnovit (tlačítko Obnovit, aplikace z plochy jiné nemá).
 *}
 {block content}
 
@@ -15,7 +15,6 @@
 		data-sw-scope="{$swScope}"
 		data-register-url="{link registerPush!}"
 		data-take-form-url="{link takeForm!}"
-		data-poll-seconds="{$pollInterval}"
 		data-tablet-state="loading">
 		<span class="tablet-device-icon is-success"><i class="fa-solid fa-tablet-screen-button"></i></span>
 		<h1>{$tablet->getName()}</h1>
@@ -41,8 +40,9 @@
 		<div class="tablet-state tablet-state-error">
 			<p class="mt-3 mb-0">{_fcadmin.tablets.device.error}</p>
 		</div>
-		{* Bez notifikací formulář přijde jen na otevřenou stránku (dotazování) *}
-		<p n:if="$pollInterval > 0" class="tablet-polling-hint mt-3 mb-0">{_fcadmin.tablets.device.pollingHint}</p>
+		{* Bez notifikací se formulář ukáže až po obnovení stránky *}
+		<p class="tablet-reload-hint mt-3 mb-0">{_fcadmin.tablets.device.reloadHint}</p>
+		<button type="button" class="btn btn-outline-secondary mt-3" data-tablet-reload><i class="fa-solid fa-rotate me-2"></i>{_fcadmin.tablets.device.reload}</button>
 	</div>
 {else}
 	<div class="tablet-device">

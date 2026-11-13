@@ -189,9 +189,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'cookieName' => Expect::string()->default('fancyadmin_tablet'),
 				// = rozsah service workeru, musí pokrýt čekací stránku i stránky formulářů
 				'cookiePath' => Expect::string()->default('/'),
-				// Záložní dotazování: otevřená čekací stránka se každých N sekund sama zeptá na
-				// odeslaný formulář (dorazí i bez notifikací nebo při ztraceném pushi), 0 = jen push
-				'pollInterval' => Expect::int()->min(0)->default(TabletService::DEFAULT_POLL_INTERVAL),
 			]),
 			// AI asistent nad daty projektu (adt/ai-chat), README, AI asistent
 			'ai' => Expect::structure([
@@ -387,7 +384,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				->setFactory(TabletService::class, [
 					'cookieName' => $this->config->tablet->cookieName,
 					'cookiePath' => $this->config->tablet->cookiePath,
-					'pollInterval' => $this->config->tablet->pollInterval,
 				]);
 		}
 

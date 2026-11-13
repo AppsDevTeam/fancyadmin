@@ -695,8 +695,7 @@ tablets:
     lastSeenAt: Naposledy pripojený
     ready: Pripravený
     notificationsDisabled: Notifikácie nepovolené
-    notificationsDisabledHint: Na tablete otvorte čakaciu stránku a povoľte notifikácie.
-    notificationsDisabledPollingHint: Formulár dorazí len na otvorenú čakaciu stránku. Aby sa dal tablet aj zobudiť, povoľte na ňom notifikácie.
+    notificationsDisabledHint: Formulár sa na tablete zobrazí až po otvorení alebo obnovení čakacej stránky. Aby sa dal tablet aj prebudiť, povoľte na ňom notifikácie.
     notPaired: Nespárovaný
     pair: Spárovať
     pairTitle: Spárovať tablet (QR kód)
@@ -712,11 +711,8 @@ tablets:
       nameExists: 'Tablet %name% už existuje.'
   messages:
     disconnected: 'Tablet %name% bol odpojený.'
-    notificationsDisabled: 'Tablet %name% nemá povolené notifikácie - otvorte na ňom čakaciu stránku a povoľte ich.'
-    subscriptionExpired: 'Tablet %name% už notifikácie neprijíma - otvorte na ňom čakaciu stránku a povoľte ich znova.'
-    pushNotConfigured: Push notifikácie nie sú na serveri nastavené - formulár otvorte na tablete inak (napr. QR kódom) a dajte vedieť správcovi.
-    sendFailed: Formulár sa do tabletu nepodarilo odoslať. Skúste to znova, prípadne ho otvorte na tablete inak (napr. QR kódom).
-    waitingPageClosed: 'Tablet %name% teraz nemá otvorenú čakaciu stránku. Otvorte ju na ňom - formulár naň čaká a do 10 minút sa na nej zobrazí sám.'
+    notPaired: 'Tablet %name% nie je spárovaný.'
+    notNotified: 'Tabletu %name% sa nepodarilo poslať notifikáciu. Otvorte alebo obnovte na ňom čakaciu stránku - formulár naň 10 minút čaká a zobrazí sa na nej.'
   device:
     title: Tablet
     loading: Pripájam tablet…
@@ -728,7 +724,8 @@ tablets:
     unsupported: Tento prehliadač notifikácie nepodporuje.
     unsupportedHint: Na iPade pridajte stránku na plochu (Zdieľať → Pridať na plochu) a otvorte ju z plochy. Na Androide použite Chrome.
     error: Tablet sa nepodarilo pripojiť. Skontrolujte pripojenie k internetu a stránku obnovte.
-    pollingHint: Formulár sa tu zobrazí aj bez notifikácií, kým táto stránka zostane otvorená.
+    reloadHint: Bez notifikácií sa formulár zobrazí po obnovení tejto stránky.
+    reload: Obnoviť
     notPaired: Tablet nie je spárovaný
     notPairedHint: V administrácii otvorte Tablety, pri tablete zvoľte Spárovať a QR kód naskenujte týmto tabletom.
     invalidPairingTitle: Neplatný odkaz

@@ -19,9 +19,9 @@ use Tester\Assert;
 use Tracy\Debugger;
 
 /**
- * Odeslání formuláře do tabletu: push a záložní dotazování čekací stránky (docs/tablets.md).
- * S dotazováním formulář čeká i na tablet bez notifikací a obsluha se dozví, jestli na něm
- * čekací stránka svítí; bez dotazování (pollInterval 0) platí, že bez pushe se neposílá.
+ * Odeslání formuláře do tabletu (docs/tablets.md): formulář čeká u serveru na čekací stránku,
+ * push tablet jen probudí. Čeká i tehdy, když push neodešel - obsluha se dozví, že má na
+ * tabletu čekací stránku otevřít nebo obnovit. Service worker se na formulář jen dívá.
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -63,7 +63,7 @@ final class FakeWebPushSender extends WebPushSender
 }
 
 
-/** sendForm(), markSeen() ani isWaitingPageOpen() se na tablety do DB neptají */
+/** sendForm() ani markSeen() se na tablety do DB neptají */
 final class UnusedTabletQueryFactory implements TabletQueryFactory
 {
 	public function create(): TabletQuery
@@ -76,7 +76,7 @@ final class UnusedTabletQueryFactory implements TabletQueryFactory
 const ENDPOINT = 'https://fcm.googleapis.com/fcm/send/abc';
 const FORM_URL = '/klient/formular/123';
 
-function tabletService(FakeWebPushSender $sender, int $pollInterval): TabletService
+function tabletService(FakeWebPushSender $sender): TabletService
 {
 	return new TabletService(
 		new TestEntityManager(),
@@ -85,7 +85,6 @@ function tabletService(FakeWebPushSender $sender, int $pollInterval): TabletServ
 		new TestTranslator(),
 		new Request(new UrlScript('https://localhost/klient/tablet')),
 		new TestHttpResponse(),
-		pollInterval: $pollInterval,
 	);
 }
 
@@ -114,7 +113,7 @@ test('push odešel - odesláno, formulář čeká na vyzvednutí', function () u
 	$sender = new FakeWebPushSender();
 	$tablet = pairedTablet(ENDPOINT);
 
-	Assert::null(tabletService($sender, 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
+	Assert::null(tabletService($sender)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
 	Assert::same([ENDPOINT], $sender->sent);
 	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
 	Assert::same('Souhlas', $tablet->getPendingFormTitle());
@@ -122,128 +121,93 @@ test('push odešel - odesláno, formulář čeká na vyzvednutí', function () u
 });
 
 
-test('bez notifikací, čekací stránka svítí - odesláno, vyzvedne si ho dotazováním', function () use ($now) {
-	$sender = new FakeWebPushSender();
-	$tablet = pairedTablet(null, $now->modify('-8 seconds'));
+test('nahlédnutí formulář nevyzvedne, vyzvednutí ho vydá jen jednou', function () use ($now) {
+	$service = tabletService(new FakeWebPushSender());
+	$tablet = pairedTablet(ENDPOINT);
+	$service->sendForm($tablet, FORM_URL, 'Souhlas', $now);
+	$form = ['url' => FORM_URL, 'title' => 'Souhlas'];
 
-	Assert::null(tabletService($sender, 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
+	// service worker po push zprávě: podle formuláře napíše notifikaci, formulář čeká dál
+	Assert::same($form, $service->peekPendingForm($tablet, $now));
+	Assert::same($form, $service->peekPendingForm($tablet, $now));
+	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
+
+	// čekací stránka
+	Assert::same($form, $service->takePendingForm($tablet, $now));
+	Assert::null($service->peekPendingForm($tablet, $now));
+	Assert::null($service->takePendingForm($tablet, $now));
+});
+
+
+test('propadlý formulář se nevydá a vyzvednutí ho uklidí', function () use ($now) {
+	$service = tabletService(new FakeWebPushSender());
+	$tablet = pairedTablet(ENDPOINT);
+	$service->sendForm($tablet, FORM_URL, 'Souhlas', $now);
+	$later = $now->modify(TabletService::PENDING_FORM_LIFETIME);
+
+	Assert::null($service->peekPendingForm($tablet, $later));
+	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
+	Assert::null($service->takePendingForm($tablet, $later));
+	Assert::null($tablet->getPendingFormUrl());
+});
+
+
+test('bez notifikací formulář čeká na obnovení čekací stránky - obsluha dostane hlášku', function () use ($now) {
+	$sender = new FakeWebPushSender();
+	$tablet = pairedTablet();
+
+	Assert::same('fcadmin.tablets.messages.notNotified', tabletService($sender)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
 	Assert::same([], $sender->sent);
 	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
+	Assert::same(['url' => FORM_URL, 'title' => 'Souhlas'], tabletService($sender)->takePendingForm($tablet, $now));
 });
 
 
-test('bez notifikací, čekací stránka nesvítí - hláška, formulář ale čeká dál', function () use ($now) {
-	$tablet = pairedTablet(null, $now->modify('-5 minutes'));
+test('odběr už neplatí - smaže se, formulář čeká dál', function () use ($now) {
+	$tablet = pairedTablet(ENDPOINT);
 
 	Assert::same(
-		'fcadmin.tablets.messages.waitingPageClosed',
-		tabletService(new FakeWebPushSender(), 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
+		'fcadmin.tablets.messages.notNotified',
+		tabletService(new FakeWebPushSender(result: false))->sendForm($tablet, FORM_URL, 'Souhlas', $now),
 	);
-	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
-});
-
-
-test('odběr už neplatí - smaže se a formulář převezme dotazování', function () use ($now) {
-	$sender = new FakeWebPushSender(result: false);
-	$tablet = pairedTablet(ENDPOINT, $now->modify('-3 seconds'));
-
-	Assert::null(tabletService($sender, 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
 	Assert::null($tablet->getPushEndpoint());
 	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
+});
 
-	// Stejná situace se zhasnutým tabletem: obsluha se dozví, že má otevřít čekací stránku
-	$tablet = pairedTablet(ENDPOINT, $now->modify('-1 hour'));
-	Assert::same(
-		'fcadmin.tablets.messages.waitingPageClosed',
-		tabletService(new FakeWebPushSender(result: false), 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
-	);
+
+test('push spadl nebo není nastavený klíč VAPID - formulář čeká dál, odběr zůstává', function () use ($now) {
+	$tablet = pairedTablet(ENDPOINT);
+	$failing = new FakeWebPushSender(result: new WebPushException('Push služba neodpovídá.'));
+	Assert::same('fcadmin.tablets.messages.notNotified', tabletService($failing)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
+	Assert::same(ENDPOINT, $tablet->getPushEndpoint()); // dočasná chyba odběr neruší
+	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
+
+	$tablet = pairedTablet(ENDPOINT);
+	$unconfigured = new FakeWebPushSender(configured: false);
+	Assert::same('fcadmin.tablets.messages.notNotified', tabletService($unconfigured)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
+	Assert::same([], $unconfigured->sent);
+	Assert::same(ENDPOINT, $tablet->getPushEndpoint());
 	Assert::same(FORM_URL, $tablet->getPendingFormUrl());
 });
 
 
-test('push spadl nebo není nastavený klíč VAPID - s dotazováním to nevadí', function () use ($now) {
-	$tablet = pairedTablet(ENDPOINT, $now->modify('-3 seconds'));
-	$failing = new FakeWebPushSender(result: new WebPushException('Push služba neodpovídá.'));
-	Assert::null(tabletService($failing, 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
-	Assert::same(ENDPOINT, $tablet->getPushEndpoint()); // dočasná chyba odběr neruší
-
-	$tablet = pairedTablet(ENDPOINT, $now->modify('-3 seconds'));
-	$unconfigured = new FakeWebPushSender(configured: false);
-	Assert::null(tabletService($unconfigured, 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
-	Assert::same([], $unconfigured->sent);
-});
-
-
-test('nespárovaný tablet formulář nedostane ani s dotazováním', function () use ($now) {
+test('nespárovaný tablet formulář nedostane', function () use ($now) {
+	$sender = new FakeWebPushSender();
 	$tablet = (new TestTablet())->setName('Recepce');
 
-	Assert::same(
-		'fcadmin.tablets.messages.notificationsDisabled',
-		tabletService(new FakeWebPushSender(), 5)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
-	);
+	Assert::same('fcadmin.tablets.messages.notPaired', tabletService($sender)->sendForm($tablet, FORM_URL, 'Souhlas', $now));
+	Assert::same([], $sender->sent);
 	Assert::null($tablet->getPendingFormUrl());
 });
 
 
-test('bez dotazování (pollInterval 0) platí původní chování - jen push', function () use ($now) {
-	// bez notifikací se neposílá, i kdyby tablet před chvílí otevřel čekací stránku
-	$tablet = pairedTablet(null, $now->modify('-2 seconds'));
-	Assert::same(
-		'fcadmin.tablets.messages.notificationsDisabled',
-		tabletService(new FakeWebPushSender(), 0)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
-	);
-	Assert::null($tablet->getPendingFormUrl());
-
-	// neplatný odběr: smazat odběr i čekající formulář
-	$tablet = pairedTablet(ENDPOINT);
-	Assert::same(
-		'fcadmin.tablets.messages.subscriptionExpired',
-		tabletService(new FakeWebPushSender(result: false), 0)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
-	);
-	Assert::null($tablet->getPushEndpoint());
-	Assert::null($tablet->getPendingFormUrl());
-
-	// chybí klíč VAPID
-	$tablet = pairedTablet(ENDPOINT);
-	Assert::same(
-		'fcadmin.tablets.messages.pushNotConfigured',
-		tabletService(new FakeWebPushSender(configured: false), 0)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
-	);
-
-	// chyba push služby
-	$tablet = pairedTablet(ENDPOINT);
-	Assert::same(
-		'fcadmin.tablets.messages.sendFailed',
-		tabletService(new FakeWebPushSender(result: new WebPushException('Chyba.')), 0)->sendForm($tablet, FORM_URL, 'Souhlas', $now),
-	);
-});
-
-
-test('čekací stránka je otevřená, dokud se ptá - tři rozestupy a rezerva', function () use ($now) {
-	$service = tabletService(new FakeWebPushSender(), 5);
-
-	Assert::true($service->isWaitingPageOpen(pairedTablet(null, $now->modify('-25 seconds')), $now));
-	Assert::false($service->isWaitingPageOpen(pairedTablet(null, $now->modify('-26 seconds')), $now));
-	Assert::false($service->isWaitingPageOpen(pairedTablet(), $now)); // ještě se neozval
-
-	// nespárovaný tablet a vypnuté dotazování
-	$unpaired = (new TestTablet())->setName('Recepce')->setLastSeenAt($now);
-	Assert::false($service->isWaitingPageOpen($unpaired, $now));
-	Assert::false(tabletService(new FakeWebPushSender(), 0)->isWaitingPageOpen(pairedTablet(null, $now), $now));
-});
-
-
-test('dotaz čekací stránky zapíše čas nejvýš jednou za rozestup', function () use ($now) {
-	$service = tabletService(new FakeWebPushSender(), 5);
-
+test('dotaz čekací stránky zapíše, kdy se tablet naposledy ozval', function () use ($now) {
+	$service = tabletService(new FakeWebPushSender());
 	$tablet = pairedTablet();
+
 	$service->markSeen($tablet, $now);
 	Assert::equal($now, $tablet->getLastSeenAt());
 
-	// za 2 s znovu - čas se nemění, do DB se nepíše
 	$service->markSeen($tablet, $now->modify('+2 seconds'));
-	Assert::equal($now, $tablet->getLastSeenAt());
-
-	$service->markSeen($tablet, $now->modify('+5 seconds'));
-	Assert::equal($now->modify('+5 seconds'), $tablet->getLastSeenAt());
+	Assert::equal($now->modify('+2 seconds'), $tablet->getLastSeenAt());
 });

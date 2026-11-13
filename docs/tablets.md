@@ -8,36 +8,39 @@ platí, dokud ho obsluha neodpojí nebo dokud na tabletu někdo nesmaže data pr
 Administrace → Tablety → Spárovat ─ QR kód ─► tablet otevře odkaz, dostane klíč zařízení (cookie)
                                                a povolí notifikace (Web Push)
 Obsluha: „Poslat na tablet" ─► odkaz čeká u serveru ─ prázdný push ─► service worker tabletu
-                                                                       si odkaz vyzvedne a otevře
+                                                                       ukáže notifikaci, čekací
+                                                                       stránka si odkaz vyzvedne
+                                                                       a otevře
 Tablet po odeslání / nečinnosti ─► čekací stránka ─► projekt zneplatní odkaz ($onRelease)
 ```
 
-## Push a záložní dotazování
+## Push a vyzvednutí formuláře
 
-Formulář se k tabletu dostane dvěma cestami, které běží **současně** a vedou na stejné místo -
-čekající odkaz u serveru (`takeForm!`), který se vydá **jen jednou**:
+Formulář čeká u serveru jako odkaz (`takeForm!`), který se vydá **jen jednou** a jen 10 minut
+(`PENDING_FORM_LIFETIME`). Vyzvedává a otevírá ho **čekací stránka** - zeptá se serveru:
 
-| | Push (Web Push, VAPID) | Dotazování čekací stránky |
-|---|---|---|
-| Jak | prázdná push zpráva probudí service worker, ten si odkaz vyzvedne | otevřená čekací stránka se každých `pollInterval` s zeptá sama |
-| Uspaný tablet, stránka na pozadí | probudí ho, ukáže notifikaci | nic - ptá se jen viditelná stránka |
-| Bez notifikací (starý prohlížeč, zakázané, iPad bez stránky na ploše) | nejde | funguje, dokud stránka svítí |
-| Zpoždění | hned | do `pollInterval` s |
+- **po načtení** (i po obnovení tlačítkem Obnovit - aplikace z plochy jiné obnovení nemá),
+- **po návratu do popředí** (tablet se probudil, klepnutí na notifikaci otevřelo aplikaci),
+- **na pokyn service workeru** po push zprávě.
 
-Kdo se zeptá dřív (service worker po push zprávě, nebo stránka dotazem), ten formulář otevře;
-druhý dostane „nic nečeká". Když push funguje, ptá se stránka jen jako pojistka pro ztracenou
-zprávu (šestkrát řidčeji). Z dotazů server pozná, že tablet má čekací stránku otevřenou
-(`TabletService::isWaitingPageOpen()`), a `sendForm()` podle toho obsluze řekne, co dál:
+V rozestupu se stránka sama neptá. Push (Web Push, VAPID) je prázdná zpráva, která probudí
+service worker: ten ukáže notifikaci a otevřené stránce řekne, ať se zeptá hned - svítící
+stránka tak formulář otevře sama, uspaný tablet po klepnutí na notifikaci.
+
+Service worker se na formulář jen **dívá** (`takeForm!` s `peek=1`), aby věděl, co napsat do
+notifikace - nevyzvedává ho a neotevírá. Otevřít odkaz totiž spolehlivě neumí: iOS po klepnutí
+na notifikaci otevře aplikaci na čekací stránce (start_url), ne na odkazu z workeru, a formulář
+vyzvednutý workerem by pak stránka už nedostala. Notifikace se ukazuje ke každé push zprávě
+(Safari by jinak odběr zrušil); stránka ji po vyzvednutí formuláře zavře, u svítící stránky
+tak jen problikne.
+
+Formulář čeká na každý spárovaný tablet, i když push neodešel - `sendForm()` obsluze řekne, co dál:
 
 | Tablet | `sendForm()` |
 |---|---|
 | nespárovaný | hláška, nic se neposílá |
 | notifikace povolené, push odešel | `null` (odesláno) |
-| bez notifikací / push selhal, čekací stránka svítí | `null` - vyzvedne si ho do pár sekund sama |
-| bez notifikací / push selhal, čekací stránka nesvítí | hláška „otevřete na tabletu čekací stránku"; formulář **čeká dál** (10 minut) a po otevření stránky se zobrazí |
-
-S `pollInterval: 0` je dotazování vypnuté a platí původní chování: bez povolených notifikací
-se formulář neodešle.
+| bez notifikací / odběr už neplatí / push selhal / chybí klíč VAPID | hláška „otevřete nebo obnovte na tabletu čekací stránku"; formulář **čeká** (10 minut) a po načtení stránky se zobrazí |
 
 ## Bezpečnost
 
@@ -45,10 +48,9 @@ se formulář neodešle.
   je jen jeho SHA-256. Nové spárování zneplatní klíč i odběr předchozího zařízení.
 - **Klíč zařízení** má 256 bitů z CSPRNG, je v cookie `HttpOnly`, `SameSite=Lax` a v DB je jen
   jeho SHA-256. Obsluha může tablet kdykoli odpojit.
-- **Dotazování** používá stejný signál `takeForm!` a stejné ověření (POST, cookie tabletu) jako
-  service worker - žádná nová cesta k odkazu. Bez platné cookie odpoví 400 a stránka se načte
-  znovu (ukáže, že tablet není spárovaný).
-- **Push je prázdný**: jen probudí service worker a ten si odkaz vyzvedne signálem `takeForm!`
+- **Vyzvednutí** (`takeForm!`) je POST ověřený cookie tabletu - stránka i service worker.
+  Bez platné cookie odpoví 400 a stránka se načte znovu (ukáže, že tablet není spárovaný).
+- **Push je prázdný**: jen probudí service worker, odkaz si tablet vyzvedne signálem `takeForm!`
   s cookie tabletu. Odkaz tak nejde přes push službu prohlížeče (Google, Apple) a zpráva se
   nemusí šifrovat. Čekající odkaz se vydá jen jednou a jen do 10 minut
   (`PENDING_FORM_LIFETIME`).
@@ -73,7 +75,6 @@ fancyadmin:
 		enabled: true
 		cookieName: fancyadmin_tablet   # výchozí
 		cookiePath: /                   # výchozí; = rozsah service workeru
-		pollInterval: 5                 # výchozí; rozestup dotazů čekací stránky (s), 0 = jen push
 ```
 
 Privátní klíč VAPID je PEM klíče EC P-256 v base64 (jeden řádek do `.env`, na produkci šifrovaně):
@@ -175,7 +176,7 @@ class TabletPresenter extends Presenter   // AutowireProperties (kdyby/autowired
 Akce `default` (čekací stránka), `pair` (odkaz z QR), `sw` (service worker), signály
 `registerPush!` a `takeForm!`. Signály workeru jdou na adresu `sw` (`sw?do=takeForm`), akce
 `sw` je proto při signálu přeskočí a odpoví až signál (JSON). Stejně se při signálu přeskočí
-akce `default` (dotazování čekací stránky, `registerPush!`) - dotaz není otevření čekací
+akce `default` (`takeForm!` a `registerPush!` čekací stránky) - dotaz není otevření čekací
 stránky a tablet se jím neuvolňuje (`$onRelease`). Šablony `default.latte` a
 `pair.latte` (bloky `title` a `content`) jde přebít vlastními u presenteru projektu. Do bundlu veřejné části:
 
@@ -196,11 +197,11 @@ $error = $this->_tabletService->sendForm($tablet, $url, 'Souhlas se zpracování
 // null = odesláno, jinak hláška pro obsluhu (co udělat dál)
 ```
 
-Nenulová hláška nemusí znamenat, že formulář propadl - s dotazováním může čekat na otevření
-čekací stránky (viz Push a záložní dotazování). Obsluze ji stačí zobrazit.
+Nenulová hláška neznamená, že formulář propadl - u spárovaného tabletu čeká na otevření nebo
+obnovení čekací stránky (viz Push a vyzvednutí formuláře). Obsluze ji stačí zobrazit.
 
-Nabídka tabletů: s dotazováním `$tabletQueryFactory->create()->byPaired()->fetch()` (formulář
-jde poslat na každý spárovaný tablet), bez něj `->byCanReceiveForms()` (jen s notifikacemi).
+Nabídka tabletů: `$tabletQueryFactory->create()->byPaired()->fetch()` (formulář jde poslat na
+každý spárovaný tablet); `->byCanReceiveForms()` vybere jen ty s povolenými notifikacemi.
 
 ### Vázání odkazu na tablet
 
@@ -231,8 +232,8 @@ Fancyadmin neví, co odkaz otevírá - zabezpečit ho musí projekt:
 
 - **iPad**: stránku přidat na plochu (Sdílet → Přidat na plochu) a otevírat z plochy - jinak
   Safari notifikace nepovolí. **Android**: Chrome.
-- Tablet bez notifikací funguje díky dotazování taky, jen ho nejde probudit: čekací stránka na
-  něm musí svítit (vypnout uspávání obrazovky, nebo ji před odesláním otevřít).
+- Tablet bez notifikací funguje taky, jen ho nejde probudit a formulář se na něm ukáže až po
+  načtení čekací stránky: po odeslání na ní klepnout na Obnovit (nebo ji otevřít).
 - Tablet zamknout v aplikaci: iPad **Řízený přístup** (Zpřístupnění), Android **připnutí
   obrazovky**. Zákazník pak z čekací stránky a formuláře neodejde do prohlížeče ani nastavení.
 - Lokálně se self-signed certifikátem prohlížeč service worker nezaregistruje - ověřovat v

@@ -149,8 +149,8 @@ trait TabletTrait
 
 	/**
 	 * Spárovaný tablet s povolenými notifikacemi - formulář ho probudí push zprávou. Bez
-	 * notifikací jde formulář poslat jen s dotazováním (fancyadmin: tablet: pollInterval)
-	 * a dorazí jen na otevřenou čekací stránku, viz TabletService::sendForm().
+	 * notifikací formulář taky dorazí, ale až po otevření nebo obnovení čekací stránky,
+	 * viz TabletService::sendForm().
 	 */
 	public function canReceiveForms(): bool
 	{

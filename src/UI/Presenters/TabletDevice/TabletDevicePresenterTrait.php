@@ -13,12 +13,10 @@ use Nette\Http\IResponse;
 /**
  * Čekací stránka tabletu (veřejná, bez přihlášení), docs/tablets.md. Tablet se jednou
  * spáruje odkazem z QR kódu (pair), dostane klíč zařízení do cookie a povolí notifikace
- * (Web Push). Formulář mu pak pošle obsluha: push probudí service worker (sw), ten si
- * formulář vyzvedne (takeForm!) a otevře ho, nebo ukáže notifikaci. Na tabletu, který drží
- * zákazník, tak není přihlášený žádný účet.
- *
- * Záložní dotazování: otevřená čekací stránka volá takeForm! i sama (fancyadmin: tablet:
- * pollInterval), takže formulář dorazí i bez notifikací nebo když se push ztratí.
+ * (Web Push). Formulář mu pak pošle obsluha: čeká u serveru a čekací stránka si ho vyzvedne
+ * (takeForm!) a otevře - při načtení, po návratu do popředí a když jí to řekne service worker
+ * (sw), kterého probudí push a který k tomu ukáže notifikaci. Na tabletu, který drží zákazník,
+ * tak není přihlášený žádný účet.
  *
  * Projekt: presenter s vlastním layoutem (blok content, define title) a routou v rozsahu
  * cookie tabletu (fancyadmin: tablet: cookiePath), na stránce JS `@fancyadmin/js/tablet`.
@@ -31,7 +29,7 @@ trait TabletDevicePresenterTrait
 
 	public function actionDefault(): void
 	{
-		// Signály čekací stránky (registerPush!, takeForm! při dotazování) jdou na její adresu
+		// Signály čekací stránky (registerPush!, takeForm!) jdou na její adresu
 		// a Nette pouští akci před signálem. Dotaz na formulář ale není otevření čekací stránky:
 		// returnToWaiting() by tablet znovu uvolnil ($onRelease) a projekt by zneplatnil odkaz,
 		// který si mezitím vyzvedl service worker po push zprávě.
@@ -48,8 +46,6 @@ trait TabletDevicePresenterTrait
 		// Bez klíče VAPID (testy) se tablet k odběru nepřihlásí a ukáže chybu
 		$this->template->vapidPublicKey = $this->_webPushSender->isConfigured() ? $this->_webPushSender->getPublicKey() : null;
 		$this->template->swScope = $this->_tabletService->getCookiePath();
-		// Rozestup dotazů čekací stránky na čekající formulář (s), 0 = jen push
-		$this->template->pollInterval = $this->_tabletService->getPollInterval();
 		$this->setTabletDeviceTemplateFile(__DIR__ . '/default.latte');
 	}
 
@@ -65,15 +61,15 @@ trait TabletDevicePresenterTrait
 	}
 
 	/**
-	 * Service worker tabletu - po push zprávě si vyzvedne formulář (takeForm!) a otevře ho,
-	 * nebo ukáže notifikaci. Rozsah (cesta cookie) mu povoluje hlavička Service-Worker-Allowed,
+	 * Service worker tabletu - po push zprávě ukáže notifikaci a čekací stránce řekne, ať si
+	 * formulář vyzvedne. Rozsah (cesta cookie) mu povoluje hlavička Service-Worker-Allowed,
 	 * aby ovládal i stránky formulářů, na které tablet přejde.
 	 */
 	public function actionSw(): void
 	{
 		// Worker volá signál na téhle adrese ({link takeForm!} = sw?do=takeForm) a Nette pouští
 		// akci před signálem - odpověď odsud by signál přeskočila a worker by místo formuláře
-		// dostal sám sebe (JSON se nepřečte, tablet ukáže jen notifikaci s čekací stránkou)
+		// dostal sám sebe (JSON se nepřečte, notifikace by formulář nepojmenovala)
 		if ($this->getSignal() !== null) {
 			return;
 		}
@@ -106,16 +102,24 @@ trait TabletDevicePresenterTrait
 	}
 
 	/**
-	 * Odeslaný formulář (jen jednou), null = nic nečeká. Ptá se service worker po push zprávě
-	 * a čekací stránka při dotazování (POST poll=1) - ta tím zároveň hlásí, že je otevřená.
+	 * Odeslaný formulář, null = nic nečeká. Čekací stránka si ho vyzvedává (jen jednou) a tím
+	 * zároveň hlásí, že je otevřená (POST poll=1). Service worker se po push zprávě jen dívá
+	 * (POST peek=1), aby věděl, co napsat do notifikace - formulář dál čeká na stránku.
 	 */
 	public function handleTakeForm(): void
 	{
 		$tablet = $this->requirePostFromTablet();
-		if ($this->getHttpRequest()->getPost('poll') !== null) {
+		$post = $this->getHttpRequest();
+		if ($post->getPost('poll') !== null) {
 			$this->_tabletService->markSeen($tablet);
 		}
-		$this->sendJson(['ok' => true, 'form' => $this->_tabletService->takePendingForm($tablet)]);
+
+		$this->sendJson([
+			'ok' => true,
+			'form' => $post->getPost('peek') !== null
+				? $this->_tabletService->peekPendingForm($tablet)
+				: $this->_tabletService->takePendingForm($tablet),
+		]);
 	}
 
 	private function requirePostFromTablet(): Tablet

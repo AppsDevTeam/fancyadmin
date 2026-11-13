@@ -695,8 +695,7 @@ tablets:
     lastSeenAt: Naposledy připojen
     ready: Připraven
     notificationsDisabled: Notifikace nepovolené
-    notificationsDisabledHint: Na tabletu otevřete čekací stránku a povolte notifikace.
-    notificationsDisabledPollingHint: Formulář dorazí jen na otevřenou čekací stránku. Aby šel tablet i probudit, povolte na něm notifikace.
+    notificationsDisabledHint: Formulář se na tabletu zobrazí až po otevření nebo obnovení čekací stránky. Aby šel tablet i probudit, povolte na něm notifikace.
     notPaired: Nespárovaný
     pair: Spárovat
     pairTitle: Spárovat tablet (QR kód)
@@ -712,11 +711,8 @@ tablets:
       nameExists: 'Tablet %name% už existuje.'
   messages:
     disconnected: 'Tablet %name% byl odpojen.'
-    notificationsDisabled: 'Tablet %name% nemá povolené notifikace - otevřete na něm čekací stránku a povolte je.'
-    subscriptionExpired: 'Tablet %name% už notifikace nepřijímá - otevřete na něm čekací stránku a povolte je znovu.'
-    pushNotConfigured: Push notifikace nejsou na serveru nastavené - formulář otevřete na tabletu jinak (např. QR kódem) a dejte vědět správci.
-    sendFailed: Formulář se do tabletu nepodařilo odeslat. Zkuste to znovu, případně ho otevřete na tabletu jinak (např. QR kódem).
-    waitingPageClosed: 'Tablet %name% teď nemá otevřenou čekací stránku. Otevřete ji na něm - formulář na něj čeká a do 10 minut se na ní zobrazí sám.'
+    notPaired: 'Tablet %name% není spárovaný.'
+    notNotified: 'Tabletu %name% se nepodařilo poslat notifikaci. Otevřete nebo obnovte na něm čekací stránku - formulář na něj 10 minut čeká a zobrazí se na ní.'
   device:
     title: Tablet
     loading: Připojuji tablet…
@@ -728,7 +724,8 @@ tablets:
     unsupported: Tento prohlížeč notifikace nepodporuje.
     unsupportedHint: Na iPadu přidejte stránku na plochu (Sdílet → Přidat na plochu) a otevřete ji z plochy. Na Androidu použijte Chrome.
     error: Tablet se nepodařilo připojit. Zkontrolujte připojení k internetu a stránku obnovte.
-    pollingHint: Formulář se tu zobrazí i bez notifikací, dokud tahle stránka zůstane otevřená.
+    reloadHint: Bez notifikací se formulář zobrazí po obnovení této stránky.
+    reload: Obnovit
     notPaired: Tablet není spárovaný
     notPairedHint: V administraci otevřete Tablety, u tabletu zvolte Spárovat a QR kód naskenujte tímto tabletem.
     invalidPairingTitle: Neplatný odkaz
