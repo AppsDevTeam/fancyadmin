@@ -1072,6 +1072,13 @@ function revealMenuSub(button) {
 	}));
 }
 
+// Odkaz menu si naviguje sám, okno se jen zavře; v capture, protože nette.ajax klik na odkazu dál nepustí
+document.addEventListener('click', (e) => {
+	if (e.target.closest?.('[data-quickbar-menu] a[href]')) {
+		close();
+	}
+}, true);
+
 // Menu na desktopu není, ostatní okna zůstanou otevřená
 mobileQuery.addEventListener('change', () => {
 	if (!bar()) {
@@ -1183,11 +1190,6 @@ document.addEventListener('click', (e) => {
 	const menuToggle = target.closest('[data-quickbar-menu-toggle]');
 	if (menuToggle) {
 		toggleMenuSub(menuToggle);
-		return;
-	}
-	// Odkaz menu si naviguje sám, okno se jen zavře
-	if (target.closest('[data-quickbar-menu] a[href]')) {
-		close();
 		return;
 	}
 	if (target.closest('[data-quickbar-chat-back]')) {
