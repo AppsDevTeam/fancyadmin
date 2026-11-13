@@ -327,15 +327,22 @@ trait IdentityTrait
 
 	public function getProfile(): ?Profile
 	{
-		$selectedAccount = $this->getSelectedAccount();
+		return $this->getProfileForAccount($this->getSelectedAccount());
+	}
+
+	/**
+	 * Profil k uctu, pripadne k nadrazenemu uctu - majitel holdingu ma profil jen na nem.
+	 */
+	public function getProfileForAccount(?Account $account): ?Profile
+	{
 		foreach ($this->getProfiles() as $_profile) {
-			if ($_profile->getAccount() === $selectedAccount) {
+			if ($_profile->getAccount() === $account) {
 				return $_profile;
 			}
 		}
-		if ($selectedAccount?->getParent()) {
+		if ($account?->getParent()) {
 			foreach ($this->getProfiles() as $_profile) {
-				if ($_profile->getAccount() === $selectedAccount->getParent()) {
+				if ($_profile->getAccount() === $account->getParent()) {
 					return $_profile;
 				}
 			}
