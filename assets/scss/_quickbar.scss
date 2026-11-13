@@ -35,6 +35,8 @@ body {
 	body {
 		--quickbar-width: calc(100vw - 32px);
 		--quickbar-width-open: var(--quickbar-width);
+		// Lišta 46 px (4 + 36 + 4 obsah, 2 rámeček), panel opět 10 px nad ní
+		--quickbar-panel-bottom: calc(var(--quickbar-bottom) + 56px);
 	}
 }
 
