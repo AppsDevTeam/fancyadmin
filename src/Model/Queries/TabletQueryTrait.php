@@ -19,8 +19,8 @@ trait TabletQueryTrait
 	}
 
 	/**
-	 * Spárované tablety (Tablet::isPaired). S dotazováním (fancyadmin: tablet: pollInterval)
-	 * jde formulář poslat na každý z nich - bez notifikací ho vyzvedne otevřená čekací stránka.
+	 * Spárované tablety (Tablet::isPaired). Formulář jde poslat na každý z nich - bez notifikací
+	 * si ho čekací stránka vyzvedne při načtení (TabletService::sendForm).
 	 */
 	public function byPaired(): static
 	{

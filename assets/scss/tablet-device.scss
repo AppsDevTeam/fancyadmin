@@ -53,14 +53,14 @@
 	}
 }
 
-// Dotazování: bez notifikací formulář dorazí jen na otevřenou stránku - říct to tam, kde
+// Bez notifikací se formulář ukáže až po obnovení stránky - říct to tam, kde
 // stránka jinak hlásí jen potíž s notifikacemi (u ready a loading to není potřeba)
-.tablet-polling-hint {
+.tablet-reload-hint {
 	display: none;
 }
 
 @each $state in permission, denied, unsupported, error {
-	[data-tablet-state="#{$state}"] .tablet-polling-hint {
+	[data-tablet-state="#{$state}"] .tablet-reload-hint {
 		display: block;
 	}
 }

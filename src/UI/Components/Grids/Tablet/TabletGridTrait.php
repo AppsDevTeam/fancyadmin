@@ -57,12 +57,8 @@ trait TabletGridTrait
 		}
 		if ($tablet->isPaired()) {
 			return Html::el('span')->class('badge bg-warning text-dark')->setText($translator->translate('fcadmin.tablets.grid.notificationsDisabled'))
-				->setAttribute('title', $translator->translate(
-					// S dotazováním formulář dorazí i tak, jen tablet nejde probudit
-					$this->getTabletsPresenter()->isTabletPollingEnabled()
-						? 'fcadmin.tablets.grid.notificationsDisabledPollingHint'
-						: 'fcadmin.tablets.grid.notificationsDisabledHint',
-				));
+				// Formulář dorazí i tak, jen tablet nejde probudit
+				->setAttribute('title', $translator->translate('fcadmin.tablets.grid.notificationsDisabledHint'));
 		}
 
 		return Html::el('span')->class('badge bg-secondary')->setText($translator->translate('fcadmin.tablets.grid.notPaired'));
