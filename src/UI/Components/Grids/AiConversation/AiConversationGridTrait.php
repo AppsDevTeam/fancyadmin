@@ -86,7 +86,7 @@ trait AiConversationGridTrait
 
 				$conversation->setDeleted(true);
 				$this->getEntityManager()->flush();
-				$this->getPresenter()->flashMessageSuccess('action.delete.yes');
+				$this->getPresenter()->flashMessageSuccess('ublaboo_datagrid.delete.done');
 				$this->getGrid()->reload();
 
 				return false;
