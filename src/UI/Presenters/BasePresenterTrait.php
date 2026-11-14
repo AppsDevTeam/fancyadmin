@@ -233,6 +233,12 @@ trait BasePresenterTrait
 			$this->redrawControl('quickbarMenu');
 			$this->redrawControl('modals');
 		}
+
+		// AJAX požadavek, který překreslil jen část stránky (grid po smazání řádku, signál
+		// komponenty): body se pak nepřekresluje, a tak ani snippet flashes v něm - hláška by se neukázala
+		if ($this->isAjax() && !empty($this->getTemplate()->flashes)) {
+			$this->redrawControl('flashes');
+		}
 	}
 
 	/**
