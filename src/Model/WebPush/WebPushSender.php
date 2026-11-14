@@ -32,6 +32,15 @@ class WebPushSender
 
 	private ?\OpenSSLAsymmetricKey $key = null;
 
+	/**
+	 * Po každém pokusu o odeslání, např. log volání API (bez podtřídy - v neonu přes decorator
+	 * `- '$onCall[]' = …`). Parametry: adresa odběru, HTTP kód (null = spojení selhalo),
+	 * tělo odpovědi, chyba, začátek volání z hrtime(true). Token VAPID jde v hlavičce, ta se nepředává.
+	 *
+	 * @var list<callable(string, ?int, ?string, ?string, int): void>
+	 */
+	public array $onCall = [];
+
 	public function __construct(
 		/** PEM privátního klíče VAPID v base64, '' = Web Push není nastavený */
 		#[\SensitiveParameter]
@@ -82,6 +91,7 @@ class WebPushSender
 			throw new WebPushException('Neplatná adresa odběru Web Push.');
 		}
 
+		$startedAt = hrtime(true);
 		$curl = curl_init($endpoint);
 		curl_setopt_array($curl, [
 			CURLOPT_POST => true,
@@ -99,17 +109,22 @@ class WebPushSender
 		$response = curl_exec($curl);
 		$status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
 		if ($response === false) {
-			throw new WebPushException('Web Push se nepodařilo odeslat: ' . curl_error($curl), curl_errno($curl));
+			$e = new WebPushException('Web Push se nepodařilo odeslat: ' . curl_error($curl), curl_errno($curl));
+			$this->notify($endpoint, null, null, $e->getMessage(), $startedAt);
+			throw $e;
 		}
 		if ($status === 404 || $status === 410) {
+			$this->notify($endpoint, $status, (string) $response, 'Odběr už neplatí.', $startedAt);
 			return false;
 		}
 		if ($status < 200 || $status >= 300) {
 			$e = new WebPushException('Push služba zprávu odmítla: ' . mb_substr((string) $response, 0, 200));
 			$e->httpStatus = $status;
+			$this->notify($endpoint, $status, (string) $response, $e->getMessage(), $startedAt);
 			throw $e;
 		}
 
+		$this->notify($endpoint, $status, (string) $response, null, $startedAt);
 		return true;
 	}
 
@@ -154,5 +169,12 @@ class WebPushSender
 	{
 		return $this->key ??= openssl_pkey_get_private((string) base64_decode($this->privateKey, true))
 			?: throw new \RuntimeException('Privátní klíč VAPID (fancyadmin: webPush: vapidPrivateKey) není platný PEM v base64.');
+	}
+
+	private function notify(string $endpoint, ?int $status, ?string $response, ?string $error, int $startedAt): void
+	{
+		foreach ($this->onCall as $listener) {
+			$listener($endpoint, $status, $response, $error, $startedAt);
+		}
 	}
 }

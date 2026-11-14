@@ -97,6 +97,15 @@ test('ACL zdroj musi byt Resource, ne retezec', function () {
 });
 
 
+test('ACL zdroj jde v neonu zapsat jako pripad enumu', function () {
+	Assert::same(
+		AclResourceNameEnum::FULL_DATA,
+		process(['fullDataAclResource' => AclResourceNameEnum::class . '::FULL_DATA'])->fullDataAclResource,
+	);
+	Assert::exception(fn() => process(['fullDataAclResource' => AclResourceNameEnum::class . '::NEEXISTUJE']), ValidationException::class);
+});
+
+
 test('Keycloak je vypnuty, ale validace certifikatu zapnuta', function () {
 	$config = process();
 
@@ -214,6 +223,10 @@ test('AI je ve vychozi konfiguraci vypnute', function () {
 	Assert::same([], $config->ai->excludedEntities);
 	Assert::false($config->ai->mcp->enabled);
 	Assert::null($config->ai->mcp->tokenClass);
+	// skilly, služby projektu jen pro AI a sůl pohledů _anon jsou nepovinné
+	Assert::null($config->ai->skillProvider);
+	Assert::same([], $config->ai->services);
+	Assert::null($config->ai->anonymizationSalt);
 	// bez klíče nejde tajná konfigurace uložit ani přečíst
 	Assert::null($config->secretKey);
 });

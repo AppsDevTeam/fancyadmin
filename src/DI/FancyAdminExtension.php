@@ -15,7 +15,10 @@ use ADT\AiChat\Mcp\McpEndpoint;
 use ADT\AiChat\Mcp\McpServer;
 use ADT\AiChat\Mcp\McpTokenAuthenticator;
 use ADT\AiChat\Tool\CompositeToolExecutor;
+use ADT\AiChat\Skill\GetSkillTool;
+use ADT\AiChat\Skill\ListSkillsTool;
 use ADT\AiChat\Tool\Tool;
+use ADT\AiChat\Tool\ToolProvider;
 use ADT\AiChat\PiiResponseFilter;
 use ADT\AiChat\PiiValueCollector;
 use ADT\AiChat\Pseudonymization\OpenAiCompatiblePiiDetector;
@@ -129,6 +132,17 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'ADT\\DoctrineAuthenticator\\LoginAttempt',
 	];
 
+	/**
+	 * ACL resource (enum implementující Resource). V neonu i jako 'App\Enum::CASE' - konstanta
+	 * enumu se do konfigurace extension jinak nepředá.
+	 */
+	private static function resourceSchema(Resource $default): Schema
+	{
+		return Expect::type(Resource::class)
+			->before(fn($value) => is_string($value) && str_contains($value, '::') && defined($value) ? constant($value) : $value)
+			->default($default);
+	}
+
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
@@ -149,10 +163,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			// ikona a nazev aplikace pridane na plochu / domovskou obrazovku (web manifest)
 			'appIconsDir' => Expect::string()->nullable()->default(null),
 			'hmr' => Expect::bool()->default(false),
-			'customerAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::CUSTOMER_DASHBOARD),
-			'backofficeAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
-			'fullDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::FULL_DATA),
-			'personalDataAclResource' => Expect::type(Resource::class)->default(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
+			'customerAclResource' => self::resourceSchema(AclResourceNameEnum::CUSTOMER_DASHBOARD),
+			'backofficeAclResource' => self::resourceSchema(AclResourceNameEnum::BACKOFFICE_DASHBOARD),
+			'fullDataAclResource' => self::resourceSchema(AclResourceNameEnum::FULL_DATA),
+			'personalDataAclResource' => self::resourceSchema(AclResourceNameEnum::PROFILE_PERSONAL_DATA),
 			// Více účtů (tenantů) v jedné databázi - data se oddělují podle účtu a uživatel
 			// si účet vybírá. false = jeden tenant na databázi (projekt bez účtů, nebo
 			// s databází pro každého zákazníka): bez filtrů podle účtu, výběru účtu
@@ -300,6 +314,15 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					// instrukce pro model klienta; null = výchozí z adt/ai-chat (McpServer::DEFAULT_INSTRUCTIONS)
 					'instructions' => Expect::string()->nullable()->default(null),
 				]),
+				// Skilly (adt/ai-chat): služba implementující ADT\AiChat\Skill\SkillProvider (třída nebo
+				// Statement s argumenty); nástroje list_skills a get_skill přidá fancyadmin
+				'skillProvider' => Expect::anyOf(Expect::string(), Expect::type(Statement::class))->nullable()->default(null),
+				// Služby projektu, které mají smysl jen se zapnutým AI (nástroje Tool a ToolProvider,
+				// stránky AiPage, worker fronty ...) - stejný zápis jako sekce services
+				'services' => Expect::array()->default([]),
+				// Tajná sůl hashů v pohledech _anon (anonymization:generate-views); null = výchozí veřejná
+				// sůl doctrine-anonymization. Prázdná (env chybí) příkaz zastaví.
+				'anonymizationSalt' => Expect::string()->nullable()->default(null),
 				// Nástroj open_page - AI otevře stránku z menu nebo stránku záznamu (služby AiPage)
 				'pages' => Expect::structure([
 					// menu backoffice (třída NavbarMenuFactory projektu); null = jen stránky záznamů
@@ -395,8 +418,11 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'ssoAllowedHosts' => $this->config->ssoAllowedHosts,
 			]);
 
+		// Autowiring jen na vlastní třídu - projekt mívá vlastní službu ADT\Utils\JsComponents
+		// a na typ rodiče by byli dva kandidáti
 		$builder->addDefinition($this->prefix('jsComponents'))
-			->setFactory(JsComponents::class);
+			->setFactory(JsComponents::class)
+			->setAutowired(JsComponents::class);
 
 		$builder->addDefinition($this->prefix('quickbarSettings'))
 			->setFactory(QuickbarSettings::class);
@@ -551,13 +577,29 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'menuFactory' => $ai->pages->menuFactory,
 			]);
 
-		// Nástroje chatu = vestavěné + všechny služby projektu (i fancyadminu) typu ADT\AiChat\Tool\Tool;
-		// ChatService i AgentProvisioner ho dostanou autowiringem (ToolExecutor)
+		// Nástroje chatu = vestavěné + všechny služby projektu (i fancyadminu) typu ADT\AiChat\Tool\Tool
+		// a nástroje služeb ToolProvider; ChatService i AgentProvisioner ho dostanou autowiringem (ToolExecutor)
 		$builder->addDefinition($this->prefix('ai.toolExecutor'))
 			->setFactory(CompositeToolExecutor::class, [
 				'base' => $this->prefix('@ai.toolHandler'),
 				'tools' => new Statement('typed', [Tool::class]),
+				'providers' => new Statement('typed', [ToolProvider::class]),
 			]);
+
+		if ($ai->skillProvider !== null) {
+			$builder->addDefinition($this->prefix('ai.skillProvider'))
+				->setFactory($ai->skillProvider);
+			$builder->addDefinition($this->prefix('ai.listSkillsTool'))
+				->setFactory(ListSkillsTool::class, [
+					'description' => ListSkillsTool::DEFAULT_DESCRIPTION
+						. ' Not needed when one of your tools does the action by itself (e.g. open_page) - call that tool directly.',
+				]);
+			$builder->addDefinition($this->prefix('ai.getSkillTool'))
+				->setFactory(GetSkillTool::class);
+		}
+
+		// Služby projektu jen pro AI (ai.services) - bez zapnutého AI by jim chyběly služby fancyadminu
+		$this->loadDefinitionsFromConfig($ai->services);
 
 		$builder->addDefinition($this->prefix('ai.piiValueCollector'))
 			->setFactory(PiiValueCollector::class);
@@ -782,9 +824,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		}
 
 		if ($builder->findByType(GenerateAnonymizedViewsCommand::class) === []) {
-			$builder->addDefinition($this->prefix('ai.anonymization.generateViewsCommand'))
+			$command = $builder->addDefinition($this->prefix('ai.anonymization.generateViewsCommand'))
 				->setFactory(GenerateAnonymizedViewsCommand::class)
 				->setAutowired(false);
+			if ($ai->anonymizationSalt !== null) {
+				$command->addSetup('setSalt', [$ai->anonymizationSalt]);
+			}
 		}
 	}
 

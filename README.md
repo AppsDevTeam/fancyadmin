@@ -3647,6 +3647,51 @@ fancyadmin:
 autowirovaní kandidáti na `ToolExecutor` dva. `NavbarMenuItem::isVisible()` /
 `NavbarSubmenuItem::isVisible()` berou presenter jako `?Component`.
 
+### 30.11 Skilly, služby jen pro AI, sůl pohledů a log volání API
+
+Co projekt přidává k AI, patří do konfigurace - podtřída `FancyAdminExtension` kvůli tomu
+není potřeba:
+
+```neon
+fancyadmin:
+	ai:
+		# skilly (adt/ai-chat): SkillProvider projektu, nástroje list_skills / get_skill přidá fancyadmin
+		skillProvider: App\Model\Ai\AiSkillProvider(@nettrine.orm.managers.shared.entityManager)
+		# služby, které mají smysl jen se zapnutým AI - stejný zápis jako sekce services
+		services:
+			- App\Model\Ai\Pages\PatientAiPage           # stránka záznamu pro open_page
+			- App\Model\Ai\Api\AiEndpointRegistry         # ToolProvider: nástroje z endpointů API
+			- App\Model\Ai\AiChatWorker
+		# tajná sůl hashů v pohledech _anon (anonymization:generate-views); prázdná příkaz zastaví
+		anonymizationSalt: %env.ANONYMIZATION_SALT_SECRET%
+```
+
+Nástroje chatu jsou všechny služby typu `ADT\AiChat\Tool\Tool` a nástroje služeb
+`ADT\AiChat\Tool\ToolProvider` (sada nástrojů vzniklá za běhu, např. z endpointů API).
+
+**Log volání API** bez podtříd klientů - v neonu přes `decorator`:
+
+```neon
+decorator:
+	ADT\AiChat\Client\GuzzleManagedAgentsClient:
+		setup:
+			- addMiddleware(@App\ApiCallLogger::createMiddleware(anthropic), apiLog)
+	ADT\AiChat\Pseudonymization\OpenAiCompatiblePiiDetector:
+		setup:
+			- addMiddleware(@App\ApiCallLogger::createMiddleware(pii), apiLog)
+	ADT\FancyAdmin\Model\WebPush\WebPushSender:
+		setup:
+			- '$onCall[]' = @App\ApiCallLogger::createListener(webPush)
+```
+
+`WebPushSender::$onCall` dostane adresu odběru, HTTP kód (null = spojení selhalo), tělo
+odpovědi, chybu a začátek volání (`hrtime(true)`).
+
+ACL resource v konfiguraci (`customerAclResource` …) jde zapsat jako případ enumu projektu
+(`App\Model\Entities\Enums\AclResourceNameEnum::CUSTOMER_HOME`). Služba `jsComponents`
+fancyadminu se autowiruje jen na vlastní třídu, takže nekoliduje se službou `ADT\Utils\JsComponents`
+projektu.
+
 ## Vývoj fancyadminu: testy
 
 - **PHP** (Nette Tester, `tests/*.phpt`): `composer test`.

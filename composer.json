@@ -30,8 +30,8 @@
     "adt/doctrine-loggable": "^4.2",
     "adt/log-sanitizer": "^1.2",
     "lbuchs/webauthn": "^2.2",
-    "adt/doctrine-anonymization": "^0.3 || ^0.4",
-    "adt/ai-chat": "^1.9"
+    "adt/doctrine-anonymization": "^0.5",
+    "adt/ai-chat": "^1.13"
   },
   "suggest": {
     "adt/biometric-signature": "Biometric signature form field and services (fancyadmin: biometricSignature), see docs/biometric-signature.md",
