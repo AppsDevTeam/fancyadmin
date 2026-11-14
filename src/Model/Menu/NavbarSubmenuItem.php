@@ -78,13 +78,21 @@ class NavbarSubmenuItem
 		return $this;
 	}
 
+	/**
+	 * @param \Closure(SecurityUser, ?Component): bool $condition presenter je null, když se menu
+	 *                                                  vyhodnocuje mimo požadavek (nástroj AI open_page)
+	 */
 	public function setCondition(\Closure $condition): self
 	{
 		$this->condition = $condition;
 		return $this;
 	}
 
-	public function isVisible(SecurityUser $user, Component $presenter): bool
+	/**
+	 * @param Component|null $presenter null = mimo požadavek (nástroj AI open_page ve workeru) -
+	 *                                  podmínka setCondition() dostane null
+	 */
+	public function isVisible(SecurityUser $user, ?Component $presenter = null): bool
 	{
 		if ($this->getAclResource() && !$user->isAllowed($this->getAclResource())) {
 			return false;

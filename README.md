@@ -3607,6 +3607,46 @@ projektu má přednost.
 `AiMessageTrait` vždy, plní se jen při pseudonymizaci) a tabulka entity kotev. Vygenerujte přes
 `migrations-diff`.
 
+### 30.10 Nástroje chatu a otevření stránky (`open_page`)
+
+**Nástroje chatu skládá fancyadmin sám** (`fancyadmin.ai.toolExecutor` = `CompositeToolExecutor`):
+vestavěné nástroje adt/ai-chat (`fancyadmin.ai.toolHandler`, SQL nad `_anon`, tabulka, graf, CSV)
+a **všechny služby typu `ADT\AiChat\Tool\Tool`** - projektový nástroj stačí zaregistrovat jako
+službu. ChatService i provisioning agenta ho dostanou autowiringem `ToolExecutor`, agent se po
+nasazení aktualizuje sám. `toolHandler` se neautowiruje (MCP server ho dostává jménem a nabízí
+dál jen schéma a SQL).
+
+**`open_page`** (`Model\AiChat\Page\OpenPageTool`) otevře uživateli stránku administrace - načte
+se za otevřeným chatem (výsledek `{type: navigate}` z adt/ai-chat, rychlá lišta ji natáhne
+ajaxem). AI dostane v popisu nástroje seznam stránek a vybírá z výčtu, cestu si vymyslet nemůže:
+
+- **stránky z menu** - položky a podpoložky `NavbarMenuFactory` s odkazem, název je odkaz
+  (`CashBook:default`), popisek z menu („Pokladna › Pokladní kniha"). Práva stejně jako v menu
+  (ACL resource položky, jinak odvozený z presenteru, a `setCondition()`). Menu se vyhodnocuje
+  mimo požadavek (worker fronty), **podmínka položky proto dostane místo presenteru `null`** -
+  podmínky, které na presenter sahají, musí `null` snést;
+- **stránky záznamů** - služby projektu implementující `Model\AiChat\Page\AiPage`: `getName()`
+  (`client`), `getDescription()` (pro AI: co je `id`), `resolve(int $id): ?AiPageTarget` (cíl
+  v modulu backoffice, parametry, popisek tlačítka - u osoby kotva `[KLIENT #12]`, ne jméno;
+  null = záznam neexistuje nebo ho uživatel nevidí). Právo na presenter cíle
+  (`<modul>.<presenter>`) kontroluje nástroj.
+
+Kontrola práv v nástroji je kvůli srozumitelné odpovědi AI - stránka si práva při načtení
+kontroluje sama. Konfigurace:
+
+```neon
+fancyadmin:
+	ai:
+		pages:
+			menuFactory: App\UI\PortalBackoffice\Presenters\NavbarMenuFactory   # bez něj jen stránky záznamů
+			module: PortalBackoffice    # výchozí z defaultBackofficeRoute
+```
+
+**Aktualizace.** Projekt, který si skládal vlastní `ToolExecutor` (toolHandler bez autowiringu
++ vlastní kompozit), ho smaže a své nástroje nechá jako služby typu `Tool` - jinak budou
+autowirovaní kandidáti na `ToolExecutor` dva. `NavbarMenuItem::isVisible()` /
+`NavbarSubmenuItem::isVisible()` berou presenter jako `?Component`.
+
 ## Vývoj fancyadminu: testy
 
 - **PHP** (Nette Tester, `tests/*.phpt`): `composer test`.

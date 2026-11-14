@@ -14,6 +14,8 @@ use ADT\AiChat\Http\ChatEndpoint;
 use ADT\AiChat\Mcp\McpEndpoint;
 use ADT\AiChat\Mcp\McpServer;
 use ADT\AiChat\Mcp\McpTokenAuthenticator;
+use ADT\AiChat\Tool\CompositeToolExecutor;
+use ADT\AiChat\Tool\Tool;
 use ADT\AiChat\PiiResponseFilter;
 use ADT\AiChat\PiiValueCollector;
 use ADT\AiChat\Pseudonymization\OpenAiCompatiblePiiDetector;
@@ -33,6 +35,8 @@ use ADT\FancyAdmin\Console\ProvisionAiAgentCommand;
 use ADT\FancyAdmin\Console\PurgeLogsCommand;
 use ADT\FancyAdmin\Core\FancyAdminRouter;
 use ADT\FancyAdmin\Core\SignalCsrfRouteList;
+use ADT\FancyAdmin\Model\AiChat\Page\AiPage;
+use ADT\FancyAdmin\Model\AiChat\Page\OpenPageTool;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
@@ -296,6 +300,13 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					// instrukce pro model klienta; null = výchozí z adt/ai-chat (McpServer::DEFAULT_INSTRUCTIONS)
 					'instructions' => Expect::string()->nullable()->default(null),
 				]),
+				// Nástroj open_page - AI otevře stránku z menu nebo stránku záznamu (služby AiPage)
+				'pages' => Expect::structure([
+					// menu backoffice (třída NavbarMenuFactory projektu); null = jen stránky záznamů
+					'menuFactory' => Expect::string()->nullable()->default(null),
+					// modul backoffice; null = z defaultBackofficeRoute (:PortalBackoffice:Home: → PortalBackoffice)
+					'module' => Expect::string()->nullable()->default(null),
+				]),
 			]),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
@@ -528,8 +539,25 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'model' => $ai->model,
 			]);
 
+		// Vestavěné nástroje (SQL nad _anon, tabulka, graf, CSV); MCP server je dostává jménem
 		$builder->addDefinition($this->prefix('ai.toolHandler'))
-			->setFactory(ToolHandler::class, ['exportEnabled' => $ai->exportEnabled]);
+			->setFactory(ToolHandler::class, ['exportEnabled' => $ai->exportEnabled])
+			->setAutowired(false);
+
+		$builder->addDefinition($this->prefix('ai.openPageTool'))
+			->setFactory(OpenPageTool::class, [
+				'pages' => new Statement('typed', [AiPage::class]),
+				'module' => $ai->pages->module ?? explode(':', trim($this->config->defaultBackofficeRoute, ':'))[0],
+				'menuFactory' => $ai->pages->menuFactory,
+			]);
+
+		// Nástroje chatu = vestavěné + všechny služby projektu (i fancyadminu) typu ADT\AiChat\Tool\Tool;
+		// ChatService i AgentProvisioner ho dostanou autowiringem (ToolExecutor)
+		$builder->addDefinition($this->prefix('ai.toolExecutor'))
+			->setFactory(CompositeToolExecutor::class, [
+				'base' => $this->prefix('@ai.toolHandler'),
+				'tools' => new Statement('typed', [Tool::class]),
+			]);
 
 		$builder->addDefinition($this->prefix('ai.piiValueCollector'))
 			->setFactory(PiiValueCollector::class);
