@@ -27,6 +27,9 @@ pište jako krátké shrnutí a za ním, co dělat dál. Zpráva s HTML se nedě
 - Najetí myší balíček rozestoupí pod sebe a zastaví odpočet všech zpráv.
 - Zprávy žijí v `.flash-stack` mimo snippet `body`, takže je ajaxový přechod nezavře. Snippet
   `flashes` nese jen data (`.flash-source`), JS je po načtení stránky i po každém AJAXu převezme.
+- Hlášku z AJAX požadavku, který překreslí jen část stránky (grid po smazání řádku, signál
+  komponenty), ukáže presenter sám: `afterRender()` při AJAXu s hláškami překreslí snippet `flashes`.
+  Ruční `redrawControl('flashes')` není potřeba.
 
 ## Uložení v bočním panelu
 
