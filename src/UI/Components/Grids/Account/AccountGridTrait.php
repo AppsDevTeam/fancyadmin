@@ -30,7 +30,7 @@ trait AccountGridTrait
 
 	public function handleEnter(int $id): void
 	{
-		$this->presenter->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $id]);
+		$this->getPresenter()->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $id]);
 	}
 
 	protected function getQueryObjectFactoryClass(): string
