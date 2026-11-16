@@ -3,7 +3,7 @@
 //
 // Zdroj dat (všechny metody vrací Promise, chybějící metoda = prázdný výsledek):
 //   search(query) → [{ label, items: [{ label, meta?, initials?, icon?, tone?, badge?: { label, class }, href?, panel? }] }]
-//   notifications: { list() → [{ id, icon, tone?, title, text, time, unread }], read(id), readAll() }
+//   notifications: { list() → [{ id, icon, tone?, title, text, time, unread, href? }], read(id), readAll() }
 //   todos: { list() → [{ id, text, due?, done }], add(text) → todo, setDone(id, done) }
 //   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials?, contact? }] (od nejnovější zprávy;
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
@@ -340,8 +340,9 @@ function renderNotifications() {
 		return;
 	}
 	setHtml($list, state.notifications.length
+		// S odkazem (nová zpráva k pacientovi, pacient přišel) je notifikace odkaz - klik ji přečte a naviguje
 		? state.notifications.map((n) => `
-			<button type="button" class="quickbar-item quickbar-notification" data-quickbar-notification="${esc(n.id)}">
+			<${n.href ? `a href="${esc(n.href)}"` : 'button type="button"'} class="quickbar-item quickbar-notification" data-quickbar-notification="${esc(n.id)}">
 				<span class="quickbar-item-icon quickbar-item-icon--tone-${esc(n.tone || 'muted')}"><i class="${esc(n.icon)}"></i></span>
 				<span class="quickbar-item-text">
 					<span class="quickbar-item-label quickbar-item-label--strong">${esc(n.title)}</span>
@@ -349,7 +350,7 @@ function renderNotifications() {
 					<span class="quickbar-notification-time">${esc(n.time)}</span>
 				</span>
 				${n.unread ? '<span class="quickbar-unread-dot"></span>' : ''}
-			</button>`).join('')
+			</${n.href ? 'a' : 'button'}>`).join('')
 		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`);
 }
 
@@ -1209,6 +1210,10 @@ document.addEventListener('click', (e) => {
 	const notification = target.closest('[data-quickbar-notification]');
 	if (notification) {
 		readNotification(notification.dataset.quickbarNotification);
+		// Odkaz naviguje sám (nette.ajax), lišta se jen zavře
+		if (notification.matches('a[href]')) {
+			close();
+		}
 		return;
 	}
 	const chatRow = target.closest('[data-quickbar-chat]');
