@@ -7,9 +7,10 @@
 //   service worker (sw.js.latte), který k tomu ukáže notifikaci. V rozestupu se stránka neptá -
 //   bez notifikací (nebo když se push ztratí) ji stačí obnovit ([data-tablet-reload]).
 // - a[data-tablet-return="10"]: stránka po odeslání formuláře - za 10 s zpět na čekací stránku.
-// - [data-tablet-idle-return="<url>"]: stránka formuláře na tabletu - po nečinnosti
+// - [data-tablet-idle-return="<url čekací stránky>"]: stránka formuláře na tabletu - po nečinnosti
 //   (data-tablet-idle-seconds, výchozí 300) zpět na čekací stránku, ať formulář nezůstane
-//   otevřený dalšímu zákazníkovi. Čekací stránka odkaz na formulář zneplatní (TabletService::$onRelease).
+//   otevřený dalšímu zákazníkovi, a na čekací stránku i tehdy, když na tablet přišel další
+//   formulář. Čekací stránka odkaz na formulář zneplatní (TabletService::$onRelease).
 //
 // - [data-tablet-install]: nabídka přidání čekací stránky na plochu - tablet ji má používat jako
 //   aplikaci (celá obrazovka, na iPadu jen tak jdou povolit notifikace). V aplikaci z plochy se neukáže.
@@ -225,18 +226,92 @@ export function initTabletReturn(link) {
 	setTimeout(() => window.location.replace(link.href), Number(link.dataset.tabletReturn) * 1000);
 }
 
+// Jak často stránka formuláře kontroluje nečinnost podle hodin (uspanému tabletu časovač stojí)
+const IDLE_CHECK_INTERVAL = 10 * 1000;
+
+/**
+ * Stránka formuláře na tabletu: po nečinnosti zpět na čekací stránku - a pryč i tehdy, když na
+ * tablet mezitím přišel další formulář.
+ *
+ * Nečinnost se měří hodinami od posledního doteku, ne jen časovačem: uspanému nebo zamčenému
+ * tabletu (telefonu) časovač stojí a po probuzení by formulář zůstal otevřený třeba hodiny.
+ * Proto se kontroluje i v rozestupu a po návratu stránky do popředí.
+ *
+ * Po push zprávě (service worker, sw.js.latte) a po návratu do popředí se stránka zeptá čekací
+ * stránky (její signál takeForm!, jen peek), jestli na tablet nečeká další formulář. Jeho odeslání
+ * ten otevřený zruší (TabletService::send), takže na něm nemá smysl zůstávat - čekací stránka nový
+ * formulář hned otevře. Jen podle zprávy workeru se neodchází: push může dorazit pozdě, až když
+ * tablet otevřel právě ten formulář, ke kterému patří.
+ */
 export function initTabletIdleReturn(element) {
 	const url = element.dataset.tabletIdleReturn;
+	// data-tablet-idle-return je čekací stránka - dotaz jde na její signál takeForm!
+	const peekUrl = new URL(url, document.baseURI);
+	peekUrl.searchParams.set('do', 'takeForm');
 	const timeout = Number(element.dataset.tabletIdleSeconds || 300) * 1000;
-	let timer;
-	const restart = () => {
+	let timer = null;
+	let checker = null;
+	let lastActivity = Date.now();
+	let left = false;
+	let peeking = false;
+
+	const leave = () => {
+		if (left) {
+			return;
+		}
+		left = true;
 		clearTimeout(timer);
-		timer = setTimeout(() => window.location.replace(url), timeout);
+		clearInterval(checker);
+		window.location.replace(url);
 	};
+	const restart = () => {
+		lastActivity = Date.now();
+		clearTimeout(timer);
+		timer = setTimeout(leave, timeout);
+	};
+	const checkIdle = () => {
+		if (Date.now() - lastActivity >= timeout) {
+			leave();
+		}
+		return left;
+	};
+
+	async function peek() {
+		if (left || peeking || document.visibilityState !== 'visible') {
+			return;
+		}
+		peeking = true;
+		try {
+			const body = new FormData();
+			body.append('peek', '1');
+			const response = await fetch(peekUrl, { method: 'POST', body, credentials: 'same-origin' });
+			if (response.ok && (await response.json()).form) {
+				leave();
+			}
+		} catch {
+			// Bez sítě - zeptá se při další zprávě nebo návratu do popředí
+		} finally {
+			peeking = false;
+		}
+	}
+
 	['pointerdown', 'keydown', 'input', 'scroll', 'touchmove'].forEach((type) => {
 		document.addEventListener(type, restart, { passive: true, capture: true });
 	});
 	restart();
+	checker = setInterval(checkIdle, IDLE_CHECK_INTERVAL);
+
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible' && !checkIdle()) {
+			peek();
+		}
+	});
+	window.addEventListener('focus', checkIdle);
+	navigator.serviceWorker?.addEventListener('message', (event) => {
+		if (event.data?.type === PICK_UP_MESSAGE) {
+			peek();
+		}
+	});
 
 	// Stránka obnovená z mezipaměti historie (tlačítko Zpět) se načte znovu - odkaz už
 	// může být neplatný a obsah formuláře se nemá ukázat bez dotazu na server

@@ -284,8 +284,12 @@ na vlastní stránku projektu (dotazník k vyplnění apod.) - tu dělá projekt
 
 4. **Návrat na čekací stránku**: stránka formuláře na tabletu dostane
    `<div data-tablet-idle-return="{link :Front:Tablet:default}" data-tablet-idle-seconds="300">`
-   (po nečinnosti zpět, stránka obnovená tlačítkem Zpět se načte znovu ze serveru), stránka
-   po odeslání `<a href="{link :Front:Tablet:default}" class="btn tablet-return" data-tablet-return="10">`
+   (po nečinnosti zpět, stránka obnovená tlačítkem Zpět se načte znovu ze serveru). Nečinnost
+   se měří hodinami, takže tablet odejde i po probuzení (uspanému tabletu časovač stojí).
+   Po push zprávě a po návratu do popředí se stránka zeptá čekací stránky (její `takeForm!`,
+   jen nahlédnutí), jestli na tablet nečeká další formulář, a pokud ano, přejde na ni - ta ho
+   otevře (odeslání dalšího formuláře ten otevřený ruší). `data-tablet-idle-return` proto musí
+   mířit na čekací stránku s `TabletDevicePresenterTrait`. Stránka po odeslání `<a href="{link :Front:Tablet:default}" class="btn tablet-return" data-tablet-return="10">`
    (za 10 s zpět). Zpět se jde přes `location.replace()`, formulář v historii nezůstane.
    Skript k tomu: `import { initTabletPage } from '@fancyadmin/js/tablet'` v bundlu projektu,
    nebo přímo modul z presenteru tabletu (`{link :Front:Tablet:asset, file => 'tablet.js'}`).
