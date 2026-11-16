@@ -18,7 +18,7 @@ const copyFonts = () => ({
 	apply: 'build',
 	writeBundle() {
 		const copies = [
-			['node_modules/@fortawesome/fontawesome-pro/webfonts', 'dist/webfonts'],
+			['node_modules/@fortawesome/fontawesome-free/webfonts', 'dist/webfonts'],
 			['assets/fonts', 'dist/fonts'],
 		];
 		for (const [from, to] of copies) {

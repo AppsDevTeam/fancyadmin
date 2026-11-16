@@ -8,12 +8,6 @@ nmMode: hardlinks-local
 
 nodeLinker: node-modules
 
-npmScopes:
-  fortawesome:
-    npmAlwaysAuth: true
-    npmAuthToken: "__FORTAWESOME_TOKEN__"
-    npmRegistryServer: "https://npm.fontawesome.com/"
-
 packageExtensions:
   adt-js-components@*:
     peerDependencies:

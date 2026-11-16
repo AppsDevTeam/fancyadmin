@@ -605,6 +605,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fortawesome/fontawesome-free@npm:^6.7.2":
+  version: 6.7.2
+  resolution: "@fortawesome/fontawesome-free@npm:6.7.2"
+  checksum: e27fb8b846f0bcf40c904acc210829a640329fc7b7ec4e42a7c43cb53739ed6052d78df90810f555a5c80bc608fee5a5174db3fa6da617f582d6210009a19278
+  languageName: node
+  linkType: hard
+
 "@googlemaps/js-api-loader@npm:^1.11.1":
   version: 1.16.6
   resolution: "@googlemaps/js-api-loader@npm:1.16.6"
@@ -1268,6 +1275,7 @@ __metadata:
   resolution: "adt-fancyadmin@workspace:."
   dependencies:
     "@firebase/messaging": ^0.12.11
+    "@fortawesome/fontawesome-free": ^6.7.2
     "@popperjs/core": ^2.11.8
     "@regru/jquery-menu-aim": ^1.0.0
     "@rollup/plugin-inject": ^5.0.5

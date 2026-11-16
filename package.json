@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@firebase/messaging": "^0.12.11",
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@popperjs/core": "^2.11.8",
     "@regru/jquery-menu-aim": "^1.0.0",
     "adt-js-components": "^1.7.0",

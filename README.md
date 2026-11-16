@@ -3354,3 +3354,44 @@ v DB není - DB, zálohy, `change_log` ani pohledy `_anon` ji tedy čitelnou nem
 $value = $configuration->getValue();
 $apiKey = SecretCipher::isEncrypted($value) ? $secretCipher->decrypt($value) : null;
 ```
+
+---
+
+## 29. Font Awesome
+
+Fancyadmin používá **Font Awesome Free** (`@fortawesome/fontawesome-free`, styly *solid*
+a *regular*) — není potřeba žádný token ani placená licence. Projekt, který bunduluje
+assety fancyadminu ze zdrojáků přes vlastní Vite, si balíček nainstaluje sám:
+
+```bash
+yarn add @fortawesome/fontawesome-free@^6.7.2
+```
+
+a zajistí zkopírování webfontů tak, aby ležely na `../webfonts` relativně k výslednému
+CSS (stejně jako to dělá `vite.config.mjs` fancyadminu). Cestu k fontům jde přenastavit
+proměnnou `$fa-font-path` (má `!default`) při `@use` souboru `_fontawesome.scss`.
+
+### Placené styly (sharp apod.) v projektu
+
+Kódové body ikon jsou napříč styly Font Awesome stejné a prohlížeč stahuje jen fonty,
+na které se CSS reálně odkazuje. Projekt s licencí Pro proto může **všechny** ikony
+fancyadminu (včetně těch napevno v šablonách, např. `fa-solid fa-xmark`) přepnout na
+jiný styl jedním pravidlem — bez zásahu do šablon:
+
+```bash
+yarn add @fortawesome/fontawesome-pro@^6.7.2
+```
+
+```scss
+// za importem SCSS fancyadminu
+@use '@fortawesome/fontawesome-pro/scss/sharp-solid' with ($fa-font-path: '../webfonts');
+
+.fa-solid {
+	font-family: 'Font Awesome 6 Sharp';
+}
+```
+
+Free webfont se pak vůbec nestáhne (jeho `@font-face` zůstane v CSS nevyužitá). Pro
+styly s jinou tloušťkou (light, thin…) je potřeba přepsat i `font-weight`. Pozor jen
+na to, že Pro balíček vyžaduje token pro registr `npm.fontawesome.com` v `.yarnrc.yml`
+projektu.
