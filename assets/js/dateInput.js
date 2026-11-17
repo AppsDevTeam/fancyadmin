@@ -129,8 +129,31 @@ export function initDateInput(defaults = {}) {
 			attachDropdown(instance.monthsDropdownContainer, instance.calendarContainer, { minWidth: 150 });
 		}
 
+		labelAltInput(input, instance.altInput);
+
 		instances.push(instance);
 	});
+}
+
+// Původní input je s altInput skrytý, popisek (<label for>, aria-label) by jinak patřil
+// neviditelnému poli - odečítač by viditelné pole nepojmenoval a klik na label nic neudělal.
+function labelAltInput(input, altInput) {
+	if (!altInput) {
+		return;
+	}
+
+	if (input.hasAttribute('aria-label')) {
+		altInput.setAttribute('aria-label', input.getAttribute('aria-label'));
+	}
+
+	if (input.id) {
+		altInput.id = `${input.id}-alt`;
+		document.querySelectorAll('label[for]').forEach((label) => {
+			if (label.htmlFor === input.id) {
+				label.htmlFor = altInput.id;
+			}
+		});
+	}
 }
 
 export default { initDateInput };
