@@ -49,7 +49,7 @@ Běžný Bootstrap markup, nic navíc:
 a utility třídy okrajů (`mb-3`, `mt-2`…) přesune z `ul` na obal.
 
 - **≥ 992 px:** co se nevejde, spadne zprava do „Další“. Je-li
-  aktivní sekce schovaná, „Další“ převezme její název. Menu je Bootstrap dropdown laděný jako rozbalený Select2.
+  aktivní sekce schovaná, „Další“ převezme její název. Menu je Bootstrap dropdown laděný jako rozbalený seznam Tom Selectu.
 - **< 992 px** a podzáložky `.nav-tabs-sm`, které se nevejdou: posuvná lišta se šipkami;
   aktivní záložka se vycentruje.
 - V lištách, které se vejdou, šipky ani „Další“ nejsou.
@@ -94,7 +94,7 @@ s ikonou má popisek ve `<span>`; pod 992 px zůstane jen ikona, proto `title`.
 <form class="select-filter">
   <label class="form-label" for="f-cat">Kategorie</label>
   <select id="f-cat" class="form-select form-select-sm"
-    data-adt-select2='{"dropdownAutoWidth": true, "dropdownCssClass": "select-filter-dropdown"}'>
+    data-adt-select='{"dropdownClass": "ts-dropdown select-filter-dropdown"}'>
     <option value="">Vše</option>
     …
   </select>
@@ -102,5 +102,6 @@ s ikonou má popisek ve `<span>`; pod 992 px zůstane jen ikona, proto `title`.
 ```
 
 Popisek je vždy vidět. Šířka podle nejdelší volby (strop 240 px), takže se při
-přepínání nemění; otevřený seznam smí být širší (max 320 px). `form` je tam kvůli
-Select2 z adt-js-components, který při změně volá `Nette.toggleForm(closest('form'))`.
+přepínání nemění; otevřený seznam smí být širší (max 320 px). Pole je Tom Select
+(builtin `Select` z adt-js-components), šířku počítá `@fancyadmin/js/selectFilter`
+z původního selectu - měří i filtr ve skryté záložce.

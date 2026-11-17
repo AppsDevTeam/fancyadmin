@@ -1,7 +1,7 @@
 @use 'variables' as *;
 
-// Šipka theme bootstrap-5 (right .75rem, šířka 16 px) + mezera 8 px od textu
-$select-filter-arrow-space: calc(.75rem + 16px + 8px);
+// Místo vpravo pro šipku Tom Selectu (16 px + mezera 8 px, viz _tomSelect.scss)
+$select-filter-arrow-space: 24px;
 
 // Filtr = podmnožina téhož seznamu: select s vždy viditelným popiskem
 .select-filter {
@@ -14,34 +14,34 @@ $select-filter-arrow-space: calc(.75rem + 16px + 8px);
 		white-space: nowrap;
 	}
 
-	// Šířka textu nejdelší volby z js/selectFilter.js + odsazení, místo pro šipku a rámeček; strop 240 px
-	> .select2-container {
-		width: calc(var(--select-filter-text-width, 0px) + var(--select2-padding-x) + #{$select-filter-arrow-space} + 2px) !important;
-		max-width: 240px;
-
-		// Zkrácený text (…) nesmí zajet pod šipku
-		.select2-selection--single .select2-selection__rendered {
-			margin-right: calc(#{$select-filter-arrow-space} - var(--select2-padding-x));
-		}
-	}
-
 	@include media-breakpoint-down(sm) {
 		width: 100%;
-
-		> .select2-container {
-			flex: 1;
-			min-width: 0;
-			width: auto !important;
-			max-width: none;
-		}
 	}
 }
 
-// Otevřený seznam smí být širší než pole (data-dropdown-auto-width); dlouhé volby se zalomí
-.select2-dropdown.select-filter-dropdown {
+// :root body - pravidlo pole v _tomSelect.scss má stejnou předponu a width: 100 %
+:root body .select-filter > .ts-wrapper {
+	// Šířka textu nejdelší volby z js/selectFilter.js + odsazení z obou stran, šipka a rámeček; strop 240 px
+	flex: none;
+	width: calc(var(--select-filter-text-width, 0px) + var(--control-padding-x) * 2 + #{$select-filter-arrow-space} + 2px);
+	max-width: 240px;
+
+	@include media-breakpoint-down(sm) {
+		flex: 1;
+		min-width: 0;
+		width: auto;
+		max-width: none;
+	}
+}
+
+// Otevřený seznam smí být širší než pole (dropdownClass "ts-dropdown select-filter-dropdown"); dlouhé volby se zalomí
+:root body .ts-dropdown.select-filter-dropdown {
+	right: auto;
+	width: max-content;
+	min-width: 100%;
 	max-width: 320px;
 
-	.select2-results__option {
+	.option {
 		white-space: normal;
 	}
 }
