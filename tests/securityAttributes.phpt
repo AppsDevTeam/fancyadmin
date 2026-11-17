@@ -121,6 +121,12 @@ final class SecuredPresenter extends SecuredBasePresenter
 	public function handleDelete(): void
 	{
 	}
+
+	#[SecurityCheckAttribute(new StringResource('admin.warehouse'))]
+	#[SecurityCheckAttribute(new StringResource('warehouse.warehouses'))]
+	public function actionWarehouses(): void
+	{
+	}
 }
 
 test('akce jen s render metodou nespadne a atribut nema', function () {
@@ -177,4 +183,17 @@ test('prava kontroluje uzivatel portalu, ne uzivatel z getUser()', function () {
 		fn() => SecuredPresenter::create('orders', allowed: [], presenterUserAllowed: ['admin.orders'])->validate($attributeOn),
 		ForbiddenRequestException::class,
 	);
+});
+
+test('akce s vic atributy vyzaduje vsechna prava', function () {
+	$presenter = new ReflectionClass(SecuredPresenter::class);
+
+	Assert::true(SecuredPresenter::create('warehouses', ['admin.warehouse', 'warehouse.warehouses'])->validate($presenter));
+
+	foreach ([['admin.warehouse'], ['warehouse.warehouses']] as $allowed) {
+		Assert::exception(
+			fn() => SecuredPresenter::create('warehouses', $allowed)->validate($presenter),
+			ForbiddenRequestException::class,
+		);
+	}
 });

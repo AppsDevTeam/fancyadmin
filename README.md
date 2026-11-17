@@ -401,6 +401,7 @@ public function actionExport(): void {}
   Akce bez obou metod atribut nemá a platí resource presenteru.
 - Když akce atribut má, resource presenteru se už nekontroluje.
 - Signál (`handle<Signál>()`) se svým atributem se kontroluje navíc k akci.
+- Atribut jde opakovat - akce pak vyžaduje všechna uvedená práva (např. resource presenteru i jemné právo).
 
 ---
 
