@@ -627,11 +627,11 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			padding: 8px;
 			z-index: 1500;
 
-			// Bridge překlene mezeru mezi item a popoverem (jen na výšku itemu)
+			// Bridge překlene mezeru mezi item a popoverem (jen na výšku itemu, i když je popover posunutý nahoru)
 			&::before {
 				content: '';
 				position: absolute;
-				top: 0;
+				top: var(--popover-bridge-top, 0);
 				height: var(--menu-wide-collapsed-item-height);
 				left: calc(-1 * var(--side-panel-width));
 				width: var(--side-panel-width);
@@ -769,11 +769,18 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		&::before {
 			content: '';
 			position: absolute;
-			top: 0;
+			top: var(--popover-bridge-top, 0);
 			height: var(--menu-wide-collapsed-item-height);
 			left: calc(-1 * var(--side-panel-width));
 			width: var(--side-panel-width);
 		}
+	}
+
+	// Popover vyšší než okno (sideMenu.js / popoverPosition.js); posuvník ořízne i bridge, přejezd myší drží menu-hover-hold
+	.group-items.popover-scrollable,
+	.menu-body > .item.has-submenu .submenu.popover-scrollable {
+		max-height: calc(100dvh - 16px);
+		overflow-y: auto;
 	}
 
 	.group:hover .group-items,

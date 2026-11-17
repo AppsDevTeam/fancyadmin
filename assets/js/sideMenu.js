@@ -1,5 +1,6 @@
 import naja from 'naja';
 import { onBeforeSnippetUpdate, onContentLoaded } from './naja';
+import { fitPopover } from './popoverPosition';
 // Boční menu (wide layout) - toggle sbaleno/rozbaleno, toggleable skupiny, otevírání has-submenu itemů.
 // Stav se persistuje v localStorage. V sbaleném režimu se popovery skupin polohují přes CSS
 // proměnnou --group-top (fixed position potřebuje inline top odpovídající Y skupiny).
@@ -92,6 +93,24 @@ function positionPopovers() {
 		this.style.setProperty('--item-top', top + 'px');
 	});
 }
+
+// Výšku popoveru jde změřit až při otevření (do té doby má display: none)
+$(document).on('mouseenter', '.side-panel-wide .menu-body > .item.has-submenu, .side-panel-wide .group', function () {
+	if (!document.body.classList.contains('menu-collapsed')) {
+		return;
+	}
+
+	const isGroup = this.classList.contains('group');
+	const popover = this.querySelector(isGroup ? ':scope > .group-items' : ':scope > .submenu');
+	if (!popover) {
+		return;
+	}
+
+	const { top, bridgeTop, scrollable } = fitPopover(this.offsetTop, popover.scrollHeight, window.innerHeight);
+	this.style.setProperty(isGroup ? '--group-top' : '--item-top', top + 'px');
+	this.style.setProperty('--popover-bridge-top', bridgeTop + 'px');
+	popover.classList.toggle('popover-scrollable', scrollable);
+});
 
 $(document).on('click', '.side-panel-toggle', function () {
 	// Přepnutí šířky menu mění layout skupin a podmenu - nemá se animovat
