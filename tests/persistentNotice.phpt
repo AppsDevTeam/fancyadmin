@@ -64,6 +64,12 @@ final class NoticePresenter extends Presenter
 	{
 		return $this->notice;
 	}
+
+	/** Bez DI neni HTTP pozadavek ani sablona; prekresleni hlasek v afterRender() se tu netestuje. */
+	public function isAjax(): bool
+	{
+		return false;
+	}
 }
 
 
