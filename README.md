@@ -387,6 +387,21 @@ fancyadmin:
 	personalDataAclResource: App\Model\Entities\Enums\AclResourceNameEnum::PERSONAL_DATA
 ```
 
+### 4.1 Práva presenterů a akcí (`AuthPresenterTrait`)
+
+Presenter s `AuthPresenterTrait` vyžaduje resource `<modul>.<presenter>` (např. `admin.order`).
+Akci nebo signál lze místo toho svázat s vlastním resource atributem:
+
+```php
+#[SecurityCheckAttribute(AclResourceNameEnum::EXPORTS)]
+public function actionExport(): void {}
+```
+
+- Atribut se hledá na `action<Akce>()`; akce, která má jen `render<Akce>()`, ho nese na ní.
+  Akce bez obou metod atribut nemá a platí resource presenteru.
+- Když akce atribut má, resource presenteru se už nekontroluje.
+- Signál (`handle<Signál>()`) se svým atributem se kontroluje navíc k akci.
+
 ---
 
 ## 5. Query třídy

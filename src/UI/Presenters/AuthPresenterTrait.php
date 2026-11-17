@@ -274,11 +274,20 @@ trait AuthPresenterTrait
 	 * @throws ReflectionException
 	 * @throws ForbiddenRequestException
 	 * @return bool Whether a SecurityCheckAttribute was found and processed on the action method
+	 *              (render method for an action without one)
 	 */
 	private function validateSecurityAttributes(ReflectionClass|ReflectionMethod $element): bool
 	{
 		$reflection = new ReflectionClass($this->getPresenter()::class);
-		$found = $this->validateSecurityAttributesOfMethod($reflection->getMethod(static::ActionKey . ucfirst($this->getAction())));
+
+		// Akce nemusí mít action<Name>(), stačí jí render<Name>() - i ten může nést atribut
+		$found = false;
+		foreach ([static::formatActionMethod($this->getAction()), static::formatRenderMethod($this->getAction())] as $method) {
+			if ($reflection->hasMethod($method)) {
+				$found = $this->validateSecurityAttributesOfMethod($reflection->getMethod($method));
+				break;
+			}
+		}
 
 		if ($element instanceof ReflectionMethod && str_starts_with($element->getName(), self::SIGNAL_METHOD_PREFIX)) {
 			$this->validateSecurityAttributesOfMethod($element);
