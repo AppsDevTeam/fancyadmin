@@ -1,0 +1,297 @@
+@use 'variables' as *;
+
+// Tom Select (builtin Select / AjaxSelect z adt-js-components). Téma Bootstrap 5
+// si komponenta načítá sama jako CSS chunk až za styly aplikace, proto pravidla
+// nesou :root body - vyšší specificita místo plošného !important. To zůstává jen
+// proti deklaracím tématu, které !important mají samy.
+
+// Křížek „odebrat položku“ / „vymazat výběr“ a šipka - vektor přes masku, barva z currentColor
+$ts-close-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 4l8 8M12 4l-8 8'/%3E%3C/svg%3E");
+$ts-caret-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+$ts-close-size: 14px;
+$ts-caret-size: 16px;
+
+@mixin ts-icon($icon, $size) {
+	background-color: currentColor;
+	-webkit-mask: $icon no-repeat center / #{$size - 4px};
+	mask: $icon no-repeat center / #{$size - 4px};
+}
+
+:root body {
+	// Pole je obal .ts-wrapper (Tom Select na něj přenese třídy původního selectu,
+	// tedy i .form-select a velikost), .ts-control uvnitř je jen průhledná plocha.
+	.ts-wrapper {
+		--control-height: #{$control-height};
+		--control-radius: #{$control-radius};
+		--control-padding-x: #{$control-padding-x};
+		--control-font: #{$control-font};
+		--ts-tag-gap: 8px;
+		--ts-tag-padding-x: 10px;
+		--ts-pr-min: var(--control-padding-x);
+		--ts-pr-caret: 0px;
+		--ts-pr-clear-button: 0px;
+
+		display: flex;
+		align-items: stretch;
+		width: 100%;
+		height: auto;
+		min-height: var(--control-height);
+		padding: 0 !important;
+		font-size: var(--control-font);
+		line-height: normal;
+		border: var(--inputBorder);
+		border-radius: var(--control-radius);
+		background-color: var(--inputBackground);
+		background-image: none;
+		box-shadow: none;
+		transition: border-color .15s, background-color .15s;
+
+		&:hover:not(.focus, .disabled) {
+			border: var(--inputHoverBorder, var(--inputBorder));
+		}
+
+		&.focus {
+			border: var(--inputFocusBorder);
+			background-color: var(--inputFocusBackground);
+		}
+
+		&.disabled {
+			background-color: $color-light-gray;
+			cursor: not-allowed;
+		}
+
+		&.single {
+			--ts-pr-caret: calc(#{$ts-caret-size} + 8px);
+
+			&::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				right: var(--control-padding-x);
+				width: $ts-caret-size;
+				height: $ts-caret-size;
+				margin-top: calc(#{$ts-caret-size} / -2);
+				color: $text-muted;
+				pointer-events: none;
+				transition: transform .15s;
+				@include ts-icon($ts-caret-icon, $ts-caret-size + 2px);
+			}
+
+			&.dropdown-active::after {
+				transform: rotate(180deg);
+			}
+		}
+
+		&.plugin-clear_button.has-items {
+			--ts-pr-clear-button: calc(#{$ts-close-size} + 8px);
+		}
+	}
+
+	// Velikosti ze třídy původního selectu (Tom Select ji přenese na obal)
+	.ts-wrapper.form-select-sm,
+	.ts-wrapper.form-control-sm {
+		--control-height: #{$control-height-sm};
+		--control-radius: #{$control-radius-sm};
+		--control-padding-x: #{$control-padding-x-sm};
+		--control-font: #{$control-font-sm};
+	}
+
+	.ts-wrapper.form-select-xl,
+	.ts-wrapper.form-select-lg,
+	.ts-wrapper.form-control-xl,
+	.ts-wrapper.form-control-lg {
+		--control-height: #{$control-height-xl};
+		--control-radius: #{$control-radius-xl};
+		--control-padding-x: #{$control-padding-x-xl};
+		--control-font: #{$control-font-xl};
+	}
+
+	.ts-wrapper .ts-control {
+		display: flex;
+		flex: 1 1 auto;
+		align-items: center;
+		min-width: 0;
+		min-height: calc(var(--control-height) - 2px);
+		padding: 0 var(--control-padding-x) !important;
+		padding-right: max(var(--ts-pr-min), var(--ts-pr-clear-button) + var(--ts-pr-caret) + var(--control-padding-x)) !important;
+		font-size: inherit;
+		line-height: normal;
+		color: $black;
+		background: transparent !important;
+		border: 0 !important;
+		border-radius: inherit;
+		box-shadow: none !important;
+
+		input {
+			min-width: 2rem;
+			margin: 0 !important;
+			padding: 0 !important;
+			font-size: inherit;
+			line-height: normal;
+			color: $black;
+
+			&::placeholder {
+				color: $text-muted;
+				opacity: 1;
+			}
+		}
+
+		.item {
+			min-width: 0;
+		}
+	}
+
+	// Vybrané položky se zalamují, prvek roste - svislé odsazení je na prvku
+	.ts-wrapper.multi .ts-control {
+		flex-wrap: wrap;
+		gap: var(--ts-tag-gap);
+		padding-top: 4px !important;
+		padding-bottom: 4px !important;
+
+		> .item {
+			margin: 0;
+			padding: 0 var(--ts-tag-padding-x);
+			line-height: calc(var(--control-height) - 2px - 8px - 8px);
+			color: $black;
+			background-color: $secondary-darker;
+			border: 0;
+			border-radius: var(--bs-border-radius);
+
+			&.active {
+				background-color: $background-darker;
+			}
+		}
+	}
+
+	.ts-wrapper.single .ts-control > .item {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	// Křížky kreslí Tom Select znakem × z písma, každý řez ho má jinak velký
+	.ts-wrapper.plugin-remove_button .item .remove,
+	.ts-wrapper .clear-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: $ts-close-size;
+		height: $ts-close-size;
+		padding: 0;
+		font-size: 0;
+		color: $text-muted;
+		border: 0 !important;
+		cursor: pointer;
+		transition: color .15s;
+		@include ts-icon($ts-close-icon, $ts-close-size);
+
+		&:hover {
+			color: $black;
+		}
+	}
+
+	.ts-wrapper.plugin-remove_button .item .remove {
+		margin-left: 6px;
+	}
+
+	.ts-wrapper .clear-button {
+		top: 50%;
+		right: calc(var(--control-padding-x) + var(--ts-pr-caret));
+		margin-top: calc(#{$ts-close-size} / -2);
+	}
+
+	// Rozbalený seznam - plovoucí vrstva jako kalendář flatpickru a karta gridu
+	.ts-dropdown {
+		margin: 4px 0;
+		padding: 0;
+		z-index: 10056;
+		color: $black;
+		background: $background;
+		border: 1px solid $color-light-gray;
+		border-radius: var(--overlay-radius);
+		box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+		overflow: hidden;
+
+		.ts-dropdown-content {
+			padding: 0;
+		}
+
+		// Výška a text jako pole, ze kterého se seznam otevřel
+		.option,
+		.no-results,
+		.create {
+			@include dropdown-option(var(--control-height, #{$control-height}), var(--control-padding-x, #{$control-padding-x}));
+			color: $black;
+		}
+
+		.no-results {
+			color: $text-muted;
+		}
+
+		.active {
+			color: $black;
+			background-color: $background-dark;
+		}
+
+		.selected {
+			font-weight: 600;
+		}
+
+		.optgroup-header {
+			@include dropdown-option(var(--control-height-sm, #{$control-height-sm}), var(--control-padding-x, #{$control-padding-x}));
+			font-weight: 600;
+			color: $text-muted;
+			background: transparent;
+		}
+
+		// Vyhledávací pole (plugin dropdown_input) je malý input jako každý jiný
+		.dropdown-input-wrap {
+			padding: 8px;
+		}
+
+		.dropdown-input {
+			height: $control-height-sm;
+			padding: 0 $control-padding-x-sm;
+			font-size: $control-font-sm;
+			color: $black;
+			background: var(--inputBackground);
+			border: var(--inputBorder);
+			border-radius: $control-radius-sm;
+			box-shadow: none;
+		}
+	}
+
+	select[readonly] + .ts-wrapper {
+		pointer-events: none;
+		touch-action: none;
+		background-color: $background-darker;
+
+		&::after,
+		.clear-button {
+			display: none;
+		}
+	}
+
+	// Téma k chybě přidává vlastní šipku a ikonu, pole má jen barvu jako .form-control.is-invalid
+	select.is-invalid + .ts-wrapper,
+	.ts-wrapper.is-invalid,
+	.was-validated select:invalid + .ts-wrapper {
+		border-color: var(--bs-form-invalid-border-color);
+		background-color: #FF42421F;
+		background-image: none;
+	}
+
+	// V .input-group se pole dělí o šířku s tlačítkem. Prvním potomkem skupiny je
+	// skrytý původní select, Bootstrap by proto obalu bral levé zaoblení jako dalšímu prvku.
+	.input-group > .ts-wrapper {
+		flex: 1 1 auto;
+		width: 1%;
+	}
+
+	// Pravidlo Bootstrapu má specificitu (0,6,0), proto !important
+	.input-group > select:first-child + .ts-wrapper {
+		margin-left: 0 !important;
+		border-top-left-radius: var(--control-radius) !important;
+		border-bottom-left-radius: var(--control-radius) !important;
+	}
+}
