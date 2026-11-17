@@ -39,7 +39,7 @@ trait SignPresenterTrait
 
 	public function actionIn(?string $errorMsg): void
 	{
-		if ($this->getUser()->isLoggedIn()) {
+		if ($this->getPortalUser()->isLoggedIn()) {
 			$this->redirectAfterLogin();
 		}
 
@@ -54,25 +54,25 @@ trait SignPresenterTrait
 
 	public function actionOut(): never
 	{
-		if ($this->getUser()->isLoggedIn()) {
+		if ($this->getPortalUser()->isLoggedIn()) {
 			// Pokud je Keycloak zapnutý a uživatel se přihlásil přes Keycloak, přesměrujeme na Keycloak logout
 			if ($this->_fancyAdmin->isKeycloakEnabled()) {
 				$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceFromSession();
 				if ($keycloak === null) {
 					// Fallback - zkusíme najít instanci dle identity. I neaktivní: uživatel se mohl
 					// přihlásit před deaktivací a odstavená instance ho nesmí uvěznit v session.
-					$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($this->getUser()->getIdentity(), activeOnly: false);
+					$keycloak = $this->_fancyAdmin->getKeycloakManager()?->getInstanceForIdentity($this->getPortalUser()->getIdentity(), activeOnly: false);
 				}
 				$redirectUrl = $this->getPresenter()->link(':Portal:Sign:in');
 				$logoutUrl = $keycloak?->getLogoutUrl($redirectUrl);
 
 				if ($logoutUrl !== null) {
-					$this->getUser()->logout(true);
+					$this->getPortalUser()->logout(true);
 					$this->redirectUrl($logoutUrl);
 				}
 			}
 
-			$this->getUser()->logout(true);
+			$this->getPortalUser()->logout(true);
 		}
 
 		$this->redirect('in');
@@ -80,11 +80,11 @@ trait SignPresenterTrait
 
 	public function actionOutAll(): never
 	{
-		if ($this->getUser()->isLoggedIn()) {
+		if ($this->getPortalUser()->isLoggedIn()) {
 			$this->_authenticator->clearIdentity(
-				$this->getUser()->getIdentity()->getAuthObjectId()
+				$this->getPortalUser()->getIdentity()->getAuthObjectId()
 			);
-			$this->getUser()->logout(true);
+			$this->getPortalUser()->logout(true);
 		}
 
 		$this->redirect('in');
@@ -104,7 +104,7 @@ trait SignPresenterTrait
 
 	public function actionPasswordSet(): void
 	{
-		$this->template->canContinue = $this->getUser()->isLoggedIn();
+		$this->template->canContinue = $this->getPortalUser()->isLoggedIn();
 	}
 
 	public function handleContinue(): void
@@ -119,7 +119,7 @@ trait SignPresenterTrait
 	/** Druhý krok přihlášení identity s vynuceným 2FA, která už klíč má (README 19.9). */
 	public function actionTwoFactor(): void
 	{
-		if ($this->getUser()->isLoggedIn()) {
+		if ($this->getPortalUser()->isLoggedIn()) {
 			$this->redirectAfterLogin();
 		}
 

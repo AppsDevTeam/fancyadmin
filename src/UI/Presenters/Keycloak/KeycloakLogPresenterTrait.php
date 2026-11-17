@@ -31,7 +31,7 @@ trait KeycloakLogPresenterTrait
 		$keycloakSession = $this->getSession(KeycloakSessionSection::SECTION_NAME);
 		$keycloakLogoutUrl = $keycloakSession->get(KeycloakSessionSection::LOGOUT_URL);
 
-		$this->getUser()->logout(true);
+		$this->getPortalUser()->logout(true);
 
 		$keycloakSession->remove(KeycloakSessionSection::LOGOUT_URL);
 

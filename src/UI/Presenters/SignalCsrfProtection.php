@@ -110,7 +110,7 @@ trait SignalCsrfProtection
 	/** Prihlaseni se cte z cookie, takze se tim session nezaklada. */
 	private function isSignalCsrfProtected(): bool
 	{
-		return $this->getUser()->isLoggedIn();
+		return $this->getPortalUser()->isLoggedIn();
 	}
 
 	/**

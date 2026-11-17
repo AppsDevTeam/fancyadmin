@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use ADT\FancyAdmin\Model\Menu\StringResource;
+use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\UI\Presenters\AuthPresenterTrait;
 use ADT\FancyAdmin\UI\Presenters\BasePresenterTrait;
 use ADT\FancyAdmin\UI\Presenters\SecurityCheckAttribute;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\Presenter;
 use Nette\Security\Authorizator;
+use Nette\Security\IIdentity;
 use Nette\Security\Resource;
 use Nette\Security\User;
 use Tester\Assert;
@@ -19,7 +21,7 @@ use Tester\Assert;
 
 require __DIR__ . '/bootstrap.php';
 
-final class AllowedResourcesUser extends User
+final class AllowedResourcesUser extends User implements SecurityUser
 {
 	/** @param list<string> $allowed */
 	public function __construct(private array $allowed)
@@ -30,6 +32,35 @@ final class AllowedResourcesUser extends User
 	{
 		return in_array($resource instanceof Resource ? $resource->getResourceId() : $resource, $this->allowed, true);
 	}
+
+	public function isAllowedFullDataAclResource(): bool
+	{
+		return false;
+	}
+
+	public function isAllowedBackoffice(): bool
+	{
+		return true;
+	}
+
+	public function isMultiTenant(): bool
+	{
+		return false;
+	}
+
+	public function canSelectAccount(): bool
+	{
+		return false;
+	}
+
+	public function isAdmin(): bool
+	{
+		return false;
+	}
+
+	public function login(string|IIdentity $username, ?string $password = null, ?string $context = null, array $metadata = []): void
+	{
+	}
 }
 
 abstract class SecuredBasePresenter extends Presenter
@@ -38,18 +69,23 @@ abstract class SecuredBasePresenter extends Presenter
 }
 
 /**
- * Presenter s AuthPresenterTrait bez DI, uzivatel se podstrci do privatni property Presenteru.
+ * Presenter s AuthPresenterTrait bez DI. Uzivatel portalu se podstrci do `_securityUser`, uzivatel
+ * z getUser() (u projektu s webem zakaznik) do privatni property Presenteru.
  */
 final class SecuredPresenter extends SecuredBasePresenter
 {
 	use AuthPresenterTrait;
 
-	/** @param list<string> $allowed */
-	public static function create(string $action, array $allowed = []): self
+	/**
+	 * @param list<string> $allowed prava uzivatele portalu
+	 * @param list<string> $presenterUserAllowed prava uzivatele z getUser()
+	 */
+	public static function create(string $action, array $allowed = [], array $presenterUserAllowed = []): self
 	{
 		$presenter = new self();
 		$presenter->changeAction($action);
-		new ReflectionProperty(Presenter::class, 'user')->setValue($presenter, new AllowedResourcesUser($allowed));
+		new ReflectionProperty(self::class, '_securityUser')->setValue($presenter, new AllowedResourcesUser($allowed));
+		new ReflectionProperty(Presenter::class, 'user')->setValue($presenter, new AllowedResourcesUser($presenterUserAllowed));
 
 		return $presenter;
 	}
@@ -127,6 +163,18 @@ test('signal kontroluje svuj atribut i u akce bez action metody', function () {
 
 	Assert::exception(
 		fn() => SecuredPresenter::create('emails')->validate($handle),
+		ForbiddenRequestException::class,
+	);
+});
+
+// Projekt s webem dava presenteru pres getUser() zakaznika, prava administrace se ptaji uzivatele portalu
+test('prava kontroluje uzivatel portalu, ne uzivatel z getUser()', function () {
+	$attributeOn = new ReflectionClass(SecuredPresenter::class);
+
+	Assert::true(SecuredPresenter::create('orders', allowed: ['admin.orders'], presenterUserAllowed: [])->validate($attributeOn));
+
+	Assert::exception(
+		fn() => SecuredPresenter::create('orders', allowed: [], presenterUserAllowed: ['admin.orders'])->validate($attributeOn),
 		ForbiddenRequestException::class,
 	);
 });

@@ -802,6 +802,11 @@ abstract class AuthPresenter extends BasePresenter
 }
 ```
 
+Traity se na přihlášení a práva ptají `getPortalUser()` (služba `ADT\FancyAdmin\Model\Security\SecurityUser`),
+ne `getUser()`. Obvykle je to tatáž služba; projekt, kde presenter dostává přes `injectPrimary()` jinou
+vrstvu uživatelů (zákazníky webu), tak pořád kontroluje uživatele administrace. Šablona dostane
+v `$user` uživatele portálu.
+
 ### ProfilePresenter (stránka „Můj profil")
 
 Osobní údaje přihlášeného uživatele, změna hesla, přihlášená zařízení a karta

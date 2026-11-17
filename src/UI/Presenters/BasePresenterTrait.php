@@ -7,6 +7,7 @@ use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\JsComponentsInject;
 use ADT\FancyAdmin\DI\Injects\PushInject;
 use ADT\FancyAdmin\DI\Injects\QuickbarSettingsInject;
+use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
 use ADT\FancyAdmin\Model\Menu\StringResource;
 use ADT\FancyAdmin\Model\Quickbar\QuickbarItem;
@@ -31,6 +32,7 @@ trait BasePresenterTrait
 	use JsComponentsInject;
 	use QuickbarSettingsInject;
 	use PushInject;
+	use SecurityUserInject;
 
 	protected bool $primaryTemplate = false;
 
@@ -45,6 +47,7 @@ trait BasePresenterTrait
 	protected function beforeRender(): void
 	{
 		parent::beforeRender();
+		$this->getTemplate()->user = $this->getPortalUser();
 		$this->getTemplate()->originalTemplate = __DIR__ . '/@layout.latte';
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
 		$this->getTemplate()->logoFileName = $this->_fancyAdmin->getLogoPublicPath();
@@ -60,7 +63,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];
 		$this->getTemplate()->quickbarAiUrl = in_array(QuickbarItem::Ai, $this->getTemplate()->quickbarItems, true) ? $this->getQuickbarAiUrl() : null;
-		$pushTopics = $this->primaryTemplate && $this->getUser()->isLoggedIn() ? $this->getPushTopics() : [];
+		$pushTopics = $this->primaryTemplate && $this->getPortalUser()->isLoggedIn() ? $this->getPushTopics() : [];
 		$pushSubscription = $pushTopics !== [] ? $this->_push->subscription($pushTopics) : null;
 		$this->getTemplate()->pushSubscription = $pushSubscription !== null ? Json::encode($pushSubscription) : null;
 		$this->getTemplate()->persistentNotice = $this->loadRenderedPersistentNotice();
@@ -111,7 +114,7 @@ trait BasePresenterTrait
 		// Keycloak settings pro frontend (keycloak-js adapter)
 		$keycloakSettingsJson = '';
 		if ($this->_fancyAdmin->isKeycloakEnabled()) {
-			$isKeycloakUserLoggedIn = $this->getUser()->isLoggedIn()
+			$isKeycloakUserLoggedIn = $this->getPortalUser()->isLoggedIn()
 				&& $this->getPresenter()->getSession(KeycloakSessionSection::SECTION_NAME)->get(KeycloakSessionSection::ID_TOKEN) !== null;
 
 			if ($isKeycloakUserLoggedIn) {
@@ -130,6 +133,16 @@ trait BasePresenterTrait
 		$this->getTemplate()->keycloakSettingsJson = $keycloakSettingsJson;
 	}
 
+
+	/**
+	 * Přihlášený uživatel portálu (administrace). Traity se ptají jeho, ne `getUser()`: projekt, kde
+	 * presenter dostává přes `injectPrimary()` jinou vrstvu uživatelů (zákazníky webu), by jinak
+	 * kontroloval práva zákazníka.
+	 */
+	protected function getPortalUser(): SecurityUser
+	{
+		return $this->_securityUser;
+	}
 
 	/**
 	 * Položky rychlé lišty podle nastavení `quickbar`; projekt může přepsat. Prázdné pole = lišta se nevykreslí.
@@ -163,10 +176,9 @@ trait BasePresenterTrait
 	 */
 	protected function getQuickbarAiUrl(): ?string
 	{
-		$user = $this->getUser();
+		$user = $this->getPortalUser();
 		if (
 			!$this->_fancyAdmin->isAiEnabled()
-			|| !$user instanceof SecurityUser
 			|| ($user->isMultiTenant() && !$user->isAllowedFullDataAclResource())
 			|| !$user->isAllowed(new StringResource(lcfirst(explode(':', $this->getName())[0]) . '.ai'))
 		) {

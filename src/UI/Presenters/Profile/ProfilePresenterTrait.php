@@ -89,7 +89,7 @@ trait ProfilePresenterTrait
 		$this->_authenticator->clearIdentity(
 			$this->_securityUser->getIdentity()->getAuthObjectId()
 		);
-		$this->getUser()->logout(true);
+		$this->getPortalUser()->logout(true);
 		$this->redirect(':Portal:Sign:in');
 	}
 

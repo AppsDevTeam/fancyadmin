@@ -66,9 +66,9 @@ trait AuthPresenterTrait
 
 				// Token vydava i API pokladny, kam se prihlasi i obsluha bez prava do portalu.
 				// Autentizator to nehlida, viz AuthenticatorTrait::validateIdentity().
-				if (!$this->_fancyAdmin->canSignIn($this->getUser()->getIdentity())) {
+				if (!$this->_fancyAdmin->canSignIn($this->getPortalUser()->getIdentity())) {
 					$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
-					$this->getUser()->logout(true);
+					$this->getPortalUser()->logout(true);
 					$this->redirect(':Portal:Sign:in');
 				}
 
@@ -80,7 +80,7 @@ trait AuthPresenterTrait
 			} catch (AuthenticationException) {}
 		}
 
-		if (!$this->getUser()->isLoggedIn()) {
+		if (!$this->getPortalUser()->isLoggedIn()) {
 			$parameters = array_merge($this->getRequest()->getParameters());
 			unset($parameters['token']);
 
@@ -102,21 +102,21 @@ trait AuthPresenterTrait
 		// Single-tenant účet nevybírá, vynuloval ho už checkRequirements()
 		if ($this->_fancyAdmin->isMultiTenant()) {
 			if ($this->getParameter('selectedAccount')) {
-				if ($this->getUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
-					$this->getUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
+				if ($this->getPortalUser()->getIdentity()->getSelectedAccount()?->getId() !== $this->getParameter('selectedAccount')) {
+					$this->getPortalUser()->getIdentity()->setSelectedAccount($this->_accountQueryFactory->create()->disableAccountFilter()->byId($this->getParameter('selectedAccount'))->fetchOne());
 					$this->_em->flush();
 				}
-			} elseif ($this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
-				if ($this->getUser()->getIdentity()->getSelectedAccount()) {
-					$this->getUser()->getIdentity()->setSelectedAccount(null);
+			} elseif ($this->getPortalUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())) {
+				if ($this->getPortalUser()->getIdentity()->getSelectedAccount()) {
+					$this->getPortalUser()->getIdentity()->setSelectedAccount(null);
 					$this->_em->flush();
 				}
-			} elseif ($this->getUser()->getIdentity()->getSelectedAccount()) {
+			} elseif ($this->getPortalUser()->getIdentity()->getSelectedAccount()) {
 				// TODO odstranit
 				try {
-					$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+					$this->redirect(':PortalCustomer:Home:', ['selectedAccount' => $this->getPortalUser()->getIdentity()->getSelectedAccount()->getId()]);
 				} catch (InvalidLinkException) {
-					$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getUser()->getIdentity()->getSelectedAccount()->getId()]);
+					$this->redirect(':Portal:Home:', ['selectedAccount' => $this->getPortalUser()->getIdentity()->getSelectedAccount()->getId()]);
 				}
 			} else {
 				// TODO odstranit
@@ -143,7 +143,7 @@ trait AuthPresenterTrait
 	 */
 	private function clearSelectedAccount(): void
 	{
-		$identity = $this->getUser()->getIdentity();
+		$identity = $this->getPortalUser()->getIdentity();
 
 		// Účet vybraný z doby před přepnutím do single-tenant režimu - dotazy ho sice
 		// ignorují, ale formuláře a šablony se na něj ptají (pole účtu, barvy účtu)
@@ -164,7 +164,7 @@ trait AuthPresenterTrait
 	 */
 	private function enforcePasskeyLogin(): void
 	{
-		$identity = $this->getUser()->getIdentity();
+		$identity = $this->getPortalUser()->getIdentity();
 
 		// Session z jednorázového kódu druhým faktorem prošla, takže se nesmí propadnout do
 		// kontroly níž, která by ji jako „heslovou" odhlásila. Na Profilu ji drží jen
@@ -187,7 +187,7 @@ trait AuthPresenterTrait
 			!$this->_passkeyService->isPasskeySession()
 		) {
 			$this->flashMessageError('fcadmin.passkeys.errors.passwordSessionRevoked');
-			$this->getUser()->logout(true);
+			$this->getPortalUser()->logout(true);
 			$this->redirect(':Portal:Sign:in');
 		}
 
@@ -209,12 +209,12 @@ trait AuthPresenterTrait
 	 */
 	private function getFirstActiveAccountId(): int
 	{
-		if ($account = $this->getUser()->getIdentity()->getActiveAccounts()[0] ?? null) {
+		if ($account = $this->getPortalUser()->getIdentity()->getActiveAccounts()[0] ?? null) {
 			return $account->getId();
 		}
 
 		$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
-		$this->getUser()->logout(true);
+		$this->getPortalUser()->logout(true);
 		$this->redirect(':Portal:Sign:in');
 	}
 
@@ -232,7 +232,7 @@ trait AuthPresenterTrait
 	public function checkRequirements($element): void
 	{
 		parent::checkRequirements($element);
-		if ($this->getUser()->isLoggedIn()) {
+		if ($this->getPortalUser()->isLoggedIn()) {
 			// Dřív než se kontrolují práva - role profilu na vybraném účtu by se do nich započítaly
 			if (!$this->_fancyAdmin->isMultiTenant()) {
 				$this->clearSelectedAccount();
@@ -246,10 +246,10 @@ trait AuthPresenterTrait
 			if (
 				!$this->_fancyAdmin->isMultiTenant()
 				&&
-				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+				!$this->getPortalUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
 			) {
 				$this->flashMessageError('fcadmin.appGeneral.exceptions.noPermission');
-				$this->getUser()->logout(true);
+				$this->getPortalUser()->logout(true);
 				$this->redirect(':Portal:Sign:in');
 			}
 
@@ -258,7 +258,7 @@ trait AuthPresenterTrait
 				&&
 				$this->isLinkCurrent($this->_fancyAdmin->getDefaultBackofficeRoute())
 				&&
-				!$this->getUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
+				!$this->getPortalUser()->isAllowed($this->_fancyAdmin->getBackofficeAclResource())
 			) {
 				$this->redirect($this->_fancyAdmin->getDefaultCustomerRoute(), ['selectedAccount' => $this->getFirstActiveAccountId()]);
 			}
@@ -307,7 +307,7 @@ trait AuthPresenterTrait
 		foreach ($reflectionMethod->getAttributes(SecurityCheckAttribute::class) as $attribute) {
 			$found = true;
 
-			if (!$this->getUser()->isAllowed($attribute->newInstance()->getResourceName())) {
+			if (!$this->getPortalUser()->isAllowed($attribute->newInstance()->getResourceName())) {
 				throw new ForbiddenRequestException();
 			}
 		}
@@ -330,7 +330,7 @@ trait AuthPresenterTrait
 		$parts = explode(':', $this->getName());
 		$resource = lcfirst($parts[0]) . '.' . lcfirst($parts[1]);
 
-		if (!$this->getUser()->isAllowed($resource)) {
+		if (!$this->getPortalUser()->isAllowed($resource)) {
 			throw new ForbiddenRequestException();
 		}
 	}
