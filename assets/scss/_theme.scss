@@ -615,6 +615,19 @@ $bottomSubMenuHeight: 45px;
 	background-color: $secondary;
 	border-top: 1px solid $secondary-darker;
 	z-index: 10;
+	// Pět položek a avatar se na telefon vejdou jen bez zalomení a bez mezer gridu, jinak avatar spadne pod okraj
+	flex-wrap: nowrap;
+	margin: 0;
+
+	> .col {
+		min-width: 0;
+		padding: 0 2px;
+	}
+
+	// Jméno a role jsou v rozbalovacím menu, v liště by vytekly za okraj
+	.user-button-info {
+		display: none;
+	}
 
 	a {
 		width: 100%;
@@ -843,7 +856,8 @@ $bottomSubMenuHeight: 45px;
 	ul {
 		left: initial !important;
 		bottom: 10px !important;
-		right: -10px !important;
+		// Lišta je bez záporných okrajů gridu, menu proto končí uvnitř okna
+		right: 4px !important;
 	}
 }
 
