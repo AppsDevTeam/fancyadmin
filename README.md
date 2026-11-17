@@ -908,7 +908,8 @@ jako zákaz (viz sekce 16).
 Factory menu modulu (`<modul>\Presenters\NavbarMenuFactory`, `UserMenuFactory`) skládá
 `AuthPresenterTrait` přes DI kontejner (`Container::createInstance()`), takže si v konstruktoru
 může injectnout služby — přihlášeného uživatele, překladač… Factory bez konstruktoru vznikne
-stejně jako dřív přes `new`.
+stejně jako dřív přes `new`. Projekt, jehož presentery neleží v namespace `…\Presenters\…`,
+přepíše `getMenuFactoryNamespace()` (vrací namespace, ve kterém factory leží).
 
 Hlavička uživatelského menu ukazuje vedle avataru jméno a e-mail uživatele. Projekt ji může
 nahradit vlastními řádky přes `UserMenu::setHeaderLines()`: první řádek je zvýrazněný titulek,

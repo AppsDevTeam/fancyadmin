@@ -24,6 +24,7 @@ use Nette\Application\ForbiddenRequestException;
 use Nette\Application\UI\InvalidLinkException;
 use Nette\Http\FileUpload;
 use Nette\Security\AuthenticationException;
+use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -377,11 +378,9 @@ trait AuthPresenterTrait
 	public function beforeRender(): void
 	{
 		parent::beforeRender();
-		// Menu lezi vedle presenteru modulu (`<modul>\Presenters\NavbarMenuFactory`). Namespace
-		// se bere z tridy presenteru, ne natvrdo - projekt nemusi zit pod `App\UI\Portal`.
-		$presentersNamespace = substr(static::class, 0, strpos(static::class, '\\Presenters\\') + strlen('\\Presenters'));
-		$className = $presentersNamespace . '\\NavbarMenuFactory';
-		$userMenuClassName = $presentersNamespace . '\\UserMenuFactory';
+		$menuNamespace = $this->getMenuFactoryNamespace();
+		$className = $menuNamespace . '\\NavbarMenuFactory';
+		$userMenuClassName = $menuNamespace . '\\UserMenuFactory';
 		// Factory se skladaji pres DI kontejner, aby si mohly injectnout sluzby (prihlaseneho
 		// uzivatele, prekladac) - trida bez konstruktoru vznikne stejne jako pres `new`.
 		/** @var NavbarMenuFactory $navbarMenuFactory */
@@ -394,6 +393,20 @@ trait AuthPresenterTrait
 			->resolveAclResources($module);
 		$this->getTemplate()->userMenu = $userMenuFactory->create()->setLinkGenerator($this->_linkGenerator);
 		$this->getTemplate()->summernoteUpload = $this->getPresenter()->link('summernoteUpload!');
+	}
+
+	/**
+	 * Namespace, ve kterém leží `NavbarMenuFactory` a `UserMenuFactory` modulu. Výchozí je
+	 * `<modul>\Presenters` podle třídy presenteru; projekt s jinou strukturou namespace přepíše.
+	 */
+	protected function getMenuFactoryNamespace(): string
+	{
+		$position = strpos(static::class, '\\Presenters\\');
+		if ($position === false) {
+			throw new LogicException(static::class . ' neleží v namespace `…\\Presenters\\…`, přepište getMenuFactoryNamespace().');
+		}
+
+		return substr(static::class, 0, $position + strlen('\\Presenters'));
 	}
 
 	/**
