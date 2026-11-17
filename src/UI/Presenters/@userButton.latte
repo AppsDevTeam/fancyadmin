@@ -6,7 +6,7 @@
     <div class="dropdown user">
         <button class="btn user-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="btn-avatar">
-                <i class="fa-regular fa-xl fa-user"></i>
+                <i class="fa-solid fa-xl fa-user"></i>
                 <img src="{$identity->getGravatar()}" alt="gravatar" />
             </span>
             <span class="user-button-info">
@@ -22,8 +22,12 @@
                         <img src="{$user->getIdentity()->getGravatar()}" alt="gravatar" />
                     </div>
                     <div class="col-auto">
-                        <div>{$user->getIdentity()->getFirstName()}</div>
-                        <div n:if="$roleNames">{$roleNames}</div>
+                        {if $userMenu->getHeaderLines() !== null}
+                            <div n:foreach="$userMenu->getHeaderLines() as $line">{$line}</div>
+                        {else}
+                            <div>{$user->getIdentity()->getFirstName()}</div>
+                            <div n:if="$roleNames">{$roleNames}</div>
+                        {/if}
                     </div>
                 </div>
             </li>
@@ -31,7 +35,7 @@
             <a n:if="$userMenu->isAddMyProfileMenuItem()" n:href="Profile:default" class="dropdown-item">
                 <div>
                     <div>
-                        <i class="fa-regular fa-user-lock"></i>
+                        <i class="fa-solid fa-user-lock"></i>
                     </div>
                     <div>
                         {_fcadmin.modules.web.navbar.profile.myProfile}
@@ -53,7 +57,7 @@
                 <a href="{$link}" class="dropdown-item">
                     <div>
                         <div>
-                            <i class="fa-regular fa-{$item->getFaIcon()}"></i>
+                            <i class="fa-solid fa-{$item->getFaIcon()}"></i>
                         </div>
                         <div>
                             {_$item->getLabel()}
@@ -67,7 +71,7 @@
                 <button type="button" class="dropdown-item theme-toggle" data-fancyadmin-theme-toggle role="switch" aria-checked="false">
                     <div>
                         <div>
-                            <i class="fa-regular fa-moon"></i>
+                            <i class="fa-solid fa-moon"></i>
                         </div>
                         <div>
                             {_fcadmin.layout.sideMenu.user.darkMode}
@@ -83,7 +87,7 @@
                 <a class="dropdown-item" n:href=":Portal:Sign:out">
                     <div>
                         <div>
-                            <i class="fa-regular fa-right-to-bracket"></i>
+                            <i class="fa-solid fa-right-to-bracket"></i>
                         </div>
                         <div>
                             {_fcadmin.layout.sideMenu.user.logout}

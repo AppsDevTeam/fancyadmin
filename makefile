@@ -8,11 +8,9 @@ config:
 		cp .env.example .env; \
 		sed -i.bak "s?PROJECT_ROOT=.*?PROJECT_ROOT=$$(pwd)?" .env && rm .env.bak; \
 	fi; \
-	set -o allexport; source .env; set +o allexport; \
 	if [ ! -f '.yarnrc.yml' ]; then \
 		cp .yarnrc.yml.template .yarnrc.yml; \
-	fi; \
-	sed -i.bak "s/__FORTAWESOME_TOKEN__/$${FORTAWESOME_TOKEN}/" .yarnrc.yml && rm .yarnrc.yml.bak;
+	fi;
 
 
 .build:

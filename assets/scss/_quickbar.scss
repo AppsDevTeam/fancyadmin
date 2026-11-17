@@ -1509,7 +1509,7 @@ body:has(.quickbar) .table-bottom-scroll {
 	color: var(--quickbar-text-strong);
 	cursor: pointer;
 
-	> .fa-regular:first-child {
+	> #{$faIcon}:first-child {
 		flex: none;
 		width: 20px;
 		text-align: center;
@@ -1528,9 +1528,10 @@ body:has(.quickbar) .table-bottom-scroll {
 
 	// Rodič aktivní podstránky jen barvou, podklad patří vybrané podpoložce
 	&:is(.quickbar-menu-item--active, .quickbar-menu-item--active-parent) {
+		font-weight: 600;
+
 		&,
-		> .fa-regular:first-child {
-			font-weight: 600;
+		> #{$faIcon}:first-child {
 			color: var(--quickbar-primary);
 		}
 	}
@@ -1600,7 +1601,7 @@ body:has(.quickbar) .table-bottom-scroll {
 	color: var(--quickbar-text);
 	cursor: pointer;
 
-	> .fa-regular {
+	> #{$faIcon} {
 		flex: none;
 		width: 20px;
 		text-align: center;
@@ -1621,7 +1622,7 @@ body:has(.quickbar) .table-bottom-scroll {
 
 	&.quickbar-menu-sub-item--danger {
 		&,
-		> .fa-regular {
+		> #{$faIcon} {
 			color: var(--quickbar-danger);
 		}
 	}

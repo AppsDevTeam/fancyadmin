@@ -206,6 +206,37 @@ body:has(.side-panel) .container {
   }
 }
 
+// Trvaly panel (PersistentNotice, @persistentNotice.latte). Vpravo nahore v radku s vyberem uctu
+// a odkazem zpet, takze nezakryva obsah ani flash zpravy, ktere chodi dole. Vzhled jako flash zprava.
+.persistent-notice {
+  // v toku stranky nad obsahem (@layout.latte), takze nic nezakryva
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 10px 12px 10px 24px;
+  border: 1px solid var(--fa-line);
+  border-radius: var(--bs-border-radius);
+  background: var(--fa-surface);
+  color: var(--fa-text);
+  box-shadow: 0 8px 24px -4px var(--fa-shadow-color);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: normal;
+
+  .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  @include media-breakpoint-down(sm) {
+    gap: 12px;
+    padding: 10px 10px 10px 16px;
+    font-size: 15px;
+  }
+}
+
 $sidePanelTemplateAnimation: .4s;
 // Plovoucí panel je od okrajů okna odsazený
 $sidePanelInset: 12px;

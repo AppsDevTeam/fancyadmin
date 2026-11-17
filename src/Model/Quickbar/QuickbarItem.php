@@ -17,7 +17,7 @@ enum QuickbarItem: string
 	{
 		return match ($this) {
 			self::Search => 'magnifying-glass',
-			self::Ai => 'sparkles',
+			self::Ai => 'wand-magic-sparkles',
 			self::Notifications => 'bell',
 			self::Todo => 'list-check',
 			self::Chat => 'comments',

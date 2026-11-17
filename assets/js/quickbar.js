@@ -482,7 +482,7 @@ function renderChatCurrent() {
 		return;
 	}
 	setHtml($current, `
-		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.back)}" data-quickbar-chat-back><i class="fa-regular fa-arrow-left"></i></button>
+		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.back)}" data-quickbar-chat-back><i class="fa-solid fa-arrow-left"></i></button>
 		${chatAvatar(chat, true)}
 		<span class="quickbar-chat-current-text">
 			<span class="quickbar-chat-current-name">${esc(chat.name)}</span>
@@ -854,7 +854,7 @@ function renderAiHeader() {
 	renderAiSpeak();
 	const $full = $panel.querySelector('[data-quickbar-ai-full]');
 	$full.title = state.ai.full ? $full.dataset.shrink : $full.dataset.expand;
-	$full.querySelector('i').className = state.ai.full ? 'fa-regular fa-down-left-and-up-right-to-center' : 'fa-regular fa-up-right-and-down-left-from-center';
+	$full.querySelector('i').className = state.ai.full ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center';
 }
 
 /** Odkaz na otevřenou konverzaci - stránka AI ji po načtení otevře; null = žádná není */
@@ -880,10 +880,10 @@ function copyAiLink($button) {
 	navigator.clipboard.writeText(link).then(() => {
 		const $icon = $button.querySelector('i');
 		const title = $button.title;
-		$icon.className = 'fa-regular fa-check';
+		$icon.className = 'fa-solid fa-check';
 		$button.title = $button.dataset.copied;
 		setTimeout(() => {
-			$icon.className = 'fa-regular fa-link';
+			$icon.className = 'fa-solid fa-link';
 			$button.title = title;
 		}, 1500);
 	}, () => window.prompt($button.title, link));
@@ -904,8 +904,8 @@ function renderAiSpeak() {
 	$button.classList.toggle('btn-primary', enabled);
 	$button.classList.toggle('btn-glass', !enabled);
 	$button.title = speaking ? $button.dataset.stop : (missing ? $button.dataset.unavailable : (enabled ? $button.dataset.off : $button.dataset.on));
-	$button.querySelector('i').className = speaking ? 'fa-regular fa-stop'
-		: (missing ? 'fa-regular fa-volume-slash' : (enabled ? 'fa-regular fa-volume-high' : 'fa-regular fa-volume-xmark'));
+	$button.querySelector('i').className = speaking ? 'fa-solid fa-stop'
+		: (missing ? 'fa-solid fa-volume-off' : (enabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark'));
 	// Zapnuté předčítání ověří, že ADTalk běží (výsledek si modul chvíli pamatuje)
 	if (enabled && !speaking) {
 		const before = speech.isAvailable();

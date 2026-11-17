@@ -7,3 +7,4 @@
 .env
 .yarnrc.yml
 /tests/output
+/dist

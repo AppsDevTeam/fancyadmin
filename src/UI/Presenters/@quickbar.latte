@@ -36,16 +36,16 @@
 					{* Předčítání odpovědí aplikací ADTalk (quickbarSpeech.js) *}
 					<button type="button" class="btn btn-icon btn-sm btn-glass" data-quickbar-ai-speak
 						data-on="{_fcadmin.layout.quickbar.ai.speakOn}" data-off="{_fcadmin.layout.quickbar.ai.speakOff}" data-stop="{_fcadmin.layout.quickbar.ai.speakStop}"
-						data-unavailable="{_fcadmin.layout.quickbar.ai.speakUnavailable}"><i class="fa-regular fa-volume-xmark"></i></button>
+						data-unavailable="{_fcadmin.layout.quickbar.ai.speakUnavailable}"><i class="fa-solid fa-volume-xmark"></i></button>
 					{* Odkaz na otevřenou konverzaci (stránka AI ji otevře), jen když nějaká je *}
 					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.copyLink}" data-quickbar-ai-copy-link
-						data-copied="{_fcadmin.layout.quickbar.ai.linkCopied}" hidden><i class="fa-regular fa-link"></i></button>
-					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-regular fa-plus"></i></button>
-					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-recent-button" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-clock-rotate-left"></i></button>
+						data-copied="{_fcadmin.layout.quickbar.ai.linkCopied}" hidden><i class="fa-solid fa-link"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.ai.newConversation}" data-quickbar-ai-new><i class="fa-solid fa-plus"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-recent-button" title="{_fcadmin.layout.quickbar.ai.recent}" data-quickbar-ai-recent-toggle><i class="fa-solid fa-clock-rotate-left"></i></button>
 					<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-ai-full-button" title="{_fcadmin.layout.quickbar.ai.expand}" data-quickbar-ai-full
-						data-expand="{_fcadmin.layout.quickbar.ai.expand}" data-shrink="{_fcadmin.layout.quickbar.ai.shrink}"><i class="fa-regular fa-up-right-and-down-left-from-center"></i></button>
+						data-expand="{_fcadmin.layout.quickbar.ai.expand}" data-shrink="{_fcadmin.layout.quickbar.ai.shrink}"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
 				{/if}
-				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-regular fa-check-double"></i></button>
+				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-solid fa-check-double"></i></button>
 				{include closeButton}
 			</div>
 		</header>
@@ -58,27 +58,27 @@
 					<aside class="quickbar-ai-sidebar">
 						<div class="quickbar-ai-sidebar-search">
 							<div class="quickbar-search-field">
-								<i class="fa-regular fa-magnifying-glass"></i>
+								<i class="fa-solid fa-magnifying-glass"></i>
 								<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.ai.search}" aria-label="{_fcadmin.layout.quickbar.ai.search}" data-quickbar-ai-query>
-								<button type="button" class="quickbar-search-clear" title="{_fcadmin.layout.quickbar.clear}" data-quickbar-clear><i class="fa-regular fa-xmark"></i></button>
+								<button type="button" class="quickbar-search-clear" title="{_fcadmin.layout.quickbar.clear}" data-quickbar-clear><i class="fa-solid fa-xmark"></i></button>
 							</div>
 						</div>
 						<div class="quickbar-ai-sidebar-list" data-quickbar-ai-groups data-empty="{_fcadmin.layout.quickbar.ai.noConversations}" data-no-results="{_fcadmin.layout.quickbar.ai.noResults}"
 							data-today="{_fcadmin.layout.quickbar.ai.today}" data-yesterday="{_fcadmin.layout.quickbar.ai.yesterday}" data-week="{_fcadmin.layout.quickbar.ai.week}" data-older="{_fcadmin.layout.quickbar.ai.older}"></div>
 						<div class="quickbar-ai-sidebar-footer">
-							<a class="quickbar-ai-all" data-quickbar-ai-all hidden>{_fcadmin.layout.quickbar.ai.allConversations}<i class="fa-regular fa-arrow-right"></i></a>
+							<a class="quickbar-ai-all" data-quickbar-ai-all hidden>{_fcadmin.layout.quickbar.ai.allConversations}<i class="fa-solid fa-arrow-right"></i></a>
 						</div>
 					</aside>
 					<div class="quickbar-ai-recent" data-quickbar-ai-recent>
 						<div class="quickbar-ai-recent-heading">
-							<button type="button" class="quickbar-ai-back" title="{_fcadmin.layout.quickbar.ai.back}" data-quickbar-ai-recent-toggle><i class="fa-regular fa-arrow-left"></i></button>
+							<button type="button" class="quickbar-ai-back" title="{_fcadmin.layout.quickbar.ai.back}" data-quickbar-ai-recent-toggle><i class="fa-solid fa-arrow-left"></i></button>
 							<span>{_fcadmin.layout.quickbar.ai.recent}</span>
 						</div>
 						<div class="quickbar-ai-list" data-quickbar-ai-list data-empty="{_fcadmin.layout.quickbar.ai.noConversations}" data-untitled="{_fcadmin.layout.quickbar.ai.untitled}" data-unread="{_fcadmin.layout.quickbar.ai.unread}"></div>
-						<a class="quickbar-ai-all" data-quickbar-ai-all hidden>{_fcadmin.layout.quickbar.ai.allConversations}<i class="fa-regular fa-arrow-right"></i></a>
+						<a class="quickbar-ai-all" data-quickbar-ai-all hidden>{_fcadmin.layout.quickbar.ai.allConversations}<i class="fa-solid fa-arrow-right"></i></a>
 					</div>
 					<div class="quickbar-ai-empty">
-						<span class="quickbar-ai-empty-icon"><i class="fa-regular fa-sparkles"></i></span>
+						<span class="quickbar-ai-empty-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
 						<span class="quickbar-ai-empty-title">{_fcadmin.layout.quickbar.ai.emptyTitle}</span>
 						<span class="quickbar-ai-empty-text">{_fcadmin.layout.quickbar.ai.emptyText}</span>
 					</div>
@@ -96,9 +96,9 @@
 				<div class="quickbar-chat-list">
 					<div class="quickbar-chat-search">
 						<div class="quickbar-search-field">
-							<i class="fa-regular fa-magnifying-glass"></i>
+							<i class="fa-solid fa-magnifying-glass"></i>
 							<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.search}" aria-label="{_fcadmin.layout.quickbar.chat.search}" data-quickbar-chat-query>
-							<button type="button" class="quickbar-search-clear" title="{_fcadmin.layout.quickbar.clear}" data-quickbar-clear><i class="fa-regular fa-xmark"></i></button>
+							<button type="button" class="quickbar-search-clear" title="{_fcadmin.layout.quickbar.clear}" data-quickbar-clear><i class="fa-solid fa-xmark"></i></button>
 						</div>
 					</div>
 					<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="{_fcadmin.layout.quickbar.chat.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
@@ -115,11 +115,11 @@
 <div n:class="quickbar, $hasSearch ? quickbar--with-search" data-quickbar>
 	{* Menu a ikonové hledání jen na mobilu, viz _quickbar.scss *}
 	<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-menu-button" title="{_fcadmin.layout.quickbar.menu.label}" aria-label="{_fcadmin.layout.quickbar.menu.label}"
-		aria-controls="quickbar-panel-menu" aria-expanded="false" data-quickbar-toggle="menu"><i class="fa-regular fa-bars"></i></button>
+		aria-controls="quickbar-panel-menu" aria-expanded="false" data-quickbar-toggle="menu"><i class="fa-solid fa-bars"></i></button>
 	<button n:if="$hasSearch" type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-search-button" title="{_fcadmin.layout.quickbar.search.placeholder}" aria-label="{_fcadmin.layout.quickbar.search.placeholder}"
-		aria-controls="quickbar-panel-search" data-quickbar-toggle="search"><i class="fa-regular fa-magnifying-glass"></i></button>
+		aria-controls="quickbar-panel-search" data-quickbar-toggle="search"><i class="fa-solid fa-magnifying-glass"></i></button>
 	<label n:if="$hasSearch" class="quickbar-search">
-		<i class="fa-regular fa-magnifying-glass"></i>
+		<i class="fa-solid fa-magnifying-glass"></i>
 		<input type="text" class="quickbar-search-input" autocomplete="off"
 			placeholder="{_fcadmin.layout.quickbar.search.placeholder}"
 			data-placeholder-closed="{_fcadmin.layout.quickbar.search.placeholder}"
@@ -133,12 +133,12 @@
 		<button n:foreach="$buttons as $item" type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-button--{$item->value}"
 			title="{_'fcadmin.layout.quickbar.' . $item->value . '.label'}" aria-controls="quickbar-panel-{$item->value}" aria-expanded="false"
 			data-quickbar-toggle="{$item->value}">
-			<i class="fa-regular fa-{$item->getIcon()}"></i>
+			<i class="fa-solid fa-{$item->getIcon()}"></i>
 			<span n:if="$item->getBadgeClass()" class="badge {$item->getBadgeClass()} quickbar-badge" data-quickbar-count="{$item->value}" hidden></span>
 		</button>
 	</div>
 </div>
 
 {define closeButton}
-	<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-regular fa-xmark"></i></button>
+	<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-solid fa-xmark"></i></button>
 {/define}

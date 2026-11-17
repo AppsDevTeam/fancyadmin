@@ -17,6 +17,7 @@ interface SecurityUser
 	public function isAllowedFullDataAclResource(): bool;
 	public function isAllowedBackoffice(): bool;
 	public function isMultiTenant(): bool;
+	public function canSelectAccount(): bool;
 	public function isLoggedIn(): bool;
 	public function isAdmin(): bool;
 

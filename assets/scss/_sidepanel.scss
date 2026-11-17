@@ -538,7 +538,7 @@ body.menu-wide:not(.menu-collapsed) .side-panel-wide .item.has-submenu .submenu 
 }
 
 // Ve sbaleném módu zůstane jen ikonka, popis nese aria-label/title. Šipka se otáčí,
-// protože klik menu naopak rozbalí - z arrow-left-from-line se stane right-from-line.
+// protože klik menu naopak rozbalí - z angles-left se stanou angles-right.
 body.menu-wide.menu-collapsed .side-panel-wide .side-panel-footer {
 	.side-panel-toggle {
 		justify-content: center;

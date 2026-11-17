@@ -23,7 +23,7 @@ trait AnonymizeIdentity
 				$this['grid']->addAction('anonymize', 'Anonymizovat')
 					->setRenderer(function (Identity $identity) {
 						echo '<a href="' . $this->link('anonymize!', $identity->getId()) . '" class="ajax" data-datagrid-confirm="' . $this->_translator->translate('fcadmin.grids.user.confirms.anonymize') . '">
-						<span class="fa fa-face-disguise"></span>
+						<span class="fa fa-user-secret"></span>
 						&nbsp;' . $this->_translator->translate('fcadmin.grids.user.actions.anonymize') . '
 					</a>';
 					});

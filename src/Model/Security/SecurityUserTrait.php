@@ -112,4 +112,21 @@ trait SecurityUserTrait
 	{
 		return $this->multiTenant;
 	}
+
+	/**
+	 * Vidí uživatel v layoutu výběr účtu - přepíná mezi víc účty (podúčty), nebo smí do
+	 * všech účtů (plná data, backoffice). S jediným účtem výběr nemá a ten účet je vybraný.
+	 */
+	public function canSelectAccount(): bool
+	{
+		if (!$this->isMultiTenant()) {
+			return false;
+		}
+
+		if ($this->isAllowedFullDataAclResource() || $this->isAllowedBackoffice()) {
+			return true;
+		}
+
+		return count($this->getIdentity()->getAccounts()) + count($this->getIdentity()->getSubaccounts()) > 1;
+	}
 }

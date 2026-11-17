@@ -137,8 +137,8 @@ function init(nav) {
 
 	const wrap = html(`
 		<div class="nav-tabs-wrap">
-			<button type="button" class="nav-tabs-arrow" aria-label="Předchozí záložky" disabled><i class="fa-regular fa-chevron-left"></i></button>
-			<button type="button" class="nav-tabs-arrow" aria-label="Další záložky" disabled><i class="fa-regular fa-chevron-right"></i></button>
+			<button type="button" class="nav-tabs-arrow" aria-label="Předchozí záložky" disabled><i class="fa-solid fa-chevron-left"></i></button>
+			<button type="button" class="nav-tabs-arrow" aria-label="Další záložky" disabled><i class="fa-solid fa-chevron-right"></i></button>
 		</div>
 	`);
 	[...nav.classList].filter((cls) => MARGIN_CLASS.test(cls)).forEach((cls) => {
@@ -153,7 +153,7 @@ function init(nav) {
 		nav.append(html(`
 			<li class="nav-item dropdown nav-tabs-more" hidden>
 				<button type="button" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-					<span class="nav-tabs-more-label"></span><i class="fa-regular fa-chevron-down" aria-hidden="true"></i>
+					<span class="nav-tabs-more-label"></span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
 				</button>
 				<ul class="dropdown-menu dropdown-menu-end"></ul>
 			</li>

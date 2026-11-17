@@ -21,6 +21,6 @@ session:
 
 latte:
 	strictTypes: false
-	strictParsing: false
+	strictParsing: true
 	extensions:
 		- ADT\Forms\LatteExtension

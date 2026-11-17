@@ -47,9 +47,9 @@ const createElement = (type, parts, stack) => {
 	el.innerHTML =
 		'<div class="flash-body">' +
 			'<div class="flash-row">' +
-				'<div class="flash-icon"><i class="fa-regular ' + (ICONS[type] || ICONS.info) + '"></i></div>' +
+				'<div class="flash-icon"><i class="fa-solid ' + (ICONS[type] || ICONS.info) + '"></i></div>' +
 				'<div class="flash-content"><div class="flash-title"></div></div>' +
-				'<button type="button" class="flash-close"><i class="fa-regular fa-xmark"></i></button>' +
+				'<button type="button" class="flash-close"><i class="fa-solid fa-xmark"></i></button>' +
 			'</div>' +
 		'</div>';
 

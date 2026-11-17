@@ -4,6 +4,7 @@ namespace ADT\FancyAdmin\UI\Presenters;
 
 use ADT\FancyAdmin\DI\Injects\AccountQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\AuthenticatorInject;
+use ADT\FancyAdmin\DI\Injects\ContainerInject;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\LinkGeneratorInject;
@@ -38,6 +39,7 @@ trait AuthPresenterTrait
 	use SecurityUserInject;
 	use ReturnPathInject;
 	use PasskeyServiceInject;
+	use ContainerInject;
 
 	const string SIGNAL_METHOD_PREFIX = 'handle';
 
@@ -371,10 +373,12 @@ trait AuthPresenterTrait
 		$presentersNamespace = substr(static::class, 0, strpos(static::class, '\\Presenters\\') + strlen('\\Presenters'));
 		$className = $presentersNamespace . '\\NavbarMenuFactory';
 		$userMenuClassName = $presentersNamespace . '\\UserMenuFactory';
-		/** @var NavbarMenuFactory $className */
-		$navbarMenuFactory = new $className();
+		// Factory se skladaji pres DI kontejner, aby si mohly injectnout sluzby (prihlaseneho
+		// uzivatele, prekladac) - trida bez konstruktoru vznikne stejne jako pres `new`.
+		/** @var NavbarMenuFactory $navbarMenuFactory */
+		$navbarMenuFactory = $this->_container->createInstance($className);
 		/** @var UserMenuFactory $userMenuFactory */
-		$userMenuFactory = new $userMenuClassName();
+		$userMenuFactory = $this->_container->createInstance($userMenuClassName);
 		$module = explode(':', $this->getName())[0];
 		$this->getTemplate()->navbarMenu = $navbarMenuFactory->create()
 			->setLinkGenerator($this->_linkGenerator)

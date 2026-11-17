@@ -563,6 +563,10 @@ class SecurityUser extends \ADT\DoctrineAuthenticator\SecurityUser
 
 **Důležité:** Rozšiřuje `ADT\DoctrineAuthenticator\SecurityUser` (ne `Nette\Security\User` přímo), protože ten má kompatibilní (ne-final) `getAuthorizator()`.
 
+Metody rozhraní `SecurityUser` (`isAllowedFullDataAclResource()`, `isMultiTenant()`,
+`canSelectAccount()`…) implementuje `SecurityUserTrait`. Vlastní implementace bez traitu
+(např. testovací stub) je musí doplnit sama.
+
 ---
 
 ## 9. Security — Permission
@@ -884,6 +888,49 @@ jako zákaz (viz sekce 16).
 > ani routovací parametr `selectedAccount` se nemění. URL se mění z `/<id>/account`
 > na `/<id>/profile`; migrace nejsou potřeba.
 
+### Menu (`NavbarMenuFactory`, `UserMenuFactory`)
+
+Factory menu modulu (`<modul>\Presenters\NavbarMenuFactory`, `UserMenuFactory`) skládá
+`AuthPresenterTrait` přes DI kontejner (`Container::createInstance()`), takže si v konstruktoru
+může injectnout služby — přihlášeného uživatele, překladač… Factory bez konstruktoru vznikne
+stejně jako dřív přes `new`.
+
+Hlavička uživatelského menu ukazuje vedle avataru jméno a e-mail uživatele. Projekt ji může
+nahradit vlastními řádky přes `UserMenu::setHeaderLines()`: první řádek je zvýrazněný titulek,
+ostatní jsou pod ním. Texty se vypisují tak, jak jsou — překlad udělá factory. `null` (výchozí)
+nechá jméno a e-mail.
+
+```php
+class UserMenuFactory implements \ADT\FancyAdmin\Model\Menu\UserMenuFactory
+{
+	public function __construct(
+		private readonly SecurityUser $securityUser,
+		private readonly Translator $translator,
+	) {
+	}
+
+	public function create(): UserMenu
+	{
+		$userMenu = new UserMenu();
+
+		// Uživatel s jediným účtem nemá výběr účtu - ukážeme mu zákaznické číslo
+		if (!$this->securityUser->canSelectAccount()) {
+			$userMenu->setHeaderLines([
+				$this->securityUser->getIdentity()->getFirstName(),
+				$this->translator->translate('app.customerNumber'),
+				$this->securityUser->getIdentity()->getSelectedAccount()->getCustomerNumber(),
+			]);
+		}
+
+		return $userMenu;
+	}
+}
+```
+
+`SecurityUser::canSelectAccount()` říká, jestli uživatel vidí v layoutu výběr účtu: v multi-tenant
+projektu, když má víc účtů (včetně podúčtů) nebo smí do všech účtů (plná data, backoffice).
+Layout se podle ní řídí taky, takže se podmínka nerozejde.
+
 ### Kam se uživatel vrátí po přihlášení
 
 Nepřihlášený požadavek na AuthPresenter skončí na přihlašovací stránce a cíl se zapamatuje
@@ -1014,6 +1061,76 @@ Co je kolem toho potřeba vědět:
   a jen formuláři, který se odesílá POSTem a patří přihlášenému uživateli — proč zrovna tak
   je popsané u `BaseFormTrait::registerCsrfProtection()`. Formuláře odesílané GETem (filtry)
   a hromadné akce gridů vlastní token nemají, ty na skriptu závisí vždy.
+
+### Trvalý panel v layoutu
+
+Na rozdíl od flash zprávy panel nezmizí, dokud platí. Hodí se třeba na hlášku „Změny
+katalogu se do pokladen odešlou v 14:30" s tlačítkem „Odeslat hned". Layout ho kreslí na každé
+stránce přihlášené části portálu (jen v primární šabloně) nad obsahem stránky, pod řádkem
+s výběrem účtu nebo odkazem zpět. Je v toku stránky, ne plovoucí: plovoucí panel by bez řádku
+s výběrem účtu zakryl tlačítka hlavičky stránky a na mobilu spodní navigaci.
+
+Panel vrací presenter z `getPersistentNotice()`. Výchozí implementace v `BasePresenterTrait`
+vrací `null`:
+
+```php
+use ADT\FancyAdmin\UI\Presenters\PersistentNotice;
+
+abstract class AuthPresenter extends BasePresenter implements \ADT\FancyAdmin\UI\Presenters\AuthPresenter
+{
+	use AuthPresenterTrait;
+
+	protected function getPersistentNotice(): ?PersistentNotice
+	{
+		$scheduledAt = $this->getSelectedAccount()?->getCatalogueUpdateScheduledAt();
+		if (!$scheduledAt) {
+			return null;
+		}
+
+		return new PersistentNotice(
+			'app.catalogueUpdate.panel.scheduled',
+			['time' => $scheduledAt->format('H:i')],
+			link: $this->link('sendCatalogueUpdate!'),
+			linkLabel: 'app.catalogueUpdate.panel.sendNow',
+			expiresAt: $scheduledAt,
+		);
+	}
+}
+```
+
+- **Text a popisek odkazu jsou klíče překladu**, stejně jako u flash zpráv. Text dostane
+  parametry `$parameters`. Výsledek se escapuje. Panel s HTML dostanete jen předáním
+  `Nette\Utils\Html` místo řetězce, to se nepřekládá ani neescapuje.
+- **Odkaz je hotová adresa**, typicky `$this->link('signal!')`. Token CSRF signálu (viz výše)
+  se do ní doplní sám. Odkaz bez `linkLabel` vyhodí výjimku. Odkaz se vykreslí jako
+  `btn btn-primary btn-sm`, s `ajax: true` dostane navíc třídu `ajax`.
+- **Překreslení řeší fancyadmin.** `getPersistentNotice()` se volá při každém vykreslení
+  přihlášené části, i ajaxovém, a u ajaxového signálu ještě před ním. Projekt tak
+  `redrawControl()` volat nemusí.
+  - Ajax, který jinak nic nepřekresluje (navigace), překreslí celé `body` i s panelem.
+  - Ajax, který překresluje jen část stránky (přetažený řádek gridu, uložený boční panel),
+    překreslí v `BasePresenterTrait::afterRender()` snippet `persistentNotice` jen tehdy,
+    když signál panel změnil. Panel před signálem a při vykreslení se porovnává hodnotově
+    (text, parametry, odkaz, popisek, `ajax`, `expiresAt`), takže `getPersistentNotice()` může vracet
+    pokaždé novou instanci.
+  - Nezměněný panel se nepřekresluje schválně. Některé částečné odpovědi nejsou stránka:
+    strom gridu vloží každý snippet odpovědi `getChildren` mezi řádky jako položku stromu.
+    Panel by se tam objevil jako falešná položka a jQuery UI sortable by pak ve stromu
+    spadlo, takže by podkategorie nešly přetahovat.
+  - Funguje to jen tehdy, když běží `afterRender()` i `processSignal()` z traitu. Projekt,
+    který je přepisuje, je musí zavolat.
+- **Platnost** (`expiresAt`, nepovinná): okamžik, kdy panel přestane platit. Na otevřené
+  stránce panel v ten okamžik zmizí sám, i když se stránka mezitím nepřekreslí – jinak by
+  zůstal, dokud ji uživatel neobnoví nebo nepřejde jinam. Šablona ho vypíše jako
+  `data-expires-at` (unix čas v ms, nezávislý na časové zóně) a `assets/js/persistentNotice.js`
+  panel odstraní. Čas kontroluje po načtení stránky, po každém ajaxu a po návratu na kartu
+  (časovač v neaktivní kartě prohlížeč zdržuje). Server o vypršení neví: hodí se tam, kde
+  stav k danému času sám skončí (úloha fronty odešle změny), a po dalším vykreslení ho
+  `getPersistentNotice()` stejně nevrátí.
+- **Signál z odkazu** může po akci při ajaxu překreslit `flashes`, jinak `redirect('this')`.
+  Panel se v obou případech obnoví sám.
+- **Vzhled** je třída `.persistent-notice` v `assets/scss/_layout.scss`: bílý pruh přes šířku
+  obsahu, text vlevo, tlačítko vpravo, barva textu z `--bs-body-color`.
 
 ---
 
@@ -3693,6 +3810,48 @@ odpovědi, chybu a začátek volání (`hrtime(true)`).
 ACL resource v konfiguraci (`customerAclResource` …) jde zapsat jako případ enumu projektu
 (`App\Model\Entities\Enums\AclResourceNameEnum::CUSTOMER_HOME`). Služba `jsComponents`
 fancyadminu se autowiruje jen na vlastní třídu, takže nekoliduje se službou `ADT\Utils\JsComponents`
+projektu.
+
+## 31. Font Awesome
+
+Fancyadmin používá **Font Awesome Free** (`@fortawesome/fontawesome-free`, styly *solid*
+a *regular*) — není potřeba žádný token ani placená licence. Regular má ve Free jen zlomek
+ikon, takže ikony z projektu (menu, rychlá lišta, akce a řazení gridu) se kreslí jako
+*solid* a regular je jen tam, kde ho Free má. Projekt, který bunduluje
+assety fancyadminu ze zdrojáků přes vlastní Vite, si balíček nainstaluje sám:
+
+```bash
+yarn add @fortawesome/fontawesome-free@^6.7.2
+```
+
+a zajistí zkopírování webfontů tak, aby ležely na `../webfonts` relativně k výslednému
+CSS (stejně jako to dělá `vite.config.mjs` fancyadminu). Cestu k fontům jde přenastavit
+proměnnou `$fa-font-path` (má `!default`) při `@use` souboru `_fontawesome.scss`.
+
+### Placené styly (sharp apod.) v projektu
+
+Kódové body ikon jsou napříč styly Font Awesome stejné a prohlížeč stahuje jen fonty,
+na které se CSS reálně odkazuje. Projekt s licencí Pro proto může **všechny** ikony
+fancyadminu (včetně těch napevno v šablonách, např. `fa-solid fa-xmark`) přepnout na
+jiný styl jedním pravidlem — bez zásahu do šablon:
+
+```bash
+yarn add @fortawesome/fontawesome-pro@^6.7.2
+```
+
+```scss
+// za importem SCSS fancyadminu
+@use '@fortawesome/fontawesome-pro/scss/sharp-solid' with ($fa-font-path: '../webfonts');
+
+.fa-solid {
+	font-family: 'Font Awesome 6 Sharp';
+}
+```
+
+Free webfont se pak vůbec nestáhne (jeho `@font-face` zůstane v CSS nevyužitá). Pro
+styly s jinou tloušťkou (light, thin…) je potřeba přepsat i `font-weight` — obrysový
+vzhled všech ikon dá např. Pro *regular* s `.fa-solid { font-family: 'Font Awesome 6 Pro'; font-weight: 400; }`. Pozor jen
+na to, že Pro balíček vyžaduje token pro registr `npm.fontawesome.com` v `.yarnrc.yml`
 projektu.
 
 ## Vývoj fancyadminu: testy

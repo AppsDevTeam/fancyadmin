@@ -132,12 +132,18 @@
 					</div>
 				</nav>
 			{else}
-				<nav n:if="$user->isMultiTenant() && ($user->isAllowedFullDataAclResource() || $user->isAllowedBackoffice() || count($user->getIdentity()->getAccounts()) + count($user->getIdentity()->getSubaccounts()) > 1)" style="height: 70px" class="d-flex">
+				<nav n:if="$user->canSelectAccount()" style="height: 70px" class="d-flex">
 					<div class="d-flex align-items-center" style="min-width: 100%; overflow: hidden">
 						{control selectAccountForm}
 					</div>
 				</nav>
 			{/if}
+
+			{* Trvaly panel v toku stranky nad obsahem: plovouci by zakryl tlacitka hlavicky stranky
+			   (bez radku s vyberem uctu) nebo spodni navigaci na mobilu. *}
+			{snippet persistentNotice}
+				{include @persistentNotice.latte}
+			{/snippet}
 
 			<div id="content">
 				{include content}
@@ -157,7 +163,7 @@
 {*					</div>*}
 {*					<hr />*}
 {*					<ul style="list-style-type: decimal;margin: 10px 0;">*}
-{*						<li>Klikněte na ikonu <i class="fa-regular fa-arrow-up-from-square"></i></li>*}
+{*						<li>Klikněte na ikonu <i class="fa-solid fa-arrow-up-from-bracket"></i></li>*}
 {*						<li>Vyberte možnost <b>Přidat na plochu</b></li>*}
 {*					</ul>*}
 {*				</div>*}
@@ -172,7 +178,7 @@
 					<h2 class="side-panel-template-title"></h2>
 					<div class="side-panel-template-subtitle" hidden></div>
 				</div>
-				<button type="button" class="btn btn-icon btn-sm btn-glass side-panel-template-close" title="{_fcadmin.sidePanels.control.close}" aria-label="{_fcadmin.sidePanels.control.close}"><i class="fa-regular fa-xmark"></i></button>
+				<button type="button" class="btn btn-icon btn-sm btn-glass side-panel-template-close" title="{_fcadmin.sidePanels.control.close}" aria-label="{_fcadmin.sidePanels.control.close}"><i class="fa-solid fa-xmark"></i></button>
 			</div>
 			{snippet sidePanel}{/snippet}
 		</div>
@@ -184,7 +190,7 @@
 					<h2 class="side-panel-template-title"></h2>
 					<div class="side-panel-template-subtitle" hidden></div>
 				</div>
-				<button type="button" class="btn btn-icon btn-sm btn-glass side-panel-template-close" title="{_fcadmin.sidePanels.control.close}" aria-label="{_fcadmin.sidePanels.control.close}"><i class="fa-regular fa-xmark"></i></button>
+				<button type="button" class="btn btn-icon btn-sm btn-glass side-panel-template-close" title="{_fcadmin.sidePanels.control.close}" aria-label="{_fcadmin.sidePanels.control.close}"><i class="fa-solid fa-xmark"></i></button>
 			</div>
 			{snippet sidePanelStacked}{/snippet}
 		</div>

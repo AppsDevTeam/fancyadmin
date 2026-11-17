@@ -10,7 +10,7 @@
 {block outer-filters}
 	<div class="datagrid-compact-toolbar">
 		<div n:ifset="$filters['search']" class="datagrid-compact-search">
-			<i class="fa-regular fa-magnifying-glass"></i>
+			<i class="fa-solid fa-magnifying-glass"></i>
 			{var $input = $control['filter']['filter'][$filters['search']->getKey()]}
 			{* Typ search kvůli nativnímu křížku pro smazání, odeslání řeší datagrid.js *}
 			{do $input->setHtmlType('search')}
@@ -44,9 +44,9 @@
 
 {define pagerArrow, bool $enabled, int $page, string $title, string $icon}
 	<a n:if="$enabled" n:href="page!, page: $page" class="ajax btn btn-icon btn-sm btn-ghost" title="{$title}" aria-label="{$title}">
-		<i class="fa-regular fa-{$icon}"></i>
+		<i class="fa-solid fa-{$icon}"></i>
 	</a>
 	<button n:if="!$enabled" type="button" class="btn btn-icon btn-sm btn-ghost" title="{$title}" aria-label="{$title}" disabled>
-		<i class="fa-regular fa-{$icon}"></i>
+		<i class="fa-solid fa-{$icon}"></i>
 	</button>
 {/define}

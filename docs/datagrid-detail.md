@@ -19,7 +19,7 @@ mini-detail pod řádkem. Vzhled i chování dává fancyadmin (`_datagridDetail
 ```latte
 <div class="grid-row-detail">
 	<div n:if="$item->getAlert()" class="grid-row-detail-alert">
-		<i class="fa-regular fa-circle-exclamation"></i>
+		<i class="fa-solid fa-circle-exclamation"></i>
 		<div>{$item->getAlert()}</div>
 	</div>
 

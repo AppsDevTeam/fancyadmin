@@ -64,7 +64,7 @@ Podzáložky stojí jen v hlavičce karty, nikdy samostatně nad kartou ani jako
   <div class="tabs-header">
     <ul class="nav nav-tabs nav-tabs-sm" role="tablist">…</ul>
     <div class="tabs-header-actions">
-      <button class="btn btn-sm btn-outline-primary" title="Nový záznam"><i class="fa-regular fa-plus"></i><span>Nový záznam</span></button>
+      <button class="btn btn-sm btn-outline-primary" title="Nový záznam"><i class="fa-solid fa-plus"></i><span>Nový záznam</span></button>
     </div>
   </div>
   <div class="tab-content">…</div>

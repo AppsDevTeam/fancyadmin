@@ -76,7 +76,6 @@ use ADT\BiometricSignature\BiometricSigning;
 use ADT\BiometricSignature\Evidence\EvidenceVerifier;
 use ADT\BiometricSignature\SigningPolicy;
 use ADT\LogSanitizer\SensitiveDataSanitizer;
-use Contributte\Datagrid\Datagrid;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Doctrine\Migrations\DependencyFactory;
 use Nette\DI\CompilerExtension;
@@ -1022,9 +1021,6 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		if (class_exists(\ADT\BiometricSignature\SignatureCapture::class)) {
 			$this->getInitialization()->addBody(BiometricSignatureInput::class . '::register();');
 		}
-
-		// Datagrid má výchozí solid ('fas fa-'), UI fancyadminu používá obrysové ikony
-		$this->getInitialization()->addBody(Datagrid::class . '::$iconPrefix = ?;', ['fa-regular fa-']);
 	}
 
 	public function getTranslationResources(): array

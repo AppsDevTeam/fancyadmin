@@ -72,14 +72,14 @@ odděluje `.dropdown-divider`, který výchozí menu schovává.
 ```html
 <div class="dropdown">
 	<button type="button" class="btn btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
-		<i class="fa-regular fa-phone"></i>Kontakt<i class="fa-regular fa-chevron-down"></i>
+		<i class="fa-solid fa-phone"></i>Kontakt<i class="fa-solid fa-chevron-down"></i>
 	</button>
 	<div class="dropdown-menu dropdown-menu-end dropdown-menu-actions">
 		<a class="dropdown-item" href="#">
-			<i class="fa-regular fa-phone"></i><span class="dropdown-item-label">Zavolat</span><span class="dropdown-item-meta">+420 735 193 074</span>
+			<i class="fa-solid fa-phone"></i><span class="dropdown-item-label">Zavolat</span><span class="dropdown-item-meta">+420 735 193 074</span>
 		</a>
 		<div class="dropdown-divider"></div>
-		<a class="dropdown-item" href="#"><i class="fa-regular fa-link"></i><span class="dropdown-item-label">Poslat odkaz</span></a>
+		<a class="dropdown-item" href="#"><i class="fa-solid fa-link"></i><span class="dropdown-item-label">Poslat odkaz</span></a>
 	</div>
 </div>
 ```
