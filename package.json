@@ -3,7 +3,7 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@popperjs/core": "^2.11.8",
     "@regru/jquery-menu-aim": "^1.0.0",
-    "adt-js-components": "^3.0.0",
+    "adt-js-components": "^3.4.0",
     "autoprefixer": "^10.4.20",
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.4",
