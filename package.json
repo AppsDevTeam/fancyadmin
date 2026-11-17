@@ -12,11 +12,9 @@
     "daterangepicker": "^3.1.0",
     "fabric": "^6.5.3",
     "flatpickr": "^4.6.13",
-    "forms-replicator": "github:AppsDevTeam/replicator#master",
     "jquery": "^3.7.1",
     "jquery-ui-bundle": "^1.12.1-migrate",
     "naja": "^3.3.3",
-    "nette-forms": "^3.5.0",
     "postcss": "^8.4.47",
     "sass": "^1.79.4",
     "ua-parser-js": "^1.0.39"

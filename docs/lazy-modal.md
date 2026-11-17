@@ -66,8 +66,9 @@ Snippet se jmenuje `lazy` + název komponenty s velkým prvním písmenem.
 
 ## JavaScript
 
-`import '@fancyadmin/js/lazyModal';` v hlavním JS. Init formuláře (Select2, datum, vlastní
-skripty) musí běžet i po AJAX překreslení (`onContentLoaded()` z `@fancyadmin/js/naja`). Kód, který formulář
+`import '@fancyadmin/js/lazyModal';` v hlavním JS. Builtiny `adt-js-components` (Tom Select, datum) najdou
+pole v načteném modalu samy, vlastní skripty musí běžet i po AJAX překreslení (`onContentLoaded()`
+z `@fancyadmin/js/naja`). Kód, který formulář
 předvyplňuje před otevřením modalu, počká na načtení:
 
 ```js

@@ -27,10 +27,9 @@ import 'jquery-ui-bundle';
 import '@regru/jquery-menu-aim';
 
 // import {Chart} from "chart.js/auto";
-import Nette from 'nette-forms';
+// nette-forms a window.Nette nastavuje builtin Form z adt-js-components; vlastní kopie by formuláře
+// inicializovala dřív a jeho chyby u polí by se při odeslání nepoužily
 import './dependentSelectBox'
-Nette.initOnLoad();
-window.Nette = Nette;
 // window.Chart = Chart;
 
 // AJAX přes Naja - všechny odkazy a formuláře (naja.js)
@@ -92,7 +91,6 @@ import './quickbar';
 // import './fullscreen';
 // import './structured-filter';
 // import './filteredSearch'
-// import 'forms-replicator';
 
 import './sideMenu'
 import './themeToggle'

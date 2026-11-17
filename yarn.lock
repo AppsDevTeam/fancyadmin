@@ -897,12 +897,10 @@ __metadata:
     daterangepicker: ^3.1.0
     fabric: ^6.5.3
     flatpickr: ^4.6.13
-    forms-replicator: "github:AppsDevTeam/replicator#master"
     jquery: ^3.7.1
     jquery-ui-bundle: ^1.12.1-migrate
     jsdom: ^26.1.0
     naja: ^3.3.3
-    nette-forms: ^3.5.0
     postcss: ^8.4.47
     sass: ^1.79.4
     sass-embedded: ^1.95.1
@@ -1770,13 +1768,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"forms-replicator@github:AppsDevTeam/replicator#master":
-  version: 1.2.0
-  resolution: "forms-replicator@https://github.com/AppsDevTeam/replicator.git#commit=0318ce956fc4ab37cc0f26255e6eeb3603cdb7b8"
-  checksum: 67465e01d7f2ac6b51e635160e4cf747490a3db286a5242d3de68eb58ee38393c17a2d185446fcb1d890023d2fef83971a01ce0560c207af4febb139649f3737
-  languageName: node
-  linkType: hard
-
 "fraction.js@npm:^4.3.7":
   version: 4.3.7
   resolution: "fraction.js@npm:4.3.7"
@@ -2525,13 +2516,6 @@ __metadata:
   version: 1.0.0
   resolution: "negotiator@npm:1.0.0"
   checksum: 4c559dd52669ea48e1914f9d634227c561221dd54734070791f999c52ed0ff36e437b2e07d5c1f6e32909fc625fe46491c16e4a8f0572567d4dd15c3a4fda04b
-  languageName: node
-  linkType: hard
-
-"nette-forms@npm:^3.5.0":
-  version: 3.5.0
-  resolution: "nette-forms@npm:3.5.0"
-  checksum: 199fdcede345011d3250bbe8136f344fd784a9e22c4a3ea43e2fdbb7f543912d7249fb05f5107e648bf11b30be523d5130b2d703e51c3d0a29294786526d0004
   languageName: node
   linkType: hard
 

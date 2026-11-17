@@ -562,7 +562,7 @@ dataGridRegisterExtension('datagrid.sortable', {
 dataGridRegisterExtension('datagrid.forms', {
 	success: function() {
 		return $('.datagrid').find('form').each(function() {
-			return window.Nette.initForm(this);
+			return window.Nette?.initForm(this);
 		});
 	}
 });

@@ -1056,9 +1056,18 @@ obecná hláška projektu o selhaném požadavku (posluchač `error`) ji má vyn
 | `settings.nette.el`, `settings.nette.form` | `e.detail.options.element`, jeho `form` |
 | `$(document).on('ajaxComplete', …)` | `naja.addEventListener('complete', …)` |
 
-Projekt odebere z `package.json` `nette.ajax.js` a `adt-nette-ajax`. Vestavěné komponenty
-`adt-js-components` 3 (Select2, DateInput, …) mají knihovny jako volitelné závislosti - projekt, který je
-registruje, si je přidá sám (`select2`, `select2-bootstrap-5-theme`, `scrollparent`, …).
+Projekt odebere z `package.json` `nette.ajax.js` a `adt-nette-ajax`.
+
+### JS komponenty a Tom Select (`adt-js-components` 3.4)
+
+Builtiny `adt-js-components` (Select = Tom Select, AjaxSelect, Form, Replicator, DateInput, Chart, …) se spouštějí
+samy, jakmile se jejich prvek objeví v dokumentu, a knihovny si nesou jako vlastní závislosti - projekt nic
+neregistruje, nevolá `init*()` a neinstaluje `select2`, `forms-replicator` ani `nette-forms`. Tom Select
+dostane každý `<select>` bez třídy `select-default` (`JsComponents::DEFAULTS`), nastavení jde přes
+`fancyadmin.jsComponentsConfig`.
+
+Co se spouští samo, nastavení a přesměrování builtinu, přechod ze Select2 (volby, API, třídy, styly):
+[docs/js-components.md](docs/js-components.md).
 
 ### JS, které čte URL (`onPageReady()`)
 
@@ -1077,7 +1086,8 @@ onPageReady(() => {
 });
 ```
 
-Inicializace prvků z nových snippetů (Select2, datum, tooltipy) zůstává v `onContentLoaded()` - ta URL nečte.
+Inicializace prvků z nových snippetů (tooltipy, vlastní pluginy) zůstává v `onContentLoaded()` - ta URL nečte.
+Builtiny `adt-js-components` (Tom Select, datum) ji nepotřebují, nové prvky najdou samy.
 
 ### Push změn do stránek (`Push`, `push.js`)
 

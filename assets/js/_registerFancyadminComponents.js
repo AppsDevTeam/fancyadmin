@@ -3,7 +3,8 @@
 //
 // Imported first by app.js — runs before app.js's init() calls, and merges into
 // the shared registry (see ComponentLoader.registerModules), so the consumer can
-// still register its own 'app' components and 'builtin' allowlist separately.
+// still register its own 'app' components. The first registerModules() also starts
+// the built-ins of adt-js-components 3 (Select, Form, …), they need no registration.
 //
 // The glob is relative to this file (assets/js/) → resolves to the package's src/UI.
 import AdtJsComponents from 'adt-js-components';
