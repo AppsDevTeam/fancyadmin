@@ -56,6 +56,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->appIconsDir = $this->_fancyAdmin->getAppIconsDir();
 		$this->getTemplate()->icon = $this->_fancyAdmin->getLogoMenuPath();
 		$this->getTemplate()->loginPageLogoPath = $this->_fancyAdmin->getLoginPageLogoPath();
+		$this->getTemplate()->isSignInPage = $this->isSignInPage();
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->project = $this->_fancyAdmin->getProject();
@@ -142,6 +143,15 @@ trait BasePresenterTrait
 	protected function getPortalUser(): SecurityUser
 	{
 		return $this->_securityUser;
+	}
+
+	/**
+	 * Stránka s přihlašovacím formulářem; karta přihlášení na ní nekreslí odkaz „přejít na přihlášení“.
+	 * Projekt s vlastním přihlášením mimo `Portal:Sign` přepíše.
+	 */
+	protected function isSignInPage(): bool
+	{
+		return $this->isLinkCurrent(':Portal:Sign:in');
 	}
 
 	/**

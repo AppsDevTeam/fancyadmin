@@ -1307,6 +1307,11 @@ nejsou, projekt je nastaví v SCSS na `body`. Bez `--inputHoverBorder` se pole p
 zavěšený mimo pole (`dropdownParent: 'body'`) přebírá velikost pole přes `@fancyadmin/js/tomSelectDropdownSize`
 — `app.js` ho importuje, projekt s vlastním entry pointem ho importuje sám.
 
+`loginPageLogoPath` je cesta pod `www/images/logos/`. Karta přihlášení (layout mimo `$primaryTemplate`) kreslí
+nepřihlášenému odkaz „přejít na přihlášení“ všude kromě stránky přihlášení; tu určuje
+`BasePresenterTrait::isSignInPage()` (výchozí `:Portal:Sign:in`), projekt s vlastním přihlašovacím
+presenterem ji přepíše.
+
 ### Tmavý režim
 
 Přepínač „Tmavý režim" je v uživatelském menu (`@userButton.latte`) a jako ikonka vedle tlačítka Sbalit v bočním menu (`@sideMenu.latte`), obsluha obou je `assets/js/themeToggle.js` (atribut `data-fancyadmin-theme-toggle`).

@@ -219,7 +219,7 @@
 
 				{include content}
 
-				{if !$user->isLoggedIn() && !$presenter->isLinkCurrent(':Portal:Sign:in')}
+				{if !$user->isLoggedIn() && !$isSignInPage}
 					<p class="text-center"><a n:href=":Portal:Sign:in" class="linkOnCard">{_'fcadmin.layout.links.goToLogin'}</a></p>
 				{/if}
 			</div>
