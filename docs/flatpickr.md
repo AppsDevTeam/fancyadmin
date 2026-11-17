@@ -96,7 +96,7 @@ tam se neodvozuje nic, všechno řeknou options.
 
 ### Vypnutí pickeru
 
-Třída `date-default` na inputu — stejná konvence jako `select-default` u Select2.
+Třída `date-default` na inputu — stejná konvence jako `select-default` u Tom Selectu.
 Pole pak zůstane nativní.
 
 ---
@@ -136,9 +136,10 @@ by podle pořadí ve svazku mohla náš vzhled přebít.
 aspoň tři, jinak tiše spadnou na vendor vzhled — stalo se to při přesunu společného bloku
 o úroveň výš (zmizela šipka selectu a odsazení položek).
 
-**Select2.** Každý `<select>` uvnitř kalendáře musí mít třídu `select-default`, jinak si ho
-převezme globální Select2 a otevře jeho seznam mimo kalendář. Pluginy si ji přidávají samy,
-u měsíce to dělá `dateInput.js`.
+**Tom Select.** Každý `<select>` uvnitř kalendáře musí mít třídu `select-default`, jinak si ho
+převezme Tom Select (builtin `Select` z adt-js-components s `select.selector`
+`select:not(.select-default)`) a otevře jeho seznam mimo kalendář. Pluginy si ji přidávají samy,
+u měsíce to dělá `dateInput.js`. Hlídá to `tests/js/flatpickrSelects.test.js`.
 
 **Panel se seznamem** se vkládá do `fp.calendarContainer` a pozici dostává v proměnných
 `--dropdown-top` / `--dropdown-left` (počítá ji JS z polohy pole v okně). Pod pole se vejde

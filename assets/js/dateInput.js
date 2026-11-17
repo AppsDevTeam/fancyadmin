@@ -10,7 +10,7 @@
 // Picker se nasadí sám na každý nativní date / time / datetime-local input (ty
 // vyrábí Nette addDate/addTime/addDateTime), takže běžný formulář nemusí nastavovat
 // nic — formát hodnoty i meze se odvodí z typu a atributů min/max. Opt-out je třída
-// date-default (stejná konvence jako select-default u Select2). Atribut
+// date-default (stejná konvence jako select-default u Tom Selectu). Atribut
 // data-flatpickr (JSON) odvozené nastavení přebíjí a zapne picker i na obyčejném
 // text inputu. Volá se na DOM ready i po AJAX překreslení; už inicializované inputy
 // mají třídu flatpickr-input a přeskakují se.
@@ -118,9 +118,9 @@ export function initDateInput(defaults = {}) {
 			...options,
 		});
 
-		// Interní select měsíce nesmí dostat globální Select2 — jeho dropdown by se
-		// otvíral mimo kalendář; třídu přidáváme synchronně, MutationObserver Select2
-		// běží až po dokončení initu.
+		// Interní select měsíce nesmí dostat Tom Select (builtin Select z adt-js-components)
+		// - jeho seznam by se otvíral mimo kalendář; třídu přidáváme synchronně,
+		// MutationObserver komponenty běží až po dokončení initu.
 		instance.monthsDropdownContainer?.classList.add('select-default');
 
 		// Seznam měsíců kreslí stejný panel jako rok a čas (pluginy si ho napojují

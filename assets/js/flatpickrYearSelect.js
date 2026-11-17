@@ -63,8 +63,8 @@ export default function yearSelect(pluginConfig = {}) {
 				wrapper.classList.add('flatpickr-yearInput-replaced');
 
 				select = document.createElement('select');
-				// select-default drží dál Select2 — ten by si select přebral a jeho
-				// dropdown by se otvíral mimo kalendář (stejně jako u měsíce).
+				// select-default drží dál Tom Select - ten by si select přebral a jeho
+				// seznam by se otvíral mimo kalendář (stejně jako u měsíce).
 				select.className = 'flatpickr-yearDropdown-years select-default';
 				select.setAttribute('aria-label', fp.l10n.yearAriaLabel ?? 'Year');
 				select.addEventListener('change', (event) => {
