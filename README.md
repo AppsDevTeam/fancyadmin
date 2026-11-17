@@ -1270,10 +1270,10 @@ sekce 27 (Single-tenant režim).
 
 Pozadí pole (`--inputBackground`) a rámeček při najetí myší (`--inputHoverBorder`) v `colors`
 nejsou, projekt je nastaví v SCSS na `body`. Bez `--inputHoverBorder` se pole při najetí nemění
-(Select2 bere rámeček focusu). Přihlašovací pole jsou bez rámečku, dokud projekt nenastaví
-`--loginInputBorder` (případně `--loginInputHoverBorder`, `--loginInputFocusBorder`). Rozbalený seznam Select2 přebírá velikost pole přes
-`@fancyadmin/js/select2DropdownSize` — `app.js` ho importuje, projekt s vlastním entry pointem
-ho importuje sám.
+(Tom Select bere rámeček focusu). Přihlašovací pole jsou bez rámečku, dokud projekt nenastaví
+`--loginInputBorder` (případně `--loginInputHoverBorder`, `--loginInputFocusBorder`). Rozbalený seznam Tom Selectu
+zavěšený mimo pole (`dropdownParent: 'body'`) přebírá velikost pole přes `@fancyadmin/js/tomSelectDropdownSize`
+— `app.js` ho importuje, projekt s vlastním entry pointem ho importuje sám.
 
 ### Tmavý režim
 
