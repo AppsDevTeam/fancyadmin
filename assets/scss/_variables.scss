@@ -29,7 +29,7 @@ $padding-input: 15px;
 /* --------------------
  *  Velikosti ovládacích prvků
  *
- *  Inputy, selecty, Select2 a tlačítka mají tři velikosti na čtyřpixelové mřížce, zaoblení je stupeň škály výše.
+ *  Inputy, selecty, Tom Select a tlačítka mají tři velikosti na čtyřpixelové mřížce, zaoblení je stupeň škály výše.
  *  Prvky si rozměry čtou z CSS proměnných --control-*, kontext (lišta, panel) je přenastaví bez přebíjení.
  *  Třídy: .form-control-sm / výchozí / .form-control-xl.
  * -------------------- */
@@ -233,7 +233,7 @@ body {
 	font-size: calc(var(--control-height, #{$control-height}) * 0.4);
 }
 
-// Položka každého rozbaleného seznamu (Select2, seznamy flatpickru) — rozměr jen tady, ať se nerozjedou
+// Položka každého rozbaleného seznamu (Tom Select, seznamy flatpickru) — rozměr jen tady, ať se nerozjedou
 // Křížek pro vymazání pole hledání (grid, rychlá lišta); zobrazení řeší kontext, jen když je co mazat
 @mixin field-clear($right: var(--control-padding-x, #{$control-padding-x})) {
 	display: none;

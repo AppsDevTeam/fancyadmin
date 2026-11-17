@@ -61,14 +61,8 @@ import 'bootstrap';
 //
 
 import AdtJsComponents from 'adt-js-components';
-// AdtJsComponents.initCurrencyInput();
-// // AdtJsComponents.initDateInput();
-// // AdtJsComponents.initRecaptcha();
-// AdtJsComponents.initSelect2();
-// AdtJsComponents.initAjaxSelect();
-// AdtJsComponents.initSubmitForm();
-// AdtJsComponents.initReplicator();
-//
+// Builtiny (Select, AjaxSelect, Form, Replicator, Chart…) adt-js-components 3 spouští samy, nastavení
+// jde z jsComponentsConfig přes data-adt-js-components (výchozí select.selector viz JsComponents::DEFAULTS)
 // AdtJsComponents.init('components-panels-base-baseChartPanel', 'UI/Portal/Components/Panels/Base/BaseChartPanelControl');
 AdtJsComponents.init('select-account-form', '~UI/Components/Forms/SelectAccount');
 AdtJsComponents.init('portal-components-grids-traits-signInAsIdentity', '~UI/Components/Grids/Traits/SignInAsIdentity');

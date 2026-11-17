@@ -7,7 +7,7 @@
 	}
 }
 
-// Jedno zaoblení všech plovoucích vrstev (dropdowny, Select2, kalendář, popovery)
+// Jedno zaoblení všech plovoucích vrstev (dropdowny, Tom Select, kalendář, popovery)
 :root {
 	@include radius.radius-root-vars;
 	--overlay-radius: var(--bs-border-radius);

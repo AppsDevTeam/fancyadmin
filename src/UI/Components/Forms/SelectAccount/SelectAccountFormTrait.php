@@ -40,8 +40,10 @@ trait SelectAccountFormTrait
 		$form->addSelect('account', '', $this->getAccountPairs())
 			->setDefaultValue($this->_securityUser->getIdentity()->getSelectedAccount()?->getId() ?: self::SETTINGS)
 			->setHtmlAttribute('class', 'primary-select')
-			->setHtmlAttribute('data-adt-select2', [
-				'dropdownCssClass' => 'select2-primary-dropdown',
+			// Seznam do body - boční menu má overflow a seznam by v něm uřízlo
+			->setHtmlAttribute('data-adt-select', [
+				'dropdownClass' => 'ts-dropdown primary-dropdown',
+				'dropdownParent' => 'body',
 			]);
 
 		$form->watchForSubmit($form['account']);

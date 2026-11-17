@@ -235,7 +235,7 @@ $fp-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 
 	// Panel se seznamem (měsíc, rok, hodiny, minuty). Pozici počítá JS a předává
 	// ji v proměnných, protože vychází z polohy pole v okně; zbytek je na CSS.
-	// Rozměr položek je společný se Select2 (mixin dropdown-option).
+	// Rozměr položek je společný se seznamem Tom Selectu (mixin dropdown-option).
 	.flatpickr-dropdown {
 		position: absolute;
 		top: var(--dropdown-top, 0);

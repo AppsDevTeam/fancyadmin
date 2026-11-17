@@ -64,7 +64,7 @@ trait BasePresenterTrait
 		$pushSubscription = $pushTopics !== [] ? $this->_push->subscription($pushTopics) : null;
 		$this->getTemplate()->pushSubscription = $pushSubscription !== null ? Json::encode($pushSubscription) : null;
 		$this->getTemplate()->persistentNotice = $this->loadRenderedPersistentNotice();
-		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
+		$this->_jsComponents->setProjectComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
 
 		// Keycloak — dynamický frame-src CSP header pro silent SSO iframe

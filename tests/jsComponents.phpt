@@ -38,6 +38,37 @@ test('vlastni komponenty se prilinaji k existujicim', function () {
 });
 
 
+test('vychozi Tom Select na kazdy select krome nativnich', function () {
+	$components = new JsComponents();
+	$components->setProjectComponents([]);
+
+	Assert::same(['selector' => 'select:not(.select-default)'], config($components)['select']);
+});
+
+
+test('projekt vychozi nastaveni builtinu prepise a prida vlastni', function () {
+	$components = new JsComponents();
+	$components->setProjectComponents([
+		'select' => ['selector' => 'select.tom'],
+		'date-input' => ['format' => 'j. n. Y'],
+	]);
+
+	Assert::same(['selector' => 'select.tom'], config($components)['select']);
+	Assert::same(['format' => 'j. n. Y'], config($components)['date-input']);
+});
+
+
+test('projektova konfigurace nesmaze komponenty nastavene drive', function () {
+	$components = new JsComponents();
+	$components->setComponents(['translate' => ['all' => []]]);
+
+	$components->setProjectComponents([]);
+
+	Assert::same(['all' => []], config($components)['translate']);
+	Assert::true(isset(config($components)['select']));
+});
+
+
 test('preklady pro JavaScript bere z libovolneho translatoru s katalogy', function () {
 	// Driv byl parametr typovany na App\Model\Translator - tridu projektu, ktera v balicku
 	// neexistuje, takze metodu nesel zavolat bez projektu. Staci rozhrani se `getCatalogue()`.
