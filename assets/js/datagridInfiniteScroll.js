@@ -1,3 +1,5 @@
+import { onContentLoaded } from './naja';
+
 const GRID_SELECTOR = '.datagrid.datagrid-infinite-scroll';
 const LOAD_MORE_SELECTOR = '[data-datagrid-infinite-scroll]';
 
@@ -287,7 +289,7 @@ window.addEventListener('resize', () => {
 	scheduleUpdate();
 });
 
-$.nette.ext('live').after(function ($el) {
+onContentLoaded(function ($el) {
 	widthsDirty = true;
 	observeLoadMore($el[0] || document);
 	bindScroll();

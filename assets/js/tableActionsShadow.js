@@ -1,7 +1,8 @@
 
 import clamp from 'clamp-js';
+import { onContentLoaded } from './naja';
 
-$.nette.ext('live').after(function (el) {
+onContentLoaded(function (el) {
 	$('.table-responsive').map((i, el) => {
 		$(el).on('scroll', (e) => {
 			const scrollEl = $(e.currentTarget).get(0);

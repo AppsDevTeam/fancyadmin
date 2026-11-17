@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import naja from 'naja';
 
 // Rozměry a časy balíčku zpráv (docs/flashes.md)
 const GAP = 8;
@@ -294,8 +295,5 @@ export const showSortableError = () => {
 
 $(document).ready(adoptServerFlashes);
 
-if (window.$ && window.$.nette) {
-	$.nette.ext('flashes', {
-		success: adoptServerFlashes
-	});
-}
+// po překreslení snippetů - SnippetHandler poslouchá success dřív
+naja.addEventListener('success', adoptServerFlashes);

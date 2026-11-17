@@ -1,3 +1,4 @@
+import { onContentLoaded } from './naja';
 // Filtr (.select-filter) — šířka Select2 podle nejdelší volby jako u nativního selectu,
 // aby se při přepínání neměnila. Text se měří přes canvas: filtr bývá ve skryté záložce.
 
@@ -22,6 +23,6 @@ function initSelectFilters() {
 document.fonts?.ready.then(() => document.querySelectorAll('.select-filter > select').forEach(fit));
 
 $(() => initSelectFilters());
-$.nette.ext('live').after(() => initSelectFilters());
+onContentLoaded(() => initSelectFilters());
 
 export { initSelectFilters };

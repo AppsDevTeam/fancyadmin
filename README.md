@@ -994,11 +994,62 @@ JSON signál (kalendář, polling, hledání, AI widget) pak zaplatí jen levnou
 Signál, který překresluje snippety, render spouští - příprava, kterou jeho snippety nepotřebují,
 se v renderu přeskočí (např. `isLazyComponentSignal()`).
 
+### AJAX (Naja, `naja.js`)
+
+Fancyadmin posílá požadavky přes [Naja](https://naja.js.org) a inicializuje ji sám (`naja.initialize()`
+po načtení všech modulů, projekt ji znovu inicializovat nesmí). Ajaxem jdou všechny odkazy a formuláře,
+nejen ty s třídou `ajax`:
+
+- odkaz bez `target` a `download`, s relativní adresou (ne `http…`, `//…`, `#…`) a bez třídy `noajax`,
+- formulář bez `target`, bez třídy `noajax` a s adresou na stejném webu.
+
+Klik i odeslání se zachytávají delegovaně na `document`, takže ajaxem jdou i odkazy vykreslené z JS.
+Obsluha, která zavolá `preventDefault()`, má přednost - odkaz ani formulář se pak neodešle.
+
+**Historie:** adresu do adresního řádku zapíše odkaz a formulář odeslaný přes GET. Formulář odeslaný přes
+POST a požadavek z kódu adresu nemění, kromě přesměrování. Adresa, která se bez signálu (`do`, `_sec`)
+rovná současné, nový záznam historie nepřidá. Návrat zpět načte stránku znovu ajaxem (bez cache snippetů).
+
+```js
+import naja from 'naja';
+import { ajax, onBeforeSnippetUpdate, onContentLoaded } from '@fancyadmin/js/naja';
+
+// pro dokument a pak pro každý překreslený snippet (jQuery objekt)
+onContentLoaded(($el) => $el.find('[data-tooltip]').tooltip());
+
+// snippet těsně před překreslením
+onBeforeSnippetUpdate(($el) => { /* ... */ });
+
+// GET z kódu: překreslí snippety, nezruší jiný běžící požadavek, adresu nemění
+ajax(url, { page: 2 }).then((payload) => { /* ... */ });
+
+// prvek, který požadavek vyvolal (odkaz, formulář nebo jeho tlačítko)
+naja.addEventListener('success', (e) => console.log(e.detail.options.element, e.detail.payload));
+```
+
+Požadavek, který chybu ohlásí sám, má volbu `ownErrorHandler: true` (např. řazení řádků gridu) -
+obecná hláška projektu o selhaném požadavku (posluchač `error`) ji má vynechat.
+
+**Převod projektu z nette.ajax:**
+
+| nette.ajax | Naja |
+|---|---|
+| `$.nette.ext('live').after(fn)` | `onContentLoaded(fn)` |
+| `$.nette.ext('snippets').before(fn)` | `onBeforeSnippetUpdate(fn)` |
+| `$.nette.ajax({ url })` | `ajax(url)` |
+| `$.nette.ext('x', { before, success, complete })` | `naja.addEventListener('before' / 'success' / 'complete', (e) => …)`, data v `e.detail` |
+| `settings.nette.el`, `settings.nette.form` | `e.detail.options.element`, jeho `form` |
+| `$(document).on('ajaxComplete', …)` | `naja.addEventListener('complete', …)` |
+
+Projekt odebere z `package.json` `nette.ajax.js` a `adt-nette-ajax`. Vestavěné komponenty
+`adt-js-components` 3 (Select2, DateInput, …) mají knihovny jako volitelné závislosti - projekt, který je
+registruje, si je přidá sám (`select2`, `select2-bootstrap-5-theme`, `scrollparent`, …).
+
 ### JS, které čte URL (`onPageReady()`)
 
-Fancyadmin dělá ajaxem všechny odkazy a URL mění až rozšíření `history` (`pushState` v `success`),
-tedy **po** překreslení snippetů a po `live.after`. Kód, který čte parametry z URL (otevřít záložku
-z `?activeTab`, modal z `?editRecordId`) a běží v `live.after`, proto u odkazu bez redirectu dostane
+Fancyadmin dělá ajaxem všechny odkazy a URL mění Naja (`pushState` v `success`),
+tedy **po** překreslení snippetů a po `onContentLoaded()`. Kód, který čte parametry z URL (otevřít záložku
+z `?activeTab`, modal z `?editRecordId`) a běží v `onContentLoaded()`, proto u odkazu bez redirectu dostane
 ještě starou adresu. Takový kód se registruje přes `onPageReady()` - běží po načtení stránky
 a po každém AJAX požadavku, až když je URL nová:
 
@@ -1011,7 +1062,7 @@ onPageReady(() => {
 });
 ```
 
-Inicializace prvků z nových snippetů (Select2, datum, tooltipy) zůstává v `live.after` - ta URL nečte.
+Inicializace prvků z nových snippetů (Select2, datum, tooltipy) zůstává v `onContentLoaded()` - ta URL nečte.
 
 ### Push změn do stránek (`Push`, `push.js`)
 
@@ -3109,7 +3160,7 @@ a nedávné konverzace bere z `urls.conversations` widgetu. Projekt musí import
 nepřekreslí: otevřený panel, konverzace AI i rozepsaný text zůstanou. Zvýraznění aktuální položky
 v okně Menu má vlastní snippet `quickbarMenu`. Když AI otevře stránku (výsledek nástroje
 `{type: navigate, url}` z adt/ai-chat, událost `ai-chat:navigate`) nebo uživatel klikne v odpovědi
-na odkaz do aplikace, lišta ji načte ajaxem za panelem (`$.nette.ajax` se zápisem do historie).
+na odkaz do aplikace, lišta ji načte ajaxem za panelem (jako klik na odkaz, se zápisem do historie).
 Odpověď, která dorazí do zavřeného panelu, stránku nemění.
 
 **Diktování a zkratka AI** — pevná zkratka **Ctrl+Alt+Shift+A** otevře AI s kurzorem v poli
@@ -3150,7 +3201,7 @@ Zdroj se netýká AI, to má vlastní backend. Tvar dat je popsaný v hlavičce 
 metoda se bere jako prázdný výsledek.
 
 **Notifikace** — položka z `notifications.list()` s `href` je odkaz: klik ji označí jako přečtenou
-(`read(id)`), naviguje (nette.ajax) a lištu zavře; bez `href` ji klik jen přečte.
+(`read(id)`), naviguje (ajaxem) a lištu zavře; bez `href` ji klik jen přečte.
 
 **Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější
 zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Řádek bere `preview`, `time`
@@ -3488,7 +3539,7 @@ yarn add adt-ai-chat@github:AppsDevTeam/ai-chat#v1.0.0 marked dompurify chart.js
 ```
 
 ```js
-// entry point projektu (např. portal.js) - za nette.ajax.js
+// entry point projektu (např. portal.js) - za app.js FancyAdminu
 import '@fancyadmin/js/aiChat';
 ```
 
@@ -3858,7 +3909,7 @@ projektu.
 
 - **PHP** (Nette Tester, `tests/*.phpt`): `composer test`.
 - **JS** (vitest + jsdom, `tests/js/*.test.js`): `bin/yarn test` (Node z `NODE_VERSION` v `.env`).
-  Testy načtou skutečné jQuery, nette.ajax.js a skripty z `assets/js` a odpovědi serveru
-  simulují přes `$.ajaxTransport`. jsdom nemá layout, takže co závisí na rozměrech (scroll),
+  Testy načtou skutečné jQuery, Naja a skripty z `assets/js` a odpovědi serveru
+  simulují přes `window.fetch`. jsdom nemá layout, takže co závisí na rozměrech (scroll),
   si test emuluje sám. Chování v opravdovém prohlížeči pokrývají akceptační testy projektů
   (např. `AjaxNavigationCest` v adt-dent).

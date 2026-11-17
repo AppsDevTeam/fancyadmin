@@ -1,8 +1,9 @@
-// Ajaxový přechod mezi stránkami přes history ext: zvýraznění menu a záložek přichází ve snippetu
+// Ajaxový přechod mezi stránkami přes Naja (naja.js): zvýraznění menu a záložek přichází ve snippetu
 // body ze serveru a JS ho nesmí přepsat; odscrollované boční menu po výměně snippetu zůstane, kde bylo.
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 let $;
+let naja;
 
 // Stránka, jak by ji poslal server: položka menu svítí na všech akcích svého presenteru,
 // záložka jen na své adrese
@@ -25,14 +26,11 @@ function page(path) {
 
 // Odpověď serveru na ajaxový požadavek: překreslený snippet body stránky z adresy požadavku
 function respondWithPage() {
-	$.ajaxTransport('+*', options => ({
-		send(headers, done) {
-			const path = new URL(options.url, window.location.href).pathname;
-			const payload = { snippets: { 'snippet--body': page(path) } };
-			setTimeout(() => done(200, 'OK', { text: JSON.stringify(payload) }, 'Content-Type: application/json'));
-		},
-		abort() {},
-	}));
+	window.fetch = async (request) => {
+		const path = new URL(request.url).pathname;
+		const payload = { snippets: { 'snippet--body': page(path) } };
+		return new Response(JSON.stringify(payload), { headers: { 'Content-Type': 'application/json' } });
+	};
 }
 
 // jsdom nemá layout a scrollTop vždy vrací 0 - pro test stačí, že si hodnotu pamatuje
@@ -50,7 +48,7 @@ function emulateScrollTop() {
 }
 
 async function clickAndWait(selector) {
-	const done = new Promise(resolve => $(document).one('ajaxComplete', () => setTimeout(resolve)));
+	const done = new Promise(resolve => naja.addEventListener('complete', () => setTimeout(resolve), { once: true }));
 	$(selector).get(0).click();
 	await done;
 }
@@ -60,16 +58,7 @@ beforeAll(async () => {
 	document.body.innerHTML = `<div id="snippet--body">${page('/connector')}</div>`;
 
 	$ = (await import('../../assets/js/_jquery-global.js')).default;
-	await import('nette.ajax.js');
-	// Stejně jako app.js
-	$.nette.init({
-		load(rh) {
-			$(this.linkSelector).off('click.nette', rh).on('click.nette', rh);
-		},
-	}, {
-		linkSelector: 'a:not([target]):not([href^="http"]):not([href^="//"]):not(.noajax)',
-	});
-	await import('../../assets/js/history.ajax.js');
+	naja = (await import('../../assets/js/naja.js')).default;
 	await import('../../assets/js/sideMenu.js');
 	respondWithPage();
 });

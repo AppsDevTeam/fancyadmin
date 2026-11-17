@@ -73,7 +73,7 @@ function deformatHtmlFromCodeview(html) {
 	return html.replace(/>\n[ \t]*</g, '><');
 }
 
-$.nette.ext('live').after(function (el) {
+onContentLoaded(function (el) {
 	$(el).find('.summernote').each((i, el) => {
 		$(el).summernote({
 			dialogsInBody: true,
@@ -243,3 +243,4 @@ function progressHandlingFunction(e) {
 }
 
 import './summernote-file'
+import { onContentLoaded } from './naja';

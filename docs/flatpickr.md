@@ -50,11 +50,11 @@ Základní CSS flatpickru si partial natahuje sám na prvním řádku — v proj
 ```js
 import { Czech } from 'flatpickr/dist/l10n/cs.js';
 import { initDateInput } from '@fancyadmin/js/dateInput';
+import { onContentLoaded } from '@fancyadmin/js/naja';
 
 const options = { locale: Czech, minuteIncrement: 15 };
 
-$(function () { initDateInput(options); });
-$.nette.ext('live').after(function () { initDateInput(options); });
+onContentLoaded(function () { initDateInput(options); });
 ```
 
 Tím to končí — zbytek (pluginy, panel se seznamem) si `dateInput.js` natáhne sám.

@@ -17,6 +17,8 @@
 // Konverzace můžou nést volitelně `preview` (náhled poslední zprávy) a `unread` (nepřečtená odpověď).
 
 import * as speech from './quickbarSpeech.js';
+import naja from 'naja';
+import { onContentLoaded } from './naja';
 
 const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
@@ -326,7 +328,7 @@ function moveSelection(step) {
 	}
 }
 
-// Otevře vybraný výsledek stejně jako klik - odkaz jde přes nette.ajax, panel přes obsluhu kliku níž
+// Otevře vybraný výsledek stejně jako klik - odkaz jde ajaxem (naja.js), panel přes obsluhu kliku níž
 function openSelectedResult() {
 	state.enterRequest = 0;
 	document.querySelector(`[data-quickbar-result="${state.selected}"]`)?.click();
@@ -974,18 +976,17 @@ document.addEventListener('ai-chat:conversation', (e) => {
 // v odpovědi, se načte ajaxem za lištou - lišta je mimo snippet body, chat zůstane otevřený.
 // Odpověď, která dorazí do zavřeného panelu, nikam nepřesouvá.
 document.addEventListener('ai-chat:navigate', (e) => {
-	if (!e.target.closest?.('[data-quickbar-ai-chat]') || !$.nette?.ajax) {
+	if (!e.target.closest?.('[data-quickbar-ai-chat]')) {
 		return;
 	}
 	if (e.detail.auto && state.open !== 'ai') {
 		return;
 	}
 	e.preventDefault();
-	// Odkaz a klik jako původce požadavku (nette.ajax bez nich nevyplní settings.nette) -
-	// podle odkazu history.ajax.js zapíše URL do historie
+	// Odkaz jako původce požadavku - adresa se zapíše do historie jako po kliku (naja.js)
 	const link = document.createElement('a');
 	link.href = e.detail.url;
-	$.nette.ajax({ url: link.href }, link, $.Event('click'));
+	naja.uiHandler.clickElement(link).catch(() => {});
 });
 
 // Pevné zkratky diktování: aplikace ADTalk (adt/adtalk) pošle Ctrl+Alt+Shift+A a přepis pak
@@ -1073,7 +1074,7 @@ function revealMenuSub(button) {
 	}));
 }
 
-// Odkaz menu si naviguje sám, okno se jen zavře; v capture, protože nette.ajax klik na odkazu dál nepustí
+// Odkaz menu si naviguje sám (naja.js), okno se jen zavře
 document.addEventListener('click', (e) => {
 	if (e.target.closest?.('[data-quickbar-menu] a[href]')) {
 		close();
@@ -1210,7 +1211,7 @@ document.addEventListener('click', (e) => {
 	const notification = target.closest('[data-quickbar-notification]');
 	if (notification) {
 		readNotification(notification.dataset.quickbarNotification);
-		// Odkaz naviguje sám (nette.ajax), lišta se jen zavře
+		// Odkaz naviguje sám (naja.js), lišta se jen zavře
 		if (notification.matches('a[href]')) {
 			close();
 		}
@@ -1222,7 +1223,7 @@ document.addEventListener('click', (e) => {
 		openChat(chat ? chat.id : null);
 		return;
 	}
-	// Odkaz ve zprávě chatu naviguje sám (nette.ajax), lišta se jen zavře
+	// Odkaz ve zprávě chatu naviguje sám (naja.js), lišta se jen zavře
 	if (target.closest('.quickbar-bubble-link')) {
 		close();
 		return;
@@ -1297,7 +1298,7 @@ document.addEventListener('submit', (e) => {
 	if (!form) {
 		return;
 	}
-	// Formuláře lišty nikam neodesílají - jinak by je chytil nette.ajax
+	// Formuláře lišty nikam neodesílají - jinak by je odeslal ajax (naja.js)
 	e.preventDefault();
 	e.stopImmediatePropagation();
 	const input = form.querySelector('input');
@@ -1437,6 +1438,4 @@ document.addEventListener('DOMContentLoaded', () => {
 	restoreOpenPanel(saved);
 });
 
-if ($.nette && $.nette.ext('live')) {
-	$.nette.ext('live').after(init);
-}
+onContentLoaded(init);

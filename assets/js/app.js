@@ -1,6 +1,6 @@
 //
 // jQuery as a global — MUST be first so it is set before the legacy plugins below
-// (and bundled deps like nette.ajax.js) are evaluated. Imports are hoisted.
+// are evaluated. Imports are hoisted.
 //
 import $ from './_jquery-global';
 
@@ -33,38 +33,14 @@ Nette.initOnLoad();
 window.Nette = Nette;
 // window.Chart = Chart;
 
-// Must run before nette.ajax.js so its `validation` extension calls the wrapped
-// Nette.validateForm (see the comment in the bridge file).
-import './netteAjaxValidationBridge';
-
-import 'nette.ajax.js';
-$.nette.init({
-	load: function (rh) {
-		$(this.linkSelector).off('click.nette', rh).on('click.nette', rh);
-		$(this.formSelector).off('submit.nette', rh).on('submit.nette', rh)
-			.off('click.nette', ':image', rh).on('click.nette', ':image', rh)
-			.off('click.nette', ':submit', rh).on('click.nette', ':submit', rh);
-		$(this.buttonSelector).closest('form')
-			.off('click.nette', this.buttonSelector, rh).on('click.nette', this.buttonSelector, rh);
-	}
-}, {
-	linkSelector: 'a:not([target]):not([href^="http"]):not([href^="//"]):not(.noajax)',
-	formSelector: 'form',
-	buttonSelector: 'input.ajax[type="submit"], button.ajax[type="submit"], input.ajax[type="image"]'
-});
-import 'adt-nette-ajax';
+// AJAX přes Naja - všechny odkazy a formuláře (naja.js)
+import { onContentLoaded } from './naja';
 
 import './toggleMenu';
 
-import './history.ajax.js';
-if ($.nette.ext('history')) {
-	// Podmíněné je to kvůli Safari na iOS, protože tam je z nějakého důvodu .ext('history') undefined
-	$.nette.ext('history').cache = false; // TODO: kvůli tomuto se všechny AJAX requesty posílají 2x, ale nevíme proč!
-}
-
 import './pageReady';
 
-$.nette.ext('live').after(function($el) {
+onContentLoaded(function($el) {
 	$('[data-dependentselectbox]').dependentSelectBox();
 });
 

@@ -6,6 +6,7 @@
 // v app.js: projekt bez podpisu by alias neměl a build by spadl. Projekt modul načte sám
 // (dynamickým importem jen na stránce s podpisem, vzor tablet.js).
 import { initBiometricSignatures } from '@biometric-signature/biometric-signature.js';
+import naja from 'naja';
 
 const SELECTOR = '[data-biometric-signature]';
 
@@ -30,7 +31,7 @@ export function initBiometricSignatureFields(root = document, options = {}) {
 }
 
 /**
- * Napojí podpisy na stránce hned a po každém AJAX překreslení (nette.ajax, je-li na stránce).
+ * Napojí podpisy na stránce hned a po každém AJAX požadavku.
  *
  * @param {object} [options] viz initBiometricSignatureFields()
  */
@@ -43,13 +44,9 @@ export function initBiometricSignaturePage(options = {}) {
 		init();
 	}
 
-	if (window.jQuery && window.jQuery.nette) {
-		window.jQuery.nette.ext('biometricSignature', {
-			complete() {
-				if (document.querySelector(SELECTOR)) {
-					init();
-				}
-			},
-		});
-	}
+	naja.addEventListener('complete', () => {
+		if (document.querySelector(SELECTOR)) {
+			init();
+		}
+	});
 }

@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import naja from 'naja';
 
 /**
  * Trvaly panel s platnosti (PersistentNotice::$expiresAt, v sablone `data-expires-at` jako unix cas
@@ -38,8 +39,4 @@ document.addEventListener('visibilitychange', () => {
 	}
 });
 
-if (window.$ && window.$.nette) {
-	$.nette.ext('persistentNotice', {
-		complete: check,
-	});
-}
+naja.addEventListener('complete', check);

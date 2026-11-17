@@ -260,15 +260,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@googlemaps/js-api-loader@npm:^1.11.1":
-  version: 1.16.6
-  resolution: "@googlemaps/js-api-loader@npm:1.16.6"
-  dependencies:
-    fast-deep-equal: "npm:^3.1.3"
-  checksum: 084f92f0cef9920e8ef7e54cd7931dddef102a4baf20fe4ba30d45dee3327748c626f1b40ccc158c76544e8d88ccebb41edf6c65d115fdd25d5bdebd7d909bb6
-  languageName: node
-  linkType: hard
-
 "@isaacs/cliui@npm:^8.0.2":
   version: 8.0.2
   resolution: "@isaacs/cliui@npm:8.0.2"
@@ -867,8 +858,7 @@ __metadata:
     "@popperjs/core": ^2.11.8
     "@regru/jquery-menu-aim": ^1.0.0
     "@rollup/plugin-inject": ^5.0.5
-    adt-js-components: ^1.7.0
-    adt-nette-ajax: ^1.0.0
+    adt-js-components: ^3.0.0
     autoprefixer: ^10.4.20
     bootstrap: ^5.3.3
     chart.js: ^4.4.4
@@ -876,12 +866,13 @@ __metadata:
     codemirror: ^5
     daterangepicker: ^3.1.0
     fabric: ^6.5.3
+    flatpickr: ^4.6.13
     forms-replicator: "github:AppsDevTeam/replicator#master"
     jquery: ^3.7.1
     jquery-ui-bundle: ^1.12.1-migrate
     jsdom: ^26.1.0
+    naja: ^3.3.3
     nette-forms: ^3.5.0
-    nette.ajax.js: "github:appsdevteam/nette.ajax.js#fix-nette-32"
     postcss: ^8.4.47
     sass: ^1.79.4
     sass-embedded: ^1.95.1
@@ -892,17 +883,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"adt-js-components@npm:^1.7.0":
-  version: 1.8.2
-  resolution: "adt-js-components@npm:1.8.2"
-  dependencies:
+"adt-js-components@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "adt-js-components@npm:3.0.0"
+  peerDependencies:
     "@googlemaps/js-api-loader": ^1.11.1
+    "@here/flexpolyline": ^0.1.0
     autonumeric: ^4.6.0
+    firebase: ^12.10.0
     flatpickr: ^4.6.3
     glightbox: ^3.0.7
+    jquery: ^3.4.1
     leaflet: ^1.9.4
     leaflet.markercluster: ^1.5.3
-    nette.ajax.js: ^2.3.0
+    naja: ^3.0.0
     script-loader: ^0.7.2
     scrollparent: ^2.0.1
     select2: ^4.0.13
@@ -910,16 +904,40 @@ __metadata:
     timepicker: ^1.13.4
     tinymce: ^5.7.0
     tinymce-i18n: ^20.12.25
-  peerDependencies:
-    jquery: ^3.4.1
-  checksum: e1b687fdc1e5b0cf895675eb39e7b4a003703794da93f80179434b577f1de2f0fc43911100324b8165817875b8193407b048ce1ff7e75bc909701dd3f1887405
-  languageName: node
-  linkType: hard
-
-"adt-nette-ajax@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "adt-nette-ajax@npm:1.0.0"
-  checksum: 48c5f4dcb34b2b1c08d010b5abf28c28b0fe4b2cf748060a9d68d9b0528b18239845ad7e1d6d3021d90853fbf44413bf9fcfca69bd88c50d76a619f05ba1d7bb
+  peerDependenciesMeta:
+    "@googlemaps/js-api-loader":
+      optional: true
+    "@here/flexpolyline":
+      optional: true
+    autonumeric:
+      optional: true
+    firebase:
+      optional: true
+    flatpickr:
+      optional: true
+    glightbox:
+      optional: true
+    leaflet:
+      optional: true
+    leaflet.markercluster:
+      optional: true
+    naja:
+      optional: true
+    script-loader:
+      optional: true
+    scrollparent:
+      optional: true
+    select2:
+      optional: true
+    select2-bootstrap-5-theme:
+      optional: true
+    timepicker:
+      optional: true
+    tinymce:
+      optional: true
+    tinymce-i18n:
+      optional: true
+  checksum: 3e46e67c0cc90fde36119dd7ac71acad0740f9967c0b054c17a069b05afde33ed72d4b6a13fd9c2e8e0b37dc4d7afe7ba5a6badadc5f419d8c3cb80af2c2368d
   languageName: node
   linkType: hard
 
@@ -1014,13 +1032,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"autonumeric@npm:^4.6.0":
-  version: 4.10.5
-  resolution: "autonumeric@npm:4.10.5"
-  checksum: 0eb176c9be239b9fdabac27bdcf6886f1772c7eaed4c41196605025b9f7ea09d78f3b6151ddeba725596f7f141e518194f1af5092fd9512c62f2f9e8432c0e3f
-  languageName: node
-  linkType: hard
-
 "autoprefixer@npm:^10.4.20":
   version: 10.4.20
   resolution: "autoprefixer@npm:10.4.20"
@@ -1046,7 +1057,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bootstrap@npm:^5.1.3, bootstrap@npm:^5.3.3":
+"bootstrap@npm:^5.3.3":
   version: 5.3.3
   resolution: "bootstrap@npm:5.3.3"
   peerDependencies:
@@ -1709,13 +1720,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-deep-equal@npm:^3.1.3":
-  version: 3.1.3
-  resolution: "fast-deep-equal@npm:3.1.3"
-  checksum: 40dedc862eb8992c54579c66d914635afbec43350afbbe991235fdcb4e3a8d5af1b23ae7e79bef7d4882d0ecee06c3197488026998fb19f72dc95acff1d1b1d0
-  languageName: node
-  linkType: hard
-
 "fdir@npm:^6.4.4, fdir@npm:^6.5.0":
   version: 6.5.0
   resolution: "fdir@npm:6.5.0"
@@ -1728,7 +1732,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flatpickr@npm:^4.6.3":
+"flatpickr@npm:^4.6.13":
   version: 4.6.13
   resolution: "flatpickr@npm:4.6.13"
   checksum: 0e027e72a2ce1716840a8c0bf9094f48d2665dc3f3024bf9604810c5bd7dd94aa830b133c5b5cfc0c330fc88939f33b54c8714515957f9d194c3a3bb7f75a1e2
@@ -1875,13 +1879,6 @@ __metadata:
     dunder-proto: ^1.0.1
     es-object-atoms: ^1.0.0
   checksum: 9224acb44603c5526955e83510b9da41baf6ae73f7398875fba50edc5e944223a89c4a72b070fcd78beb5f7bdda58ecb6294adc28f7acfc0da05f76a2399643c
-  languageName: node
-  linkType: hard
-
-"glightbox@npm:^3.0.7":
-  version: 3.3.0
-  resolution: "glightbox@npm:3.3.0"
-  checksum: 30aab4afb12cf4e31195fe8ff450ad4de94ab5f3c832461aed0cc5b9c97feee6aa33568d21b029ec45cf967a4857c3c4a34464a2f7266aa5963438d824e236ee
   languageName: node
   linkType: hard
 
@@ -2155,7 +2152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jquery@npm:>=1.10, jquery@npm:>=1.7.0, jquery@npm:^3.5.1, jquery@npm:^3.7.1":
+"jquery@npm:>=1.10, jquery@npm:^3.7.1":
   version: 3.7.1
   resolution: "jquery@npm:3.7.1"
   checksum: 808cfbfb758438560224bf26e17fcd5afc7419170230c810dd11f5c1792e2263e2970cca8d659eb84fcd9acc301edb6d310096e450277d54be4f57071b0c82d9
@@ -2238,22 +2235,6 @@ __metadata:
     canvas:
       optional: true
   checksum: 5b14a5bc32ce077a06fb42d1ab95b1191afa5cbbce8859e3b96831c5143becbbcbf0511d4d4934e922d2901443ced2cdc3b734c1cf30b5f73b3e067ce457d0f4
-  languageName: node
-  linkType: hard
-
-"leaflet.markercluster@npm:^1.5.3":
-  version: 1.5.3
-  resolution: "leaflet.markercluster@npm:1.5.3"
-  peerDependencies:
-    leaflet: ^1.3.1
-  checksum: ce2d4065da00c727f5b05fe4568e5239ebd2556e45d859307ff9c44a6f7ecb9658cd91d055f5723d93f3e491c48949cf78109f50533b0b36b9a226e4d339213f
-  languageName: node
-  linkType: hard
-
-"leaflet@npm:^1.9.4":
-  version: 1.9.4
-  resolution: "leaflet@npm:1.9.4"
-  checksum: f639441dbb7eb9ae3fcd29ffd7d3508f6c6106892441634b0232fafb9ffb1588b05a8244ec7085de2c98b5ed703894df246898477836cfd0ce5b96d4717b5ca1
   languageName: node
   linkType: hard
 
@@ -2484,6 +2465,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"naja@npm:^3.3.3":
+  version: 3.3.3
+  resolution: "naja@npm:3.3.3"
+  checksum: bb1480e6d322baea4031115f816d2689aac5e3bcbe689fc47d186eb50c1dcc96ee5107c91ba4643c26c90e5e3af446a6de9f5fb808fc39f779dc113ccb11062d
+  languageName: node
+  linkType: hard
+
 "nan@npm:^2.17.0":
   version: 2.22.0
   resolution: "nan@npm:2.22.0"
@@ -2513,22 +2501,6 @@ __metadata:
   version: 3.5.0
   resolution: "nette-forms@npm:3.5.0"
   checksum: 199fdcede345011d3250bbe8136f344fd784a9e22c4a3ea43e2fdbb7f543912d7249fb05f5107e648bf11b30be523d5130b2d703e51c3d0a29294786526d0004
-  languageName: node
-  linkType: hard
-
-"nette.ajax.js@github:appsdevteam/nette.ajax.js#fix-nette-32":
-  version: 2.3.0
-  resolution: "nette.ajax.js@https://github.com/appsdevteam/nette.ajax.js.git#commit=e6d0a5e35aa4856e870ae379bd52afb6ad2f35b9"
-  dependencies:
-    jquery: ">=1.7.0"
-  checksum: f9fe413936f020ee8f9d20a46741fbcf039a3f1b89c5d19e20acd8d3c1ac6e5c2794589b547c1ab4efb3bdd30de8f605981c6f70af7b9fe97da54e7b9b7e7594
-  languageName: node
-  linkType: hard
-
-"nette.ajax.js@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "nette.ajax.js@npm:2.3.0"
-  checksum: c3aa89ce07962a9f2b0fe8371fe1a52e56d96102b11039acca5c4e670ba1fe2fee346d2384630c805b5596fd0d805c7dc6d7b78f742d7b095e9d45dbc36cf208
   languageName: node
   linkType: hard
 
@@ -2817,13 +2789,6 @@ __metadata:
   version: 2.2.0
   resolution: "querystringify@npm:2.2.0"
   checksum: 3258bc3dbdf322ff2663619afe5947c7926a6ef5fb78ad7d384602974c467fadfc8272af44f5eb8cddd0d011aae8fabf3a929a8eee4b86edcc0a21e6bd10f9aa
-  languageName: node
-  linkType: hard
-
-"raw-loader@npm:~0.5.1":
-  version: 0.5.1
-  resolution: "raw-loader@npm:0.5.1"
-  checksum: 0961d64c0c21c25f8a1ecddd5bf17a4308e5d82addff11044a42c28dde35f14b34c6dbf4665adda7ce3a64922a3132785276c25e1f33c0c62689ff366ab8fb6e
   languageName: node
   linkType: hard
 
@@ -3249,38 +3214,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"script-loader@npm:^0.7.2":
-  version: 0.7.2
-  resolution: "script-loader@npm:0.7.2"
-  dependencies:
-    raw-loader: "npm:~0.5.1"
-  checksum: bd8fdec46ff72210a9fc78471f54733feab57b0e6e7d1331f4ee8f95dd381ed6102b46a02d508e002d87bf847b676be1564d9cd1c62e87e7c16696b4f91ce8a3
-  languageName: node
-  linkType: hard
-
-"scrollparent@npm:^2.0.1":
-  version: 2.1.0
-  resolution: "scrollparent@npm:2.1.0"
-  checksum: b377ec5a461f6ed8021f0c3c6b0c76317341c33838f047e91387cdfe0ba4c28aa2a3855240458f9bcf1e18e6c8718540075eb1215fc094496300114f295b2e6b
-  languageName: node
-  linkType: hard
-
-"select2-bootstrap-5-theme@npm:^1.1.1":
-  version: 1.3.0
-  resolution: "select2-bootstrap-5-theme@npm:1.3.0"
-  dependencies:
-    bootstrap: "npm:^5.1.3"
-  checksum: bc8d26b9c2b3151684976ba1502b35e88fe0e1f8fb032cabb6eb988d6a71a0b3d3211a9cec6cb4aa0cab2cd62410819b9999eb3c7ac1a483f1f3a3b98f426113
-  languageName: node
-  linkType: hard
-
-"select2@npm:^4.0.13":
-  version: 4.0.13
-  resolution: "select2@npm:4.0.13"
-  checksum: a393866565a5f878ca21276ed32793595851debb35ff48a8c368640e732619349f547d335b438b45ff5647145eb6c5af868cd5153740de58306a2dca2498550f
-  languageName: node
-  linkType: hard
-
 "semver@npm:^6.0.0":
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
@@ -3528,15 +3461,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"timepicker@npm:^1.13.4":
-  version: 1.14.1
-  resolution: "timepicker@npm:1.14.1"
-  dependencies:
-    jquery: "npm:^3.5.1"
-  checksum: 4302d5a842f1fd98679a478157f8965dc07ce54410c4176d974d553ffe90dcc490298ca786caeed0c6daaed6329a88abdc3d372f81811209b5c0a4bcbaa34315
-  languageName: node
-  linkType: hard
-
 "tinybench@npm:^6.2.2":
   version: 6.2.3
   resolution: "tinybench@npm:6.2.3"
@@ -3558,20 +3482,6 @@ __metadata:
     fdir: ^6.5.0
     picomatch: ^4.0.4
   checksum: 7f7bb0f197c88bc4b20c231e0deca4240ca3bf313a88f5a7fee93a872b84966a4d50220947c0455ad07a60b3b360961c5b7fd979222aeb716a9f99b412002e4c
-  languageName: node
-  linkType: hard
-
-"tinymce-i18n@npm:^20.12.25":
-  version: 20.12.25
-  resolution: "tinymce-i18n@npm:20.12.25"
-  checksum: 1791422f471ef5ee84c1a744fc587490db260689e349e89c591f075dfa659c9abbbfbeef2c5db816e68bc7438c84915c2b83c999c12ec478e8ada2f4760c9003
-  languageName: node
-  linkType: hard
-
-"tinymce@npm:^5.7.0":
-  version: 5.10.9
-  resolution: "tinymce@npm:5.10.9"
-  checksum: 8b0d8602259d54ab89ffbf7bc4ea08f1bb35fa1f523748358d22550fed1abbffda3a2168af7c7a562a6bb8828c1c9dedb41e8ed1cd63b21a00f31ef39e708443
   languageName: node
   linkType: hard
 

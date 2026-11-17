@@ -1,4 +1,5 @@
 import { showSortableError } from './flashes';
+import { ajax, onContentLoaded } from './naja';
 
 // Explicit global: ublaboo renders inline scripts that call datagridSortable().
 // ESM modules are strict, so the previous implicit global assignment threw.
@@ -32,16 +33,8 @@ window.datagridSortable = function($el) {
             if (next_id !== null) {
                 data[(component_prefix + '-next_id').replace(/^-/, '')] = next_id;
             }
-            return $.nette.ajax({
-                type: 'GET',
-                url: url,
-                data: data,
-                error: function(jqXHR, textStatus, errorThrown) {
-                    if (errorThrown !== 'abort') {
-                        showSortableError();
-                    }
-                }
-            });
+            // chybu ohlásí sama, obecnou hlášku projektu vynechá
+            return ajax(url, data, { ownErrorHandler: true }).catch(showSortableError);
         },
         helper: function(e, ui) {
             ui.children().each(function() {
@@ -52,7 +45,7 @@ window.datagridSortable = function($el) {
     });
 };
 
-$.nette.ext('live').after(function (el) {
+onContentLoaded(function (el) {
     return datagridSortable(el);
 });
 

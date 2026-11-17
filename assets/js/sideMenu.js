@@ -1,3 +1,5 @@
+import naja from 'naja';
+import { onBeforeSnippetUpdate, onContentLoaded } from './naja';
 // Boční menu (wide layout) - toggle sbaleno/rozbaleno, toggleable skupiny, otevírání has-submenu itemů.
 // Stav se persistuje v localStorage. V sbaleném režimu se popovery skupin polohují přes CSS
 // proměnnou --group-top (fixed position potřebuje inline top odpovídající Y skupiny).
@@ -197,30 +199,26 @@ $(window).on('resize', function () {
 	positionPopovers();
 });
 
-if ($.nette && $.nette.ext('live')) {
-	$.nette.ext('live').after(function () {
-		applyState();
-	});
-}
+onContentLoaded(function () {
+	applyState();
+});
 
 // Menu je ve snippetu body, takže ho každý ajaxový přechod vymění za nový element a odscrollované
 // menu by skočilo nahoru. Zvýraznění položek ale musí dál počítat server, proto se menu překresluje
 // a jen se mu vrátí scroll.
-if ($.nette && $.nette.ext('snippets')) {
-	let menuScrollTop = null;
+let menuScrollTop = null;
 
-	$.nette.ext('snippets').before(function ($el) {
-		const menuBody = $el.find('.side-panel-wide .menu-body').get(0);
-		if (menuBody) {
-			menuScrollTop = menuBody.scrollTop;
-		}
-	});
+onBeforeSnippetUpdate(function ($el) {
+	const menuBody = $el.find('.side-panel-wide .menu-body').get(0);
+	if (menuBody) {
+		menuScrollTop = menuBody.scrollTop;
+	}
+});
 
-	$.nette.ext('snippets').after(function ($el) {
-		const menuBody = $el.find('.side-panel-wide .menu-body').get(0);
-		if (menuBody && menuScrollTop !== null) {
-			menuBody.scrollTop = menuScrollTop;
-			menuScrollTop = null;
-		}
-	});
-}
+naja.snippetHandler.addEventListener('afterUpdate', function (e) {
+	const menuBody = $(e.detail.snippet).find('.side-panel-wide .menu-body').get(0);
+	if (menuBody && menuScrollTop !== null) {
+		menuBody.scrollTop = menuScrollTop;
+		menuScrollTop = null;
+	}
+});

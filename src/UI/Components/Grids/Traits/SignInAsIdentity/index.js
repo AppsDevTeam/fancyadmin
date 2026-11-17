@@ -1,12 +1,12 @@
+import naja from 'naja';
+
 const run = (el) => {
     $(function () {
         $(document).on('click', '[data-sign-in-as-identity-url]', function (e) {
             e.preventDefault();
             const buttonText  = $(this).attr('data-button-text');
 
-            $.nette.ajax({
-                url: $(this).attr('data-sign-in-as-identity-url'),
-            }).done(function (payload) {
+            naja.makeRequest('GET', $(this).attr('data-sign-in-as-identity-url'), null, { history: false, unique: false }).then(function (payload) {
                 // Modal s tlačítkem
                 const modal = document.createElement('div');
                 modal.style.position = 'fixed';

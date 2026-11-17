@@ -1,4 +1,6 @@
-$.nette.ext('live').after(function (el, data) {
+import { onContentLoaded } from './naja';
+
+onContentLoaded(function (el, data) {
 
 	setTimeout(() => {
 		$(el).find('.delay-animate').removeClass('delay-animate');

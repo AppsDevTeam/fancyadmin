@@ -107,8 +107,8 @@ if (document.querySelector('[data-biometric-signature]')) {
 }
 ```
 
-`initBiometricSignaturePage()` napojí podpisy hned a po každém AJAX požadavku (nette.ajax, je-li
-na stránce); už napojené přeskočí. Pro vlastní kontejner je `initBiometricSignatureFields(root)`.
+`initBiometricSignaturePage()` napojí podpisy hned a po každém AJAX požadavku; už napojené
+přeskočí. Pro vlastní kontejner je `initBiometricSignatureFields(root)`.
 
 ```scss
 @use '@fancyadmin/scss/biometric-signature';

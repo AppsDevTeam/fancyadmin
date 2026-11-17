@@ -1,3 +1,4 @@
+import { onContentLoaded } from './naja';
 // Záložky (.nav-tabs) — přejíždějící podtržení aktivní záložky, přetečení do „Další“
 // (Bootstrap dropdown) a pod 992 px posuvná lišta se šipkami (.nav-tabs-sm jen lišta).
 // Volá se na DOM ready i po AJAX překreslení; hotové záložky mají data-tabs-ready.
@@ -196,6 +197,6 @@ NARROW.addEventListener('change', relayoutAll);
 document.fonts?.ready.then(relayoutAll);
 
 $(initTabs);
-$.nette.ext('live').after(initTabs);
+onContentLoaded(initTabs);
 
 export { initTabs, relayoutAll };

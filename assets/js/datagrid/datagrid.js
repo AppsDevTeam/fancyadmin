@@ -1,4 +1,6 @@
 import { showSortableError } from '../flashes';
+// nastaví window.naja dřív, než se níž rozhodne mezi Naja a nette.ajax
+import '../naja';
 
 var dataGridRegisterExtension, dataGridRegisterAjaxCall, dataGridLoad, dataGridSubmitForm;
 
@@ -90,7 +92,7 @@ if (typeof naja !== "undefined") {
 	};
 
 	dataGridLoad = function () {
-		naja.load();
+		naja.uiHandler.bindUI(document.body);
 	};
 
 	dataGridSubmitForm = function (form) {
@@ -580,9 +582,10 @@ dataGridRegisterExtension('datagrid.url', {
 				}
 				url += window.location.hash;
 				if (window.location.href !== url) {
-					return window.history.replaceState({
-						path: url
-					}, '', url);
+					// stav Naja zůstane, jinak by návrat zpět na tenhle záznam nic nenačetl
+					return window.history.replaceState(Object.assign({}, window.history.state, {
+						href: url
+					}), '', url);
 				}
 			}
 		}

@@ -1,3 +1,4 @@
+import { onContentLoaded } from './naja';
 // Přepínač světlého/tmavého režimu v uživatelském menu. Režim nastavuje už inline
 // skript v hlavičce @layout.latte (kvůli probliknutí), tady se jen přepíná a ukládá.
 // Bez uložené volby se režim řídí systémem a sleduje i jeho změnu za běhu.
@@ -72,6 +73,4 @@ window.addEventListener('storage', (e) => {
 
 document.addEventListener('DOMContentLoaded', syncToggles);
 // Po ajaxovém překreslení menu nastavit stav přepínače znovu
-if ($.nette && $.nette.ext('live')) {
-	$.nette.ext('live').after(syncToggles);
-}
+onContentLoaded(syncToggles);

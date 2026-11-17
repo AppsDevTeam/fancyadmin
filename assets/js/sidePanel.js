@@ -1,4 +1,6 @@
+import naja from 'naja';
 import { interceptServerFlashes, showServerFlash, splitMessage } from './flashes';
+import { onBeforeSnippetUpdate } from './naja';
 
 $(function () {
 	const panels = {
@@ -30,12 +32,19 @@ $(function () {
 		closeSidePanel(panelId);
 	}
 
-	function getFormPanelId(settings) {
-		if (!(settings && settings.nette && settings.nette.form && settings.nette.form.closest)) {
+	// Formulář, který požadavek odeslal (options.element je formulář nebo jeho tlačítko, naja.js)
+	function getForm(options) {
+		const el = options.element;
+		return el instanceof HTMLFormElement ? el : (el && el.form) || null;
+	}
+
+	function getFormPanelId(options) {
+		const form = getForm(options);
+		if (!form) {
 			return null;
 		}
 		for (const panelId in panels) {
-			if (settings.nette.form.closest('#' + panelId).length) {
+			if (form.closest('#' + panelId)) {
 				return panelId;
 			}
 		}
@@ -66,45 +75,46 @@ $(function () {
 	}
 
 	// Reset dirty řešíme už v "before" fázi odeslání formuláře z panelu.
-	// Důvod: po úspěchu může jiná extension (submitForm) ve své "success"
+	// Důvod: po úspěchu může jiný posluchač (SubmitForm) ve své "success"
 	// fázi panel rovnou zavřít (např. po stažení souboru), a to dřív, než by
 	// se sem stihl dostat "success" – reset by tak přišel pozdě a vyskočil by
 	// potvrzovací dialog "Opravdu zavřít bez uložení?".
-	$.nette.ext('sidePanelDirty', {
-		before: function (xhr, settings) {
-			// Optimisticky bereme odeslání panel formuláře jako "uloženo".
-			const panelId = getFormPanelId(settings);
+	naja.addEventListener('before', function (e) {
+		const { options } = e.detail;
+		// Optimisticky bereme odeslání panel formuláře jako "uloženo".
+		const panelId = getFormPanelId(options);
+		if (panelId) {
+			panels[panelId].isDirty = false;
+			// Formulář ve vlastní šabloně panelu (AI chat) panel nezavírá
+			if (!getForm(options).closest('.side-panel-body')) {
+				pendingSave = { container: document.getElementById(panelId).closest('.side-panel-template-container'), at: Date.now() };
+			}
+		}
+	});
+
+	naja.addEventListener('success', function (e) {
+		const { payload, options } = e.detail;
+		// Validace na serveru selhala → formulář zůstává rozdělaný.
+		if (payload && payload.hasErrors) {
+			const panelId = getFormPanelId(options);
 			if (panelId) {
+				panels[panelId].isDirty = true;
+				// Až po vložení snippetů s hláškami
+				const container = document.getElementById(panelId).closest('.side-panel-template-container');
+				setTimeout(() => showErrorTab(container));
+			}
+			return;
+		}
+		// Otevření panelu / standardní uložení s překreslením snippetu → čisté.
+		for (const panelId in panels) {
+			if (payload && payload.snippets && (panelId in payload.snippets)) {
 				panels[panelId].isDirty = false;
-				// Formulář ve vlastní šabloně panelu (AI chat) panel nezavírá
-				if (!settings.nette.form.closest('.side-panel-body').length) {
-					pendingSave = { container: document.getElementById(panelId).closest('.side-panel-template-container'), at: Date.now() };
-				}
 			}
-		},
-		success: function (payload, status, xhr, settings) {
-			// Validace na serveru selhala → formulář zůstává rozdělaný.
-			if (payload && payload.hasErrors) {
-				const panelId = getFormPanelId(settings);
-				if (panelId) {
-					panels[panelId].isDirty = true;
-					// Až po vložení snippetů s hláškami
-					const container = document.getElementById(panelId).closest('.side-panel-template-container');
-					setTimeout(() => showErrorTab(container));
-				}
-				return;
-			}
-			// Otevření panelu / standardní uložení s překreslením snippetu → čisté.
-			for (const panelId in panels) {
-				if (payload && payload.snippets && (panelId in payload.snippets)) {
-					panels[panelId].isDirty = false;
-				}
-			}
-			if (payload && payload.sidePanelStackedResult) {
-				fillStackedTarget(payload.sidePanelStackedResult);
-				panels['snippet--sidePanel'].isDirty = true;
-				$stackedTarget = null;
-			}
+		}
+		if (payload && payload.sidePanelStackedResult) {
+			fillStackedTarget(payload.sidePanelStackedResult);
+			panels['snippet--sidePanel'].isDirty = true;
+			$stackedTarget = null;
 		}
 	});
 
@@ -113,7 +123,7 @@ $(function () {
 	let pendingSave = null;
 	let saved = null;
 
-	$.nette.ext('snippets').before(function ($el) {
+	onBeforeSnippetUpdate(function ($el) {
 		// Po přesměrování se čeká až na následný požadavek
 		if (!pendingSave || saved || Date.now() - pendingSave.at > 15000) return;
 		const container = pendingSave.container;
@@ -174,18 +184,17 @@ $(function () {
 		return true;
 	});
 
-	$.nette.ext('sidePanelStackedOpen', {
-		before: function (xhr, settings) {
-			const $el = settings && settings.nette && settings.nette.el;
-			if (!$el || !$el.is('[data-fancyadmin-side-panel-stacked]')) {
-				return;
-			}
-			$stackedTarget = $el.closest('.input-group').find('select, input:not([type="hidden"]), textarea').first();
-			$('#snippet--sidePanelStacked').html('<div class="side-panel-loading"><div class="spinner-border" role="status"></div></div>');
-		},
-		complete: function () {
-			$('#snippet--sidePanelStacked > .side-panel-loading').remove();
+	naja.addEventListener('before', function (e) {
+		const el = e.detail.options.element;
+		if (!el || !el.matches('[data-fancyadmin-side-panel-stacked]')) {
+			return;
 		}
+		$stackedTarget = $(el).closest('.input-group').find('select, input:not([type="hidden"]), textarea').first();
+		$('#snippet--sidePanelStacked').html('<div class="side-panel-loading"><div class="spinner-border" role="status"></div></div>');
+	});
+
+	naja.addEventListener('complete', function () {
+		$('#snippet--sidePanelStacked > .side-panel-loading').remove();
 	});
 
 	// Nadpis nového záznamu je text tlačítka, které panel otevřelo; ikonové tlačítko dá svůj popisek
@@ -194,24 +203,24 @@ $(function () {
 		return text || el.getAttribute('title') || el.getAttribute('data-bs-original-title') || el.getAttribute('aria-label') || '';
 	}
 
-	// prepare dostává stejné settings jako success, before jen kopii od jQuery
-	$.nette.ext('sidePanelTitle', {
-		prepare: function (settings) {
-			const el = settings && settings.nette && settings.nette.el && settings.nette.el[0];
-			if (!el) return;
-			const stacked = el.matches('[data-fancyadmin-side-panel-stacked]');
-			// Odeslání formuláře z panelu nadpis nemění
-			if (!stacked && el.closest('.side-panel-template-container')) return;
-			settings.sidePanelTitle = { stacked, title: triggerTitle(el) };
-		},
-		success: function (payload, status, xhr, settings) {
-			const pending = settings && settings.sidePanelTitle;
-			const snippet = pending && (pending.stacked ? 'snippet--sidePanelStacked' : 'snippet--sidePanel');
-			if (!pending || !payload || !payload.snippets || !(snippet in payload.snippets)) return;
-			const container = document.getElementById(snippet).closest('.side-panel-template-container');
-			container.dataset.triggerTitle = pending.title;
-			applyTitle(container);
-		}
+	naja.addEventListener('before', function (e) {
+		const { options } = e.detail;
+		const el = options.element;
+		if (!el) return;
+		const stacked = el.matches('[data-fancyadmin-side-panel-stacked]');
+		// Odeslání formuláře z panelu nadpis nemění
+		if (!stacked && el.closest('.side-panel-template-container')) return;
+		options.sidePanelTitle = { stacked, title: triggerTitle(el) };
+	});
+
+	naja.addEventListener('success', function (e) {
+		const { payload, options } = e.detail;
+		const pending = options.sidePanelTitle;
+		const snippet = pending && (pending.stacked ? 'snippet--sidePanelStacked' : 'snippet--sidePanel');
+		if (!pending || !payload || !payload.snippets || !(snippet in payload.snippets)) return;
+		const container = document.getElementById(snippet).closest('.side-panel-template-container');
+		container.dataset.triggerTitle = pending.title;
+		applyTitle(container);
 	});
 
 	// Úprava má název záznamu ze serveru (.side-panel-config[data-title]), jinak text tlačítka
@@ -421,7 +430,7 @@ $(function () {
 		}
 		updateLines(this);
 	});
-	// Klientská validace neodešle formulář, chybu ale může mít v jiné záložce; capture, nette.ajax klik dál nepouští
+	// Klientská validace neodešle formulář, chybu ale může mít v jiné záložce; capture, aby to běželo před odesláním
 	document.addEventListener('click', (e) => {
 		const container = e.target instanceof Element && e.target.closest('.side-panel-template-container [type="submit"]')?.closest('.side-panel-template-container');
 		if (container) setTimeout(() => showErrorTab(container, true));

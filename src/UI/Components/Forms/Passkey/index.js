@@ -160,9 +160,8 @@ const onButtonClick = async (event) => {
 		return;
 	}
 
-	// Ceremony řídí JS — klik nesmí odeslat formulář ani doputovat k nette.ajax
-	// handlerům (delegovaný click.nette na :submit na formuláři), proto capture
-	// fáze + stopPropagation (viz run()).
+	// Ceremony řídí JS — klik nesmí odeslat formulář (ajaxem ho odesílá naja.js
+	// z FancyAdminu), proto capture fáze + preventDefault (viz run()).
 	event.preventDefault();
 	event.stopPropagation();
 
@@ -203,8 +202,8 @@ const onSubmit = (event) => {
 };
 
 const run = () => {
-	// Capture fáze — musí běžet dřív než delegované click.nette handlery
-	// nette.ajax na formuláři, jinak klik na submit odešle formulář AJAXem
+	// Capture fáze — musí běžet dřív než ostatní obsluhy kliku a odeslání,
+	// jinak klik na submit odešle formulář AJAXem
 	document.addEventListener('click', onButtonClick, true);
 	document.addEventListener('submit', onSubmit, true);
 };

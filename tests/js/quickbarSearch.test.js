@@ -73,7 +73,7 @@ function key(name, options = {}) {
 }
 
 beforeAll(async () => {
-	// Modul čte při načtení matchMedia (mobilní zlom) a na konci $.nette; jsdom nemá scrollIntoView
+	// Modul čte při načtení matchMedia (mobilní zlom); jsdom nemá scrollIntoView
 	window.matchMedia = vi.fn((query) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
 	Element.prototype.scrollIntoView = vi.fn();
 	await import('../../assets/js/_jquery-global.js');

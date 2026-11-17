@@ -12,8 +12,5 @@ packageExtensions:
   adt-js-components@*:
     peerDependencies:
       "@popperjs/core": "*"
-  select2-bootstrap-5-theme@*:
-    peerDependencies:
-      "@popperjs/core": "*"
 
 yarnPath: ./.yarn/yarn.cjs

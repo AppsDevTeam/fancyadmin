@@ -12,24 +12,17 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import Chart from 'chart.js/auto';
 import '../scss/_aiChat.scss';
+import { ajax } from './naja';
 
 const SELECTOR = '[data-adt-fancyadmin-ai-chat]';
 const GRID_REFRESH_SELECTOR = '[data-adt-fancyadmin-ai-grid-refresh]';
 const OPEN_SELECTOR = '[data-adt-fancyadmin-ai-open]';
 
-function ajax(url) {
-	if (window.jQuery?.nette?.ajax) {
-		window.jQuery.nette.ajax({ url });
-	} else {
-		window.location.reload();
-	}
-}
-
 function mount(root) {
 	root.querySelectorAll?.(SELECTOR).forEach((element) => {
 		// instance na elementu - rychlá lišta (quickbar.js) přes ni přepíná konverzace, sama adt-ai-chat neimportuje
 		element.adtAiChat = AiChat.mount(element, { marked, DOMPurify, Chart }, JSON.parse(element.dataset.adtFancyadminAiChat || '{}'));
-		// formulář si odesílá widget sám, nette.ajax ho nesmí převzít
+		// formulář si odesílá widget sám, ajax (naja.js) ho nesmí převzít
 		element.querySelectorAll('form').forEach((form) => form.classList.add('noajax'));
 	});
 }
@@ -65,11 +58,10 @@ new MutationObserver((records) => {
 mount(document);
 
 // odkaz na konverzaci (?aiConversationGrid-id=ID): otevřít konverzaci v bočním panelu - až po load,
-// kdy je nette.ajax inicializovaný
+// kdy je Naja inicializovaná
 window.addEventListener('load', () => {
 	const holder = document.querySelector(OPEN_SELECTOR);
-	// bez nette.ajax ne - záložní reload by se zacyklil
-	if (holder && window.jQuery?.nette?.ajax) {
-		window.jQuery.nette.ajax({ url: holder.dataset.adtFancyadminAiOpen });
+	if (holder) {
+		ajax(holder.dataset.adtFancyadminAiOpen);
 	}
 });

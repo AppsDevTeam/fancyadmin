@@ -61,7 +61,7 @@ function addTokenToForms(root) {
  * bez `do` a `_sec` vykresli tutez stranku a navic ji jde znovu nacist, aniz by se
  * signal zopakoval.
  */
-function cleanUrl(url) {
+export function cleanUrl(url) {
 	const parsed = new URL(url, window.location.href);
 
 	if (!parsed.searchParams.has(TOKEN_NAME) && !parsed.searchParams.has(SIGNAL_NAME)) {

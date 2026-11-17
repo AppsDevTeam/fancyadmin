@@ -4,6 +4,8 @@
 // data-lazy-state="loaded" a událost lazy-modal:loaded; kód, který formulář v modalu předvyplňuje,
 // na ni počká přes whenLazyModalLoaded().
 
+import { ajax } from './naja';
+
 export function whenLazyModalLoaded(modal, callback) {
 	if (!modal.dataset.lazyUrl || modal.dataset.lazyState === 'loaded') {
 		callback();
@@ -18,12 +20,12 @@ $(document).on('show.bs.modal', '.modal[data-lazy-url]', function () {
 		return;
 	}
 	modal.dataset.lazyState = 'loading';
-	$.nette.ajax({ url: modal.dataset.lazyUrl, off: ['history'] })
-		.done(() => {
+	ajax(modal.dataset.lazyUrl, null, { history: false })
+		.then(() => {
 			modal.dataset.lazyState = 'loaded';
 			$(modal).trigger('lazy-modal:loaded');
 		})
-		.fail(() => {
+		.catch(() => {
 			// Další otevření to zkusí znovu
 			delete modal.dataset.lazyState;
 		});
