@@ -1119,6 +1119,12 @@ s důkazním záznamem (otisk SHA-256 do PDF). Logika je v knihovně `adt/biomet
 (volitelná závislost), fancyadmin k ní dává služby (`biometricSignature: enabled`), pole
 `$form->addBiometricSignature()`, JS a styly. Návod v `docs/biometric-signature.md`.
 
+### Tlačítko Filtry nad gridem (`CollapsibleFiltersTrait`)
+
+Řádek filtrů gridu sbalený pod tlačítkem **Filtry**, rozbalený jen při aktivním filtru (výchozí filtr gridu
+se nepočítá). Trait do potomka `DataGrid`, šablona projektu dál dědí z `$originalTemplate`.
+Návod v `docs/datagrid-filters.md`.
+
 ### Formuláře v modalech až při otevření (`LazyComponentsTrait`)
 
 Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`

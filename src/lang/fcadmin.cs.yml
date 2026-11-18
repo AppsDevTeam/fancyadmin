@@ -12,6 +12,9 @@ accordion:
   active: Aktivní
   inactive: Neaktivní
 
+datagrid:
+  filters: Filtry
+
 dashboard:
   empty: Za zvolené období nejsou žádná data.
   period:

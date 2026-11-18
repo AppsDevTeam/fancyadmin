@@ -672,3 +672,35 @@ $datagridPageHeaderAnimation: .25s;
 		opacity: .6;
 	}
 }
+
+// Tlačítko Filtry (DataGridFilters.latte): vedle pole Hledat bere jeho výšku, rozbalené vypadá jako .active
+.grid-filters-toggle {
+	align-self: stretch;
+	white-space: nowrap;
+
+	&:not(.collapsed) {
+		color: var(--bs-btn-active-color);
+		background-color: var(--bs-btn-active-bg);
+		border-color: var(--bs-btn-active-border-color);
+	}
+
+	.main-search-filter & {
+		margin-left: 8px;
+	}
+}
+
+.grid-filters-bar {
+	display: flex;
+	margin-bottom: 1rem;
+}
+
+// Do načtení JS (initCollapsedFilters) je řádek filtrů bez hledání ještě rozbalený ze šablony knihovny
+.grid-filters-bar--collapsed ~ [class*='grid-filters-'].collapse.show {
+	display: none;
+}
+
+@include media-breakpoint-down(sm) {
+	.grid-filters-bar .grid-filters-toggle {
+		flex: 1;
+	}
+}

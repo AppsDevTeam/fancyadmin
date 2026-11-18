@@ -67,6 +67,20 @@ $(document).on('sortstart', '.datagrid [data-sortable]', (e, ui) => {
 	});
 });
 
+/**
+ * Bez pole Hledat kreslí knihovna řádek filtrů rozbalený (`collapse show`). Lišta s tlačítkem Filtry
+ * (DataGridFilters.latte) nese stav ze serveru; do načtení JS řádek schová CSS, tady ho předáme Bootstrapu.
+ */
+export function initCollapsedFilters($el) {
+	$el.find('.grid-filters-bar--collapsed').addBack('.grid-filters-bar--collapsed').each((index, bar) => {
+		const target = bar.querySelector('[data-bs-target]')?.dataset.bsTarget;
+		bar.parentElement.querySelectorAll(':scope > ' + target).forEach((filters) => filters.classList.remove('show'));
+		bar.classList.remove('grid-filters-bar--collapsed');
+	});
+}
+
+onContentLoaded(initCollapsedFilters);
+
 $(document).on('hidden.bs.collapse', '.datagrid form > .collapse', (e) => {
 	$(e.currentTarget).closest('form').find('.reset-filter').click();
 });

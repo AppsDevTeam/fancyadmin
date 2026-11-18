@@ -1,0 +1,30 @@
+{**
+ * Tlačítko „Filtry“ nad řádkem filtrů gridu (CollapsibleFiltersTrait, docs/datagrid-filters.md)
+ *
+ * @param Datagrid $control
+ *}
+
+{extends $control->getCollapsibleFiltersParentTemplate()}
+
+{define filters-toggle}
+	<button n:if="$control->hasCollapsibleFilters($filters, $switcherValues, $periodFilters)" type="button" n:class="btn, btn-outline-primary, grid-filters-toggle, !$filter_active ? collapsed"
+		data-bs-toggle="collapse" data-bs-target=".grid-filters-{$control->getParent()->getName()}"
+		aria-expanded="{$filter_active ? 'true' : 'false'}"
+	>
+		<i class="fa-solid fa-filter" aria-hidden="true"></i> {_fcadmin.datagrid.filters}
+	</button>
+{/define}
+
+{* S polem Hledat sbaluje řádek filtrů knihovna, tlačítko patří vedle hledání *}
+{define filter-search}
+	{include parent}
+	{include filters-toggle}
+{/define}
+
+{* Bez pole Hledat má knihovna řádek filtrů vždy rozbalený (třída `show`); sbalí ho datagrid.js podle lišty *}
+{define outer-filters}
+	<div n:if="!isset($filters['search']) && $control->hasCollapsibleFilters($filters, $switcherValues, $periodFilters)" n:class="grid-filters-bar, !$filter_active ? 'grid-filters-bar--collapsed'">
+		{include filters-toggle}
+	</div>
+	{include parent}
+{/define}
