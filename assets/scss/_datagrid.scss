@@ -689,18 +689,19 @@ $datagridPageHeaderAnimation: .25s;
 	}
 }
 
-.grid-filters-bar {
+// Ne `grid-filters-…`: prázdné `[class^="grid-filters"]` bez pole schovává pravidlo výš
+.datagrid-filters-bar {
 	display: flex;
 	margin-bottom: 1rem;
 }
 
 // Do načtení JS (initCollapsedFilters) je řádek filtrů bez hledání ještě rozbalený ze šablony knihovny
-.grid-filters-bar--collapsed ~ [class*='grid-filters-'].collapse.show {
+.datagrid-filters-bar--collapsed ~ [class*='grid-filters-'].collapse.show {
 	display: none;
 }
 
 @include media-breakpoint-down(sm) {
-	.grid-filters-bar .grid-filters-toggle {
+	.datagrid-filters-bar .grid-filters-toggle {
 		flex: 1;
 	}
 }

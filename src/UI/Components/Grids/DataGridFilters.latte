@@ -23,7 +23,7 @@
 
 {* Bez pole Hledat má knihovna řádek filtrů vždy rozbalený (třída `show`); sbalí ho datagrid.js podle lišty *}
 {define outer-filters}
-	<div n:if="!isset($filters['search']) && $control->hasCollapsibleFilters($filters, $switcherValues, $periodFilters)" n:class="grid-filters-bar, !$filter_active ? 'grid-filters-bar--collapsed'">
+	<div n:if="!isset($filters['search']) && $control->hasCollapsibleFilters($filters, $switcherValues, $periodFilters)" n:class="datagrid-filters-bar, !$filter_active ? 'datagrid-filters-bar--collapsed'">
 		{include filters-toggle}
 	</div>
 	{include parent}

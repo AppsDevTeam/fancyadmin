@@ -27,7 +27,7 @@ trait vrací jako `$originalTemplate` šablonu `DataGridFilters.latte`, která d
 | `src/UI/Components/Grids/CollapsibleFiltersTrait.php` | šablona gridu, `hasCollapsibleFilters()`, `isFilterActive()` bez výchozího filtru |
 | `src/UI/Components/Grids/DataGridFilters.latte` | tlačítko (`filters-toggle`) vedle pole Hledat (`filter-search`), bez hledání v liště nad filtry (`outer-filters`) |
 | `assets/js/datagrid.js` | `initCollapsedFilters()` - sbalení řádku bez hledání při načtení a po překreslení snippetu |
-| `assets/scss/_datagrid.scss` | `.grid-filters-toggle`, `.grid-filters-bar` (na mobilu tlačítko přes celou šířku) |
+| `assets/scss/_datagrid.scss` | `.grid-filters-toggle`, `.datagrid-filters-bar` (na mobilu tlačítko přes celou šířku) |
 | `src/lang/fcadmin.*.yml` | `fcadmin.datagrid.filters` |
 
 ## Chování
@@ -40,7 +40,7 @@ trait vrací jako `$originalTemplate` šablonu `DataGridFilters.latte`, která d
 - **Sbalení filtr zruší** - `datagrid.js` po `hidden.bs.collapse` klikne na „Resetovat filtr“ (stejné jako dosud).
 - **S polem Hledat** sbaluje řádek knihovna (`grid-filters-{grid} collapse`, `show` jen při aktivním filtru)
   a tlačítko stojí vedle hledání.
-- **Bez pole Hledat** knihovna kreslí řádek vždy rozbalený (`collapse show`). Lišta `.grid-filters-bar` s tlačítkem
-  nese stav ze serveru (`.grid-filters-bar--collapsed`): do načtení JS řádek schová CSS, `initCollapsedFilters()`
+- **Bez pole Hledat** knihovna kreslí řádek vždy rozbalený (`collapse show`). Lišta `.datagrid-filters-bar` s tlačítkem
+  nese stav ze serveru (`.datagrid-filters-bar--collapsed`): do načtení JS řádek schová CSS, `initCollapsedFilters()`
   pak odebere `show` a dál řídí Bootstrap collapse. Po překreslení gridu (filtrování, řazení, stránkování) se
   stav nastaví znovu podle serveru - rozbalené zůstanou jen aktivní filtry.

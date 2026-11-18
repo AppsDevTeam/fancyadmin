@@ -6,7 +6,7 @@ let naja;
 
 function grid(collapsed) {
 	return `<div id="snippet-grid-grid"><form>
-		<div class="grid-filters-bar${collapsed ? ' grid-filters-bar--collapsed' : ''}">
+		<div class="datagrid-filters-bar${collapsed ? ' datagrid-filters-bar--collapsed' : ''}">
 			<button type="button" class="btn btn-outline-primary grid-filters-toggle${collapsed ? ' collapsed' : ''}" data-bs-toggle="collapse" data-bs-target=".grid-filters-orderGrid" aria-expanded="${collapsed ? 'false' : 'true'}">Filtry</button>
 		</div>
 		<div class="grid-filters-orderGrid collapse show"><div class="row-filters"></div></div>
@@ -14,7 +14,7 @@ function grid(collapsed) {
 }
 
 const filters = () => document.querySelector('.grid-filters-orderGrid');
-const bar = () => document.querySelector('.grid-filters-bar');
+const bar = () => document.querySelector('.datagrid-filters-bar');
 
 beforeAll(async () => {
 	await import('../../assets/js/_jquery-global.js');
@@ -34,7 +34,7 @@ describe('sbalené filtry gridu', () => {
 
 		expect(filters().classList.contains('show')).toBe(false);
 		expect(filters().classList.contains('collapse')).toBe(true);
-		expect(bar().classList.contains('grid-filters-bar--collapsed')).toBe(false);
+		expect(bar().classList.contains('datagrid-filters-bar--collapsed')).toBe(false);
 	});
 
 	it('aktivní filtr: řádek zůstane rozbalený', async () => {
@@ -60,5 +60,19 @@ describe('sbalené filtry gridu', () => {
 		initCollapsedFilters($(document));
 
 		expect(document.querySelector('.grid-filters-otherGrid').classList.contains('show')).toBe(true);
+	});
+
+	it('sbalení řádku filtrů zruší filtr - nativní klik na Resetovat filtr, na který slyší Naja', () => {
+		document.body.innerHTML = '<div class="datagrid"><form><div class="grid-filters-orderGrid collapse"></div><a class="reset-filter ajax" href="/reset">Resetovat filtr</a></form></div>';
+		let clicked = 0;
+		document.querySelector('.reset-filter').addEventListener('click', (e) => {
+			e.preventDefault();
+			clicked++;
+		});
+
+		// Bootstrap s jQuery na stránce spouští i jQuery událost, na kterou datagrid.js slyší
+		$(filters()).trigger('hidden.bs.collapse');
+
+		expect(clicked).toBe(1);
 	});
 });
