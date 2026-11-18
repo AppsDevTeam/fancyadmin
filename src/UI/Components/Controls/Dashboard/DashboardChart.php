@@ -15,7 +15,7 @@ final class DashboardChart
 	public const TYPES = ['line', 'bar', 'doughnut', 'pie'];
 
 	/**
-	 * @param list<string> $labels popisky osy (dny, produkty)
+	 * @param list<string|list<string>> $labels popisky osy (dny, produkty); pole = víc řádků popisku
 	 * @param list<array<string, mixed>> $datasets `label`, `data` a případně další volby datasetu Chart.js
 	 * @param array<string, mixed>|null $format volby `Intl.NumberFormat` pro osu hodnot a tooltip
 	 * @param string|null $indexAxis `x` nebo `y` (vodorovné sloupce)
