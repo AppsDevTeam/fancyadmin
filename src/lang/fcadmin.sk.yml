@@ -15,6 +15,9 @@ accordion:
 datagrid:
   filters: Filtre
 
+modal:
+  close: Zavrieť
+
 dashboard:
   empty: Za zvolené obdobie nie sú žiadne údaje.
   period:

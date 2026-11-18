@@ -1130,6 +1130,12 @@ Návod v `docs/datagrid-filters.md`.
 Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`
 a `assets/js/lazyModal.js` je načtou až při prvním otevření modalu. Návod v `docs/lazy-modal.md`.
 
+### Modal (`modal.latte`)
+
+Modal pro `{embed}` - hlavička s ikonou, tělo, patička se „Zavřít“ a hlavním tlačítkem, formulář přes celý modal,
+napojení na `LazyComponentsTrait`; styly dávají formulářům v modalu užší dialog a široké hlavní tlačítko.
+Návod v `docs/modal.md`.
+
 ### Accordion sekcí (`accordion.latte`, `accordion.js`)
 
 Formuláře stránky jako karty pod sebou s jednou otevřenou sekcí (šablony e-mailů, platební metody):

@@ -1,0 +1,42 @@
+@use 'variables' as *;
+
+// Modal (docs/modal.md): užší dialog pro formuláře, široké hlavní tlačítko, backdrop pod modalem fancyadminu
+
+// Modaly mají z-index 9030 (nad bočním panelem 9020, _base.scss), backdrop Bootstrapu musí ležet mezi nimi
+.modal-backdrop {
+	--bs-backdrop-zindex: 9025;
+}
+
+.modal-dialog-narrow {
+	max-width: 600px;
+}
+
+// Formulář přes tělo i patičku je pro Bootstrap další úroveň: bez flexu se modal-dialog-scrollable neuplatní
+// a na malém monitoru je konec formuláře i tlačítko Odeslat mimo obrazovku
+.modal-dialog-scrollable .modal-content > form {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.modal form [type='submit'] {
+	width: auto;
+	min-width: 240px;
+	padding-right: 32px;
+	padding-left: 32px;
+}
+
+// Formulář z rendereru má odeslání v běžném bloku pod poli - na střed jako v patičce
+.modal form > .mb-3 > [type='submit'] {
+	display: block;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+@include media-breakpoint-down(sm) {
+	.modal form [type='submit'] {
+		min-width: 0;
+		flex: 1;
+	}
+}

@@ -1,0 +1,41 @@
+{**
+	Modal pro {embed}: hlavička s ikonou, titulkem a křížkem, tělo a nepovinná patička (docs/modal.md).
+
+	{import ADT\FancyAdmin\UI\Components\Modal\Modal::TEMPLATE}
+	{embed modal, id: 'smsModal', title: 'Odeslat SMS', icon: 'comment-sms'}
+		{block body}…{/block}
+		{block footer}{include modalClose}<button type="submit" class="btn btn-primary">…</button>{/block}
+	{/embed}
+
+	Formulář přes tělo i patičku: parametr `form` (atributy formuláře) - modal-content pak obalí <form>.
+	Velikost `size`: narrow (výchozí, 600 px), sm, lg, xl, '' = šířka Bootstrapu.
+	Načtení obsahu až při otevření (LazyComponentsTrait): `lazyUrl` a `lazyLoaded`.
+*}
+{define modal, string $id, string $title, ?string $icon = null, ?string $size = 'narrow', bool $scrollable = true, bool $centered = false, ?string $lazyUrl = null, bool $lazyLoaded = false, ?array $form = null, bool $show = false}
+	{var $_titleId = $id . 'Title'}
+	<div class="modal fade" id="{$id}" tabindex="-1" aria-labelledby="{$_titleId}" aria-hidden="true"
+		n:attr="data-lazy-url: $lazyUrl, data-lazy-state: $lazyUrl && $lazyLoaded ? 'loaded', data-adt-show-modal: $show ?: null">
+		<div n:class="modal-dialog, $scrollable ? modal-dialog-scrollable, $centered ? modal-dialog-centered, $size === 'narrow' ? modal-dialog-narrow, $size && $size !== 'narrow' ? 'modal-' . $size">
+			<div class="modal-content">
+				<form n:tag-if="$form !== null" n:attr="$form ?? []">
+					<div class="modal-header">
+						<h2 class="modal-title h5" id="{$_titleId}">
+							<i n:if="$icon" class="{str_starts_with($icon, 'fa-') ? $icon : 'fa-regular fa-' . $icon} me-2" aria-hidden="true"></i>{$title}
+						</h2>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{_fcadmin.modal.close}"></button>
+					</div>
+					<div class="modal-body">
+						{block body}{/block}
+					</div>
+					<div class="modal-footer" n:ifcontent>
+						{block footer}{/block}
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+{/define}
+
+{define modalClose}
+	<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{_fcadmin.modal.close}</button>
+{/define}
