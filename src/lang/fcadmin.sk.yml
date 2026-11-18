@@ -8,6 +8,10 @@ global:
     dismiss: Zavrieť
     sortableError: Nové poradie sa nepodarilo uložiť. Obnovte prosím stránku a skúste to znova.
 
+accordion:
+  active: Aktívne
+  inactive: Neaktívne
+
 layout:
   sideMenu:
     collapse: Zbaliť

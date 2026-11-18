@@ -8,6 +8,10 @@ global:
     dismiss: Zavřít
     sortableError: Nové pořadí se nepodařilo uložit. Obnovte prosím stránku a zkuste to znovu.
 
+accordion:
+  active: Aktivní
+  inactive: Neaktivní
+
 layout:
   sideMenu:
     collapse: Sbalit

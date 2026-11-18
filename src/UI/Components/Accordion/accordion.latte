@@ -1,0 +1,36 @@
+{*
+	Sekce accordionu (docs/accordion.md). Obsah sekce je blok `body` uvnitř `{embed}`:
+
+	<div class="accordion-sections" data-single>
+		{embed accordionSection, id: 'paid', title: 'Zaplaceno', description: '…'}
+			{block body}{control paidForm}{/block}
+		{/embed}
+	</div>
+
+	Odznak: `badge` je pevný text; s `badgeSource` (jméno zaškrtávátka v sekci) přepíná JS mezi
+	`badgeOn` a `badgeOff` podle stavu pole, výchozí stav nese `badgeActive`.
+*}
+{define accordionSection, string $id, string $title, ?string $description = null, ?string $badge = null, ?string $badgeSource = null, ?bool $badgeActive = null, ?string $badgeOn = null, ?string $badgeOff = null, bool $open = false}
+	{var $_bodyId = 'accordion-section-' . $id}
+	{if $badgeSource}
+		{var $badgeOn = $badgeOn ?? ('fcadmin.accordion.active'|translate)}
+		{var $badgeOff = $badgeOff ?? ('fcadmin.accordion.inactive'|translate)}
+		{var $badge = $badgeActive ? $badgeOn : $badgeOff}
+	{/if}
+	<section n:class="accordion-section, $open ? 'is-open'" data-accordion-section="{$id}"
+		n:attr="data-accordion-badge-source: $badgeSource, data-accordion-badge-on: $badgeSource ? $badgeOn, data-accordion-badge-off: $badgeSource ? $badgeOff">
+		<button type="button" n:class="accordion-section-header, !$open ? 'collapsed'" data-bs-toggle="collapse" data-bs-target="#{$_bodyId}" aria-expanded="{$open ? 'true' : 'false'}" aria-controls="{$_bodyId}">
+			<span class="accordion-section-heading">
+				<span class="accordion-section-title">{$title}</span>
+				<span n:if="$description" class="accordion-section-description">{$description}</span>
+			</span>
+			<span n:if="$badge !== null" n:class="accordion-section-badge, badge, $badgeSource && $badgeActive ? 'text-bg-success' : 'text-bg-secondary'" data-accordion-badge>{$badge}</span>
+			<i class="accordion-section-chevron fa-solid fa-chevron-down" aria-hidden="true"></i>
+		</button>
+		<div id="{$_bodyId}" n:class="collapse, $open ? 'show'">
+			<div class="accordion-section-body">
+				{block body}{/block}
+			</div>
+		</div>
+	</section>
+{/define}

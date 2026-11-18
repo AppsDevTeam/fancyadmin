@@ -1124,6 +1124,12 @@ s důkazním záznamem (otisk SHA-256 do PDF). Logika je v knihovně `adt/biomet
 Stránka s modaly nemusí při každém zobrazení sestavovat jejich formuláře - `LazyComponentsTrait`
 a `assets/js/lazyModal.js` je načtou až při prvním otevření modalu. Návod v `docs/lazy-modal.md`.
 
+### Accordion sekcí (`accordion.latte`, `accordion.js`)
+
+Formuláře stránky jako karty pod sebou s jednou otevřenou sekcí (šablony e-mailů, platební metody):
+blok `accordionSection` pro `{embed}`, otevření sekce s chybou, zapamatování otevřené sekce, `?section=`
+a odznak napojený na zaškrtávátko. Návod v `docs/accordion.md`.
+
 ### CSRF ochrana signálů
 
 Stavové akce administrace se spouštějí signály (`?do=...`). SameSite cookie ani hlavička

@@ -1,0 +1,79 @@
+@use 'variables' as *;
+
+// Sekce accordionu (docs/accordion.md): karty pod sebou, hlavička s titulkem, popisem, odznakem
+// a šipkou, tělo sbalené Bootstrap collapse. Jen proměnné --fa-* / --primaryColor - světlý i tmavý režim.
+
+.accordion-sections {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.accordion-section {
+	background-color: var(--fa-surface);
+	border: 1px solid var(--fa-border);
+	border-radius: var(--bs-border-radius-lg);
+	overflow: hidden;
+
+	&.is-open {
+		border-color: color-mix(in srgb, var(--primaryColor) 35%, var(--fa-border));
+	}
+}
+
+.accordion-section-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 16px 20px;
+	border: 0;
+	background: none;
+	color: var(--fa-heading, var(--fa-text));
+	text-align: left;
+
+	&:hover {
+		background-color: var(--fa-surface-hover);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primaryColor);
+		outline-offset: -2px;
+	}
+}
+
+.accordion-section-heading {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.accordion-section-title {
+	font-size: $control-font;
+	font-weight: 600;
+}
+
+.accordion-section-description {
+	font-size: $control-font-sm;
+	color: var(--fa-text-muted);
+}
+
+.accordion-section-badge {
+	flex: 0 0 auto;
+}
+
+.accordion-section-chevron {
+	flex: 0 0 auto;
+	color: var(--fa-text-muted);
+	transition: transform 0.2s ease;
+
+	.accordion-section-header:not(.collapsed) & {
+		transform: rotate(180deg);
+	}
+}
+
+.accordion-section-body {
+	padding: 20px;
+	border-top: 1px solid var(--fa-border);
+}
