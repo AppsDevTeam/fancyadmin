@@ -141,7 +141,7 @@ describe('pomocné funkce a registrace', () => {
 		expect(theme.withAlpha('red', 0.2)).toBe('red');
 	});
 
-	it('dashboard.js plugin zaregistruje do builtinu Chart', () => {
+	it('widgets.js plugin zaregistruje do builtinu Chart', () => {
 		expect(chartPlugins.fancyadminTheme).toBe(theme.fancyadminTheme);
 	});
 });
