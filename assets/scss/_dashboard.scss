@@ -33,9 +33,10 @@
 	}
 }
 
+// Přímo sloupce, ne proměnná - tu nastavuje specifičtější pravidlo pro lg výše
 @include media-breakpoint-down(md) {
 	.fa-dashboard {
-		--fa-dashboard-columns: 1;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.fa-dashboard-widget {
