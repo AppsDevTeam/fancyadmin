@@ -3211,6 +3211,27 @@ první výskyt `text` ve zprávě je odkaz (např. jméno pacienta na jeho kartu
 Otevřený seznam nebo vlákno
 obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený chat ho ignoruje.
 
+**Chat - téma, plus a výběr zpráv (volitelné)** — co zdroj neumí, lišta neukáže:
+
+- `chats.messages()` může místo pole vrátit `{ messages, topic }`. `topic: { label, href? }` je téma
+  konverzace (např. řešený pacient) v pruhu nad polem zprávy, s `chats.clearTopic(chatId)` v něm
+  je tlačítko *Ukončit*. Zpráva navíc nese `id` a `tag: { text, href? }` - souvislá řada zpráv se
+  stejným štítkem je jeden blok (linka vlevo, podbarvení, štítek nahoře), takže je vidět, kde téma
+  začíná a končí; štítek s `href` je odkaz (na mobilu lištu zavře).
+- `chats.menu(chatId) → [{ id, icon, label, meta? }]` ukáže plus vlevo od pole zprávy, klik otevře
+  nabídku (šipky, Esc). Položka volá `chats.menuAction(chatId, id)`, po jejím dokončení lišta
+  zprávy načte znovu (téma se mohlo změnit).
+- `chats.selectionActions(chatId) → [{ id, icon?, label }]` přidá do nabídky *Vybrat zprávy*: zprávy
+  s `id` jdou klikem (i mezerou) vybrat, místo pole zprávy je lišta s počtem, akcemi (první je
+  hlavní) a *Zrušit*. Akce volá `chats.selectionAction(chatId, id, messageIds)`; vrácené `false`
+  = uživatel si to rozmyslel a výběr zůstane, jinak se výběr ukončí a zprávy načtou znovu.
+- `pickInQuickbar({ title, placeholder?, hint?, minLength?, suggestions?, search })` (export `quickbar.js`)
+  ukáže přes vlákno výběr položky s hledáním: bez textu `suggestions` (pole nebo Promise, nadpis
+  *Návrhy*), od `minLength` znaků (2) výsledky `search(query)` s prodlevou jako hledání v liště.
+  Bez návrhů je pod polem `hint` (co psát). Položka `{ id, label, meta?, initials? }`, šipky a Enter
+  vybírají, Esc a křížek zavřou; Enter stisknutý před příchodem výsledků počká na první z nich.
+  Vrací Promise s vybranou položkou, nebo `null`. Hodí se pro akce nabídky a výběru zpráv.
+
 **AI na celou plochu** — tlačítko v hlavičce roztáhne okno od bočního menu k okraji
 (`--side-panel-width`), vlevo seznam konverzací po dnech, vpravo konverzace v bublině.
 Zmenšit nebo Esc vrátí malé okno.

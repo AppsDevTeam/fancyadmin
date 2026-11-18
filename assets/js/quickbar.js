@@ -9,6 +9,15 @@
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
 //            messages(chatId) → [{ mine, text, time, link?: { text, href } }], send(chatId, text) → message, read(chatId) }
 //            link = část textu zprávy jako odkaz (např. jméno pacienta na jeho kartu)
+//            Volitelně (bez nich lišta plus ani výběr zpráv neukáže):
+//            messages(chatId) → { messages, topic?: { label, href? } } - téma konverzace v pruhu nad polem zprávy,
+//              zpráva navíc s id a tag?: { text, href? } (řada zpráv se stejným štítkem je jeden blok se štítkem nahoře),
+//            menu(chatId) → [{ id, icon, label, meta? }] - nabídka pod plusem vlevo od pole zprávy,
+//            menuAction(chatId, id) - po dokončení lišta zprávy načte znovu (téma se mohlo změnit),
+//            clearTopic(chatId) - tlačítko Ukončit v pruhu tématu,
+//            selectionActions(chatId) → [{ id, icon?, label }] - v nabídce přibude „Vybrat zprávy“,
+//            selectionAction(chatId, id, messageIds) → false = zrušeno (výběr zůstane), jinak se výběr ukončí.
+//            Akce si můžou nechat vybrat položku přes pickInQuickbar().
 // Otevřený chat obnovuje projekt voláním refreshQuickbarChat() (polling, push).
 //
 // Na mobilu je v liště i Menu (@quickbarMenu.latte) místo bočního menu a AI se neroztahuje na celou plochu.
@@ -47,6 +56,15 @@ const state = {
 	chatQuery: '',
 	activeChat: null,
 	messages: [],
+	// Téma otevřené konverzace ({ label, href? }) - zdroj ho vrací spolu se zprávami
+	chatTopic: null,
+	// Nabídka pod plusem (null = zavřená) a akce nad vybranými zprávami
+	chatMenu: null,
+	chatSelecting: false,
+	chatSelected: new Set(),
+	chatSelectionActions: [],
+	// Otevřený výběr položky s hledáním (pickInQuickbar)
+	picker: null,
 	ai: { config: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
@@ -108,6 +126,7 @@ function open(name, focus = true) {
 	state.ai.full = false;
 	// Chat se otevírá seznamem konverzací
 	state.chatView = 'list';
+	resetChatThreadState();
 	render();
 
 	if (name === 'search') {
@@ -412,6 +431,9 @@ function addTodo(text) {
 
 let renderedThread = { chat: null, count: 0 };
 
+// Volitelné části chatu (téma, nabídka plusu, výběr zpráv) jen podle toho, co zdroj umí
+const chatSourceHas = (method) => typeof source.chats?.[method] === 'function';
+
 function renderChat() {
 	const $list = document.querySelector('[data-quickbar-chats]');
 	const $thread = document.querySelector('[data-quickbar-thread]');
@@ -420,16 +442,421 @@ function renderChat() {
 	}
 	renderChatList($list);
 	renderChatCurrent();
+	renderChatTopic();
+	renderChatSelection();
+	renderChatMenu();
+	renderPicker();
 
-	setHtml($thread, state.messages.map((m) => `
-		<div class="quickbar-message ${m.mine ? 'quickbar-message--mine' : ''}">
-			<div class="quickbar-bubble">${messageHtml(m)}</div>
-			<div class="quickbar-message-time">${esc(m.time)}</div>
-		</div>`).join(''));
+	$thread.classList.toggle('quickbar-thread--selecting', state.chatSelecting);
+	setHtml($thread, messageRuns(state.messages).map((run) => {
+		const messages = run.messages.map(messageRowHtml).join('');
+		return run.tag
+			? `<div class="quickbar-message-group">
+				<div class="quickbar-message-group-head">${messageTag(run.tag)}</div>
+				${messages}
+			</div>`
+			: messages;
+	}).join(''));
 	// Na konec jen při nové zprávě nebo jiné konverzaci - polling by jinak vracel čtenáře dolů
 	if (renderedThread.chat !== state.activeChat || renderedThread.count !== state.messages.length) {
 		$thread.scrollTop = $thread.scrollHeight;
 		renderedThread = { chat: state.activeChat, count: state.messages.length };
+	}
+}
+
+// Souvislá řada zpráv se stejným štítkem je jeden blok - je vidět, kde téma začíná a kde končí
+function messageRuns(messages) {
+	const runs = [];
+	messages.forEach((m) => {
+		const key = m.tag ? (m.tag.href ?? m.tag.text) : null;
+		const last = runs[runs.length - 1];
+		if (last && last.key === key) {
+			last.messages.push(m);
+		} else {
+			runs.push({ key, tag: m.tag ?? null, messages: [m] });
+		}
+	});
+	return runs;
+}
+
+function messageRowHtml(m) {
+	const selectable = state.chatSelecting && m.id != null;
+	const selected = selectable && state.chatSelected.has(String(m.id));
+	const classes = ['quickbar-message', m.mine ? 'quickbar-message--mine' : '', selected ? 'quickbar-message--selected' : ''];
+	const attributes = selectable ? ` role="checkbox" tabindex="0" aria-checked="${selected}" data-quickbar-message="${esc(m.id)}"` : '';
+	return `
+		<div class="${classes.join(' ')}"${attributes}>
+			${selectable ? '<span class="quickbar-message-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>' : ''}
+			<div class="quickbar-message-content">
+				<div class="quickbar-bubble">${messageHtml(m)}</div>
+				<div class="quickbar-message-time">${esc(m.time)}</div>
+			</div>
+		</div>`;
+}
+
+// Při výběru zpráv je štítek jen popisek - klik vybírá zprávu, nenaviguje
+function messageTag(tag) {
+	const inner = `<i class="fa-regular fa-tag"></i><span>${esc(tag.text)}</span>`;
+	return tag.href && !state.chatSelecting
+		? `<a class="quickbar-message-tag" href="${esc(tag.href)}">${inner}</a>`
+		: `<span class="quickbar-message-tag">${inner}</span>`;
+}
+
+function renderChatTopic() {
+	const $topic = document.querySelector('[data-quickbar-chat-topic]');
+	if (!$topic) {
+		return;
+	}
+	const topic = state.chatView === 'thread' ? state.chatTopic : null;
+	$topic.hidden = !topic || state.chatSelecting;
+	if (!topic) {
+		return;
+	}
+	const name = topic.href
+		? `<a class="quickbar-chat-topic-name" href="${esc(topic.href)}">${esc(topic.label)}</a>`
+		: `<span class="quickbar-chat-topic-name">${esc(topic.label)}</span>`;
+	setHtml($topic, `
+		<span class="quickbar-chat-topic-icon" aria-hidden="true"><i class="fa-regular fa-tag"></i></span>
+		<span class="quickbar-chat-topic-text">
+			<span class="quickbar-chat-topic-label">${esc($topic.dataset.label)}</span>
+			${name}
+		</span>
+		${chatSourceHas('clearTopic') ? `<button type="button" class="btn btn-sm btn-ghost quickbar-chat-topic-clear" data-quickbar-chat-topic-clear>${esc($topic.dataset.clear)}</button>` : ''}`);
+}
+
+function renderChatSelection() {
+	const $selection = document.querySelector('[data-quickbar-chat-selection]');
+	const $form = panel('chat')?.querySelector('[data-quickbar-form="chat"]');
+	if (!$selection || !$form) {
+		return;
+	}
+	$selection.hidden = !state.chatSelecting;
+	$form.hidden = state.chatSelecting;
+	const $plus = $form.querySelector('[data-quickbar-chat-plus]');
+	$plus.hidden = !chatSourceHas('menu') && !chatSourceHas('selectionActions');
+	$plus.setAttribute('aria-expanded', state.chatMenu ? 'true' : 'false');
+	$plus.classList.toggle('active', state.chatMenu !== null);
+	if (!state.chatSelecting) {
+		return;
+	}
+	const count = state.chatSelected.size;
+	const label = count ? $selection.dataset.count.replace('%count%', count) : $selection.dataset.hint;
+	setHtml($selection, `
+		<span class="quickbar-chat-selection-count${count ? '' : ' quickbar-chat-selection-count--hint'}">${esc(label)}</span>
+		<span class="quickbar-chat-selection-actions">
+			${state.chatSelectionActions.map((action, index) => `
+				<button type="button" class="btn btn-sm ${index === 0 ? 'btn-primary' : 'btn-outline-secondary'}" data-quickbar-selection-action="${esc(action.id)}"${count ? '' : ' disabled'}>
+					${action.icon ? `<i class="${esc(action.icon)}"></i>` : ''}${esc(action.label)}
+				</button>`).join('')}
+			<button type="button" class="btn btn-sm btn-ghost" data-quickbar-selection-cancel>${esc($selection.dataset.cancel)}</button>
+		</span>`);
+}
+
+function renderChatMenu() {
+	const $menu = document.querySelector('[data-quickbar-chat-menu]');
+	if (!$menu) {
+		return;
+	}
+	$menu.hidden = state.chatMenu === null;
+	if (state.chatMenu === null) {
+		return;
+	}
+	setHtml($menu, state.chatMenu.map((item) => `
+		<button type="button" class="quickbar-chat-menu-item" role="menuitem" data-quickbar-chat-menu-item="${esc(item.id)}">
+			<span class="quickbar-chat-menu-icon"><i class="${esc(item.icon || 'fa-regular fa-circle')}"></i></span>
+			<span class="quickbar-chat-menu-text">
+				<span class="quickbar-chat-menu-label">${esc(item.label)}</span>
+				${item.meta ? `<span class="quickbar-chat-menu-meta">${esc(item.meta)}</span>` : ''}
+			</span>
+		</button>`).join(''));
+}
+
+const SELECT_MENU_ITEM = '__select';
+
+function toggleChatMenu() {
+	if (state.chatMenu !== null) {
+		closeChatMenu();
+		return;
+	}
+	const chatId = state.activeChat;
+	const $menu = document.querySelector('[data-quickbar-chat-menu]');
+	Promise.all([call('chats.menu', chatId), call('chats.selectionActions', chatId)]).then(([items, selectionActions]) => {
+		if (state.activeChat !== chatId || state.chatView !== 'thread') {
+			return;
+		}
+		state.chatSelectionActions = selectionActions || [];
+		const menu = [
+			...(items || []),
+			...(state.chatSelectionActions.length ? [{ id: SELECT_MENU_ITEM, icon: 'fa-regular fa-list-check', label: $menu.dataset.select }] : []),
+		];
+		// Zdroj v téhle konverzaci nic nenabízí (např. bez oprávnění) - prázdná nabídka se neotevře
+		if (!menu.length) {
+			return;
+		}
+		state.chatMenu = menu;
+		render();
+		$menu.querySelector('[data-quickbar-chat-menu-item]')?.focus();
+	});
+}
+
+function closeChatMenu(focusInput = false) {
+	if (state.chatMenu === null) {
+		return;
+	}
+	state.chatMenu = null;
+	render();
+	if (focusInput) {
+		focusChatInput();
+	}
+}
+
+function focusChatInput() {
+	panel('chat')?.querySelector('[data-quickbar-form="chat"] input')?.focus();
+}
+
+function runChatMenuItem(id) {
+	const chatId = state.activeChat;
+	closeChatMenu();
+	if (id === SELECT_MENU_ITEM) {
+		startSelecting();
+		return;
+	}
+	call('chats.menuAction', chatId, id).then(() => {
+		if (state.activeChat === chatId) {
+			loadMessages(chatId);
+			focusChatInput();
+		}
+	});
+}
+
+function startSelecting() {
+	state.chatSelecting = true;
+	state.chatSelected = new Set();
+	render();
+}
+
+function stopSelecting() {
+	state.chatSelecting = false;
+	state.chatSelected = new Set();
+	render();
+	focusChatInput();
+}
+
+function toggleMessageSelected(id) {
+	state.chatSelected.has(id) ? state.chatSelected.delete(id) : state.chatSelected.add(id);
+	render();
+}
+
+// Akce vrátí false, když si ji uživatel rozmyslel (např. zavřel výběr) - výběr pak zůstane
+function runSelectionAction(id) {
+	const chatId = state.activeChat;
+	const ids = [...state.chatSelected];
+	call('chats.selectionAction', chatId, id, ids).then((result) => {
+		if (result === false || state.activeChat !== chatId) {
+			return;
+		}
+		stopSelecting();
+		loadMessages(chatId);
+	});
+}
+
+function clearChatTopic() {
+	const chatId = state.activeChat;
+	call('chats.clearTopic', chatId).then(() => {
+		if (state.activeChat === chatId) {
+			state.chatTopic = null;
+			render();
+			loadMessages(chatId);
+			focusChatInput();
+		}
+	});
+}
+
+function resetChatThreadState() {
+	state.chatTopic = null;
+	state.chatMenu = null;
+	state.chatSelecting = false;
+	state.chatSelected = new Set();
+	if (state.picker) {
+		closePicker(null);
+	}
+}
+
+// === Výběr položky s hledáním (překryje vlákno chatu) ===
+
+/**
+ * Výběr položky (pacienta, zakázky…) pro akci chatu. Ukáže se přes vlákno, dokud uživatel
+ * nevybere nebo nezavře (Esc, šipka zpět). Vrací Promise s vybranou položkou, nebo null.
+ *
+ * options: { title, placeholder?, hint? (bez návrhů pod polem), minLength? (2),
+ *            suggestions?: items | Promise<items>, search(query) → Promise<items> },
+ *            items: [{ id, label, meta?, initials? }]
+ */
+export function pickInQuickbar(options) {
+	return new Promise((resolve) => {
+		if (state.picker) {
+			closePicker(null);
+		}
+		state.picker = {
+			title: options.title ?? '',
+			placeholder: options.placeholder ?? '',
+			minLength: options.minLength ?? 2,
+			search: options.search,
+			suggestions: [],
+			suggestionsLoaded: false,
+			hint: options.hint ?? '',
+			query: '',
+			results: null,
+			active: 0,
+			request: 0,
+			resolve,
+		};
+		mountPicker();
+		Promise.resolve(options.suggestions).then((list) => {
+			if (state.picker?.resolve === resolve) {
+				state.picker.suggestions = list || [];
+				state.picker.suggestionsLoaded = true;
+				renderPicker();
+			}
+		});
+	});
+}
+
+// Kostra se vykreslí jednou při otevření - překreslení by bralo poli kurzor
+function mountPicker() {
+	const $picker = document.querySelector('[data-quickbar-picker]');
+	if (!$picker || !state.picker) {
+		return;
+	}
+	$picker.innerHTML = `
+		<div class="quickbar-picker-header">
+			<span class="quickbar-picker-title">${esc(state.picker.title)}</span>
+			<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($picker.dataset.close)}" aria-label="${esc($picker.dataset.close)}" data-quickbar-picker-close><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div class="quickbar-picker-search">
+			<div class="quickbar-search-field">
+				<i class="fa-regular fa-magnifying-glass"></i>
+				<input type="text" class="form-control form-control-sm" autocomplete="off" placeholder="${esc(state.picker.placeholder)}" aria-label="${esc(state.picker.placeholder || state.picker.title)}" data-quickbar-picker-query>
+			</div>
+		</div>
+		<div class="quickbar-panel-body quickbar-picker-list" role="listbox" data-quickbar-picker-list></div>`;
+	render();
+	$picker.querySelector('[data-quickbar-picker-query]').focus();
+}
+
+// Text filtruje návrhy; od minLength znaků platí výsledky hledání zdroje, do jejich příchodu návrhy
+function pickerItems() {
+	const picker = state.picker;
+	const query = normalize(picker.query.trim());
+	const suggestions = query ? picker.suggestions.filter((item) => normalize(`${item.label} ${item.meta ?? ''}`).includes(query)) : picker.suggestions;
+	return query.length >= picker.minLength ? (picker.results ?? suggestions) : suggestions;
+}
+
+function pickerSearching() {
+	const picker = state.picker;
+	return picker.query.trim().length >= picker.minLength && picker.results !== null;
+}
+
+function renderPicker() {
+	const $picker = document.querySelector('[data-quickbar-picker]');
+	if (!$picker) {
+		return;
+	}
+	$picker.hidden = state.picker === null;
+	panel('chat')?.classList.toggle('quickbar-panel--picking', state.picker !== null);
+	const $list = $picker.querySelector('[data-quickbar-picker-list]');
+	if (!state.picker || !$list) {
+		return;
+	}
+	const picker = state.picker;
+	const searching = pickerSearching();
+	const pending = picker.query.trim().length >= picker.minLength && picker.results === null;
+	const items = pickerItems();
+	let html = '';
+	if (!items.length) {
+		let text = '';
+		if (searching) {
+			text = $picker.dataset.empty;
+		} else if (picker.query.trim() && !pending) {
+			text = $picker.dataset.short.replace('%count%', picker.minLength);
+		} else if (!picker.query.trim() && picker.suggestionsLoaded) {
+			// Bez návrhů radí, co psát (hint), jinak kolik znaků stačí
+			text = picker.hint || $picker.dataset.short.replace('%count%', picker.minLength);
+		}
+		html = text ? `<div class="quickbar-empty quickbar-picker-hint"><i class="fa-regular fa-magnifying-glass"></i>${esc(text)}</div>` : '';
+	} else {
+		html = (searching ? '' : `<div class="quickbar-group-title">${esc($picker.dataset.suggestions)}</div>`)
+			+ items.map((item, index) => `
+			<button type="button" class="quickbar-chat-row quickbar-picker-row${index === picker.active ? ' quickbar-picker-row--active' : ''}" role="option" aria-selected="${index === picker.active}" data-quickbar-picker-item="${index}">
+				${chatAvatar({ name: item.label, initials: item.initials }, true)}
+				<span class="quickbar-chat-text">
+					<span class="quickbar-chat-name">${esc(item.label)}</span>
+					${item.meta ? `<span class="quickbar-chat-preview">${esc(item.meta)}</span>` : ''}
+				</span>
+			</button>`).join('');
+	}
+	setHtml($list, html);
+}
+
+let pickerTimer = null;
+
+function searchPicker(query) {
+	const picker = state.picker;
+	picker.query = query;
+	picker.active = 0;
+	picker.enterPending = false;
+	clearTimeout(pickerTimer);
+	if (query.trim().length < picker.minLength) {
+		picker.results = null;
+		renderPicker();
+		return;
+	}
+	const request = ++picker.request;
+	picker.results = null;
+	renderPicker();
+	pickerTimer = setTimeout(() => {
+		Promise.resolve(picker.search?.(query.trim())).then((items) => {
+			if (state.picker === picker && picker.request === request) {
+				picker.results = items || [];
+				renderPicker();
+				// Enter stisknutý během hledání vybere první výsledek
+				if (picker.enterPending) {
+					picker.enterPending = false;
+					const first = picker.results[0];
+					if (first) {
+						closePicker(first);
+					}
+				}
+			}
+		});
+	}, SEARCH_DEBOUNCE_MS);
+}
+
+function movePicker(step) {
+	const count = pickerItems().length;
+	if (!count) {
+		return;
+	}
+	state.picker.active = Math.min(count - 1, Math.max(0, state.picker.active + step));
+	renderPicker();
+	document.querySelector('.quickbar-picker-row--active')?.scrollIntoView({ block: 'nearest' });
+}
+
+function closePicker(item) {
+	const picker = state.picker;
+	if (!picker) {
+		return;
+	}
+	state.picker = null;
+	clearTimeout(pickerTimer);
+	const $picker = document.querySelector('[data-quickbar-picker]');
+	if ($picker) {
+		$picker.innerHTML = '';
+	}
+	render();
+	picker.resolve(item ?? null);
+	if (state.open === 'chat' && state.chatView === 'thread' && !state.chatSelecting) {
+		focusChatInput();
 	}
 }
 
@@ -504,10 +931,12 @@ function loadChats() {
 	});
 }
 
+// Zdroj vrací zprávy, nebo { messages, topic } u konverzace s tématem
 function loadMessages(id) {
-	return call('chats.messages', id).then((messages) => {
+	return call('chats.messages', id).then((payload) => {
 		if (state.activeChat === id) {
-			state.messages = messages || [];
+			state.messages = (Array.isArray(payload) ? payload : payload?.messages) || [];
+			state.chatTopic = Array.isArray(payload) ? null : (payload?.topic ?? null);
 			render();
 		}
 	});
@@ -519,6 +948,7 @@ function openChat(id) {
 	}
 	if (state.activeChat !== id) {
 		state.messages = [];
+		resetChatThreadState();
 	}
 	state.activeChat = id;
 	state.chatView = 'thread';
@@ -533,6 +963,7 @@ function openChat(id) {
 }
 
 function backToChatList() {
+	resetChatThreadState();
 	state.chatView = 'list';
 	render();
 	// Náhled a pořadí po odeslané zprávě
@@ -1198,6 +1629,53 @@ document.addEventListener('click', (e) => {
 		backToChatList();
 		return;
 	}
+	if (state.chatMenu !== null && !target.closest('[data-quickbar-chat-menu], [data-quickbar-chat-plus]')) {
+		closeChatMenu();
+	}
+	if (target.closest('[data-quickbar-chat-plus]')) {
+		toggleChatMenu();
+		return;
+	}
+	const menuItem = target.closest('[data-quickbar-chat-menu-item]');
+	if (menuItem) {
+		runChatMenuItem(menuItem.dataset.quickbarChatMenuItem);
+		return;
+	}
+	if (target.closest('[data-quickbar-chat-topic-clear]')) {
+		clearChatTopic();
+		return;
+	}
+	const selectableMessage = target.closest('[data-quickbar-message]');
+	if (selectableMessage) {
+		e.preventDefault();
+		toggleMessageSelected(selectableMessage.dataset.quickbarMessage);
+		return;
+	}
+	const selectionAction = target.closest('[data-quickbar-selection-action]');
+	if (selectionAction) {
+		runSelectionAction(selectionAction.dataset.quickbarSelectionAction);
+		return;
+	}
+	if (target.closest('[data-quickbar-selection-cancel]')) {
+		stopSelecting();
+		return;
+	}
+	if (target.closest('[data-quickbar-picker-close]')) {
+		closePicker(null);
+		return;
+	}
+	const pickerItem = target.closest('[data-quickbar-picker-item]');
+	if (pickerItem && state.picker) {
+		closePicker(pickerItems()[Number(pickerItem.dataset.quickbarPickerItem)]);
+		return;
+	}
+	// Štítek a téma konverzace navigují samy (naja.js); na mobilu panel stránku překrývá, tak se zavře
+	if (target.closest('.quickbar-message-tag[href], .quickbar-chat-topic-name[href]')) {
+		if (mobileQuery.matches) {
+			close();
+		}
+		return;
+	}
 	const aiConversation = target.closest('[data-quickbar-ai-conversation]');
 	if (aiConversation) {
 		const conversation = state.ai.conversations.find((c) => String(c.id) === aiConversation.dataset.quickbarAiConversation);
@@ -1272,6 +1750,10 @@ document.addEventListener('input', (e) => {
 		renderChat();
 		return;
 	}
+	if (e.target.matches('[data-quickbar-picker-query]') && state.picker) {
+		searchPicker(e.target.value);
+		return;
+	}
 	if (e.target.matches('[data-quickbar-ai-query]')) {
 		state.ai.query = e.target.value;
 		renderAi();
@@ -1322,7 +1804,13 @@ document.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape' && state.open !== null) {
 		e.preventDefault();
 		// V podstavech vrací Esc nejdřív zpět, až pak zavře okno
-		if (state.open === 'chat' && state.chatView === 'thread') {
+		if (state.open === 'chat' && state.picker) {
+			closePicker(null);
+		} else if (state.open === 'chat' && state.chatMenu !== null) {
+			closeChatMenu(true);
+		} else if (state.open === 'chat' && state.chatSelecting) {
+			stopSelecting();
+		} else if (state.open === 'chat' && state.chatView === 'thread') {
 			backToChatList();
 		} else if (state.open === 'ai' && aiFull()) {
 			toggleAiFull();
@@ -1335,6 +1823,39 @@ document.addEventListener('keydown', (e) => {
 	}
 	// Šipky vybírají výsledek hledání, Enter ho otevře; kurzor zůstává v poli
 	const plainKey = !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.isComposing;
+	if (plainKey && state.picker && e.target.matches('[data-quickbar-picker-query]')) {
+		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+			e.preventDefault();
+			movePicker(e.key === 'ArrowDown' ? 1 : -1);
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			const picker = state.picker;
+			// Výsledky dopsaného textu ještě nedorazily - Enter počká na ně
+			if (picker.query.trim().length >= picker.minLength && picker.results === null) {
+				picker.enterPending = true;
+				return;
+			}
+			const item = pickerItems()[picker.active];
+			if (item) {
+				closePicker(item);
+			}
+		}
+		return;
+	}
+	// Vybíraná zpráva jde přepnout i z klávesnice
+	if (plainKey && (e.key === ' ' || e.key === 'Enter') && e.target.matches?.('[data-quickbar-message]')) {
+		e.preventDefault();
+		toggleMessageSelected(e.target.dataset.quickbarMessage);
+		return;
+	}
+	// Šipky v nabídce plusu
+	if (plainKey && state.chatMenu !== null && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.closest?.('[data-quickbar-chat-menu]')) {
+		e.preventDefault();
+		const items = [...document.querySelectorAll('[data-quickbar-chat-menu-item]')];
+		const index = items.indexOf(e.target.closest('[data-quickbar-chat-menu-item]'));
+		items[(index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+		return;
+	}
 	if (plainKey && state.open === 'search' && e.target.matches('[data-quickbar-search]')) {
 		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 			e.preventDefault();

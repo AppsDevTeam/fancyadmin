@@ -82,6 +82,18 @@ layout:
       back: Všetky konverzácie
       colleague: Kolega
       group: Skupina
+      more: Ďalšie možnosti
+      topic: Riešime
+      topicClear: Ukončiť
+      select: Vybrať správy
+      selected: 'Vybrané: %count%'
+      selectCancel: Zrušiť
+      selectHint: Vyberte správy
+    picker:
+      close: Späť do konverzácie
+      empty: Nič sa nenašlo
+      short: Napíšte aspoň %count% znaky
+      suggestions: Návrhy
 aclResource:
   title:
     portal:

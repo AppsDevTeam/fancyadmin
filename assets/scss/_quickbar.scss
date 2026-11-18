@@ -949,12 +949,121 @@ body:has(.quickbar) .table-bottom-scroll {
 
 .quickbar-message {
 	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.quickbar-message-content {
+	flex: 1;
+	min-width: 0;
+	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 2px;
 
-	&.quickbar-message--mine {
+	.quickbar-message--mine & {
 		align-items: flex-end;
+	}
+}
+
+// Řada zpráv se stejným štítkem (např. řešený pacient) - blok s linkou vlevo a štítkem nahoře,
+// ať je vidět, kde téma začíná a kde končí
+.quickbar-message-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 4px -6px;
+	padding: 8px 10px 10px 13px;
+	border-radius: var(--bs-border-radius-sm);
+	background: color-mix(in srgb, var(--quickbar-primary) 5%, transparent);
+	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--quickbar-primary) 55%, transparent);
+}
+
+.quickbar-message-group-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+
+	// Linka za štítkem odděluje hlavičku bloku od zpráv
+	&::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: color-mix(in srgb, var(--quickbar-primary) 18%, transparent);
+	}
+}
+
+.quickbar-message-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	min-width: 0;
+	max-width: 80%;
+	padding: 2px 9px 2px 8px;
+	border-radius: 999px;
+	background: var(--quickbar-tint);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	color: var(--quickbar-primary);
+	text-decoration: none;
+
+	> i {
+		font-size: 10px;
+	}
+
+	> span {
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	&[href]:hover {
+		background: color-mix(in srgb, var(--quickbar-primary) 18%, transparent);
+		color: var(--quickbar-primary);
+	}
+}
+
+// Výběr zpráv - celý řádek je přepínač s kolečkem vlevo
+.quickbar-thread--selecting .quickbar-message {
+	margin: -4px -8px;
+	padding: 4px 8px;
+	border-radius: var(--quickbar-item-radius);
+	cursor: pointer;
+	transition: background-color .15s;
+
+	&:hover {
+		background: var(--quickbar-hover);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--quickbar-primary);
+		outline-offset: -2px;
+	}
+
+	&.quickbar-message--selected {
+		background: var(--quickbar-tint);
+	}
+}
+
+.quickbar-message-check {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1.5px solid var(--quickbar-faint);
+	border-radius: 50%;
+	font-size: 10px;
+	color: transparent;
+	transition: background-color .15s, border-color .15s;
+
+	.quickbar-message--selected & {
+		border-color: var(--quickbar-primary);
+		background: var(--quickbar-primary);
+		color: var(--quickbar-on-primary);
 	}
 }
 
@@ -993,6 +1102,282 @@ body:has(.quickbar) .table-bottom-scroll {
 	padding: 0 4px;
 	font-size: 11px;
 	color: var(--quickbar-faint);
+}
+
+// Plus vlevo od pole zprávy - otevřený se otočí na křížek
+.quickbar-chat-plus {
+	> i {
+		transition: transform .2s ease;
+	}
+
+	&.active > i {
+		transform: rotate(45deg);
+	}
+}
+
+// Nabídka plusu - nad polem zprávy u levého okraje panelu
+.quickbar-chat-menu {
+	position: absolute;
+	left: 10px;
+	bottom: 58px;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 240px;
+	max-width: calc(100% - 20px);
+	padding: 6px;
+	border: 1px solid var(--quickbar-border);
+	border-radius: var(--bs-border-radius-sm);
+	background: var(--quickbar-surface);
+	box-shadow: 0 12px 32px -12px var(--fa-shadow-color, rgba(0, 0, 0, .25)), 0 2px 6px -2px var(--fa-shadow-color, rgba(0, 0, 0, .2));
+	animation: quickbar-pop .14s ease-out;
+	transform-origin: bottom left;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+@keyframes quickbar-pop {
+	from {
+		opacity: 0;
+		transform: translateY(4px) scale(.98);
+	}
+}
+
+.quickbar-chat-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 7px 8px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	text-align: left;
+	color: var(--quickbar-text);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		outline: none;
+		background: var(--quickbar-hover);
+	}
+}
+
+.quickbar-chat-menu-icon {
+	flex: none;
+	width: 30px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--quickbar-item-radius);
+	background: var(--quickbar-tint);
+	font-size: 13px;
+	color: var(--quickbar-primary);
+}
+
+.quickbar-chat-menu-text {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.quickbar-chat-menu-label {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--quickbar-text-strong);
+}
+
+.quickbar-chat-menu-meta {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: 12px;
+	color: var(--quickbar-muted);
+}
+
+// Téma konverzace (např. řešený pacient) - pruh nad polem zprávy
+.quickbar-chat-topic {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px;
+	border-top: 1px solid var(--quickbar-line);
+	background: var(--quickbar-tint);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-chat-topic-icon {
+	flex: none;
+	width: 26px;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--quickbar-primary);
+	font-size: 11px;
+	color: var(--quickbar-on-primary);
+}
+
+.quickbar-chat-topic-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	line-height: 1.25;
+}
+
+.quickbar-chat-topic-label {
+	font-size: 11px;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-chat-topic-name {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--quickbar-text-strong);
+	text-decoration: none;
+
+	&[href]:hover {
+		color: var(--quickbar-primary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+}
+
+.quickbar-chat-topic-clear {
+	flex: none;
+}
+
+// Lišta výběru zpráv - místo pole zprávy
+.quickbar-chat-selection {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	@extend %quickbar-footer-line;
+	padding: 10px 12px 12px;
+
+	&[hidden] {
+		display: none;
+	}
+
+	// Počet (nápověda) nad akcemi - vedle tří tlačítek by se do šířky panelu nevešel
+	flex-wrap: wrap;
+	row-gap: 6px;
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+}
+
+.quickbar-chat-selection-count {
+	flex: 1 1 100%;
+	min-width: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--quickbar-text-strong);
+
+	&.quickbar-chat-selection-count--hint {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--quickbar-muted);
+	}
+}
+
+.quickbar-chat-selection-actions {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+
+	// Zrušit vpravo, akce vlevo
+	> :last-child {
+		margin-left: auto;
+	}
+}
+
+// Výběr položky s hledáním (pickInQuickbar) - místo vlákna a pole zprávy
+.quickbar-picker {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	border-top: 1px solid var(--quickbar-line);
+	animation: quickbar-pop .14s ease-out;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-panel--picking :is(.quickbar-thread, .quickbar-chat-topic, .quickbar-chat-selection, .quickbar-chat-form, .quickbar-chat-menu) {
+	display: none;
+}
+
+.quickbar-picker-header {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 10px 0 16px;
+}
+
+.quickbar-picker-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--quickbar-heading);
+}
+
+.quickbar-picker-search {
+	flex: none;
+	padding: 10px 12px 6px;
+}
+
+.quickbar-picker-hint {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding-top: 40px;
+
+	> i {
+		font-size: 22px;
+		color: var(--quickbar-faint);
+	}
+}
+
+.quickbar-panel-body.quickbar-picker-list {
+	gap: 0;
+	padding: 4px 6px 8px;
+}
+
+.quickbar-picker-row {
+	padding: 8px 10px;
+
+	.quickbar-chat-text {
+		gap: 1px;
+	}
+
+	&.quickbar-picker-row--active {
+		background: var(--quickbar-selected);
+	}
 }
 
 // === AI asistent - vlákno a odesílání je widget adt-ai-chat, tady jen jeho vzhled v liště ===
