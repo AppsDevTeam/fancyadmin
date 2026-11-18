@@ -55,6 +55,12 @@ class DashboardControl extends Control
 		return $this->addWidget(new TableWidget($name, $title, $columns, $rows));
 	}
 
+	/** @param callable(?DashboardPeriod): DashboardChart $chart */
+	public function addChart(string $name, string $title, callable $chart): ChartWidget
+	{
+		return $this->addWidget(new ChartWidget($name, $title, $chart));
+	}
+
 	/** @param array<string, mixed>|(\Closure(?DashboardPeriod): array<string, mixed>) $parameters */
 	public function addTemplate(string $name, ?string $title, string $file, array|\Closure $parameters = []): TemplateWidget
 	{

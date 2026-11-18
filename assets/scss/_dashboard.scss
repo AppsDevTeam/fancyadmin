@@ -193,6 +193,15 @@
 	}
 }
 
+.fa-dashboard-chart {
+	position: relative;
+	height: 280px;
+
+	&.fa-dashboard-chart-tall {
+		height: 360px;
+	}
+}
+
 .fa-dashboard-empty {
 	margin: 0;
 	color: var(--fa-text-muted);

@@ -79,6 +79,17 @@
 	{/if}
 {/define}
 
+{define widget-chart}
+	{var $_chart = $widget->getChart()}
+	{if $_chart->isEmpty()}
+		<p class="fa-dashboard-empty">{_fcadmin.dashboard.empty}</p>
+	{else}
+		<div n:class="'fa-dashboard-chart', $_chart->indexAxis === 'y' ? 'fa-dashboard-chart-tall'">
+			<canvas data-adt-chart={$_chart->toConfig()} role="img" aria-label={$widget->getTitle()}></canvas>
+		</div>
+	{/if}
+{/define}
+
 {define widget-template}
 	{include $widget->getFile(), presenter: $presenter, dashboard: $dashboard, widget: $widget, period: $widget->getPeriod(), ...$widget->getParameters()}
 {/define}

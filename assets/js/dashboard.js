@@ -1,8 +1,12 @@
-// Dashboard (docs/dashboard.md): výběr období ve widgetu. Změna selectu pošle ajaxem adresu stránky s novým
-// obdobím a parametrem redraw, server překreslí jen snippet toho widgetu; adresu bez redraw pak zapíše
+// Dashboard (docs/dashboard.md): výběr období ve widgetu a grafy. Změna selectu pošle ajaxem adresu stránky
+// s novým obdobím a parametrem redraw, server překreslí jen snippet toho widgetu; adresu bez redraw pak zapíše
 // history.replaceState, takže obnovení stránky i sdílený odkaz drží zvolená období. Bez JS odešle
-// formulář tlačítko v <noscript>.
-import { ajax } from './naja';
+// formulář tlačítko v <noscript>. Graf v překresleném widgetu se nevymění, jen dostane nová data.
+import AdtJsComponents from 'adt-js-components';
+import naja, { ajax } from './naja';
+import { fancyadminTheme } from './dashboardTheme';
+
+AdtJsComponents.registerChartPlugins({ fancyadminTheme });
 
 const SELECT = 'select[data-dashboard-period]';
 
@@ -27,6 +31,31 @@ function onChange(event) {
 }
 
 document.addEventListener('change', onChange);
+
+/**
+ * Snippet widgetu s grafem, jehož nový obsah je zase graf: místo výměny HTML se jen přepíše data-adt-chart
+ * stávajícího canvasu, builtin Chart pak graf aktualizuje na místě (bez probliknutí a s animací přechodu).
+ */
+export function chartUpdateOperation(snippet, content) {
+	if (!snippet.closest('[data-dashboard-widget]')) {
+		return null;
+	}
+	const canvas = snippet.querySelectorAll('canvas[data-adt-chart]');
+	const next = document.createElement('template');
+	next.innerHTML = content;
+	const nextCanvas = next.content.querySelectorAll('canvas[data-adt-chart]');
+	if (canvas.length !== 1 || nextCanvas.length !== 1) {
+		return null;
+	}
+	return () => canvas[0].setAttribute('data-adt-chart', nextCanvas[0].getAttribute('data-adt-chart'));
+}
+
+naja.snippetHandler.addEventListener('beforeUpdate', (event) => {
+	const operation = chartUpdateOperation(event.detail.snippet, event.detail.content);
+	if (operation) {
+		event.detail.changeOperation(operation);
+	}
+});
 
 export function stopListening() {
 	document.removeEventListener('change', onChange);

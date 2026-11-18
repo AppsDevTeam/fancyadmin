@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use ADT\FancyAdmin\DI\FancyAdminExtension;
+use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardChart;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControlFactory;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardPeriod;
@@ -28,7 +29,7 @@ use Tester\Assert;
 
 /**
  * Dashboard (DashboardControl, docs/dashboard.md): mrizka, poradi a sirka widgetu, widgety stat, tiles,
- * table a template, line nacteni dat, vyber obdobi s prekreslenim jednoho widgetu, DashboardPeriod,
+ * table, template a chart, line nacteni dat, vyber obdobi s prekreslenim jednoho widgetu, DashboardPeriod,
  * tovarna v DI a trait presenteru.
  */
 
@@ -443,4 +444,65 @@ test('DashboardPeriod: hodnota z URL a klic prekladu', function () {
 	Assert::same(DashboardPeriod::TODAY, DashboardPeriod::fromUrl('nesmysl', DashboardPeriod::TODAY));
 	Assert::same(DashboardPeriod::TODAY, DashboardPeriod::fromUrl(null, DashboardPeriod::TODAY));
 	Assert::same('fcadmin.dashboard.period.last7Days', DashboardPeriod::LAST_7_DAYS->getTranslationKey());
+});
+
+
+/** @return array<string, mixed> konfigurace z data-adt-chart */
+function chartConfig(string $html): array
+{
+	Assert::same(1, preg_match("~<canvas data-adt-chart='([^']+)' role=\"img\" aria-label=\"([^\"]*)\"></canvas>~", $html, $match));
+
+	return json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
+}
+
+
+test('graf: canvas s konfiguraci pro builtin Chart, plugin tematu, format a zvolene obdobi', function () {
+	$dashboard = dashboard();
+	$dashboard->addChart('revenue', 'Tržba "po dnech"', fn(?DashboardPeriod $period) => new DashboardChart(
+		'line',
+		['1. 11.', '2. 11.'],
+		[['label' => $period->value, 'data' => [1200.5, 0]], ['label' => "Předchozí 'rok'", 'data' => [800, 100], 'borderDash' => [4, 4]]],
+		format: ['style' => 'currency', 'currency' => 'CZK', 'maximumFractionDigits' => 0],
+		options: ['interaction' => ['intersect' => true], 'plugins' => ['legend' => ['position' => 'bottom']]],
+	))->setPeriods(DashboardPeriod::THIS_MONTH);
+	$dashboard['revenue']->loadState(['period' => 'lastMonth']);
+
+	$html = renderDashboard($dashboard);
+	$config = chartConfig($html);
+
+	Assert::contains('<div class="fa-dashboard-chart">', $html);
+	Assert::contains('aria-label="Tržba &quot;po dnech&quot;"', $html);
+	Assert::same('line', $config['type']);
+	Assert::same(['1. 11.', '2. 11.'], $config['data']['labels']);
+	Assert::same('lastMonth', $config['data']['datasets'][0]['label']);
+	Assert::same([1200.5, 0], $config['data']['datasets'][0]['data']);
+	Assert::same("Předchozí 'rok'", $config['data']['datasets'][1]['label']);
+	Assert::same([4, 4], $config['data']['datasets'][1]['borderDash']);
+	Assert::same(['fancyadminTheme'], $config['plugins']);
+	Assert::same(['style' => 'currency', 'currency' => 'CZK', 'maximumFractionDigits' => 0], $config['format']);
+	Assert::false($config['options']['maintainAspectRatio']);
+	Assert::same(['mode' => 'index', 'intersect' => true], $config['options']['interaction']);
+	Assert::same(['legend' => ['position' => 'bottom']], $config['options']['plugins']);
+	Assert::false(isset($config['options']['indexAxis']));
+});
+
+
+test('graf: vodorovne sloupce jsou vyssi, prazdna data hlasi prazdne obdobi, spatny navrat a typ vyjimkou', function () {
+	$dashboard = dashboard();
+	$dashboard->addChart('top', 'Top 10', fn() => new DashboardChart('bar', ['A'], [['label' => 'Kusy', 'data' => [5]]], indexAxis: 'y'));
+	$dashboard->addChart('empty', 'Prázdný', fn() => new DashboardChart('line', [], []));
+
+	$html = renderDashboard($dashboard);
+
+	Assert::contains('<div class="fa-dashboard-chart fa-dashboard-chart-tall">', $html);
+	Assert::same('y', chartConfig($html)['options']['indexAxis']);
+	Assert::contains('<p class="fa-dashboard-empty">[fcadmin.dashboard.empty]</p>', $html);
+
+	$dashboard = dashboard();
+	$dashboard->addChart('wrong', 'Špatně', fn() => ['type' => 'line']);
+	Assert::exception(fn() => renderDashboard($dashboard), UnexpectedValueException::class, "%a%'wrong'%a%");
+
+	Assert::exception(fn() => new DashboardChart('scatter3d', [], []), InvalidArgumentException::class);
+	Assert::exception(fn() => new DashboardChart('bar', ['A'], [['label' => 'bez dat']]), InvalidArgumentException::class);
+	Assert::exception(fn() => new DashboardChart('bar', [], [], indexAxis: 'z'), InvalidArgumentException::class);
 });

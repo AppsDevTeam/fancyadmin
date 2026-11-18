@@ -12,7 +12,9 @@ ani v databázi; data každého widgetu dodává `callable`, které se zavolá a
 | `src/UI/Components/Controls/Dashboard/*Widget.php` | widgety `stat`, `tiles`, `table`, `template` (data a nastavení) |
 | `src/UI/Components/Controls/Dashboard/DashboardWidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta dashboardu se snippetem `body` a persistentním `period` |
 | `src/UI/Components/Controls/Dashboard/DashboardPeriod.php` | období (dnes ... tento rok), `getRange()`, `getPreviousRange()` |
-| `assets/js/dashboard.js` | výběr období bez načtení stránky (Naja + `history.replaceState`) |
+| `assets/js/dashboard.js` | výběr období bez načtení stránky (Naja + `history.replaceState`), registrace pluginu grafů, aktualizace grafu na místě |
+| `assets/js/dashboardTheme.js` | plugin Chart.js `fancyadminTheme` - barvy z CSS proměnných, změna tématu |
+| `src/UI/Components/Controls/Dashboard/DashboardChart.php`, `ChartWidget.php` | widget `chart` |
 | `src/UI/Presenters/Dashboard.php` | trait presenteru - komponenta `dashboard` z továrny `DashboardControlFactory` (registruje ji rozšíření) |
 | `assets/scss/_dashboard.scss` | vzhled (součást `app.scss`), prefix `.fa-dashboard-*`, světlý i tmavý režim |
 | `src/lang/fcadmin.*.yml` | `fcadmin.dashboard.empty` (prázdná tabulka), `fcadmin.dashboard.period.*` (období, popisek, tlačítko bez JS) |
@@ -81,6 +83,7 @@ class HomepagePresenter extends BasePresenter
 | `addStat($name, $title, fn() => int\|float\|string)` | velké číslo; `setNote()` (text nebo callable), `setIcon()`, `setLink()` (celá karta je odkaz), `setTone()` |
 | `addTiles($name, fn() => DashboardTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `DashboardTile`: label, value, note, icon, link, tone |
 | `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `DashboardTableColumn($label, numeric: true)` (formát a zarovnání doprava), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.dashboard.empty` |
+| `addChart($name, $title, fn() => DashboardChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
 | `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$dashboard`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
 
 Poznámka statu a parametry šablony mohou být text / pole, nebo `Closure` (ne obecné `callable` - text `'date'` by byl funkce).
@@ -117,3 +120,41 @@ zvolené `DashboardPeriod` jako parametr; widget bez období dostane `null`.
 | `THIS_MONTH` | od 1. do dneška | 1. až N. den minulého měsíce (zkráceno na jeho konec) |
 | `LAST_MONTH` | celý minulý měsíc | celý měsíc před ním |
 | `THIS_QUARTER`, `THIS_YEAR` | od začátku do dneška | stejně dlouhý úsek od začátku předchozího čtvrtletí / roku |
+
+## Grafy
+
+`addChart()` vrací z callable `DashboardChart`:
+
+```php
+$dashboard->addChart('revenue', 'Tržba po dnech', fn(DashboardPeriod $period) => new DashboardChart(
+	'line',
+	$labels,                                         // popisky osy
+	[
+		['label' => 'Toto období', 'data' => $current],
+		['label' => 'Předchozí období', 'data' => $previous],
+	],
+	format: ['style' => 'currency', 'currency' => 'CZK', 'maximumFractionDigits' => 0],
+))->setPeriods(DashboardPeriod::THIS_MONTH)->setSpan(2);
+```
+
+- `type`: `line`, `bar`, `doughnut`, `pie`; `indexAxis: 'y'` = vodorovné sloupce (vyšší plocha, např. top 10).
+- `format` jsou volby `Intl.NumberFormat` pro osu hodnot a tooltip (builtin `Chart`), `options` další volby
+  Chart.js (mají přednost před výchozími `maintainAspectRatio: false`, `interaction: index`).
+- Šablona vypíše `<canvas data-adt-chart='{…}'>` s `plugins: ["fancyadminTheme"]`; prázdné `labels` nebo
+  `datasets` ukážou `fcadmin.dashboard.empty`.
+
+**Plugin `fancyadminTheme`** (`dashboardTheme.js`, registruje ho `dashboard.js` přes `registerChartPlugins()`):
+
+- datasety bez barvy dostanou paletu z proměnných `--primaryColor`, `--fa-text-muted` (druhý dataset - typicky
+  předchozí období - je tlumený), `--dashboardAccentColor`, `--bs-info`, `--bs-success`, `--bs-warning`; čára má
+  průhlednou výplň, sloupce plnou, koláč barvu na díl;
+- mřížka a okraje os `--fa-line`, popisky os `--fa-text-muted`, legenda `--fa-text`, tooltip `--fa-surface` /
+  `--fa-text` / `--fa-border`;
+- barvu zadanou v konfiguraci nepřepíše - přepisuje jen hodnoty, které sám nastavil;
+- na `fancyadmin:theme-change` barvy přepočítá a grafy překreslí (`update('none')`);
+- builtin při změně atributu vymění celé volby a Chart.js si volby os vyhodnotí ještě před `beforeUpdate`, proto
+  plugin po takové aktualizaci projde graf jednou znovu.
+
+**Přepnutí období grafu**: `dashboard.js` při překreslení snippetu widgetu, ve kterém je graf a nový obsah je
+zase graf, nevymění HTML, jen přepíše `data-adt-chart` stávajícího canvasu - builtin graf aktualizuje na místě
+(bez probliknutí, s animací přechodu). Prázdná data nebo jiný obsah jdou běžnou výměnou.
