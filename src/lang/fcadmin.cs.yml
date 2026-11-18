@@ -14,6 +14,17 @@ accordion:
 
 dashboard:
   empty: Za zvolené období nejsou žádná data.
+  period:
+    label: Období
+    submit: Zobrazit
+    today: Dnes
+    yesterday: Včera
+    thisWeek: Tento týden
+    last7Days: Posledních 7 dní
+    thisMonth: Tento měsíc
+    lastMonth: Minulý měsíc
+    thisQuarter: Toto čtvrtletí
+    thisYear: Tento rok
 
 layout:
   sideMenu:

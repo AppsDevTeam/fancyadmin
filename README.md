@@ -1134,7 +1134,8 @@ a odznak napojený na zaškrtávátko. Návod v `docs/accordion.md`.
 
 Přehled jako mřížka widgetů - velké číslo (`addStat`), řada dlaždic (`addTiles`), tabulka (`addTable`)
 a vlastní šablona (`addTemplate`). Rozložení skládá presenter v `configureDashboard()`, data se načtou
-až při vykreslení. Návod v `docs/dashboard.md`.
+až při vykreslení. Widget může mít výběr období (`DashboardPeriod`, URL + překreslení jen toho widgetu).
+Návod v `docs/dashboard.md`.
 
 ### CSRF ochrana signálů
 

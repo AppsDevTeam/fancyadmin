@@ -7,15 +7,15 @@ namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
 /** Jedno velké číslo s poznámkou (např. objednávky čekající na odeslání). */
 final class StatWidget extends DashboardWidget
 {
-	/** @var callable(): (int|float|string) */
+	/** @var callable(?DashboardPeriod): (int|float|string) */
 	private $value;
 
 	private bool $resolved = false;
 
 	private int|float|string $resolvedValue = '';
 
-	/** @var string|callable(): ?string|null */
-	private $note = null;
+	/** @var string|(\Closure(?DashboardPeriod): ?string)|null */
+	private string|\Closure|null $note = null;
 
 	private ?string $icon = null;
 
@@ -23,7 +23,7 @@ final class StatWidget extends DashboardWidget
 
 	private DashboardTone $tone = DashboardTone::Neutral;
 
-	/** @param callable(): (int|float|string) $value */
+	/** @param callable(?DashboardPeriod): (int|float|string) $value */
 	public function __construct(string $name, string $title, callable $value)
 	{
 		parent::__construct($name, $title);
@@ -38,14 +38,14 @@ final class StatWidget extends DashboardWidget
 	public function getValue(): int|float|string
 	{
 		if (!$this->resolved) {
-			$this->resolvedValue = ($this->value)();
+			$this->resolvedValue = ($this->value)($this->getPeriod());
 			$this->resolved = true;
 		}
 		return $this->resolvedValue;
 	}
 
-	/** @param string|callable(): ?string|null $note */
-	public function setNote(string|callable|null $note): static
+	/** @param string|(\Closure(?DashboardPeriod): ?string)|null $note */
+	public function setNote(string|\Closure|null $note): static
 	{
 		$this->note = $note;
 		return $this;
@@ -53,7 +53,7 @@ final class StatWidget extends DashboardWidget
 
 	public function getNote(): ?string
 	{
-		return is_callable($this->note) ? ($this->note)() : $this->note;
+		return $this->note instanceof \Closure ? ($this->note)($this->getPeriod()) : $this->note;
 	}
 
 	public function setIcon(?string $icon): static

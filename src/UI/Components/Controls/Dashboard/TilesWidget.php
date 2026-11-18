@@ -9,13 +9,13 @@ use UnexpectedValueException;
 /** Řada dlaždic (KPI); bez titulku se vykreslí bez hlavičky. */
 final class TilesWidget extends DashboardWidget
 {
-	/** @var callable(): iterable<mixed> projekt může vrátit cokoli, kontroluje se při vykreslení */
+	/** @var callable(?DashboardPeriod): iterable<mixed> projekt může vrátit cokoli, kontroluje se při vykreslení */
 	private $tiles;
 
 	/** @var list<DashboardTile>|null */
 	private ?array $resolvedTiles = null;
 
-	/** @param callable(): iterable<DashboardTile> $tiles */
+	/** @param callable(?DashboardPeriod): iterable<DashboardTile> $tiles */
 	public function __construct(string $name, callable $tiles, ?string $title = null)
 	{
 		parent::__construct($name, $title);
@@ -32,7 +32,7 @@ final class TilesWidget extends DashboardWidget
 	{
 		if ($this->resolvedTiles === null) {
 			$this->resolvedTiles = [];
-			foreach (($this->tiles)() as $tile) {
+			foreach (($this->tiles)($this->getPeriod()) as $tile) {
 				if (!$tile instanceof DashboardTile) {
 					throw new UnexpectedValueException("Widget '{$this->getName()}' musí vracet dlaždice " . DashboardTile::class . '.');
 				}

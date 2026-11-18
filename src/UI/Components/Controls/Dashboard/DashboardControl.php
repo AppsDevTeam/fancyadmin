@@ -34,13 +34,13 @@ class DashboardControl extends Control
 		return $this->columns;
 	}
 
-	/** @param callable(): (int|float|string) $value */
+	/** @param callable(?DashboardPeriod): (int|float|string) $value */
 	public function addStat(string $name, string $title, callable $value): StatWidget
 	{
 		return $this->addWidget(new StatWidget($name, $title, $value));
 	}
 
-	/** @param callable(): iterable<DashboardTile> $tiles */
+	/** @param callable(?DashboardPeriod): iterable<DashboardTile> $tiles */
 	public function addTiles(string $name, callable $tiles, ?string $title = null): TilesWidget
 	{
 		return $this->addWidget(new TilesWidget($name, $tiles, $title));
@@ -48,15 +48,15 @@ class DashboardControl extends Control
 
 	/**
 	 * @param array<string, string|DashboardTableColumn> $columns
-	 * @param callable(): iterable<array<string, mixed>> $rows
+	 * @param callable(?DashboardPeriod): iterable<array<string, mixed>> $rows
 	 */
 	public function addTable(string $name, string $title, array $columns, callable $rows): TableWidget
 	{
 		return $this->addWidget(new TableWidget($name, $title, $columns, $rows));
 	}
 
-	/** @param array<string, mixed>|callable(): array<string, mixed> $parameters */
-	public function addTemplate(string $name, ?string $title, string $file, array|callable $parameters = []): TemplateWidget
+	/** @param array<string, mixed>|(\Closure(?DashboardPeriod): array<string, mixed>) $parameters */
+	public function addTemplate(string $name, ?string $title, string $file, array|\Closure $parameters = []): TemplateWidget
 	{
 		return $this->addWidget(new TemplateWidget($name, $title, $file, $parameters));
 	}
@@ -72,6 +72,7 @@ class DashboardControl extends Control
 			throw new InvalidArgumentException("Widget '{$widget->getName()}' už na dashboardu je.");
 		}
 		$this->widgets[$widget->getName()] = $widget;
+		$this->addComponent(new DashboardWidgetControl($widget), $widget->getName());
 		return $widget;
 	}
 

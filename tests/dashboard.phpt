@@ -5,24 +5,31 @@ declare(strict_types=1);
 use ADT\FancyAdmin\DI\FancyAdminExtension;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControlFactory;
+use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardPeriod;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardTableColumn;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardTile;
 use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardTone;
 use ADT\FancyAdmin\UI\Presenters\Dashboard;
 use Latte\Engine;
+use Latte\Essential\TranslatorExtension;
 use Nette\Application\UI\Presenter;
 use Nette\Bridges\ApplicationLatte\LatteFactory;
 use Nette\Bridges\ApplicationLatte\TemplateFactory;
+use Nette\Bridges\ApplicationLatte\UIExtension;
 use Nette\DI\Compiler;
 use Nette\DI\ContainerBuilder;
 use Nette\DI\Definitions\FactoryDefinition;
+use Nette\Http\Request;
+use Nette\Http\Response;
+use Nette\Http\UrlScript;
 use Nette\Localization\Translator;
 use Nette\Utils\Html;
 use Tester\Assert;
 
 /**
  * Dashboard (DashboardControl, docs/dashboard.md): mrizka, poradi a sirka widgetu, widgety stat, tiles,
- * table a template, line nacteni dat, tovarna v DI a trait presenteru.
+ * table a template, line nacteni dat, vyber obdobi s prekreslenim jednoho widgetu, DashboardPeriod,
+ * tovarna v DI a trait presenteru.
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -37,12 +44,32 @@ final class DashboardTranslator implements Translator
 }
 
 
+final class DashboardLatteFactory implements LatteFactory
+{
+	public function create(?Nette\Application\UI\Control $control = null): Engine
+	{
+		$latte = new Engine();
+		$latte->setTempDirectory(null);
+		$latte->addExtension(new UIExtension($control));
+		$latte->addExtension(new TranslatorExtension(new DashboardTranslator()));
+		return $latte;
+	}
+}
+
+
 final class DashboardTestPresenter extends Presenter
 {
 	use Dashboard;
 
 	/** @var callable(DashboardControl): void */
 	public $configure;
+
+	public bool $ajax = false;
+
+	public function isAjax(): bool
+	{
+		return $this->ajax;
+	}
 
 	protected function configureDashboard(DashboardControl $dashboard): void
 	{
@@ -51,10 +78,20 @@ final class DashboardTestPresenter extends Presenter
 }
 
 
-function dashboard(): DashboardControl
+function presenter(string $url = 'https://admin.test/admin/', bool $ajax = false): DashboardTestPresenter
+{
+	$presenter = new DashboardTestPresenter();
+	$presenter->ajax = $ajax;
+	$presenter->injectPrimary(new Request(new UrlScript($url)), new Response(), templateFactory: new TemplateFactory(new DashboardLatteFactory()));
+
+	return $presenter;
+}
+
+
+function dashboard(?DashboardTestPresenter $presenter = null): DashboardControl
 {
 	$dashboard = new DashboardControl();
-	new DashboardTestPresenter()->addComponent($dashboard, 'dashboard');
+	($presenter ?? presenter())->addComponent($dashboard, 'dashboard');
 
 	return $dashboard;
 }
@@ -62,16 +99,6 @@ function dashboard(): DashboardControl
 
 function renderDashboard(DashboardControl $dashboard): string
 {
-	$dashboard->setTemplateFactory(new TemplateFactory(new class implements LatteFactory {
-		public function create(?Nette\Application\UI\Control $control = null): Engine
-		{
-			$latte = new Engine();
-			$latte->setTempDirectory(null);
-			return $latte;
-		}
-	}));
-	$dashboard->getTemplate()->setTranslator(new DashboardTranslator());
-
 	ob_start();
 	try {
 		$dashboard->render();
@@ -217,6 +244,8 @@ test('neplatne nastaveni skonci vyjimkou', function () {
 
 	Assert::exception(fn() => $dashboard->addStat('same', 'B', fn() => 2), InvalidArgumentException::class, "%a%'same'%a%");
 	Assert::exception(fn() => $dashboard->addStat('1bad name', 'B', fn() => 2), InvalidArgumentException::class);
+	Assert::exception(fn() => $dashboard->addStat('with-dash', 'B', fn() => 2), InvalidArgumentException::class);
+	Assert::exception(fn() => $dashboard->getWidget('same')->setPeriods(DashboardPeriod::TODAY, [DashboardPeriod::THIS_MONTH]), InvalidArgumentException::class);
 	Assert::exception(fn() => $dashboard->setColumns(0), InvalidArgumentException::class);
 	Assert::exception(fn() => $dashboard->setColumns(7), InvalidArgumentException::class);
 	Assert::exception(fn() => $dashboard->getWidget('same')->setSpan(0), InvalidArgumentException::class);
@@ -259,4 +288,159 @@ test('rozsireni registruje tovarnu dashboardu', function () {
 	Assert::type(FactoryDefinition::class, $definition);
 	Assert::same(DashboardControlFactory::class, $definition->getImplement());
 	Assert::same(DashboardControl::class, $definition->getResultDefinition()->getFactory()->getEntity());
+});
+
+
+test('vyber obdobi: data dostanou zvolene obdobi, neplatne a nenabizene je vychozi, vychozi nejde do odkazu', function () {
+	$received = [];
+	$dashboard = dashboard();
+	$dashboard->addTable('sales', 'Prodeje', ['a' => 'A'], function (?DashboardPeriod $period) use (&$received) {
+		$received[] = $period;
+		return [];
+	})->setPeriods(DashboardPeriod::TODAY, [DashboardPeriod::TODAY, DashboardPeriod::THIS_MONTH]);
+	$control = $dashboard['sales'];
+
+	$control->loadState(['period' => 'thisMonth']);
+	Assert::same(DashboardPeriod::THIS_MONTH, $dashboard->getWidget('sales')->getPeriod());
+	Assert::same('thisMonth', $control->period);
+
+	foreach (['nesmysl', 'thisYear', 'today'] as $value) {
+		$control->loadState(['period' => $value]);
+		Assert::same(DashboardPeriod::TODAY, $dashboard->getWidget('sales')->getPeriod(), $value);
+		Assert::null($control->period, $value);
+	}
+
+	$control->loadState(['period' => 'thisMonth']);
+	renderDashboard($dashboard);
+	Assert::same([DashboardPeriod::THIS_MONTH], $received);
+});
+
+
+test('widget bez obdobi nema vyber a jeho data dostanou null', function () {
+	$received = 'nevolano';
+	$dashboard = dashboard();
+	$dashboard->addStat('pending', 'Čeká', function ($period) use (&$received) {
+		$received = $period;
+		return 1;
+	});
+	$dashboard['pending']->loadState(['period' => 'today']);
+
+	$html = renderDashboard($dashboard);
+
+	Assert::null($received);
+	Assert::null($dashboard['pending']->period);
+	Assert::notContains('fa-dashboard-period', $html);
+});
+
+
+test('formular obdobi: select s volbami, skryta pole ostatnich parametru stranky a noscript odeslani', function () {
+	$dashboard = dashboard(presenter('https://admin.test/admin/?dashboard-orders-period=lastMonth&dashboard-sales-period=today&dashboard-sales-redraw=1&filter%5Bstate%5D=2'));
+	$dashboard->addTable('sales', 'Prodeje', ['a' => 'A'], fn() => [])->setPeriods(DashboardPeriod::THIS_MONTH, [DashboardPeriod::TODAY, DashboardPeriod::THIS_MONTH]);
+	$dashboard['sales']->loadState(['period' => 'today']);
+
+	$html = renderDashboard($dashboard);
+
+	Assert::contains('<form class="fa-dashboard-period" method="get" action="/admin/">', $html);
+	Assert::contains('<input type="hidden" name="dashboard-orders-period" value="lastMonth">', $html);
+	Assert::contains('<input type="hidden" name="filter[state]" value="2">', $html);
+	Assert::notContains('type="hidden" name="dashboard-sales-period"', $html);
+	Assert::notContains('redraw" value', $html);
+	Assert::match('%A%<select name="dashboard-sales-period" class="form-select form-select-sm" aria-label="[fcadmin.dashboard.period.label]"%A%data-dashboard-period data-dashboard-redraw="dashboard-sales-redraw">%A%', $html);
+	Assert::contains('<option value="today" selected>[fcadmin.dashboard.period.today]</option>', $html);
+	Assert::contains('<option value="thisMonth">[fcadmin.dashboard.period.thisMonth]</option>', $html);
+	Assert::notContains('thisYear', $html);
+	Assert::contains('<noscript><button type="submit" class="btn btn-sm btn-outline-secondary">[fcadmin.dashboard.period.submit]</button></noscript>', $html);
+});
+
+
+test('ajax s redraw prekresli jen snippet toho widgetu a data ostatnich se nenactou', function () {
+	$calls = [];
+	$dashboard = dashboard(presenter(ajax: true));
+	foreach (['sales', 'orders'] as $name) {
+		$dashboard->addTable($name, $name, ['a' => 'A'], function (?DashboardPeriod $period) use (&$calls, $name) {
+			$calls[] = $name;
+			return [['a' => $period->value]];
+		})->setPeriods(DashboardPeriod::TODAY);
+	}
+	$dashboard->addStat('pending', 'Čeká', function () use (&$calls) {
+		$calls[] = 'pending';
+		return 1;
+	});
+
+	$dashboard['orders']->loadState(['period' => 'yesterday']);
+	$dashboard['sales']->loadState(['period' => 'lastMonth', 'redraw' => '1']);
+	Assert::true($dashboard['sales']->isControlInvalid('body'));
+	Assert::false($dashboard['orders']->isControlInvalid());
+
+	$dashboard->snippetMode = true;
+	$output = renderDashboard($dashboard);
+
+	$snippets = (array) $dashboard->getPresenter()->getPayload()->snippets;
+	Assert::same(['snippet-dashboard-sales-body'], array_keys($snippets));
+	Assert::contains('lastMonth', $snippets['snippet-dashboard-sales-body']);
+	Assert::same(['sales'], $calls);
+	Assert::same('', trim($output));
+});
+
+
+test('redraw bez ajaxu nic neprekresluje (cela stranka)', function () {
+	$dashboard = dashboard(presenter(ajax: false));
+	$dashboard->addTable('sales', 'Prodeje', ['a' => 'A'], fn() => [])->setPeriods(DashboardPeriod::TODAY);
+	$dashboard['sales']->loadState(['redraw' => '1']);
+
+	Assert::false($dashboard['sales']->isControlInvalid());
+});
+
+
+/** @return array{string, string} */
+function periodRange(DashboardPeriod $period, string $now, bool $previous = false): array
+{
+	$range = $previous ? $period->getPreviousRange(new DateTimeImmutable($now)) : $period->getRange(new DateTimeImmutable($now));
+
+	return [$range[0]->format('Y-m-d H:i'), $range[1]->format('Y-m-d H:i')];
+}
+
+
+test('DashboardPeriod: rozsah vsech obdobi, konec vylucny, tyden od pondeli', function () {
+	$now = '2026-11-18 14:35'; // streda
+	Assert::same(['2026-11-18 00:00', '2026-11-19 00:00'], periodRange(DashboardPeriod::TODAY, $now));
+	Assert::same(['2026-11-17 00:00', '2026-11-18 00:00'], periodRange(DashboardPeriod::YESTERDAY, $now));
+	Assert::same(['2026-11-16 00:00', '2026-11-19 00:00'], periodRange(DashboardPeriod::THIS_WEEK, $now));
+	Assert::same(['2026-11-12 00:00', '2026-11-19 00:00'], periodRange(DashboardPeriod::LAST_7_DAYS, $now));
+	Assert::same(['2026-11-01 00:00', '2026-11-19 00:00'], periodRange(DashboardPeriod::THIS_MONTH, $now));
+	Assert::same(['2026-10-01 00:00', '2026-11-01 00:00'], periodRange(DashboardPeriod::LAST_MONTH, $now));
+	Assert::same(['2026-10-01 00:00', '2026-11-19 00:00'], periodRange(DashboardPeriod::THIS_QUARTER, $now));
+	Assert::same(['2026-01-01 00:00', '2026-11-19 00:00'], periodRange(DashboardPeriod::THIS_YEAR, $now));
+
+	Assert::same(['2026-11-16 00:00', '2026-11-17 00:00'], periodRange(DashboardPeriod::THIS_WEEK, '2026-11-16 08:00'), 'v pondeli jen dnesek');
+	Assert::same(['2026-12-01 00:00', '2027-01-01 00:00'], periodRange(DashboardPeriod::LAST_MONTH, '2027-01-05'), 'minuly mesic pres rok');
+	Assert::same(['2027-01-01 00:00', '2027-01-06 00:00'], periodRange(DashboardPeriod::THIS_QUARTER, '2027-01-05'));
+	Assert::same(['2026-07-01 00:00', '2026-09-30 00:00'], periodRange(DashboardPeriod::THIS_QUARTER, '2026-09-29 23:59'));
+});
+
+
+test('DashboardPeriod: predchozi obdobi je stejne dlouhe a nepresahuje do zvoleneho', function () {
+	$now = '2026-11-18 14:35';
+	Assert::same(['2026-11-17 00:00', '2026-11-18 00:00'], periodRange(DashboardPeriod::TODAY, $now, true));
+	Assert::same(['2026-11-16 00:00', '2026-11-17 00:00'], periodRange(DashboardPeriod::YESTERDAY, $now, true));
+	Assert::same(['2026-11-09 00:00', '2026-11-12 00:00'], periodRange(DashboardPeriod::THIS_WEEK, $now, true));
+	Assert::same(['2026-11-05 00:00', '2026-11-12 00:00'], periodRange(DashboardPeriod::LAST_7_DAYS, $now, true));
+	Assert::same(['2026-10-01 00:00', '2026-10-19 00:00'], periodRange(DashboardPeriod::THIS_MONTH, $now, true));
+	Assert::same(['2026-09-01 00:00', '2026-10-01 00:00'], periodRange(DashboardPeriod::LAST_MONTH, $now, true));
+	Assert::same(['2026-07-01 00:00', '2026-08-19 00:00'], periodRange(DashboardPeriod::THIS_QUARTER, $now, true));
+	Assert::same(['2025-01-01 00:00', '2025-11-19 00:00'], periodRange(DashboardPeriod::THIS_YEAR, $now, true));
+
+	Assert::same(['2026-02-01 00:00', '2026-03-01 00:00'], periodRange(DashboardPeriod::THIS_MONTH, '2026-03-31', true), 'delsi nez unor se zkrati na jeho konec');
+	Assert::same(['2026-01-01 00:00', '2026-02-01 00:00'], periodRange(DashboardPeriod::LAST_MONTH, '2026-03-10', true), 'minuly mesic (unor) proti celemu lednu');
+	Assert::same(['2026-12-01 00:00', '2026-12-06 00:00'], periodRange(DashboardPeriod::THIS_MONTH, '2027-01-05', true), 'pres prelom roku');
+	Assert::same(['2027-01-01 00:00', '2028-01-01 00:00'], periodRange(DashboardPeriod::THIS_YEAR, '2028-12-31', true), 'prestupny rok proti celemu predchozimu');
+	Assert::same(['2026-12-31 00:00', '2027-01-01 00:00'], periodRange(DashboardPeriod::TODAY, '2027-01-01 00:00', true));
+});
+
+
+test('DashboardPeriod: hodnota z URL a klic prekladu', function () {
+	Assert::same(DashboardPeriod::LAST_MONTH, DashboardPeriod::fromUrl('lastMonth', DashboardPeriod::TODAY));
+	Assert::same(DashboardPeriod::TODAY, DashboardPeriod::fromUrl('nesmysl', DashboardPeriod::TODAY));
+	Assert::same(DashboardPeriod::TODAY, DashboardPeriod::fromUrl(null, DashboardPeriod::TODAY));
+	Assert::same('fcadmin.dashboard.period.last7Days', DashboardPeriod::LAST_7_DAYS->getTranslationKey());
 });

@@ -10,7 +10,7 @@ final class TableWidget extends DashboardWidget
 	/** @var array<string, DashboardTableColumn> */
 	private array $columns = [];
 
-	/** @var callable(): iterable<array<string, mixed>> */
+	/** @var callable(?DashboardPeriod): iterable<array<string, mixed>> */
 	private $rows;
 
 	/** @var list<array<string, mixed>>|null */
@@ -18,7 +18,7 @@ final class TableWidget extends DashboardWidget
 
 	/**
 	 * @param array<string, string|DashboardTableColumn> $columns klíč v řádku => popisek nebo sloupec
-	 * @param callable(): iterable<array<string, mixed>> $rows
+	 * @param callable(?DashboardPeriod): iterable<array<string, mixed>> $rows
 	 */
 	public function __construct(string $name, string $title, array $columns, callable $rows)
 	{
@@ -45,7 +45,7 @@ final class TableWidget extends DashboardWidget
 	{
 		if ($this->resolvedRows === null) {
 			$this->resolvedRows = [];
-			foreach (($this->rows)() as $row) {
+			foreach (($this->rows)($this->getPeriod()) as $row) {
 				$this->resolvedRows[] = $row;
 			}
 		}
