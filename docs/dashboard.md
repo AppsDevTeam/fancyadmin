@@ -9,12 +9,16 @@ ani v databázi; data každého widgetu dodává `callable`, které se zavolá a
 |---|---|
 | `src/UI/Components/Controls/Dashboard/DashboardControl.php` | control - mřížka, přidávání widgetů, pořadí, šířka |
 | `src/UI/Components/Controls/Dashboard/DashboardControl.latte` | markup mřížky a widgetů |
-| `src/UI/Components/Controls/Dashboard/*Widget.php` | widgety `stat`, `tiles`, `table`, `template` (data a nastavení) |
+| `src/UI/Components/Controls/Dashboard/DashboardWidget.php` | společný předek widgetů - titulek, popis, šířka, pořadí, období |
+| `src/UI/Components/Controls/Dashboard/*Widget.php` | widgety `stat`, `tiles`, `table`, `chart`, `template` (data a nastavení) |
+| `src/UI/Components/Controls/Dashboard/DashboardTile.php`, `DashboardTableColumn.php`, `DashboardTone.php` | dlaždice, sloupec tabulky a barva ikony (hodnotové objekty pro widgety) |
+| `src/UI/Components/Controls/Dashboard/DashboardFormat.php` | formát čísel a ikon pro šablony |
+| `src/UI/Components/Controls/Dashboard/DashboardControlFactory.php` | generovaná továrna controlu, registruje ji rozšíření |
 | `src/UI/Components/Controls/Dashboard/DashboardWidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta dashboardu se snippetem `body` a persistentním `period` |
 | `src/UI/Components/Controls/Dashboard/DashboardPeriod.php` | období (dnes ... tento rok), `getRange()`, `getPreviousRange()` |
 | `assets/js/dashboard.js` | výběr období bez načtení stránky (Naja + `history.replaceState`), registrace pluginu grafů, aktualizace grafu na místě |
 | `assets/js/dashboardTheme.js` | plugin Chart.js `fancyadminTheme` - barvy z CSS proměnných, změna tématu |
-| `src/UI/Components/Controls/Dashboard/DashboardChart.php`, `ChartWidget.php` | widget `chart` |
+| `src/UI/Components/Controls/Dashboard/DashboardChart.php` | data grafu widgetu `chart` |
 | `src/UI/Presenters/Dashboard.php` | trait presenteru - komponenta `dashboard` z továrny `DashboardControlFactory` (registruje ji rozšíření) |
 | `assets/scss/_dashboard.scss` | vzhled (součást `app.scss`), prefix `.fa-dashboard-*`, světlý i tmavý režim |
 | `src/lang/fcadmin.*.yml` | `fcadmin.dashboard.empty` (prázdná tabulka), `fcadmin.dashboard.period.*` (období, popisek, tlačítko bez JS) |
@@ -137,7 +141,10 @@ $dashboard->addChart('revenue', 'Tržba po dnech', fn(DashboardPeriod $period) =
 ))->setPeriods(DashboardPeriod::THIS_MONTH)->setSpan(2);
 ```
 
-- `type`: `line`, `bar`, `doughnut`, `pie`; `indexAxis: 'y'` = vodorovné sloupce (vyšší plocha, např. top 10).
+- `type`: `line`, `bar`, `doughnut`, `pie`, jiný vyhodí výjimku; `indexAxis: 'y'` = vodorovné sloupce (vyšší
+  plocha, např. top 10).
+- `labels`: popisek je text, nebo pole textů = víc řádků (dlouhý název produktu u vodorovných sloupců).
+- `datasets`: každý musí mít pole `data`, další klíče jsou volby datasetu Chart.js (vlastní barva, `type`).
 - `format` jsou volby `Intl.NumberFormat` pro osu hodnot a tooltip (builtin `Chart`), `options` další volby
   Chart.js (mají přednost před výchozími `maintainAspectRatio: false`, `interaction: index`).
 - Šablona vypíše `<canvas data-adt-chart='{…}'>` s `plugins: ["fancyadminTheme"]`; prázdné `labels` nebo
