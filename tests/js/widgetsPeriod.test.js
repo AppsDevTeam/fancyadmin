@@ -1,4 +1,4 @@
-// Výběr období ve widgetu dashboardu (assets/js/widgets.js): změna selectu pošle ajaxem adresu s obdobím
+// Výběr období ve widgetu (assets/js/widgets.js): změna selectu pošle ajaxem adresu s obdobím
 // a parametrem redraw, adresu stránky bez redraw zapíše až po úspěšném požadavku.
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,9 +7,9 @@ let periodUrls;
 
 const nextTick = () => new Promise((resolve) => setTimeout(resolve));
 
-function widget(name, value) {
+function widget(name, value, grid = 'dashboard') {
 	return `<form class="fa-widgets-period" method="get" action="/admin/">
-		<select name="dashboard-${name}-period" data-widget-period data-widget-redraw="dashboard-${name}-redraw">
+		<select name="${grid}-${name}-period" data-widget-period data-widget-redraw="${grid}-${name}-redraw">
 			<option value="today"${value === 'today' ? ' selected' : ''}>Dnes</option>
 			<option value="thisMonth"${value === 'thisMonth' ? ' selected' : ''}>Tento měsíc</option>
 		</select>
@@ -86,6 +86,22 @@ describe('změna selectu', () => {
 		await nextTick();
 
 		expect(window.location.search).not.toContain('dashboard-sales-period');
+	});
+
+	it('dvě mřížky se stejným widgetem: změna jedné žádá redraw jen jejího widgetu a období druhé drží', async () => {
+		const request = vi.spyOn(naja, 'makeRequest').mockResolvedValue({});
+		window.history.replaceState(null, '', '/admin/?customers-sales-period=thisMonth');
+		document.body.innerHTML = widget('sales', 'today', 'orders') + widget('sales', 'thisMonth', 'customers');
+
+		choose(document.querySelector('[name="orders-sales-period"]'), 'thisMonth');
+
+		const params = new URL(request.mock.calls[0][1]).searchParams;
+		expect(params.get('orders-sales-redraw')).toBe('1');
+		expect(params.has('customers-sales-redraw')).toBe(false);
+		expect(params.get('customers-sales-period')).toBe('thisMonth');
+
+		await nextTick();
+		expect(window.location.search).toBe('?customers-sales-period=thisMonth&orders-sales-period=thisMonth');
 	});
 
 	it('jiný select stránky požadavek nespustí', () => {

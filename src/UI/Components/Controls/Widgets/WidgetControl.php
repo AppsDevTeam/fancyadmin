@@ -32,13 +32,21 @@ final class WidgetControl extends Control
 		parent::loadState($params);
 
 		$this->widget->selectPeriod($this->period);
-		// Výchozí nebo neplatné období do odkazů nepatří
-		$period = $this->widget->getPeriod();
-		$this->period = $period !== $this->widget->getDefaultPeriod() ? $period?->value : null;
 
 		if (!empty($params['redraw']) && $this->getPresenter()->isAjax()) {
 			$this->redrawControl('body');
 		}
+	}
+
+	/** @param array<string, mixed> $params */
+	public function saveState(array &$params): void
+	{
+		if (!array_key_exists('period', $params)) {
+			// Výchozí nebo neplatné období do odkazů nepatří
+			$period = $this->widget->getPeriod();
+			$params['period'] = $period !== $this->widget->getDefaultPeriod() ? $period?->value : null;
+		}
+		parent::saveState($params);
 	}
 
 	/** Jméno pole s obdobím v URL (`dashboard-sales-period` pro komponentu `dashboard`). */

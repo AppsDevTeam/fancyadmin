@@ -1,7 +1,9 @@
-# Dashboard
+# Widgety
 
-Přehled administrace jako mřížka widgetů. Rozložení je v kódu projektu (presenter), ne v konfiguraci
-ani v databázi; data každého widgetu dodává `callable`, které se zavolá až při vykreslení a jen jednou.
+Mřížka widgetů (`WidgetGridControl`) - čísla, dlaždice, tabulky, grafy a vlastní šablony. Je to obyčejná
+komponenta: patří kamkoli do administrace (přehled, detail záznamu, panel), pod libovolným jménem a ve víc
+instancích na jedné stránce. Rozložení je v kódu projektu, ne v konfiguraci ani v databázi; data každého
+widgetu dodává `callable`, které se zavolá až při vykreslení a jen jednou.
 
 ## Co je kde
 
@@ -14,21 +16,31 @@ ani v databázi; data každého widgetu dodává `callable`, které se zavolá a
 | `src/UI/Components/Controls/Widgets/WidgetTile.php`, `WidgetTableColumn.php`, `WidgetTone.php` | dlaždice, sloupec tabulky a barva ikony (hodnotové objekty pro widgety) |
 | `src/UI/Components/Controls/Widgets/WidgetFormat.php` | formát čísel a ikon pro šablony |
 | `src/UI/Components/Controls/Widgets/WidgetGridControlFactory.php` | generovaná továrna controlu, registruje ji rozšíření |
-| `src/UI/Components/Controls/Widgets/WidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta dashboardu se snippetem `body` a persistentním `period` |
+| `src/UI/Components/Controls/Widgets/WidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta mřížky se snippetem `body` a persistentním `period` |
 | `src/UI/Components/Controls/Widgets/WidgetPeriod.php` | období (dnes ... tento rok), `getRange()`, `getPreviousRange()` |
 | `assets/js/widgets.js` | výběr období bez načtení stránky (Naja + `history.replaceState`), registrace pluginu grafů, aktualizace grafu na místě |
 | `assets/js/widgetsTheme.js` | plugin Chart.js `fancyadminTheme` - barvy z CSS proměnných, změna tématu |
 | `src/UI/Components/Controls/Widgets/WidgetChart.php` | data grafu widgetu `chart` |
-| `src/UI/Presenters/Dashboard.php` | trait presenteru - komponenta `dashboard` z továrny `WidgetGridControlFactory` (registruje ji rozšíření) |
+| `src/UI/Presenters/Dashboard.php` | trait přehledu - komponenta `dashboard` z továrny `WidgetGridControlFactory`, rozložení v `configureDashboard()` |
 | `assets/scss/_widgets.scss` | vzhled (součást `app.scss`), prefix `.fa-widgets-*`, světlý i tmavý režim |
 | `src/lang/fcadmin.*.yml` | `fcadmin.widgets.empty` (prázdná tabulka), `fcadmin.widgets.period.*` (období, popisek, tlačítko bez JS) |
 
-Starší třídy `.dashboard-card` v `_theme.scss` s dashboardem nesouvisí a zůstávají.
+Starší třídy `.dashboard-card` v `_theme.scss` s widgety nesouvisí a zůstávají.
 
 JS si projekt importuje sám (`import '@fancyadmin/js/widgets';`). Bez importu by změna selectu v prohlížeči
 se zapnutým JS nic neodeslala - tlačítko v `<noscript>` se ukáže jen s vypnutým JS.
 
 ## Použití
+
+Mřížka nemá závislosti, vytvoří ji `new WidgetGridControl()` nebo továrna `WidgetGridControlFactory`
+(rozšíření ji registruje jako `fancyadmin.widgetGridControlFactory`) v libovolném `createComponent*()`
+presenteru nebo jiné komponenty. Widgety jde přidat v továrně i do už připojené mřížky (třeba v `action*()`
+podle záznamu): období z URL si widget pamatuje jako text a vyhodnotí ho až při čtení, takže `setPeriods()`
+může přijít i po načtení stavu.
+
+### Přehled (trait `Dashboard`)
+
+Trait je tenký obal pro úvodní stránku: komponenta `dashboard`, rozložení skládá `configureDashboard()`.
 
 ```php
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
@@ -72,13 +84,51 @@ class HomepagePresenter extends BasePresenter
 {/block}
 ```
 
+### Kdekoli a víc mřížek na stránce
+
+```php
+class CustomerPresenter extends BasePresenter
+{
+	protected function createComponentOrderStats(): WidgetGridControl
+	{
+		$widgetGrid = (new WidgetGridControl())->setColumns(2);
+		$widgetGrid->addStat('count', 'Objednávky', fn() => $this->orders->countFor($this->customer));
+		$widgetGrid->addChart('revenue', 'Útrata', fn(WidgetPeriod $period) => $this->stats->getChart($this->customer, $period))
+			->setPeriods(WidgetPeriod::THIS_YEAR);
+		return $widgetGrid;
+	}
+
+	protected function createComponentReturnStats(): WidgetGridControl
+	{
+		$widgetGrid = new WidgetGridControl();
+		$widgetGrid->addTable('revenue', 'Vratky', ['label' => 'Důvod', 'count' => new WidgetTableColumn('Počet', numeric: true)],
+			fn(WidgetPeriod $period) => $this->returns->getReasonRows($this->customer, $period))
+			->setPeriods(WidgetPeriod::THIS_YEAR);
+		return $widgetGrid;
+	}
+}
+```
+
+```latte
+{control orderStats}
+…
+{control returnStats}
+```
+
+Všechno, co widget nese v URL a v DOM, je odvozené od cesty komponenty (`getUniqueId()`), takže se dvě mřížky
+neperou ani se stejnými jmény widgetů: období `orderStats-revenue-period` a `returnStats-revenue-period`,
+snippety `snippet-orderStats-revenue-body` a `snippet-returnStats-revenue-body`, překreslení
+`orderStats-revenue-redraw`. Mřížka vnořená v jiné komponentě má celou cestu (`panel-stats-revenue-period`).
+Formulář období každého widgetu nese ve skrytých polích období všech ostatních widgetů stránky, přepnutí bez JS
+tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
 ## Mřížka
 
 - `setColumns(1-6)`, výchozí 3. Pod zlomem `lg` má mřížka nejvýš 2 sloupce, pod `md` jeden.
 - `setSpan(n)` - kolik sloupců widget zabere; víc, než má mřížka, se ořízne (pod `lg` na 2).
 - `setPosition(n)` - pořadí; widgety se stejnou pozicí (výchozí 0) zůstanou v pořadí přidání.
 - `setTitle()`, `setDescription()` - hlavička widgetu. Jméno widgetu (`data-widget`) je zároveň jméno
-  podkomponenty, smí tedy obsahovat jen písmena, číslice a `_` a musí být na dashboardu jedinečné.
+  podkomponenty, smí tedy obsahovat jen písmena, číslice a `_` a musí být v mřížce jedinečné (v jiné mřížce
+  stejné jméno být smí).
 
 ## Widgety
 
@@ -103,10 +153,10 @@ Poznámka statu a parametry šablony mohou být text / pole, nebo `Closure` (ne 
 nabídka všech osmi). Data widgetu (callable hodnoty, dlaždic, řádků, parametry šablony, poznámka) pak dostanou
 zvolené `WidgetPeriod` jako parametr; widget bez období dostane `null`.
 
-- **Stav je v URL**: persistentní parametr podkomponenty `period` (`?dashboard-sales-period=lastMonth`), takže
-  obnovení stránky i odkaz drží zvolená období všech widgetů. Výchozí období do adresy nejde, neznámé nebo
-  nenabízené se tiše nahradí výchozím.
-- **Přepnutí bez načtení stránky** (`dashboard.js`): změna selectu pošle Najou GET na adresu s novým obdobím
+- **Stav je v URL**: persistentní parametr podkomponenty `period` (`?<mřížka>-<widget>-period`, na přehledu
+  `?dashboard-sales-period=lastMonth`), takže obnovení stránky i odkaz drží zvolená období všech widgetů.
+  Neznámé nebo nenabízené se tiše nahradí výchozím; výchozí ani neplatné do odkazů nejde (`saveState()`).
+- **Přepnutí bez načtení stránky** (`widgets.js`): změna selectu pošle Najou GET na adresu s novým obdobím
   a `dashboard-sales-redraw=1`, `loadState()` widgetu při AJAXu zneplatní jen jeho snippet `body`; po odpovědi
   `history.replaceState` zapíše adresu bez `redraw`. Hlavička se selectem se nepřekresluje.
 - **Proč podkomponenta na widget**: dynamické snippety ve `{snippetArea}` Nette při překreslení oblasti pošle
@@ -150,7 +200,7 @@ $widgetGrid->addChart('revenue', 'Tržba po dnech', fn(WidgetPeriod $period) => 
 - Šablona vypíše `<canvas data-adt-chart='{…}'>` s `plugins: ["fancyadminTheme"]`; prázdné `labels` nebo
   `datasets` ukážou `fcadmin.widgets.empty`.
 
-**Plugin `fancyadminTheme`** (`widgetsTheme.js`, registruje ho `dashboard.js` přes `registerChartPlugins()`):
+**Plugin `fancyadminTheme`** (`widgetsTheme.js`, registruje ho `widgets.js` přes `registerChartPlugins()`):
 
 - datasety bez barvy dostanou paletu z proměnných `--primaryColor`, `--fa-text-muted` (druhý dataset - typicky
   předchozí období - je tlumený), `--dashboardAccentColor`, `--bs-info`, `--bs-success`, `--bs-warning`; čára má
@@ -162,6 +212,6 @@ $widgetGrid->addChart('revenue', 'Tržba po dnech', fn(WidgetPeriod $period) => 
 - builtin při změně atributu vymění celé volby a Chart.js si volby os vyhodnotí ještě před `beforeUpdate`, proto
   plugin po takové aktualizaci projde graf jednou znovu.
 
-**Přepnutí období grafu**: `dashboard.js` při překreslení snippetu widgetu, ve kterém je graf a nový obsah je
+**Přepnutí období grafu**: `widgets.js` při překreslení snippetu widgetu, ve kterém je graf a nový obsah je
 zase graf, nevymění HTML, jen přepíše `data-adt-chart` stávajícího canvasu - builtin graf aktualizuje na místě
 (bez probliknutí, s animací přechodu). Prázdná data nebo jiný obsah jdou běžnou výměnou.

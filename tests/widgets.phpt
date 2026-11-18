@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use ADT\FancyAdmin\DI\FancyAdminExtension;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetChart;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControlFactory;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetPeriod;
@@ -28,9 +29,9 @@ use Nette\Utils\Html;
 use Tester\Assert;
 
 /**
- * Dashboard (WidgetGridControl, docs/widgets.md): mrizka, poradi a sirka widgetu, widgety stat, tiles,
+ * Widgety (WidgetGridControl, docs/widgets.md): mrizka, poradi a sirka widgetu, widgety stat, tiles,
  * table, template a chart, line nacteni dat, vyber obdobi s prekreslenim jednoho widgetu, WidgetPeriod,
- * tovarna v DI a trait presenteru.
+ * vic mrizek na strance i vnorena mrizka, tovarna v DI a trait presenteru.
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -102,6 +103,15 @@ function renderWidgetGrid(WidgetGridControl $widgetGrid): string
 	}
 
 	return $html;
+}
+
+/** Obdobi, ktere widget preda do odkazu (null = parametr v adrese nebude). */
+function linkPeriod(WidgetControl $control): ?string
+{
+	$params = [];
+	$control->saveState($params);
+
+	return $params['period'] ?? null;
 }
 
 /** @return list<string> jmena widgetu v poradi vykresleni */
@@ -286,12 +296,12 @@ test('vyber obdobi: data dostanou zvolene obdobi, neplatne a nenabizene je vycho
 
 	$control->loadState(['period' => 'thisMonth']);
 	Assert::same(WidgetPeriod::THIS_MONTH, $widgetGrid->getWidget('sales')->getPeriod());
-	Assert::same('thisMonth', $control->period);
+	Assert::same('thisMonth', linkPeriod($control));
 
 	foreach (['nesmysl', 'thisYear', 'today'] as $value) {
 		$control->loadState(['period' => $value]);
 		Assert::same(WidgetPeriod::TODAY, $widgetGrid->getWidget('sales')->getPeriod(), $value);
-		Assert::null($control->period, $value);
+		Assert::null(linkPeriod($control), $value);
 	}
 
 	$control->loadState(['period' => 'thisMonth']);
@@ -311,7 +321,7 @@ test('widget bez obdobi nema vyber a jeho data dostanou null', function () {
 	$html = renderWidgetGrid($widgetGrid);
 
 	Assert::null($received);
-	Assert::null($widgetGrid['pending']->period);
+	Assert::null(linkPeriod($widgetGrid['pending']));
 	Assert::notContains('fa-widgets-period', $html);
 });
 
@@ -369,6 +379,107 @@ test('redraw bez ajaxu nic neprekresluje (cela stranka)', function () {
 	$widgetGrid['sales']->loadState(['redraw' => '1']);
 
 	Assert::false($widgetGrid['sales']->isControlInvalid());
+});
+
+/** Presenter s parametry adresy rozdelenymi na komponenty, jako po run() - stav komponent se nacte pri pripojeni. */
+function pagePresenter(string $query, bool $ajax = false): DashboardTestPresenter
+{
+	$presenter = presenter('https://admin.test/admin/?' . $query, $ajax);
+	parse_str($query, $params);
+	Closure::bind(function () use ($params) {
+		$this->request = new Nette\Application\Request('Test', 'GET', $params);
+		$this->initGlobalParameters();
+	}, $presenter, Presenter::class)();
+
+	return $presenter;
+}
+
+/**
+ * Mrizka nastavena pred pripojenim, jako z createComponent*() - widgety dostanou stav az s obdobim.
+ *
+ * @param list<string> $calls
+ */
+function salesGrid(array &$calls, string $prefix): WidgetGridControl
+{
+	$widgetGrid = new WidgetGridControl();
+	$widgetGrid->addTable('sales', 'Prodeje', ['a' => 'A'], function (?WidgetPeriod $period) use (&$calls, $prefix) {
+		$calls[] = $prefix . ':' . $period->value;
+		return [['a' => $period->value]];
+	})->setPeriods(WidgetPeriod::TODAY);
+
+	return $widgetGrid;
+}
+
+test('dve mrizky na jedne strance: stejne jmeno widgetu, vlastni obdobi, select, formular a redraw', function () {
+	$calls = [];
+	$presenter = pagePresenter('orders-sales-period=lastMonth&customers-sales-period=yesterday');
+	$presenter->addComponent($orders = salesGrid($calls, 'orders'), 'orders');
+	$presenter->addComponent($customers = salesGrid($calls, 'customers'), 'customers');
+
+	Assert::same(WidgetPeriod::LAST_MONTH, $orders->getWidget('sales')->getPeriod());
+	Assert::same(WidgetPeriod::YESTERDAY, $customers->getWidget('sales')->getPeriod());
+
+	$html = renderWidgetGrid($orders) . renderWidgetGrid($customers);
+
+	Assert::same(['orders:lastMonth', 'customers:yesterday'], $calls);
+	Assert::contains('id="snippet-orders-sales-body"', $html);
+	Assert::contains('id="snippet-customers-sales-body"', $html);
+	Assert::contains('<select name="orders-sales-period"', $html);
+	Assert::contains('data-widget-redraw="orders-sales-redraw"', $html);
+	Assert::contains('<select name="customers-sales-period"', $html);
+	Assert::contains('data-widget-redraw="customers-sales-redraw"', $html);
+	// Formular jedne mrizky nese obdobi druhe, bez JS by se jinak ztratilo
+	Assert::contains('<input type="hidden" name="customers-sales-period" value="yesterday">', $html);
+	Assert::contains('<input type="hidden" name="orders-sales-period" value="lastMonth">', $html);
+});
+
+test('dve mrizky: redraw jedne prekresli jen jeji widget, data druhe se nenactou', function () {
+	$calls = [];
+	$presenter = pagePresenter('orders-sales-period=lastMonth&customers-sales-period=yesterday&customers-sales-redraw=1', ajax: true);
+	$presenter->addComponent($orders = salesGrid($calls, 'orders'), 'orders');
+	$presenter->addComponent($customers = salesGrid($calls, 'customers'), 'customers');
+
+	Assert::false($orders['sales']->isControlInvalid());
+	Assert::true($customers['sales']->isControlInvalid('body'));
+
+	$orders->snippetMode = $customers->snippetMode = true;
+	renderWidgetGrid($orders);
+	renderWidgetGrid($customers);
+
+	$snippets = (array) $presenter->getPayload()->snippets;
+	Assert::same(['snippet-customers-sales-body'], array_keys($snippets));
+	Assert::same(['customers:yesterday'], $calls);
+});
+
+test('widget pridany az do pripojene mrizky drzi obdobi z URL v datech i v odkazu', function () {
+	$received = [];
+	$presenter = pagePresenter('stats-sales-period=lastMonth');
+	$presenter->addComponent($widgetGrid = new WidgetGridControl(), 'stats');
+	$widgetGrid->addTable('sales', 'Prodeje', ['a' => 'A'], function (?WidgetPeriod $period) use (&$received) {
+		$received[] = $period;
+		return [];
+	})->setPeriods(WidgetPeriod::TODAY);
+
+	renderWidgetGrid($widgetGrid);
+
+	Assert::same([WidgetPeriod::LAST_MONTH], $received);
+	Assert::same('lastMonth', linkPeriod($widgetGrid['sales']));
+});
+
+test('mrizka vnorena v jine komponente ma parametry pod celou cestou', function () {
+	$calls = [];
+	$panel = new class extends Nette\Application\UI\Control {
+	};
+	$panel->addComponent($widgetGrid = salesGrid($calls, 'stats'), 'stats');
+	pagePresenter('panel-stats-sales-period=thisWeek')->addComponent($panel, 'panel');
+
+	Assert::same(WidgetPeriod::THIS_WEEK, $widgetGrid->getWidget('sales')->getPeriod());
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('id="snippet-panel-stats-sales-body"', $html);
+	Assert::contains('<select name="panel-stats-sales-period"', $html);
+	Assert::contains('data-widget-redraw="panel-stats-sales-redraw"', $html);
 });
 
 /** @return array{string, string} */

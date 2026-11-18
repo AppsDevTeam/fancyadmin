@@ -20,7 +20,7 @@ abstract class Widget
 	/** @var list<WidgetPeriod> */
 	private array $periodOptions = [];
 
-	private ?WidgetPeriod $period = null;
+	private ?string $requestedPeriod = null;
 
 	public function __construct(
 		private readonly string $name,
@@ -120,17 +120,23 @@ abstract class Widget
 		return $this->defaultPeriod;
 	}
 
-	/** Zvolené období, bez volby výchozí; widget bez období vrací null. */
+	/** Zvolené období, bez volby výchozí; neznámé nebo nenabízené znamená výchozí, widget bez období vrací null. */
 	public function getPeriod(): ?WidgetPeriod
 	{
-		return $this->period ?? $this->defaultPeriod;
+		if ($this->defaultPeriod === null) {
+			return null;
+		}
+		$period = WidgetPeriod::fromUrl($this->requestedPeriod, $this->defaultPeriod);
+		return in_array($period, $this->periodOptions, true) ? $period : $this->defaultPeriod;
 	}
 
-	/** Hodnota z URL; neznámé nebo nenabízené období znamená výchozí. */
+	/**
+	 * Hodnota z URL. Vyhodnotí se až v getPeriod(): stav se načte při připojení k presenteru a widget přidaný
+	 * do už připojené mřížky dostane nabídku období (setPeriods) až potom.
+	 */
 	public function selectPeriod(?string $value): static
 	{
-		$period = $this->defaultPeriod ? WidgetPeriod::fromUrl($value, $this->defaultPeriod) : null;
-		$this->period = in_array($period, $this->periodOptions, true) ? $period : null;
+		$this->requestedPeriod = $value;
 		return $this;
 	}
 }

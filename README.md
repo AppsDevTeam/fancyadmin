@@ -1144,10 +1144,12 @@ a odznak napojený na zaškrtávátko. Návod v `docs/accordion.md`.
 
 ### Widgety (`WidgetGridControl`, trait `Dashboard`)
 
-Přehled jako mřížka widgetů - velké číslo (`addStat`), řada dlaždic (`addTiles`), tabulka (`addTable`),
-graf Chart.js s barvami tématu (`addChart`, plugin `fancyadminTheme`) a vlastní šablona (`addTemplate`). Rozložení skládá presenter v `configureDashboard()`, data se načtou
-až při vykreslení. Widget může mít výběr období (`WidgetPeriod`, URL + překreslení jen toho widgetu).
-Návod v `docs/widgets.md`.
+Mřížka widgetů - velké číslo (`addStat`), řada dlaždic (`addTiles`), tabulka (`addTable`), graf Chart.js
+s barvami tématu (`addChart`, plugin `fancyadminTheme`) a vlastní šablona (`addTemplate`). Je to obyčejná
+komponenta bez závislostí: kdekoli v administraci, pod libovolným jménem a ve víc instancích na jedné stránce
+(i vnořená v jiné komponentě). Přehled ji dostane přes trait `Dashboard` (komponenta `dashboard`, rozložení
+v `configureDashboard()`). Data se načtou až při vykreslení. Widget může mít výběr období (`WidgetPeriod`,
+URL + překreslení jen toho widgetu). Návod v `docs/widgets.md`.
 
 ### CSRF ochrana signálů
 
