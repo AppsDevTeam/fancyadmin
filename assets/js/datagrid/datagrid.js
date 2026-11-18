@@ -1,6 +1,6 @@
 import { showSortableError } from '../flashes';
 // nastaví window.naja dřív, než se níž rozhodne mezi Naja a nette.ajax
-import '../naja';
+import { handlesLink } from '../naja';
 
 var dataGridRegisterExtension, dataGridRegisterAjaxCall, dataGridLoad, dataGridSubmitForm;
 
@@ -119,8 +119,13 @@ if (typeof naja !== "undefined") {
 var datagridFitlerMultiSelect, datagridGroupActionMultiSelect, datagridShiftGroupSelection, datagridSortable, datagridSortableTree, getEventDomPath,
 	indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+// Odkazy přebírané Najou potvrzuje rozšíření datagrid.confirm, tady by se ptalo podruhé
 $(document).on('click', '[data-datagrid-confirm]:not(.ajax)', function(e) {
-	if (!confirm($(e.target).closest('a').attr('data-datagrid-confirm'))) {
+	const link = e.target.closest('a');
+	if (link && handlesLink(link)) {
+		return;
+	}
+	if (!confirm($(link).attr('data-datagrid-confirm'))) {
 		e.stopPropagation();
 		return e.preventDefault();
 	}

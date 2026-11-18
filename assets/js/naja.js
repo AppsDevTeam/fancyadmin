@@ -41,13 +41,18 @@ const ignoreErrors = () => {
 	// chyby obsluhuje naja.addEventListener('error', ...)
 };
 
+/** Odkaz, který při kliknutí přebírá Naja (AJAX), i bez třídy .ajax */
+export function handlesLink(link) {
+	return link.matches(LINK_SELECTOR) && isSameOrigin(link.href);
+}
+
 function bindUI() {
 	document.addEventListener('click', (e) => {
 		if (e.defaultPrevented || e.button || e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
 			return;
 		}
 		const link = e.target.closest?.('a[href]');
-		if (!link || !link.matches(LINK_SELECTOR) || !isSameOrigin(link.href)) {
+		if (!link || !handlesLink(link)) {
 			return;
 		}
 		naja.uiHandler.clickElement(link, {}, e).catch(ignoreErrors);
