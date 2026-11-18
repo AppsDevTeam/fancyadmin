@@ -88,6 +88,14 @@ trait ApiKeyTrait
 		return $this->key;
 	}
 
+	/**
+	 * Samotný klíč zobrazit nelze (uložený je jen otisk), pro rozlišení stačí jeho začátek.
+	 */
+	public function getKeyFingerprint(): string
+	{
+		return $this->key ? mb_substr($this->key, 0, 8) . '…' : '';
+	}
+
 	public function setKey(?string $key): static
 	{
 		$this->key = $key;

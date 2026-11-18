@@ -27,11 +27,11 @@ trait PasskeyGridTrait
 
 		$grid->addColumnText('name', 'fcadmin.passkeys.grid.name');
 
-		$grid->addColumnText('createdAt', 'fcadmin.passkeys.grid.createdAt')
-			->setRenderer(fn(Passkey $passkey) => $passkey->getCreatedAt()->format('d.m.Y H:i'));
+		$grid->addColumnDateTime('createdAt', 'fcadmin.passkeys.grid.createdAt')
+			->setFormat('d.m.Y H:i');
 
-		$grid->addColumnText('lastUsedAt', 'fcadmin.passkeys.grid.lastUsedAt')
-			->setRenderer(fn(Passkey $passkey) => $passkey->getLastUsedAt()?->format('d.m.Y H:i') ?? '');
+		$grid->addColumnDateTime('lastUsedAt', 'fcadmin.passkeys.grid.lastUsedAt')
+			->setFormat('d.m.Y H:i');
 
 		$grid->addColumnText('backupState', '')
 			->setRenderer(fn(Passkey $passkey) => $passkey->getBackupState()
