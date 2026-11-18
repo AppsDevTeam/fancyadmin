@@ -15,7 +15,6 @@ use Tester\Assert;
 
 require __DIR__ . '/bootstrap.php';
 
-
 final class AccordionTranslator implements Translator
 {
 	public function translate(string|Stringable $message, mixed ...$parameters): string
@@ -23,7 +22,6 @@ final class AccordionTranslator implements Translator
 		return '[' . $message . ']';
 	}
 }
-
 
 /** @param array<string, mixed> $params */
 function renderAccordion(string $sections, array $params = []): string
@@ -42,7 +40,6 @@ function renderAccordion(string $sections, array $params = []): string
 	}
 }
 
-
 test('sekce ma titulek, popis, collapse s aria a obsah bloku body s promennymi stranky', function () {
 	$html = renderAccordion(
 		"{embed accordionSection, id: 'paid', title: 'Zaplaceno', description: 'E-mail po zaplacení'}{block body}<form>{\$formName}</form>{/block}{/embed}",
@@ -57,7 +54,6 @@ test('sekce ma titulek, popis, collapse s aria a obsah bloku body s promennymi s
 	Assert::notContains('data-accordion-badge', $html);
 });
 
-
 test('otevrena sekce ma show a aria-expanded true', function () {
 	$html = renderAccordion("{embed accordionSection, id: 'a', title: 'A', open: true}{block body}x{/block}{/embed}");
 
@@ -67,14 +63,12 @@ test('otevrena sekce ma show a aria-expanded true', function () {
 	Assert::contains('class="collapse show"', $html);
 });
 
-
 test('pevny odznak je sedy', function () {
 	$html = renderAccordion("{embed accordionSection, id: 'a', title: 'A', badge: 'Nové'}{block body}x{/block}{/embed}");
 
 	Assert::contains('<span class="accordion-section-badge badge text-bg-secondary" data-accordion-badge>Nové</span>', $html);
 	Assert::notContains('data-accordion-badge-source', $html);
 });
-
 
 test('odznak napojeny na pole nese texty pro JS a vychozi stav z entity', function () {
 	$active = renderAccordion("{embed accordionSection, id: 'cash', title: 'Dobírka', badgeSource: 'isActive', badgeActive: true}{block body}x{/block}{/embed}");
@@ -85,7 +79,6 @@ test('odznak napojeny na pole nese texty pro JS a vychozi stav z entity', functi
 	Assert::contains('data-accordion-badge-on="Zapnuto" data-accordion-badge-off="Vypnuto"', $inactive);
 	Assert::contains('<span class="accordion-section-badge badge text-bg-secondary" data-accordion-badge>Vypnuto</span>', $inactive);
 });
-
 
 test('titulek a popis se escapuji', function () {
 	$html = renderAccordion("{embed accordionSection, id: 'a', title: '<b>A</b>', description: '<i>d</i>'}{block body}x{/block}{/embed}");

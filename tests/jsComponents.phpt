@@ -45,7 +45,6 @@ test('vychozi Tom Select na kazdy select krome nativnich', function () {
 	Assert::same(['selector' => 'select:not(.select-default)'], config($components)['select']);
 });
 
-
 test('projekt vychozi nastaveni builtinu prepise a prida vlastni', function () {
 	$components = new JsComponents();
 	$components->setProjectComponents([
@@ -57,7 +56,6 @@ test('projekt vychozi nastaveni builtinu prepise a prida vlastni', function () {
 	Assert::same(['format' => 'j. n. Y'], config($components)['date-input']);
 });
 
-
 test('projektova konfigurace nesmaze komponenty nastavene drive', function () {
 	$components = new JsComponents();
 	$components->setComponents(['translate' => ['all' => []]]);
@@ -67,7 +65,6 @@ test('projektova konfigurace nesmaze komponenty nastavene drive', function () {
 	Assert::same(['all' => []], config($components)['translate']);
 	Assert::true(isset(config($components)['select']));
 });
-
 
 test('preklady pro JavaScript bere z libovolneho translatoru s katalogy', function () {
 	// Driv byl parametr typovany na App\Model\Translator - tridu projektu, ktera v balicku

@@ -35,7 +35,6 @@ use Tester\Assert;
 
 require __DIR__ . '/bootstrap.php';
 
-
 final class DashboardTranslator implements Translator
 {
 	public function translate(string|Stringable $message, mixed ...$parameters): string
@@ -43,7 +42,6 @@ final class DashboardTranslator implements Translator
 		return '[' . $message . ']';
 	}
 }
-
 
 final class DashboardLatteFactory implements LatteFactory
 {
@@ -56,7 +54,6 @@ final class DashboardLatteFactory implements LatteFactory
 		return $latte;
 	}
 }
-
 
 final class DashboardTestPresenter extends Presenter
 {
@@ -78,7 +75,6 @@ final class DashboardTestPresenter extends Presenter
 	}
 }
 
-
 function presenter(string $url = 'https://admin.test/admin/', bool $ajax = false): DashboardTestPresenter
 {
 	$presenter = new DashboardTestPresenter();
@@ -88,7 +84,6 @@ function presenter(string $url = 'https://admin.test/admin/', bool $ajax = false
 	return $presenter;
 }
 
-
 function dashboard(?DashboardTestPresenter $presenter = null): DashboardControl
 {
 	$dashboard = new DashboardControl();
@@ -96,7 +91,6 @@ function dashboard(?DashboardTestPresenter $presenter = null): DashboardControl
 
 	return $dashboard;
 }
-
 
 function renderDashboard(DashboardControl $dashboard): string
 {
@@ -110,7 +104,6 @@ function renderDashboard(DashboardControl $dashboard): string
 	return $html;
 }
 
-
 /** @return list<string> jmena widgetu v poradi vykresleni */
 function widgetNames(string $html): array
 {
@@ -118,7 +111,6 @@ function widgetNames(string $html): array
 
 	return $match[1];
 }
-
 
 test('mrizka ma pocet sloupcu, widgety jdou podle pozice a sirka se orizne na mrizku', function () {
 	$dashboard = dashboard()->setColumns(2);
@@ -133,7 +125,6 @@ test('mrizka ma pocet sloupcu, widgety jdou podle pozice a sirka se orizne na mr
 	Assert::contains('class="fa-dashboard-widget fa-dashboard-widget-stat fa-dashboard-span-2" data-dashboard-widget="third"', $html);
 	Assert::contains('class="fa-dashboard-widget fa-dashboard-widget-stat fa-dashboard-span-1" data-dashboard-widget="first"', $html);
 });
-
 
 test('stat vypise formatovane cislo, poznamku, ikonu, ton a odkaz', function () {
 	$dashboard = dashboard();
@@ -157,7 +148,6 @@ test('stat vypise formatovane cislo, poznamku, ikonu, ton a odkaz', function () 
 	Assert::notContains('fa-dashboard-widget-header', $html);
 });
 
-
 test('dlazdice se vykresli bez karty widgetu, s titulkem jen kdyz ho widget ma', function () {
 	$dashboard = dashboard();
 	$dashboard->addTiles('kpi', fn() => [
@@ -178,7 +168,6 @@ test('dlazdice se vykresli bez karty widgetu, s titulkem jen kdyz ho widget ma',
 	$dashboard->addTiles('kpi', fn() => ['neni dlazdice']);
 	Assert::exception(fn() => renderDashboard($dashboard), UnexpectedValueException::class, "%a%'kpi'%a%");
 });
-
 
 test('tabulka formatuje ciselne sloupce, Html nechava a prazdna hlasi prazdna data', function () {
 	$dashboard = dashboard();
@@ -202,7 +191,6 @@ test('tabulka formatuje ciselne sloupce, Html nechava a prazdna hlasi prazdna da
 	Assert::contains('<p class="fa-dashboard-empty">[fcadmin.dashboard.empty]</p>', $html);
 });
 
-
 test('sablona widgetu dostane parametry, presenter, dashboard i widget', function () {
 	$file = tempnam(sys_get_temp_dir(), 'dashboard') . '.latte';
 	file_put_contents($file, '<p class="custom">{$label} {$widget->getName()} {$dashboard->getColumns()} {$presenter::class}</p>');
@@ -219,7 +207,6 @@ test('sablona widgetu dostane parametry, presenter, dashboard i widget', functio
 	Assert::contains('<h2 class="fa-dashboard-widget-title">Export</h2>', $html);
 	Assert::contains('<p class="custom">Stáhnout export 3 DashboardTestPresenter</p>', $html);
 });
-
 
 test('data widgetu se nactou az pri vykresleni a jen jednou', function () {
 	$calls = 0;
@@ -238,7 +225,6 @@ test('data widgetu se nactou az pri vykresleni a jen jednou', function () {
 	Assert::same(2, $calls);
 });
 
-
 test('neplatne nastaveni skonci vyjimkou', function () {
 	$dashboard = dashboard();
 	$dashboard->addStat('same', 'A', fn() => 1);
@@ -252,7 +238,6 @@ test('neplatne nastaveni skonci vyjimkou', function () {
 	Assert::exception(fn() => $dashboard->getWidget('same')->setSpan(0), InvalidArgumentException::class);
 	Assert::exception(fn() => $dashboard->getWidget('missing'), InvalidArgumentException::class);
 });
-
 
 test('trait presenteru vytvori komponentu dashboard z tovarny a necha ji projektu nastavit', function () {
 	$presenter = new DashboardTestPresenter();
@@ -269,7 +254,6 @@ test('trait presenteru vytvori komponentu dashboard z tovarny a necha ji projekt
 	Assert::same(4, $dashboard->getColumns());
 	Assert::same(['a'], array_map(fn($widget) => $widget->getName(), $dashboard->getWidgets()));
 });
-
 
 test('rozsireni registruje tovarnu dashboardu', function () {
 	$builder = new ContainerBuilder();
@@ -290,7 +274,6 @@ test('rozsireni registruje tovarnu dashboardu', function () {
 	Assert::same(DashboardControlFactory::class, $definition->getImplement());
 	Assert::same(DashboardControl::class, $definition->getResultDefinition()->getFactory()->getEntity());
 });
-
 
 test('vyber obdobi: data dostanou zvolene obdobi, neplatne a nenabizene je vychozi, vychozi nejde do odkazu', function () {
 	$received = [];
@@ -316,7 +299,6 @@ test('vyber obdobi: data dostanou zvolene obdobi, neplatne a nenabizene je vycho
 	Assert::same([DashboardPeriod::THIS_MONTH], $received);
 });
 
-
 test('widget bez obdobi nema vyber a jeho data dostanou null', function () {
 	$received = 'nevolano';
 	$dashboard = dashboard();
@@ -332,7 +314,6 @@ test('widget bez obdobi nema vyber a jeho data dostanou null', function () {
 	Assert::null($dashboard['pending']->period);
 	Assert::notContains('fa-dashboard-period', $html);
 });
-
 
 test('formular obdobi: select s volbami, skryta pole ostatnich parametru stranky a noscript odeslani', function () {
 	$dashboard = dashboard(presenter('https://admin.test/admin/?dashboard-orders-period=lastMonth&dashboard-sales-period=today&dashboard-sales-redraw=1&filter%5Bstate%5D=2'));
@@ -352,7 +333,6 @@ test('formular obdobi: select s volbami, skryta pole ostatnich parametru stranky
 	Assert::notContains('thisYear', $html);
 	Assert::contains('<noscript><button type="submit" class="btn btn-sm btn-outline-secondary">[fcadmin.dashboard.period.submit]</button></noscript>', $html);
 });
-
 
 test('ajax s redraw prekresli jen snippet toho widgetu a data ostatnich se nenactou', function () {
 	$calls = [];
@@ -383,7 +363,6 @@ test('ajax s redraw prekresli jen snippet toho widgetu a data ostatnich se nenac
 	Assert::same('', trim($output));
 });
 
-
 test('redraw bez ajaxu nic neprekresluje (cela stranka)', function () {
 	$dashboard = dashboard(presenter(ajax: false));
 	$dashboard->addTable('sales', 'Prodeje', ['a' => 'A'], fn() => [])->setPeriods(DashboardPeriod::TODAY);
@@ -392,7 +371,6 @@ test('redraw bez ajaxu nic neprekresluje (cela stranka)', function () {
 	Assert::false($dashboard['sales']->isControlInvalid());
 });
 
-
 /** @return array{string, string} */
 function periodRange(DashboardPeriod $period, string $now, bool $previous = false): array
 {
@@ -400,7 +378,6 @@ function periodRange(DashboardPeriod $period, string $now, bool $previous = fals
 
 	return [$range[0]->format('Y-m-d H:i'), $range[1]->format('Y-m-d H:i')];
 }
-
 
 test('DashboardPeriod: rozsah vsech obdobi, konec vylucny, tyden od pondeli', function () {
 	$now = '2026-11-18 14:35'; // streda
@@ -418,7 +395,6 @@ test('DashboardPeriod: rozsah vsech obdobi, konec vylucny, tyden od pondeli', fu
 	Assert::same(['2027-01-01 00:00', '2027-01-06 00:00'], periodRange(DashboardPeriod::THIS_QUARTER, '2027-01-05'));
 	Assert::same(['2026-07-01 00:00', '2026-09-30 00:00'], periodRange(DashboardPeriod::THIS_QUARTER, '2026-09-29 23:59'));
 });
-
 
 test('DashboardPeriod: predchozi obdobi je stejne dlouhe a nepresahuje do zvoleneho', function () {
 	$now = '2026-11-18 14:35';
@@ -438,14 +414,12 @@ test('DashboardPeriod: predchozi obdobi je stejne dlouhe a nepresahuje do zvolen
 	Assert::same(['2026-12-31 00:00', '2027-01-01 00:00'], periodRange(DashboardPeriod::TODAY, '2027-01-01 00:00', true));
 });
 
-
 test('DashboardPeriod: hodnota z URL a klic prekladu', function () {
 	Assert::same(DashboardPeriod::LAST_MONTH, DashboardPeriod::fromUrl('lastMonth', DashboardPeriod::TODAY));
 	Assert::same(DashboardPeriod::TODAY, DashboardPeriod::fromUrl('nesmysl', DashboardPeriod::TODAY));
 	Assert::same(DashboardPeriod::TODAY, DashboardPeriod::fromUrl(null, DashboardPeriod::TODAY));
 	Assert::same('fcadmin.dashboard.period.last7Days', DashboardPeriod::LAST_7_DAYS->getTranslationKey());
 });
-
 
 /** @return array<string, mixed> konfigurace z data-adt-chart */
 function chartConfig(string $html): array
@@ -454,7 +428,6 @@ function chartConfig(string $html): array
 
 	return json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
 }
-
 
 test('graf: canvas s konfiguraci pro builtin Chart, plugin tematu, format a zvolene obdobi', function () {
 	$dashboard = dashboard();
@@ -485,7 +458,6 @@ test('graf: canvas s konfiguraci pro builtin Chart, plugin tematu, format a zvol
 	Assert::same(['legend' => ['position' => 'bottom']], $config['options']['plugins']);
 	Assert::false(isset($config['options']['indexAxis']));
 });
-
 
 test('graf: vodorovne sloupce jsou vyssi, prazdna data hlasi prazdne obdobi, spatny navrat a typ vyjimkou', function () {
 	$dashboard = dashboard();
