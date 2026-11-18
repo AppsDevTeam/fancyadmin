@@ -4,7 +4,7 @@
 // data-lazy-state="loaded" a událost lazy-modal:loaded; kód, který formulář v modalu předvyplňuje,
 // na ni počká přes whenLazyModalLoaded().
 
-import { ajax } from './naja';
+import { ajax, onContentLoaded } from './naja';
 
 export function whenLazyModalLoaded(modal, callback) {
 	if (!modal.dataset.lazyUrl || modal.dataset.lazyState === 'loaded') {
@@ -29,4 +29,31 @@ $(document).on('show.bs.modal', '.modal[data-lazy-url]', function () {
 			// Další otevření to zkusí znovu
 			delete modal.dataset.lazyState;
 		});
+});
+
+// Formulář v modalu se uloží a přesměruje, překreslení stránky nahradí otevřený modal novým zavřeným.
+// Backdrop a zámek posunu stránky by pak zůstaly viset, protože je už nemá kdo zavřít.
+const openModals = new Set();
+
+$(document).on('show.bs.modal', '.modal', function () {
+	openModals.add(this);
+});
+
+$(document).on('hidden.bs.modal', '.modal', function () {
+	openModals.delete(this);
+});
+
+onContentLoaded(() => {
+	openModals.forEach((modal) => {
+		if (!modal.isConnected) {
+			openModals.delete(modal);
+		}
+	});
+	if (openModals.size) {
+		return;
+	}
+	document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.remove());
+	document.body.classList.remove('modal-open');
+	document.body.style.removeProperty('overflow');
+	document.body.style.removeProperty('padding-right');
 });

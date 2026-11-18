@@ -80,4 +80,10 @@ whenLazyModalLoaded(modal, () => {
 });
 ```
 
+## Uložení formuláře v modalu
+
+Formulář v modalu po uložení přesměruje a překreslení stránky (`modals`) nahradí otevřený modal novým,
+zavřeným. `lazyModal.js` pak odklidí backdrop Bootstrapu a zámek posunu stránky (`modal-open`), které by
+jinak zůstaly viset. Chyby validace se vracejí jen do formuláře, modal zůstane otevřený.
+
 Na kartě pacienta v adt-dent to zkrátilo zobrazení karty zhruba o třetinu (77 → 45 ms).
