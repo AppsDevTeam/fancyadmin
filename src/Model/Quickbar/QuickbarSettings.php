@@ -24,6 +24,7 @@ class QuickbarSettings
 		'todo' => true,
 		'notifications' => true,
 		'chat' => true,
+		'mobileMenu' => false,
 	];
 
 	/** Pořadí v liště podle návrhu, ne podle pořadí klíčů v nastavení */
@@ -53,6 +54,15 @@ class QuickbarSettings
 		return array_values(array_filter(self::ORDER, fn(QuickbarItem $item) => $this->getBool($item->value)));
 	}
 
+	/**
+	 * Vypnutá lišta i tak na mobilu jen s tlačítkem Menu (okno s položkami menu a profilem) místo spodní lišty
+	 * s ikonami (@mobileMenu.latte). Se zapnutou lištou je Menu na mobilu vždy.
+	 */
+	public function isMobileMenu(): bool
+	{
+		return $this->getBool('mobileMenu');
+	}
+
 	private function getBool(string $key): bool
 	{
 		$value = $this->getValues()[$key] ?? null;
@@ -60,7 +70,7 @@ class QuickbarSettings
 	}
 
 	/** @return array<string, mixed> Chybějící nebo rozbitý řádek = výchozí hodnoty */
-	private function getValues(): array
+	protected function getValues(): array
 	{
 		if ($this->values !== null) {
 			return $this->values;

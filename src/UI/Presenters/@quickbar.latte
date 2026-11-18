@@ -112,7 +112,8 @@
 	</section>
 {/foreach}
 
-<div n:class="quickbar, $hasSearch ? quickbar--with-search" data-quickbar>
+{* Bez položek jen Menu na mobilu (QuickbarSettings::isMobileMenu()), na širší obrazovce se lišta nekreslí *}
+<div n:class="quickbar, $hasSearch ? quickbar--with-search, !$quickbarItems ? quickbar--menu-only" data-quickbar>
 	{* Menu a ikonové hledání jen na mobilu, viz _quickbar.scss *}
 	<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-button quickbar-menu-button" title="{_fcadmin.layout.quickbar.menu.label}" aria-label="{_fcadmin.layout.quickbar.menu.label}"
 		aria-controls="quickbar-panel-menu" aria-expanded="false" data-quickbar-toggle="menu"><i class="fa-solid fa-bars"></i></button>

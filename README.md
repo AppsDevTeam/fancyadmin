@@ -3202,6 +3202,13 @@ migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). V
 Čte ho `QuickbarSettings::getItems()`; `BasePresenterTrait::getQuickbarItems()` jde v projektu přepsat
 (např. položky podle oprávnění). Ikony jsou v pořadí AI, Notifikace, Úkoly, Chat, hledání vždy vlevo.
 
+**Jen Menu na mobilu** - klíč `mobileMenu: true` (výchozí `false`): vypnutá lišta se i tak vykreslí, ale jen pod
+576 px a jen s tlačítkem **Menu** (třída `quickbar--menu-only`, pilulka s jedním tlačítkem) místo spodního
+mobilního menu s ikonami. Na širší obrazovce se nekreslí vůbec. Projekt bez tabulky `configuration` dodá vlastní `QuickbarSettings`
+s přepsaným `getValues()` (pole jako JSON výše) - přepsat jen `getItems()` nestačí, `isMobileMenu()` by sáhlo
+do databáze. Režim jde také přepsat v `BasePresenterTrait::isQuickbarMobileMenu()`. JS lišty (`@fancyadmin/js/quickbar`)
+si projekt importuje sám.
+
 **Hledání z klávesnice** — kurzor zůstává v poli hledání, výsledky se vybírají šipkami ↑ ↓ (na konci
 seznamu se zastaví) a Enter vybraný otevře stejně jako klik. Vybraný řádek má podklad
 `--quickbar-selected` a vpravo klávesu ↵ (`.quickbar-item--selected`, `.quickbar-item-enter`). Místo pro ni

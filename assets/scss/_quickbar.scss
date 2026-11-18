@@ -40,19 +40,28 @@ body {
 	}
 }
 
-// Rezerva, aby lišta nepřekryla konec stránky („Načíst další")
-body:has(.quickbar) .container-main {
-	padding-bottom: 120px;
+// Lišta jen s Menu (.quickbar--menu-only) je vidět jen na mobilu, rezervy pod ní tedy taky
+@mixin quickbar-reserve($bar) {
+	// Rezerva, aby lišta nepřekryla konec stránky („Načíst další")
+	body:has(#{$bar}) .container-main {
+		padding-bottom: 120px;
+	}
+
+	// Flash zprávy nad lištou, jinak je překryje
+	body:has(#{$bar}) .flash-stack {
+		bottom: var(--quickbar-panel-bottom);
+	}
+
+	// Vodorovný scroll gridu pod lištu, ne za ni: 9 px vysoký a 5 px mezera
+	body:has(#{$bar}) .table-bottom-scroll {
+		bottom: calc(var(--quickbar-bottom) - 14px);
+	}
 }
 
-// Flash zprávy nad lištou, jinak je překryje
-body:has(.quickbar) .flash-stack {
-	bottom: var(--quickbar-panel-bottom);
-}
+@include quickbar-reserve('.quickbar:not(.quickbar--menu-only)');
 
-// Vodorovný scroll gridu pod lištu, ne za ni: 9 px vysoký a 5 px mezera
-body:has(.quickbar) .table-bottom-scroll {
-	bottom: calc(var(--quickbar-bottom) - 14px);
+@include media-breakpoint-down(sm) {
+	@include quickbar-reserve('.quickbar--menu-only');
 }
 
 .quickbar {
@@ -144,10 +153,22 @@ body:has(.quickbar) .table-bottom-scroll {
 	}
 }
 
-// Menu a ikonové hledání jsou jen na mobilu
+// Menu a ikonové hledání jsou jen na mobilu, lišta bez položek s nimi celá
 @include media-breakpoint-up(sm) {
-	.quickbar :is(.quickbar-menu-button, .quickbar-search-button) {
+	.quickbar :is(.quickbar-menu-button, .quickbar-search-button),
+	.quickbar.quickbar--menu-only {
 		display: none;
+	}
+}
+
+// Jen Menu: pilulka s jedním tlačítkem, ani pod 400 px se neroztahuje přes celou šířku
+.quickbar.quickbar--menu-only {
+	width: auto;
+
+	.quickbar-button.btn.quickbar-menu-button {
+		flex: none;
+		width: auto;
+		min-width: 0;
 	}
 }
 

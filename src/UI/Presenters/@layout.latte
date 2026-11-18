@@ -119,7 +119,7 @@
 		{block menu}
 			{include @sideMenu.latte}
 			{* S rychlou lištou je navigace na mobilu v jejím okně Menu *}
-			{if empty($quickbarItems)}
+			{if empty($quickbarItems) && empty($quickbarMobileMenu)}
 				{include @mobileMenu.latte}
 			{/if}
 		{/block}
@@ -237,7 +237,7 @@
 {* Rychlá lišta mimo snippet body - ajaxový přechod na jinou stránku ji nepřekreslí, takže
    otevřený panel (AI asistent, chat) i rozepsaný text zůstanou. Zvýraznění aktuální položky
    menu lišty má vlastní snippet quickbarMenu. *}
-{if $primaryTemplate && !empty($quickbarItems)}
+{if $primaryTemplate && (!empty($quickbarItems) || !empty($quickbarMobileMenu))}
 	{include @quickbar.latte}
 {/if}
 {* Flash zprávy mimo snippet body - ajaxový přechod je nezavře *}

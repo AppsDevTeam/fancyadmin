@@ -64,6 +64,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];
 		$this->getTemplate()->quickbarAiUrl = in_array(QuickbarItem::Ai, $this->getTemplate()->quickbarItems, true) ? $this->getQuickbarAiUrl() : null;
+		$this->getTemplate()->quickbarMobileMenu = $this->primaryTemplate && !$this->getTemplate()->quickbarItems && $this->isQuickbarMobileMenu();
 		$pushTopics = $this->primaryTemplate && $this->getPortalUser()->isLoggedIn() ? $this->getPushTopics() : [];
 		$pushSubscription = $pushTopics !== [] ? $this->_push->subscription($pushTopics) : null;
 		$this->getTemplate()->pushSubscription = $pushSubscription !== null ? Json::encode($pushSubscription) : null;
@@ -167,6 +168,12 @@ trait BasePresenterTrait
 		return in_array(QuickbarItem::Ai, $items, true) && $this->getQuickbarAiUrl() === null
 			? array_values(array_filter($items, fn(QuickbarItem $item) => $item !== QuickbarItem::Ai))
 			: $items;
+	}
+
+	/** Vypnutá lišta jen s tlačítkem Menu na mobilu (QuickbarSettings::isMobileMenu()); projekt může přepsat. */
+	protected function isQuickbarMobileMenu(): bool
+	{
+		return $this->_quickbarSettings->isMobileMenu();
 	}
 
 	/**
