@@ -1,4 +1,4 @@
-// Plugin fancyadminTheme (assets/js/dashboardTheme.js) a aktualizace grafu ve widgetu (assets/js/dashboard.js).
+// Plugin fancyadminTheme (assets/js/widgetsTheme.js) a aktualizace grafu ve widgetu (assets/js/widgets.js).
 // Chart.js je nahrazený objektem s config, data a update() - plugin s instancí víc nedělá.
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -37,8 +37,8 @@ function init(chart) {
 beforeAll(async () => {
 	await import('../../assets/js/_jquery-global.js');
 	await import('../../assets/js/naja.js');
-	theme = await import('../../assets/js/dashboardTheme.js');
-	({ chartUpdateOperation } = await import('../../assets/js/dashboard.js'));
+	theme = await import('../../assets/js/widgetsTheme.js');
+	({ chartUpdateOperation } = await import('../../assets/js/widgets.js'));
 	({ chartPlugins } = await import('adt-js-components/src/Chart/plugins'));
 });
 
@@ -148,15 +148,15 @@ describe('pomocné funkce a registrace', () => {
 
 describe('graf v překresleném widgetu', () => {
 	function widgetSnippet(inner) {
-		document.body.innerHTML = `<section data-dashboard-widget="sales"><div id="snippet-dashboard-sales-body">${inner}</div></section>`;
+		document.body.innerHTML = `<section data-widget="sales"><div id="snippet-dashboard-sales-body">${inner}</div></section>`;
 		return document.getElementById('snippet-dashboard-sales-body');
 	}
 
 	it('nový graf jen přepíše data-adt-chart stávajícího canvasu', () => {
-		const snippet = widgetSnippet('<div class="fa-dashboard-chart"><canvas data-adt-chart=\'{"type":"line","v":1}\'></canvas></div>');
+		const snippet = widgetSnippet('<div class="fa-widgets-chart"><canvas data-adt-chart=\'{"type":"line","v":1}\'></canvas></div>');
 		const canvas = snippet.querySelector('canvas');
 
-		const operation = chartUpdateOperation(snippet, '<div class="fa-dashboard-chart"><canvas data-adt-chart=\'{"type":"line","v":2}\'></canvas></div>');
+		const operation = chartUpdateOperation(snippet, '<div class="fa-widgets-chart"><canvas data-adt-chart=\'{"type":"line","v":2}\'></canvas></div>');
 		operation(snippet, '');
 
 		expect(snippet.querySelector('canvas')).toBe(canvas);
@@ -165,7 +165,7 @@ describe('graf v překresleném widgetu', () => {
 
 	it('prázdná data, widget bez grafu a snippet mimo dashboard jdou běžnou výměnou', () => {
 		const snippet = widgetSnippet('<canvas data-adt-chart="{}"></canvas>');
-		expect(chartUpdateOperation(snippet, '<p class="fa-dashboard-empty">Žádná data</p>')).toBeNull();
+		expect(chartUpdateOperation(snippet, '<p class="fa-widgets-empty">Žádná data</p>')).toBeNull();
 
 		const table = widgetSnippet('<table></table>');
 		expect(chartUpdateOperation(table, '<canvas data-adt-chart="{}"></canvas>')).toBeNull();

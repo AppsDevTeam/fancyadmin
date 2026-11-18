@@ -1,4 +1,4 @@
-// Výběr období ve widgetu dashboardu (assets/js/dashboard.js): změna selectu pošle ajaxem adresu s obdobím
+// Výběr období ve widgetu dashboardu (assets/js/widgets.js): změna selectu pošle ajaxem adresu s obdobím
 // a parametrem redraw, adresu stránky bez redraw zapíše až po úspěšném požadavku.
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,8 +8,8 @@ let periodUrls;
 const nextTick = () => new Promise((resolve) => setTimeout(resolve));
 
 function widget(name, value) {
-	return `<form class="fa-dashboard-period" method="get" action="/admin/">
-		<select name="dashboard-${name}-period" data-dashboard-period data-dashboard-redraw="dashboard-${name}-redraw">
+	return `<form class="fa-widgets-period" method="get" action="/admin/">
+		<select name="dashboard-${name}-period" data-widget-period data-widget-redraw="dashboard-${name}-redraw">
 			<option value="today"${value === 'today' ? ' selected' : ''}>Dnes</option>
 			<option value="thisMonth"${value === 'thisMonth' ? ' selected' : ''}>Tento měsíc</option>
 		</select>
@@ -24,7 +24,7 @@ function choose(select, value) {
 beforeAll(async () => {
 	await import('../../assets/js/_jquery-global.js');
 	({ default: naja } = await import('../../assets/js/naja.js'));
-	({ periodUrls } = await import('../../assets/js/dashboard.js'));
+	({ periodUrls } = await import('../../assets/js/widgets.js'));
 });
 
 beforeEach(() => {

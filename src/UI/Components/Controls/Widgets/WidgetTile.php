@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 /** Jedna dlaždice widgetu `tiles`: číslo s popiskem, poznámkou a ikonou. */
-final class DashboardTile
+final class WidgetTile
 {
 	public function __construct(
 		public readonly string $label,
@@ -13,7 +13,7 @@ final class DashboardTile
 		public readonly ?string $note = null,
 		public readonly ?string $icon = null,
 		public readonly ?string $link = null,
-		public readonly DashboardTone $tone = DashboardTone::Neutral,
+		public readonly WidgetTone $tone = WidgetTone::Neutral,
 	) {
 	}
 }

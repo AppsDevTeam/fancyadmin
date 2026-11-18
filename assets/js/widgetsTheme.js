@@ -1,4 +1,4 @@
-// Plugin Chart.js `fancyadminTheme` (docs/dashboard.md): barvy datasetů, mřížky, os, legendy a tooltipu z CSS
+// Plugin Chart.js `fancyadminTheme` (docs/widgets.md): barvy datasetů, mřížky, os, legendy a tooltipu z CSS
 // proměnných fancyadminu, takže graf sedí ve světlém i tmavém režimu. Barvu zadanou v konfiguraci nepřepíše;
 // na `fancyadmin:theme-change` barvy přepočítá a grafy překreslí. Nenačítá chart.js, jen pracuje s instancemi.
 

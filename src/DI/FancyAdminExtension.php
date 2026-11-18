@@ -68,8 +68,8 @@ use ADT\FancyAdmin\Model\Security\ReturnPath;
 use ADT\FancyAdmin\Model\Security\SecretCipher;
 use ADT\FancyAdmin\Model\Security\SecurityUser;
 use ADT\FancyAdmin\Model\Services\JsComponents;
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl;
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControlFactory;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControlFactory;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControl;
 use ADT\FancyAdmin\UI\Components\Controls\SidePanel\SidePanelControlFactory;
 use ADT\FancyAdmin\UI\Components\Forms\BiometricSignature\BiometricSignatureInput;
@@ -380,10 +380,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->getResultDefinition()
 			->setFactory(SidePanelControl::class);
 
-		$builder->addFactoryDefinition($this->prefix('dashboardControlFactory'))
-			->setImplement(DashboardControlFactory::class)
+		$builder->addFactoryDefinition($this->prefix('widgetGridControlFactory'))
+			->setImplement(WidgetGridControlFactory::class)
 			->getResultDefinition()
-			->setFactory(DashboardControl::class);
+			->setFactory(WidgetGridControl::class);
 
 		$builder->addDefinition($this->prefix('fancyAdminRouter'))
 			->setFactory(FancyAdminRouter::class);

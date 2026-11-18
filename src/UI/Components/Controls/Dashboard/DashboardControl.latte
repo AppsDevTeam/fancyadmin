@@ -1,9 +1,0 @@
-{varType ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl $dashboard}
-
-<div class="fa-dashboard fa-dashboard-cols-{$dashboard->getColumns()}">
-	{foreach $dashboard->getWidgets() as $widget}
-		<section class="fa-dashboard-widget fa-dashboard-widget-{$widget->getType()} fa-dashboard-span-{$dashboard->getSpan($widget)}" data-dashboard-widget="{$widget->getName()}">
-			{control $widget->getName()}
-		</section>
-	{/foreach}
-</div>

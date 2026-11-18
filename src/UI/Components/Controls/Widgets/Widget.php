@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 use InvalidArgumentException;
 
-/** Widget dashboardu. Data dodává callable, které se zavolá až při vykreslení. */
-abstract class DashboardWidget
+/** Widget mřížky. Data dodává callable, které se zavolá až při vykreslení. */
+abstract class Widget
 {
 	private ?string $description = null;
 
@@ -15,12 +15,12 @@ abstract class DashboardWidget
 
 	private int $position = 0;
 
-	private ?DashboardPeriod $defaultPeriod = null;
+	private ?WidgetPeriod $defaultPeriod = null;
 
-	/** @var list<DashboardPeriod> */
+	/** @var list<WidgetPeriod> */
 	private array $periodOptions = [];
 
-	private ?DashboardPeriod $period = null;
+	private ?WidgetPeriod $period = null;
 
 	public function __construct(
 		private readonly string $name,
@@ -91,11 +91,11 @@ abstract class DashboardWidget
 	/**
 	 * Výběr období v hlavičce widgetu; data widgetu pak dostanou zvolené období jako parametr.
 	 *
-	 * @param list<DashboardPeriod>|null $options nabízená období, výchozí všechna
+	 * @param list<WidgetPeriod>|null $options nabízená období, výchozí všechna
 	 */
-	public function setPeriods(DashboardPeriod $default, ?array $options = null): static
+	public function setPeriods(WidgetPeriod $default, ?array $options = null): static
 	{
-		$options ??= DashboardPeriod::cases();
+		$options ??= WidgetPeriod::cases();
 		if (!in_array($default, $options, true)) {
 			throw new InvalidArgumentException('Výchozí období musí být mezi nabízenými.');
 		}
@@ -109,19 +109,19 @@ abstract class DashboardWidget
 		return $this->defaultPeriod !== null;
 	}
 
-	/** @return list<DashboardPeriod> */
+	/** @return list<WidgetPeriod> */
 	public function getPeriodOptions(): array
 	{
 		return $this->periodOptions;
 	}
 
-	public function getDefaultPeriod(): ?DashboardPeriod
+	public function getDefaultPeriod(): ?WidgetPeriod
 	{
 		return $this->defaultPeriod;
 	}
 
 	/** Zvolené období, bez volby výchozí; widget bez období vrací null. */
-	public function getPeriod(): ?DashboardPeriod
+	public function getPeriod(): ?WidgetPeriod
 	{
 		return $this->period ?? $this->defaultPeriod;
 	}
@@ -129,7 +129,7 @@ abstract class DashboardWidget
 	/** Hodnota z URL; neznámé nebo nenabízené období znamená výchozí. */
 	public function selectPeriod(?string $value): static
 	{
-		$period = $this->defaultPeriod ? DashboardPeriod::fromUrl($value, $this->defaultPeriod) : null;
+		$period = $this->defaultPeriod ? WidgetPeriod::fromUrl($value, $this->defaultPeriod) : null;
 		$this->period = in_array($period, $this->periodOptions, true) ? $period : null;
 		return $this;
 	}

@@ -1,0 +1,9 @@
+{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl $widgetGrid}
+
+<div class="fa-widgets fa-widgets-cols-{$widgetGrid->getColumns()}">
+	{foreach $widgetGrid->getWidgets() as $widget}
+		<section class="fa-widget fa-widget-{$widget->getType()} fa-widgets-span-{$widgetGrid->getSpan($widget)}" data-widget="{$widget->getName()}">
+			{control $widget->getName()}
+		</section>
+	{/foreach}
+</div>

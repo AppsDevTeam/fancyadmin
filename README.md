@@ -1142,12 +1142,12 @@ Formuláře stránky jako karty pod sebou s jednou otevřenou sekcí (šablony e
 blok `accordionSection` pro `{embed}`, otevření sekce s chybou, zapamatování otevřené sekce, `?section=`
 a odznak napojený na zaškrtávátko. Návod v `docs/accordion.md`.
 
-### Dashboard (`DashboardControl`, trait `Dashboard`)
+### Widgety (`WidgetGridControl`, trait `Dashboard`)
 
 Přehled jako mřížka widgetů - velké číslo (`addStat`), řada dlaždic (`addTiles`), tabulka (`addTable`),
 graf Chart.js s barvami tématu (`addChart`, plugin `fancyadminTheme`) a vlastní šablona (`addTemplate`). Rozložení skládá presenter v `configureDashboard()`, data se načtou
-až při vykreslení. Widget může mít výběr období (`DashboardPeriod`, URL + překreslení jen toho widgetu).
-Návod v `docs/dashboard.md`.
+až při vykreslení. Widget může mít výběr období (`WidgetPeriod`, URL + překreslení jen toho widgetu).
+Návod v `docs/widgets.md`.
 
 ### CSRF ochrana signálů
 

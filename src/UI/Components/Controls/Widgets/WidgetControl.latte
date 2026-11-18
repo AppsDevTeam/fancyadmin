@@ -1,0 +1,95 @@
+{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\Widget $widget}
+{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl $widgetGrid}
+{varType string $format}
+
+{* Dlaždice jsou samy kartami, ostatní widgety jsou v kartě *}
+{var $_card = $widget->getType() !== 'tiles'}
+<div n:class="$_card ? 'card fa-widgets-card'">
+	{include header}
+	<div n:class="$_card ? 'card-body fa-widgets-card-body'" n:snippet="body">
+		{include block ('widget-' . $widget->getType())}
+	</div>
+</div>
+
+{define header}
+	{var $_title = $widget->getType() !== 'stat' ? $widget->getTitle() : null}
+	<div n:if="$_title !== null || $widget->hasPeriods()" class="fa-widget-header">
+		<div n:if="$_title !== null" class="fa-widget-heading">
+			<h2 class="fa-widget-title">{$_title}</h2>
+			<p n:if="$widget->getDescription()" class="fa-widget-description">{$widget->getDescription()}</p>
+		</div>
+		<form n:if="$widget->hasPeriods()" class="fa-widgets-period" method="get" action="{$control->getPeriodFormAction()}">
+			<input n:foreach="$control->getPeriodFormFields() as $_name => $_value" type="hidden" name="{$_name}" value="{$_value}">
+			<select name="{$control->getPeriodParameterName()}" class="form-select form-select-sm" aria-label="{_fcadmin.widgets.period.label}"
+				data-widget-period data-widget-redraw="{$control->getRedrawParameterName()}">
+				<option n:foreach="$widget->getPeriodOptions() as $_period" value="{$_period->value}" n:attr="selected: $_period === $widget->getPeriod()">{_$_period->getTranslationKey()}</option>
+			</select>
+			<noscript><button type="submit" class="btn btn-sm btn-outline-secondary">{_fcadmin.widgets.period.submit}</button></noscript>
+		</form>
+	</div>
+{/define}
+
+{define widget-stat}
+	<div class="fa-widgets-stat fa-widgets-tone-{$widget->getTone()->value}">
+		<div class="fa-widgets-stat-head">
+			<span n:if="$widget->getIcon()" class="fa-widgets-icon"><i class="{$format::icon($widget->getIcon())}" aria-hidden="true"></i></span>
+			<span class="fa-widgets-stat-label">{$widget->getTitle()}</span>
+		</div>
+		<div class="fa-widgets-stat-value">{$format::value($widget->getValue())}</div>
+		<div n:ifcontent class="fa-widgets-stat-note">{$widget->getNote()}</div>
+		<a n:if="$widget->getLink()" href="{$widget->getLink()}" class="stretched-link" aria-label="{$widget->getTitle()}"></a>
+	</div>
+{/define}
+
+{define widget-tiles}
+	<div class="fa-widgets-tiles">
+		<div n:foreach="$widget->getTiles() as $tile" class="card fa-widgets-tile fa-widgets-tone-{$tile->tone->value}">
+			<div class="fa-widgets-stat-head">
+				<span n:if="$tile->icon" class="fa-widgets-icon"><i class="{$format::icon($tile->icon)}" aria-hidden="true"></i></span>
+				<span class="fa-widgets-stat-label">{$tile->label}</span>
+			</div>
+			<div class="fa-widgets-tile-value">{$format::value($tile->value)}</div>
+			<div n:if="$tile->note !== null" class="fa-widgets-stat-note">{$tile->note}</div>
+			<a n:if="$tile->link" href="{$tile->link}" class="stretched-link" aria-label="{$tile->label}"></a>
+		</div>
+	</div>
+{/define}
+
+{define widget-table}
+	{if $widget->getRows()}
+		<div class="table-responsive">
+			<table class="table fa-widgets-table mb-0">
+				<thead>
+					<tr>
+						<th n:foreach="$widget->getColumns() as $column" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$widget->getRows() as $row">
+						{foreach $widget->getColumns() as $key => $column}
+							{var $_value = $row[$key] ?? null}
+							<td n:class="$column->numeric ? 'text-end text-nowrap'">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</td>
+						{/foreach}
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	{else}
+		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+	{/if}
+{/define}
+
+{define widget-chart}
+	{var $_chart = $widget->getChart()}
+	{if $_chart->isEmpty()}
+		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+	{else}
+		<div n:class="'fa-widgets-chart', $_chart->indexAxis === 'y' ? 'fa-widgets-chart-tall'">
+			<canvas data-adt-chart={$_chart->toConfig()} role="img" aria-label={$widget->getTitle()}></canvas>
+		</div>
+	{/if}
+{/define}
+
+{define widget-template}
+	{include $widget->getFile(), presenter: $presenter, widgetGrid: $widgetGrid, widget: $widget, period: $widget->getPeriod(), ...$widget->getParameters()}
+{/define}

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
-final class DashboardFormat
+final class WidgetFormat
 {
 	/** Číslo po česku (mezera mezi tisíci, desetinná čárka), text beze změny. */
 	public static function value(int|float|string|null $value): string

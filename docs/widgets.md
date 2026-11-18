@@ -7,61 +7,61 @@ ani v databázi; data každého widgetu dodává `callable`, které se zavolá a
 
 | soubor | co dělá |
 |---|---|
-| `src/UI/Components/Controls/Dashboard/DashboardControl.php` | control - mřížka, přidávání widgetů, pořadí, šířka |
-| `src/UI/Components/Controls/Dashboard/DashboardControl.latte` | markup mřížky a widgetů |
-| `src/UI/Components/Controls/Dashboard/DashboardWidget.php` | společný předek widgetů - titulek, popis, šířka, pořadí, období |
-| `src/UI/Components/Controls/Dashboard/*Widget.php` | widgety `stat`, `tiles`, `table`, `chart`, `template` (data a nastavení) |
-| `src/UI/Components/Controls/Dashboard/DashboardTile.php`, `DashboardTableColumn.php`, `DashboardTone.php` | dlaždice, sloupec tabulky a barva ikony (hodnotové objekty pro widgety) |
-| `src/UI/Components/Controls/Dashboard/DashboardFormat.php` | formát čísel a ikon pro šablony |
-| `src/UI/Components/Controls/Dashboard/DashboardControlFactory.php` | generovaná továrna controlu, registruje ji rozšíření |
-| `src/UI/Components/Controls/Dashboard/DashboardWidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta dashboardu se snippetem `body` a persistentním `period` |
-| `src/UI/Components/Controls/Dashboard/DashboardPeriod.php` | období (dnes ... tento rok), `getRange()`, `getPreviousRange()` |
-| `assets/js/dashboard.js` | výběr období bez načtení stránky (Naja + `history.replaceState`), registrace pluginu grafů, aktualizace grafu na místě |
-| `assets/js/dashboardTheme.js` | plugin Chart.js `fancyadminTheme` - barvy z CSS proměnných, změna tématu |
-| `src/UI/Components/Controls/Dashboard/DashboardChart.php` | data grafu widgetu `chart` |
-| `src/UI/Presenters/Dashboard.php` | trait presenteru - komponenta `dashboard` z továrny `DashboardControlFactory` (registruje ji rozšíření) |
-| `assets/scss/_dashboard.scss` | vzhled (součást `app.scss`), prefix `.fa-dashboard-*`, světlý i tmavý režim |
-| `src/lang/fcadmin.*.yml` | `fcadmin.dashboard.empty` (prázdná tabulka), `fcadmin.dashboard.period.*` (období, popisek, tlačítko bez JS) |
+| `src/UI/Components/Controls/Widgets/WidgetGridControl.php` | control - mřížka, přidávání widgetů, pořadí, šířka |
+| `src/UI/Components/Controls/Widgets/WidgetGridControl.latte` | markup mřížky a widgetů |
+| `src/UI/Components/Controls/Widgets/Widget.php` | společný předek widgetů - titulek, popis, šířka, pořadí, období |
+| `src/UI/Components/Controls/Widgets/*Widget.php` | widgety `stat`, `tiles`, `table`, `chart`, `template` (data a nastavení) |
+| `src/UI/Components/Controls/Widgets/WidgetTile.php`, `WidgetTableColumn.php`, `WidgetTone.php` | dlaždice, sloupec tabulky a barva ikony (hodnotové objekty pro widgety) |
+| `src/UI/Components/Controls/Widgets/WidgetFormat.php` | formát čísel a ikon pro šablony |
+| `src/UI/Components/Controls/Widgets/WidgetGridControlFactory.php` | generovaná továrna controlu, registruje ji rozšíření |
+| `src/UI/Components/Controls/Widgets/WidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta dashboardu se snippetem `body` a persistentním `period` |
+| `src/UI/Components/Controls/Widgets/WidgetPeriod.php` | období (dnes ... tento rok), `getRange()`, `getPreviousRange()` |
+| `assets/js/widgets.js` | výběr období bez načtení stránky (Naja + `history.replaceState`), registrace pluginu grafů, aktualizace grafu na místě |
+| `assets/js/widgetsTheme.js` | plugin Chart.js `fancyadminTheme` - barvy z CSS proměnných, změna tématu |
+| `src/UI/Components/Controls/Widgets/WidgetChart.php` | data grafu widgetu `chart` |
+| `src/UI/Presenters/Dashboard.php` | trait presenteru - komponenta `dashboard` z továrny `WidgetGridControlFactory` (registruje ji rozšíření) |
+| `assets/scss/_widgets.scss` | vzhled (součást `app.scss`), prefix `.fa-widgets-*`, světlý i tmavý režim |
+| `src/lang/fcadmin.*.yml` | `fcadmin.widgets.empty` (prázdná tabulka), `fcadmin.widgets.period.*` (období, popisek, tlačítko bez JS) |
 
 Starší třídy `.dashboard-card` v `_theme.scss` s dashboardem nesouvisí a zůstávají.
 
-JS si projekt importuje sám (`import '@fancyadmin/js/dashboard';`). Bez importu by změna selectu v prohlížeči
+JS si projekt importuje sám (`import '@fancyadmin/js/widgets';`). Bez importu by změna selectu v prohlížeči
 se zapnutým JS nic neodeslala - tlačítko v `<noscript>` se ukáže jen s vypnutým JS.
 
 ## Použití
 
 ```php
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl;
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardPeriod;
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardTableColumn;
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardTile;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetPeriod;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetTableColumn;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetTile;
 use ADT\FancyAdmin\UI\Presenters\Dashboard;
 
 class HomepagePresenter extends BasePresenter
 {
 	use Dashboard;
 
-	protected function configureDashboard(DashboardControl $dashboard): void
+	protected function configureDashboard(WidgetGridControl $widgetGrid): void
 	{
-		$dashboard->setColumns(3);
+		$widgetGrid->setColumns(3);
 
-		$dashboard->addStat('pending', 'Čeká na odeslání', fn() => $this->orders->countPending())
+		$widgetGrid->addStat('pending', 'Čeká na odeslání', fn() => $this->orders->countPending())
 			->setNote('objednávek')
 			->setIcon('truck')
 			->setLink($this->link('Order:default'));
 
-		$dashboard->addTable('sales', 'Prodeje', [
+		$widgetGrid->addTable('sales', 'Prodeje', [
 			'label' => 'Ukazatel',
-			'value' => new DashboardTableColumn('Hodnota', numeric: true),
-		], fn(DashboardPeriod $period) => $this->stats->getSalesRows(...$period->getRange()))
-			->setPeriods(DashboardPeriod::THIS_MONTH)
+			'value' => new WidgetTableColumn('Hodnota', numeric: true),
+		], fn(WidgetPeriod $period) => $this->stats->getSalesRows(...$period->getRange()))
+			->setPeriods(WidgetPeriod::THIS_MONTH)
 			->setSpan(2);
 
-		$dashboard->addTiles('kpi', fn() => [
-			new DashboardTile('Katalog', $this->stats->getCatalogCount(), icon: 'box'),
+		$widgetGrid->addTiles('kpi', fn() => [
+			new WidgetTile('Katalog', $this->stats->getCatalogCount(), icon: 'box'),
 		])->setSpan(3);
 
-		$dashboard->addTemplate('export', 'Export', __DIR__ . '/export.latte');
+		$widgetGrid->addTemplate('export', 'Export', __DIR__ . '/export.latte');
 	}
 }
 ```
@@ -77,7 +77,7 @@ class HomepagePresenter extends BasePresenter
 - `setColumns(1-6)`, výchozí 3. Pod zlomem `lg` má mřížka nejvýš 2 sloupce, pod `md` jeden.
 - `setSpan(n)` - kolik sloupců widget zabere; víc, než má mřížka, se ořízne (pod `lg` na 2).
 - `setPosition(n)` - pořadí; widgety se stejnou pozicí (výchozí 0) zůstanou v pořadí přidání.
-- `setTitle()`, `setDescription()` - hlavička widgetu. Jméno widgetu (`data-dashboard-widget`) je zároveň jméno
+- `setTitle()`, `setDescription()` - hlavička widgetu. Jméno widgetu (`data-widget`) je zároveň jméno
   podkomponenty, smí tedy obsahovat jen písmena, číslice a `_` a musí být na dashboardu jedinečné.
 
 ## Widgety
@@ -85,23 +85,23 @@ class HomepagePresenter extends BasePresenter
 | metoda | widget |
 |---|---|
 | `addStat($name, $title, fn() => int\|float\|string)` | velké číslo; `setNote()` (text nebo callable), `setIcon()`, `setLink()` (celá karta je odkaz), `setTone()` |
-| `addTiles($name, fn() => DashboardTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `DashboardTile`: label, value, note, icon, link, tone |
-| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `DashboardTableColumn($label, numeric: true)` (formát a zarovnání doprava), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.dashboard.empty` |
-| `addChart($name, $title, fn() => DashboardChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
-| `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$dashboard`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
+| `addTiles($name, fn() => WidgetTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `WidgetTile`: label, value, note, icon, link, tone |
+| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty` |
+| `addChart($name, $title, fn() => WidgetChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
+| `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$widgetGrid`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
 
 Poznámka statu a parametry šablony mohou být text / pole, nebo `Closure` (ne obecné `callable` - text `'date'` by byl funkce).
 
 - **Čísla** se vypisují česky: mezera (nezlomitelná) mezi tisíci, desetinná čárka, desetinné číslo na 2 místa.
   Text projde beze změny - když má projekt vlastní formát (měna, procenta), vrátí rovnou text.
 - **Ikona** je jméno Font Awesome (`truck` → `fa-solid fa-truck`), plné třídy (`fa-regular fa-box`) zůstanou.
-- **Tón** (`DashboardTone`): `Neutral`, `Primary`, `Success`, `Warning`, `Danger`, `Info` - barva ikony.
+- **Tón** (`WidgetTone`): `Neutral`, `Primary`, `Success`, `Warning`, `Danger`, `Info` - barva ikony.
 
 ## Období
 
-`setPeriods(DashboardPeriod $default, ?array $options = null)` dá widgetu v hlavičce select období (výchozí
+`setPeriods(WidgetPeriod $default, ?array $options = null)` dá widgetu v hlavičce select období (výchozí
 nabídka všech osmi). Data widgetu (callable hodnoty, dlaždic, řádků, parametry šablony, poznámka) pak dostanou
-zvolené `DashboardPeriod` jako parametr; widget bez období dostane `null`.
+zvolené `WidgetPeriod` jako parametr; widget bez období dostane `null`.
 
 - **Stav je v URL**: persistentní parametr podkomponenty `period` (`?dashboard-sales-period=lastMonth`), takže
   obnovení stránky i odkaz drží zvolená období všech widgetů. Výchozí období do adresy nejde, neznámé nebo
@@ -115,7 +115,7 @@ zvolené `DashboardPeriod` jako parametr; widget bez období dostane `null`.
 - **Bez JS**: select je v GET formuláři s tlačítkem v `<noscript>`; skrytá pole nesou ostatní parametry
   aktuální adresy (GET formulář query z `action` zahodí).
 
-`DashboardPeriod`:
+`WidgetPeriod`:
 
 | | `getRange()` (konec výlučný) | `getPreviousRange()` |
 |---|---|---|
@@ -127,10 +127,10 @@ zvolené `DashboardPeriod` jako parametr; widget bez období dostane `null`.
 
 ## Grafy
 
-`addChart()` vrací z callable `DashboardChart`:
+`addChart()` vrací z callable `WidgetChart`:
 
 ```php
-$dashboard->addChart('revenue', 'Tržba po dnech', fn(DashboardPeriod $period) => new DashboardChart(
+$widgetGrid->addChart('revenue', 'Tržba po dnech', fn(WidgetPeriod $period) => new WidgetChart(
 	'line',
 	$labels,                                         // popisky osy
 	[
@@ -138,7 +138,7 @@ $dashboard->addChart('revenue', 'Tržba po dnech', fn(DashboardPeriod $period) =
 		['label' => 'Předchozí období', 'data' => $previous],
 	],
 	format: ['style' => 'currency', 'currency' => 'CZK', 'maximumFractionDigits' => 0],
-))->setPeriods(DashboardPeriod::THIS_MONTH)->setSpan(2);
+))->setPeriods(WidgetPeriod::THIS_MONTH)->setSpan(2);
 ```
 
 - `type`: `line`, `bar`, `doughnut`, `pie`, jiný vyhodí výjimku; `indexAxis: 'y'` = vodorovné sloupce (vyšší
@@ -148,9 +148,9 @@ $dashboard->addChart('revenue', 'Tržba po dnech', fn(DashboardPeriod $period) =
 - `format` jsou volby `Intl.NumberFormat` pro osu hodnot a tooltip (builtin `Chart`), `options` další volby
   Chart.js (mají přednost před výchozími `maintainAspectRatio: false`, `interaction: index`).
 - Šablona vypíše `<canvas data-adt-chart='{…}'>` s `plugins: ["fancyadminTheme"]`; prázdné `labels` nebo
-  `datasets` ukážou `fcadmin.dashboard.empty`.
+  `datasets` ukážou `fcadmin.widgets.empty`.
 
-**Plugin `fancyadminTheme`** (`dashboardTheme.js`, registruje ho `dashboard.js` přes `registerChartPlugins()`):
+**Plugin `fancyadminTheme`** (`widgetsTheme.js`, registruje ho `dashboard.js` přes `registerChartPlugins()`):
 
 - datasety bez barvy dostanou paletu z proměnných `--primaryColor`, `--fa-text-muted` (druhý dataset - typicky
   předchozí období - je tlumený), `--dashboardAccentColor`, `--bs-info`, `--bs-success`, `--bs-warning`; čára má

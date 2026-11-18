@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 use UnexpectedValueException;
 
 /** Řada dlaždic (KPI); bez titulku se vykreslí bez hlavičky. */
-final class TilesWidget extends DashboardWidget
+final class TilesWidget extends Widget
 {
-	/** @var callable(?DashboardPeriod): iterable<mixed> projekt může vrátit cokoli, kontroluje se při vykreslení */
+	/** @var callable(?WidgetPeriod): iterable<mixed> projekt může vrátit cokoli, kontroluje se při vykreslení */
 	private $tiles;
 
-	/** @var list<DashboardTile>|null */
+	/** @var list<WidgetTile>|null */
 	private ?array $resolvedTiles = null;
 
-	/** @param callable(?DashboardPeriod): iterable<DashboardTile> $tiles */
+	/** @param callable(?WidgetPeriod): iterable<WidgetTile> $tiles */
 	public function __construct(string $name, callable $tiles, ?string $title = null)
 	{
 		parent::__construct($name, $title);
@@ -27,14 +27,14 @@ final class TilesWidget extends DashboardWidget
 		return 'tiles';
 	}
 
-	/** @return list<DashboardTile> */
+	/** @return list<WidgetTile> */
 	public function getTiles(): array
 	{
 		if ($this->resolvedTiles === null) {
 			$this->resolvedTiles = [];
 			foreach (($this->tiles)($this->getPeriod()) as $tile) {
-				if (!$tile instanceof DashboardTile) {
-					throw new UnexpectedValueException("Widget '{$this->getName()}' musí vracet dlaždice " . DashboardTile::class . '.');
+				if (!$tile instanceof WidgetTile) {
+					throw new UnexpectedValueException("Widget '{$this->getName()}' musí vracet dlaždice " . WidgetTile::class . '.');
 				}
 				$this->resolvedTiles[] = $tile;
 			}

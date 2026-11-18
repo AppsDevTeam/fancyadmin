@@ -1,33 +1,33 @@
 @use 'variables' as *;
 
-// Dashboard (docs/dashboard.md): mřížka widgetů, pod lg nejvýš 2 sloupce, pod md jeden.
+// Widgety (docs/widgets.md): mřížka widgetů, pod lg nejvýš 2 sloupce, pod md jeden.
 // Jen proměnné --fa-* / --primaryColor - světlý i tmavý režim. Staré .dashboard-card v _theme.scss zůstávají.
 
-.fa-dashboard {
-	--fa-dashboard-columns: 3;
+.fa-widgets {
+	--fa-widgets-columns: 3;
 	display: grid;
-	grid-template-columns: repeat(var(--fa-dashboard-columns), minmax(0, 1fr));
+	grid-template-columns: repeat(var(--fa-widgets-columns), minmax(0, 1fr));
 	gap: 20px;
 	align-items: stretch;
 }
 
 @for $i from 1 through 6 {
-	.fa-dashboard-cols-#{$i} {
-		--fa-dashboard-columns: #{$i};
+	.fa-widgets-cols-#{$i} {
+		--fa-widgets-columns: #{$i};
 	}
 
-	.fa-dashboard-span-#{$i} {
+	.fa-widgets-span-#{$i} {
 		grid-column: span $i;
 	}
 }
 
 @include media-breakpoint-down(lg) {
-	.fa-dashboard:not(.fa-dashboard-cols-1) {
-		--fa-dashboard-columns: 2;
+	.fa-widgets:not(.fa-widgets-cols-1) {
+		--fa-widgets-columns: 2;
 	}
 
 	@for $i from 3 through 6 {
-		.fa-dashboard-span-#{$i} {
+		.fa-widgets-span-#{$i} {
 			grid-column: span 2;
 		}
 	}
@@ -35,38 +35,38 @@
 
 // Přímo sloupce, ne proměnná - tu nastavuje specifičtější pravidlo pro lg výše
 @include media-breakpoint-down(md) {
-	.fa-dashboard {
+	.fa-widgets {
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	.fa-dashboard-widget {
+	.fa-widget {
 		grid-column: auto;
 	}
 }
 
-.fa-dashboard-widget {
+.fa-widget {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 	min-width: 0;
 }
 
-.fa-dashboard-card {
+.fa-widgets-card {
 	flex: 1 1 auto;
 	background-color: var(--fa-surface);
 	border: 1px solid var(--fa-border);
 	border-radius: var(--bs-border-radius-lg);
 
-	> .fa-dashboard-widget-header {
+	> .fa-widget-header {
 		padding: 16px 20px 0;
 	}
 }
 
-.fa-dashboard-card-body {
+.fa-widgets-card-body {
 	padding: 16px 20px 20px;
 }
 
-.fa-dashboard-widget-header {
+.fa-widget-header {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
@@ -74,7 +74,7 @@
 	gap: 8px 16px;
 }
 
-.fa-dashboard-period {
+.fa-widgets-period {
 	display: flex;
 	gap: 8px;
 	margin-left: auto;
@@ -84,28 +84,28 @@
 	}
 }
 
-.fa-dashboard-widget-title {
+.fa-widget-title {
 	margin: 0;
 	font-size: 1rem;
 	font-weight: 600;
 	color: var(--fa-heading, var(--fa-text));
 }
 
-.fa-dashboard-widget-description {
+.fa-widget-description {
 	margin: 4px 0 0;
 	font-size: .875rem;
 	color: var(--fa-text-muted);
 }
 
-.fa-dashboard-stat,
-.fa-dashboard-tile {
+.fa-widgets-stat,
+.fa-widgets-tile {
 	position: relative;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
 }
 
-.fa-dashboard-stat-head {
+.fa-widgets-stat-head {
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -114,7 +114,7 @@
 	font-weight: 600;
 }
 
-.fa-dashboard-icon {
+.fa-widgets-icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -122,69 +122,69 @@
 	height: 32px;
 	flex: 0 0 32px;
 	border-radius: var(--bs-border-radius);
-	background-color: color-mix(in srgb, var(--fa-dashboard-tone) 14%, transparent);
-	color: var(--fa-dashboard-tone);
+	background-color: color-mix(in srgb, var(--fa-widgets-tone) 14%, transparent);
+	color: var(--fa-widgets-tone);
 }
 
-.fa-dashboard-stat-value {
+.fa-widgets-stat-value {
 	font-size: 2.5rem;
 	font-weight: 700;
 	line-height: 1.1;
 	color: var(--fa-heading, var(--fa-text));
 }
 
-.fa-dashboard-stat-note {
+.fa-widgets-stat-note {
 	font-size: .875rem;
 	color: var(--fa-text-muted);
 }
 
-.fa-dashboard-tiles {
+.fa-widgets-tiles {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	gap: 20px;
 }
 
-.fa-dashboard-tile {
+.fa-widgets-tile {
 	padding: 16px 20px;
 	background-color: var(--fa-surface);
 	border: 1px solid var(--fa-border);
 	border-radius: var(--bs-border-radius-lg);
 }
 
-.fa-dashboard-tile-value {
+.fa-widgets-tile-value {
 	font-size: 1.75rem;
 	font-weight: 700;
 	line-height: 1.2;
 	color: var(--fa-heading, var(--fa-text));
 }
 
-.fa-dashboard-tone-neutral,
-.fa-dashboard-tone-primary {
-	--fa-dashboard-tone: var(--primaryColor);
+.fa-widgets-tone-neutral,
+.fa-widgets-tone-primary {
+	--fa-widgets-tone: var(--primaryColor);
 }
 
-.fa-dashboard-tone-success {
-	--fa-dashboard-tone: var(--bs-success);
+.fa-widgets-tone-success {
+	--fa-widgets-tone: var(--bs-success);
 }
 
-.fa-dashboard-tone-warning {
-	--fa-dashboard-tone: var(--bs-warning);
+.fa-widgets-tone-warning {
+	--fa-widgets-tone: var(--bs-warning);
 }
 
-.fa-dashboard-tone-danger {
-	--fa-dashboard-tone: var(--bs-danger);
+.fa-widgets-tone-danger {
+	--fa-widgets-tone: var(--bs-danger);
 }
 
-.fa-dashboard-tone-info {
-	--fa-dashboard-tone: var(--bs-info);
+.fa-widgets-tone-info {
+	--fa-widgets-tone: var(--bs-info);
 }
 
-.fa-dashboard-tone-neutral .fa-dashboard-icon {
+.fa-widgets-tone-neutral .fa-widgets-icon {
 	background-color: var(--fa-surface-hover);
 	color: var(--fa-text-muted);
 }
 
-.fa-dashboard-table {
+.fa-widgets-table {
 	--bs-table-bg: transparent;
 
 	th {
@@ -194,16 +194,16 @@
 	}
 }
 
-.fa-dashboard-chart {
+.fa-widgets-chart {
 	position: relative;
 	height: 280px;
 
-	&.fa-dashboard-chart-tall {
+	&.fa-widgets-chart-tall {
 		height: 360px;
 	}
 }
 
-.fa-dashboard-empty {
+.fa-widgets-empty {
 	margin: 0;
 	color: var(--fa-text-muted);
 }

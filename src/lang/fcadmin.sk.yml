@@ -18,7 +18,7 @@ datagrid:
 modal:
   close: Zavrieť
 
-dashboard:
+widgets:
   empty: Za zvolené obdobie nie sú žiadne údaje.
   period:
     label: Obdobie

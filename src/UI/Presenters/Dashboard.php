@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters;
 
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl;
-use ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControlFactory;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControlFactory;
 
-/** Presenter s dashboardem (docs/dashboard.md): komponenta `dashboard`, widgety skládá `configureDashboard()`. */
+/** Presenter s dashboardem (docs/widgets.md): komponenta `dashboard`, widgety skládá `configureDashboard()`. */
 trait Dashboard
 {
-	abstract protected function configureDashboard(DashboardControl $dashboard): void;
+	abstract protected function configureDashboard(WidgetGridControl $dashboard): void;
 
-	public function createComponentDashboard(DashboardControlFactory $factory): DashboardControl
+	public function createComponentDashboard(WidgetGridControlFactory $factory): WidgetGridControl
 	{
 		$dashboard = $factory->create();
 		$this->configureDashboard($dashboard);

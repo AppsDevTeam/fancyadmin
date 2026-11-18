@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
-/** Vlastní šablona projektu v kartě widgetu; dostane `$presenter`, `$dashboard` a předané parametry. */
-final class TemplateWidget extends DashboardWidget
+/** Vlastní šablona projektu v kartě widgetu; dostane `$presenter`, `$widgetGrid` a předané parametry. */
+final class TemplateWidget extends Widget
 {
-	/** @var array<string, mixed>|(\Closure(?DashboardPeriod): array<string, mixed>) */
+	/** @var array<string, mixed>|(\Closure(?WidgetPeriod): array<string, mixed>) */
 	private array|\Closure $parameters;
 
-	/** @param array<string, mixed>|(\Closure(?DashboardPeriod): array<string, mixed>) $parameters */
+	/** @param array<string, mixed>|(\Closure(?WidgetPeriod): array<string, mixed>) $parameters */
 	public function __construct(string $name, ?string $title, private readonly string $file, array|\Closure $parameters = [])
 	{
 		parent::__construct($name, $title);

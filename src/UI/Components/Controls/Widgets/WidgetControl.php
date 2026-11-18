@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Control;
@@ -11,17 +11,17 @@ use Nette\Application\UI\Control;
  * Vykreslení jednoho widgetu. Podkomponentou je proto, aby šel překreslit sám (snippet `body`) - dynamické
  * snippety ve `{snippetArea}` by Nette při překreslení poslalo všechny a data všech widgetů by se načetla znovu.
  */
-final class DashboardWidgetControl extends Control
+final class WidgetControl extends Control
 {
 	#[Persistent]
 	public ?string $period = null;
 
 	public function __construct(
-		private readonly DashboardWidget $widget,
+		private readonly Widget $widget,
 	) {
 	}
 
-	public function getWidget(): DashboardWidget
+	public function getWidget(): Widget
 	{
 		return $this->widget;
 	}
@@ -41,7 +41,7 @@ final class DashboardWidgetControl extends Control
 		}
 	}
 
-	/** Jméno pole s obdobím v URL (`dashboard-sales-period`). */
+	/** Jméno pole s obdobím v URL (`dashboard-sales-period` pro komponentu `dashboard`). */
 	public function getPeriodParameterName(): string
 	{
 		return $this->getParameterId('period');
@@ -82,9 +82,9 @@ final class DashboardWidgetControl extends Control
 	public function render(): void
 	{
 		$this->template->widget = $this->widget;
-		$this->template->dashboard = $this->getParent();
-		$this->template->format = DashboardFormat::class;
-		$this->template->setFile(__DIR__ . '/DashboardWidgetControl.latte');
+		$this->template->widgetGrid = $this->getParent();
+		$this->template->format = WidgetFormat::class;
+		$this->template->setFile(__DIR__ . '/WidgetControl.latte');
 		$this->template->render();
 	}
 }

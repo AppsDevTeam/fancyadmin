@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 use DateTimeImmutable;
 
-/** Období widgetu dashboardu (docs/dashboard.md). Hodnota je zároveň to, co jde do URL. */
-enum DashboardPeriod: string
+/** Období widgetu (docs/widgets.md). Hodnota je zároveň to, co jde do URL. */
+enum WidgetPeriod: string
 {
 	case TODAY = 'today';
 	case YESTERDAY = 'yesterday';
@@ -26,7 +26,7 @@ enum DashboardPeriod: string
 
 	public function getTranslationKey(): string
 	{
-		return 'fcadmin.dashboard.period.' . $this->value;
+		return 'fcadmin.widgets.period.' . $this->value;
 	}
 
 	/**

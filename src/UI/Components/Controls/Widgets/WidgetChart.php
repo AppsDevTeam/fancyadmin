@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADT\FancyAdmin\UI\Components\Controls\Dashboard;
+namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 use InvalidArgumentException;
 
@@ -10,7 +10,7 @@ use InvalidArgumentException;
  * Data grafu widgetu `chart` pro builtin `Chart` z adt-js-components (Chart.js). Barvy doplní plugin
  * `fancyadminTheme` z CSS proměnných, dataset s vlastní barvou si ji nechá.
  */
-final class DashboardChart
+final class WidgetChart
 {
 	public const TYPES = ['line', 'bar', 'doughnut', 'pie'];
 

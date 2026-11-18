@@ -1,21 +1,21 @@
-// Dashboard (docs/dashboard.md): výběr období ve widgetu a grafy. Změna selectu pošle ajaxem adresu stránky
+// Widgety (docs/widgets.md): výběr období ve widgetu a grafy. Změna selectu pošle ajaxem adresu stránky
 // s novým obdobím a parametrem redraw, server překreslí jen snippet toho widgetu; adresu bez redraw pak zapíše
 // history.replaceState, takže obnovení stránky i sdílený odkaz drží zvolená období. Bez JS odešle
 // formulář tlačítko v <noscript>. Graf v překresleném widgetu se nevymění, jen dostane nová data.
 import AdtJsComponents from 'adt-js-components';
 import naja, { ajax } from './naja';
-import { fancyadminTheme } from './dashboardTheme';
+import { fancyadminTheme } from './widgetsTheme';
 
 AdtJsComponents.registerChartPlugins({ fancyadminTheme });
 
-const SELECT = 'select[data-dashboard-period]';
+const SELECT = 'select[data-widget-period]';
 
 /** Adresa stránky se zvoleným obdobím a adresa požadavku, která navíc žádá překreslení widgetu. */
 export function periodUrls(select, location = window.location) {
 	const url = new URL(location.href);
 	url.searchParams.set(select.name, select.value);
 	const request = new URL(url);
-	request.searchParams.set(select.dataset.dashboardRedraw, '1');
+	request.searchParams.set(select.dataset.widgetRedraw, '1');
 	return { url: url.toString(), request: request.toString() };
 }
 
@@ -37,7 +37,7 @@ document.addEventListener('change', onChange);
  * stávajícího canvasu, builtin Chart pak graf aktualizuje na místě (bez probliknutí a s animací přechodu).
  */
 export function chartUpdateOperation(snippet, content) {
-	if (!snippet.closest('[data-dashboard-widget]')) {
+	if (!snippet.closest('[data-widget]')) {
 		return null;
 	}
 	const canvas = snippet.querySelectorAll('canvas[data-adt-chart]');
