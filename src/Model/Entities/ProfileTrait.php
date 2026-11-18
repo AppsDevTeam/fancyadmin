@@ -71,6 +71,11 @@ trait ProfileTrait
 		return $this->roles->toArray();
 	}
 
+	public function getRoleNames(): string
+	{
+		return implode(', ', array_map(fn(AclRole $role) => $role->getName(), $this->getRoles()));
+	}
+
 	public function addRole(AclRole $role): static
 	{
 		if ($this->roles->contains($role)) {

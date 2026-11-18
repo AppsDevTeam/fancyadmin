@@ -418,6 +418,28 @@ trait IdentityTrait
 		return array_merge($this->roles->toArray(), $this->getProfile()?->getRoles() ?: []);
 	}
 
+	/**
+	 * Role ze všech profilů, ne jen z aktuálního jako getRoles().
+	 */
+	public function getRoleNames(): string
+	{
+		$roles = [];
+		foreach ($this->getProfiles() as $profile) {
+			foreach ($profile->getRoles() as $role) {
+				$roles[$role->getId()] = $role->getName();
+			}
+		}
+		foreach ($this->roles as $role) {
+			$roles[$role->getId()] = $role->getName();
+		}
+		return implode(', ', $roles);
+	}
+
+	public function getAccountNames(): string
+	{
+		return implode(', ', array_map(fn(Account $account) => $account->getName(), $this->getAccounts()));
+	}
+
 	public function addRole(AclRole $role): static
 	{
 		if ($this->roles->contains($role)) {

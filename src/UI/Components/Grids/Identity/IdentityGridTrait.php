@@ -6,7 +6,6 @@ namespace ADT\FancyAdmin\UI\Components\Grids\Identity;
 
 use ADT\Datagrid\Component\DataGrid;
 use ADT\FancyAdmin\Model\Entities\Enums\IdentityScopeEnum;
-use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Queries\IdentityQuery;
 use ADT\FancyAdmin\Model\Queries\Factories\IdentityQueryFactory;
 use ADT\FancyAdmin\UI\Components\Grids\Traits\AnonymizeIdentity\AnonymizeIdentity;
@@ -30,29 +29,14 @@ trait IdentityGridTrait
 	{
 		$this->addIdentityData($grid);
 
-		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles')
-			->setRenderer(function (Identity $identity) {
-				$roles = [];
-				foreach ($identity->getProfiles() as $profile) {
-					foreach ($profile->getRoles() as $role) {
-						$roles[$role->getId()] = $role->getName();
-					}
-				}
-				foreach ($identity->getRoles() as $role) {
-					$roles[$role->getId()] = $role->getName();
-				}
-				return implode(', ', $roles);
-			});
+		$grid->addColumnText('roles', 'fcadmin.grids.user.labels.roles', 'roleNames');
 
 		// Single-tenant: účty nejsou
 		if (!$this->_securityUser->isMultiTenant()) {
 			return;
 		}
 
-		$grid->addColumnText('accounts', 'fcadmin.grids.user.labels.accounts')
-			->setRenderer(function (Identity $identity) {
-				return implode(', ', array_map(fn($account) => $account->getName(), $identity->getAccounts()));
-			});
+		$grid->addColumnText('accounts', 'fcadmin.grids.user.labels.accounts', 'accountNames');
 	}
 
 	protected function initQueryObject($queryObject): void
