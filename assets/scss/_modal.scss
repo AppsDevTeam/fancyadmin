@@ -34,8 +34,9 @@
 	margin-left: auto;
 }
 
+// V patičce je vedle Zavřít, 240 px by se na telefon nevešlo; odeslání v těle si šířku drží
 @include media-breakpoint-down(sm) {
-	.modal form [type='submit'] {
+	.modal form .modal-footer [type='submit'] {
 		min-width: 0;
 		flex: 1;
 	}

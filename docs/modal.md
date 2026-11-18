@@ -44,4 +44,5 @@ Parametry `modal`:
 | `show` | `data-adt-show-modal` - modal se otevře hned po načtení stránky (formulář s chybou) |
 
 Blok `body` je tělo, blok `footer` patička - bez obsahu se patička nevykreslí. Formulář vykreslený rendererem
-(`{control form}`) má odeslání v těle; styly ho dají na střed a roztáhnou na 240 px, patička pak není potřeba.
+(`{control form}`) má odeslání v těle; styly ho dají na střed a roztáhnou na 240 px, patička pak není potřeba. Na telefonu (pod `sm`) si 240 px
+drží jen odeslání v těle; v patičce se vedle tlačítka Zavřít dělí o šířku rovným dílem.
