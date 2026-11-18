@@ -2,8 +2,8 @@
 // nakreslený jednou jde potvrdit do dalších míst, nový podpis platí jen pro místo, kde vznikl,
 // a odeslat jde až všechna místa všech dokumentů.
 // (pdf.js a plátno z import mapy nahrazují stuby, vitest.config.mjs)
-import { describe, expect, it } from 'vitest';
-import { createSignState } from '../../assets/js/tabletSign.js';
+import { describe, expect, it, vi } from 'vitest';
+import { createSignState, initDragPan } from '../../assets/js/tabletSign.js';
 
 const PLACES = [
 	{ id: 'contract:0', document: 'contract' },
@@ -80,5 +80,71 @@ describe('createSignState', () => {
 
 	it('převzít jde až nějaký podpis', () => {
 		expect(() => createSignState(PLACES).reuse('contract:0')).toThrow();
+	});
+});
+
+// Přiblížený dokument jde myší chytit a táhnout (initDragPan) - tah se od klepnutí na místo pro
+// podpis liší pohybem, prst posouvá prohlížeč sám
+describe('initDragPan', () => {
+	function pointer(type, target, x, y, pointerType = 'mouse') {
+		const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
+		Object.defineProperty(event, 'pointerType', { value: pointerType });
+		target.dispatchEvent(event);
+	}
+
+	function page() {
+		document.body.innerHTML = '<div class="tablet-sign-documents"><div data-tablet-document><button data-place>místo</button></div></div>';
+		const area = document.querySelector('.tablet-sign-documents');
+		const scroller = area.querySelector('[data-tablet-document]');
+		scroller.scrollLeft = 300;
+		window.scrollTo = vi.fn();
+		return { area, scroller, place: area.querySelector('[data-place]') };
+	}
+
+	it('tah posune dokument a klepnutí, které ho ukončilo, zahodí', () => {
+		const { area, scroller, place } = page();
+		initDragPan(area, () => true);
+		const clicked = vi.fn();
+		place.addEventListener('click', clicked);
+
+		pointer('pointerdown', place, 500, 400);
+		pointer('pointermove', document, 380, 350);
+		pointer('pointerup', document, 380, 350);
+		place.click();
+
+		expect(scroller.scrollLeft).toBe(420);
+		expect(window.scrollTo).toHaveBeenCalledWith(window.scrollX, window.scrollY + 50);
+		expect(clicked).not.toHaveBeenCalled();
+	});
+
+	it('klepnutí bez pohybu místo otevře', () => {
+		const { area, place } = page();
+		initDragPan(area, () => true);
+		const clicked = vi.fn();
+		place.addEventListener('click', clicked);
+
+		pointer('pointerdown', place, 500, 400);
+		pointer('pointermove', document, 502, 401);
+		pointer('pointerup', document, 502, 401);
+		place.click();
+
+		expect(clicked).toHaveBeenCalledOnce();
+		expect(window.scrollTo).not.toHaveBeenCalled();
+	});
+
+	it('nepřiblížený dokument a prst se netahají', () => {
+		const { area, scroller, place } = page();
+		let zoomed = false;
+		initDragPan(area, () => zoomed);
+
+		pointer('pointerdown', place, 500, 400);
+		pointer('pointermove', document, 300, 400);
+		pointer('pointerup', document, 300, 400);
+		zoomed = true;
+		pointer('pointerdown', place, 500, 400, 'touch');
+		pointer('pointermove', document, 300, 400, 'touch');
+		pointer('pointerup', document, 300, 400, 'touch');
+
+		expect(scroller.scrollLeft).toBe(300);
 	});
 });

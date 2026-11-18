@@ -350,8 +350,8 @@ ani nepřijme. Podpisy žijí jen v paměti stránky jedné žádosti, do dalš�
 klienta) se nic nepřenáší.
 
 Spodní lišta ukazuje, kolik míst je podepsaných, a umí dokument přiblížit (− / + po krocích do
-250 %, klepnutí na procenta vrátí 100 %) - stránky se pak posouvají i vodorovně a překreslí se
-ostře. „Další podpis“ přeskočí na další nepodepsané místo (i v dalším dokumentu). „Dokončit podpis“
+250 %, klepnutí na procenta vrátí 100 %) - stránky se překreslí ostře a přiblížený dokument se
+posouvá prstem, myší ho jde chytit a táhnout. „Další podpis“ přeskočí na další nepodepsané místo (i v dalším dokumentu). „Dokončit podpis“
 odešle všechno najednou, až jsou podepsaná všechna místa všech dokumentů. Dokument bez
 označených míst (bez PDF, PDF bez míst, nebo projekt bez `setasign/fpdi`) má jedno místo pod
 náhledem.

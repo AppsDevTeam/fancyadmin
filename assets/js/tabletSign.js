@@ -231,6 +231,62 @@ export function rerenderTabletDocument(container) {
 	(container.tabletPages || []).forEach((entry) => renderPage(entry));
 }
 
+/**
+ * Přiblížený dokument jde myší chytit a táhnout - vodorovně posouvá dokument, svisle stránku.
+ * Prstem se posouvá sám (prohlížeč), proto jen myš. Tah se od klepnutí (místo pro podpis) liší
+ * pohybem o víc než pár pixelů - po tahu se klepnutí zahodí.
+ *
+ * @param {HTMLElement} area plocha s dokumenty
+ * @param {function(): boolean} isZoomed táhnout jde jen přiblížený dokument
+ */
+export function initDragPan(area, isZoomed) {
+	const THRESHOLD = 4;
+	let drag = null;
+
+	const onMove = (event) => {
+		const dx = event.clientX - drag.x;
+		const dy = event.clientY - drag.y;
+		if (!drag.moved && Math.hypot(dx, dy) < THRESHOLD) {
+			return;
+		}
+		drag.moved = true;
+		area.classList.add('is-panning');
+		drag.scroller.scrollLeft = drag.left - dx;
+		window.scrollTo(window.scrollX, drag.top - dy);
+		event.preventDefault();
+	};
+
+	const onUp = () => {
+		document.removeEventListener('pointermove', onMove);
+		document.removeEventListener('pointerup', onUp);
+		document.removeEventListener('pointercancel', onUp);
+		area.classList.remove('is-panning');
+		if (drag?.moved) {
+			// klepnutí, které tah ukončil, neotevře místo pro podpis
+			const swallow = (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+			};
+			window.addEventListener('click', swallow, { capture: true, once: true });
+			setTimeout(() => window.removeEventListener('click', swallow, { capture: true }));
+		}
+		drag = null;
+	};
+
+	area.addEventListener('pointerdown', (event) => {
+		const scroller = event.target.closest('[data-tablet-document]');
+		if (event.pointerType !== 'mouse' || event.button !== 0 || !scroller || !isZoomed()) {
+			return;
+		}
+		drag = { x: event.clientX, y: event.clientY, left: scroller.scrollLeft, top: window.scrollY, scroller, moved: false };
+		document.addEventListener('pointermove', onMove);
+		document.addEventListener('pointerup', onUp);
+		document.addEventListener('pointercancel', onUp);
+	});
+	// obrázek stránky (plátno) se nemá tahat jako soubor
+	area.addEventListener('dragstart', (event) => event.preventDefault());
+}
+
 /** Náhled první stránky dokumentu do navigace */
 async function renderThumbnail(container, target) {
 	try {
@@ -611,6 +667,9 @@ export function initTabletSignPage(root = document) {
 		});
 	});
 	form.querySelector('[data-tablet-sign-zoom="-1"]').disabled = true;
+	if (documents) {
+		initDragPan(documents, () => zoomIndex > 0);
+	}
 
 	form.addEventListener('submit', (event) => {
 		if (!state.isComplete()) {

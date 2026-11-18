@@ -719,6 +719,21 @@ body {
 	margin-left: 0;
 }
 
+/* přiblížený dokument jde myší chytit a táhnout (tabletSign.js, initDragPan) */
+.is-zoomed .tablet-document {
+	cursor: grab;
+}
+
+.is-panning .tablet-document {
+	cursor: grabbing;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.is-panning .tablet-sign-place {
+	cursor: grabbing;
+}
+
 .tablet-error {
 	margin: 8px 0 0;
 	color: var(--tablet-danger);
