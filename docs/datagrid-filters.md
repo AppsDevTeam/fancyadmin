@@ -1,7 +1,8 @@
-# Tlačítko Filtry nad gridem
+# Tlačítko Filtry a lišta nad gridem
 
 Řádek filtrů nad tabulkou je sbalený pod tlačítkem **Filtry**, dokud uživatel nefiltruje. Stránka s gridem
-tak začíná tabulkou, ne formulářem s deseti poli.
+tak začíná tabulkou, ne formulářem s deseti poli. Tlačítko je v jedné liště s obsahem projektu (hromadné akce,
+vlastní tlačítka) a ozubeným kolem sloupců; rozbalené filtry jsou pod ní.
 
 ## Použití
 
@@ -20,14 +21,24 @@ class AppDataGrid extends DataGrid
 Šablona projektu (`getTemplateFile()`, stromový grid fancyadminu) dál dědí z `{extends $originalTemplate}` -
 trait vrací jako `$originalTemplate` šablonu `DataGridFilters.latte`, která dědí ze šablony knihovny.
 
+Obsah projektu do lišty přidá šablona gridu projektu blokem `toolbar`:
+
+```latte
+{extends $originalTemplate}
+
+{define toolbar}
+	<div n:if="$hasGroupActions" class="row-group-actions d-flex align-items-center gap-2">…</div>
+{/define}
+```
+
 ## Co je kde
 
 | soubor | co dělá |
 |---|---|
 | `src/UI/Components/Grids/CollapsibleFiltersTrait.php` | šablona gridu, `hasCollapsibleFilters()`, `isFilterActive()` bez výchozího filtru |
-| `src/UI/Components/Grids/DataGridFilters.latte` | tlačítko (`filters-toggle`) vedle pole Hledat (`filter-search`), bez hledání v liště nad filtry (`outer-filters`) |
+| `src/UI/Components/Grids/DataGridFilters.latte` | tlačítko (`filters-toggle`), blok projektu `toolbar` a kopie ozubeného kola (`toolbar-settings`) - vedle pole Hledat (`filter-search`), bez hledání v liště nad filtry (`outer-filters`) |
 | `assets/js/datagrid.js` | `initCollapsedFilters()` - sbalení řádku bez hledání při načtení a po překreslení snippetu |
-| `assets/scss/_datagrid.scss` | `.grid-filters-toggle`, `.datagrid-filters-bar` (na mobilu tlačítko přes celou šířku) |
+| `assets/scss/_datagrid.scss` | `.grid-filters-toggle`, `.datagrid-filters-bar` (jeden řádek, ozubené kolo vpravo; na mobilu Filtry s ozubeným kolem a obsah projektu pod nimi), schování původního ozubeného kola |
 | `src/lang/fcadmin.*.yml` | `fcadmin.datagrid.filters` |
 
 ## Chování
@@ -44,3 +55,9 @@ trait vrací jako `$originalTemplate` šablonu `DataGridFilters.latte`, která d
   nese stav ze serveru (`.datagrid-filters-bar--collapsed`): do načtení JS řádek schová CSS, `initCollapsedFilters()`
   pak odebere `show` a dál řídí Bootstrap collapse. Po překreslení gridu (filtrování, řazení, stránkování) se
   stav nastaví znovu podle serveru - rozbalené zůstanou jen aktivní filtry.
+- **Lišta** se vykreslí, když má obsah (tlačítko, blok `toolbar` nebo ozubené kolo), jinak vůbec. Pořadí: Filtry,
+  obsah projektu, ozubené kolo vpravo. Na telefonu (pod `sm`) jsou Filtry a ozubené kolo v prvním řádku a obsah
+  projektu přes celou šířku pod nimi.
+- **Ozubené kolo** (`canHideColumns()`) kreslí šablona knihovny mimo jakýkoli blok, až pod řádkem filtrů. Lišta má
+  jeho kopii (`.datagrid-toolbar-settings`, stejné odkazy `hideColumn!` / `showColumn!`) a původní `.datagrid-settings`
+  schová pravidlo `form:has(.datagrid-toolbar-settings) > .datagrid-settings`. Při povýšení knihovny kopii porovnat.

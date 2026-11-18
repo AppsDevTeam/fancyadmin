@@ -1,5 +1,6 @@
 {**
- * Tlačítko „Filtry“ nad řádkem filtrů gridu (CollapsibleFiltersTrait, docs/datagrid-filters.md)
+ * Lišta nad gridem (CollapsibleFiltersTrait, docs/datagrid-filters.md): tlačítko Filtry, obsah projektu (blok
+ * `toolbar`) a ozubené kolo sloupců v jednom řádku, řádek filtrů se rozbalí pod ní
  *
  * @param Datagrid $control
  *}
@@ -15,16 +16,56 @@
 	</button>
 {/define}
 
-{* S polem Hledat sbaluje řádek filtrů knihovna, tlačítko patří vedle hledání *}
+{* Obsah lišty od projektu (hromadné akce, vlastní tlačítka) - přepíše ho šablona gridu projektu *}
+{define toolbar}{/define}
+
+{* Kopie ozubeného kola knihovny: to kreslí šablona knihovny mimo blok pod filtry, v liště ho proto nahrazuje
+   tahle kopie a původní schová _datagrid.scss *}
+{define toolbar-settings}
+	<div n:if="$control->canHideColumns()" class="datagrid-toolbar-settings btn-group">
+		<button type="button" class="btn btn-sm {$btnSecondaryClass} dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{='ublaboo_datagrid.show_all_columns'|translate}">
+			<i class="{$iconPrefix}cog"></i>
+		</button>
+		<ul class="dropdown-menu dropdown-menu-end dropdown-menu--grid">
+			<li n:foreach="$columnsVisibility as $v_key => $visibility">
+				{if $visibility['visible']}
+					<a n:href="hideColumn!, column => $v_key" class="ajax dropdown-item">
+						<i class="{$iconPrefix}check-square"></i>
+						{include #column-header, column => $visibility['column'], key => $v_key}
+					</a>
+				{else}
+					<a n:href="showColumn!, column => $v_key" class="ajax dropdown-item">
+						<i class="{$iconPrefix}square"></i>
+						{include #column-header, column => $visibility['column'], key => $v_key}
+					</a>
+				{/if}
+			</li>
+			<li role="separator" class="divider dropdown-divider"></li>
+			<li>
+				<a n:href="showAllColumns!" class="ajax dropdown-item"><i class="{$iconPrefix}eye"></i> {='ublaboo_datagrid.show_all_columns'|translate}</a>
+			</li>
+			<li n:if="$control->hasSomeColumnDefaultHide()">
+				<a n:href="showDefaultColumns!" class="ajax dropdown-item"><i class="{$iconPrefix}repeat"></i> {='ublaboo_datagrid.show_default_columns'|translate}</a>
+			</li>
+		</ul>
+	</div>
+{/define}
+
+{* S polem Hledat sbaluje řádek filtrů knihovna, lišta je řádek hledání *}
 {define filter-search}
 	{include parent}
 	{include filters-toggle}
+	{include toolbar}
+	{include toolbar-settings}
 {/define}
 
 {* Bez pole Hledat má knihovna řádek filtrů vždy rozbalený (třída `show`); sbalí ho datagrid.js podle lišty *}
 {define outer-filters}
-	<div n:if="!isset($filters['search']) && $control->hasCollapsibleFilters($filters, $switcherValues, $periodFilters)" n:class="datagrid-filters-bar, !$filter_active ? 'datagrid-filters-bar--collapsed'">
+	{var $_collapsed = $control->hasCollapsibleFilters($filters, $switcherValues, $periodFilters) && !$filter_active}
+	<div n:if="!isset($filters['search'])" n:ifcontent n:class="datagrid-filters-bar, $_collapsed ? 'datagrid-filters-bar--collapsed'">
 		{include filters-toggle}
+		{include toolbar}
+		{include toolbar-settings}
 	</div>
 	{include parent}
 {/define}

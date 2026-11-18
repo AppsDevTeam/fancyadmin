@@ -689,10 +689,23 @@ $datagridPageHeaderAnimation: .25s;
 	}
 }
 
-// Ne `grid-filters-…`: prázdné `[class^="grid-filters"]` bez pole schovává pravidlo výš
+// Lišta nad gridem: Filtry, obsah projektu a ozubené kolo v jednom řádku. Ne `grid-filters-…`: prázdné
+// `[class^="grid-filters"]` bez pole schovává pravidlo výš
 .datagrid-filters-bar {
 	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
 	margin-bottom: 1rem;
+}
+
+.datagrid-toolbar-settings {
+	margin-left: auto;
+}
+
+// Ozubené kolo knihovny pod řádkem filtrů nahrazuje kopie v liště
+.datagrid form:has(.datagrid-toolbar-settings) > .datagrid-settings {
+	display: none !important;
 }
 
 // Do načtení JS (initCollapsedFilters) je řádek filtrů bez hledání ještě rozbalený ze šablony knihovny
@@ -700,8 +713,20 @@ $datagridPageHeaderAnimation: .25s;
 	display: none;
 }
 
+// Na telefonu Filtry a ozubené kolo v prvním řádku, obsah projektu (hromadné akce) přes celou šířku pod nimi
 @include media-breakpoint-down(sm) {
-	.datagrid-filters-bar .grid-filters-toggle {
-		flex: 1;
+	.datagrid-filters-bar {
+		> .grid-filters-toggle {
+			flex: 1;
+		}
+
+		> .datagrid-toolbar-settings {
+			order: 1;
+		}
+
+		> :not(.grid-filters-toggle, .datagrid-toolbar-settings) {
+			order: 2;
+			flex-basis: 100%;
+		}
 	}
 }

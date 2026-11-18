@@ -6,6 +6,7 @@ use ADT\Datagrid\Component\DataGrid;
 use ADT\FancyAdmin\UI\Components\Grids\CollapsibleFiltersTrait;
 use Latte\Engine;
 use Latte\Essential\TranslatorExtension;
+use Nette\Bridges\ApplicationLatte\UIExtension;
 use Tester\Assert;
 
 /**
@@ -32,6 +33,7 @@ test('šablona se přeloží', function () {
 	$latte = new Engine();
 	$latte->setTempDirectory(null);
 	$latte->addExtension(new TranslatorExtension(null));
+	$latte->addExtension(new UIExtension(null));
 
 	Assert::noError(fn() => $latte->compile(CollapsibleFiltersGrid::COLLAPSIBLE_FILTERS_TEMPLATE));
 });
