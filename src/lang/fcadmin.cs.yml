@@ -742,9 +742,29 @@ tablets:
       button: Přidat na plochu
       ios: V Safari klepněte na Sdílet a zvolte Přidat na plochu. Stránku pak otevírejte z plochy - jen tak půjdou povolit notifikace.
   sign:
-    label: Podpis
-    required: Podepište se prosím.
-    submit: Podepsat
+    documents: Dokumenty k podpisu
+    signHere: Kliknutím podepsat
+    signed: Podepsáno
+    modalTitle: Podpis
+    hintDraw: Podepište se prstem, perem nebo myší do šedé plochy.
+    hintReuse: Použijte svůj předchozí podpis, nebo se podepište znovu.
+    hintSigned: Toto místo je podepsané. Podpis můžete změnit - nový platí jen pro toto místo.
+    caption: Váš podpis
+    restart: Začít znovu
+    redraw: Podepsat znovu
+    back: Zpět
+    use: Použít tento podpis
+    zoom: Přiblížení dokumentu
+    zoomIn: Přiblížit
+    zoomOut: Oddálit
+    zoomReset: Původní velikost
+    next: Další podpis
+    progress: "Podepsáno %signed% z %total%"
+    documentProgress: "%signed% z %total% podepsáno"
+    documentDone: Podepsáno
+    incomplete: Podepište prosím všechna vyznačená místa.
+    loadFailed: Dokument se nepodařilo načíst.
+    submit: Dokončit podpis
     failed: Podpis se nepodařilo uložit. Zkuste to prosím znovu.
     done: Podepsáno
     doneThanks: Děkujeme. Tablet prosím vraťte obsluze.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADT\FancyAdmin\UI\Presenters\TabletDevice;
 
+use ADT\BiometricSignature\Exception\InvalidSignatureException;
 use ADT\BiometricSignature\SignatureCapture;
 use ADT\FancyAdmin\DI\Injects\TabletServiceInject;
 use ADT\FancyAdmin\DI\Injects\TabletSigningInject;
@@ -11,7 +12,9 @@ use ADT\FancyAdmin\DI\Injects\WebPushSenderInject;
 use ADT\FancyAdmin\Model\Entities\Tablet;
 use ADT\FancyAdmin\Model\Entities\TabletSignRequest;
 use ADT\FancyAdmin\Model\Tablet\TabletSignDocument;
-use ADT\FancyAdmin\UI\Components\Forms\BiometricSignature\BiometricSignatureInput;
+use ADT\FancyAdmin\Model\Tablet\TabletSignIncompleteException;
+use ADT\FancyAdmin\Model\Tablet\TabletSignPlace;
+use ADT\FancyAdmin\Model\Tablet\TabletSignSubmission;
 use Nette\Application\Responses\FileResponse;
 use Nette\Application\Responses\TextResponse;
 use Nette\Application\UI\Form;
@@ -33,8 +36,10 @@ use Tracy\ILogger;
  * Projekt dodává jen logo (getTabletLogoUrl()) a odkaz na zásady zpracování osobních údajů
  * (getTabletPrivacyPolicyUrl()).
  *
- * Podpis dokumentu (sign): náhled dokumentu a biometrický podpis k otevřené žádosti tabletu,
- * uložení dělá TabletSigning; co se podepisuje a podepsané PDF dodá TabletSignHandler projektu.
+ * Podpis dokumentů (sign): náhledy dokumentů žádosti se zvýrazněnými místy pro podpis - do
+ * každého se podepisuje v okně s plátnem (biometrický podpis), nakreslený podpis jde potvrdit
+ * i do dalších míst. Uložení dělá TabletSigning; co se podepisuje a podepsaná PDF dodá
+ * TabletSignHandler projektu.
  * Bez něj akce sign není dostupná a tablet otevírá odkazy na stránky projektu (TabletService::send).
  *
  * Projekt: presenter s routou v rozsahu cookie tabletu (fancyadmin: tablet: cookiePath).
@@ -62,6 +67,12 @@ trait TabletDevicePresenterTrait
 		'signature_pad.js' => 'vendor/signature_pad/signature_pad.min.js',
 		'pdf.mjs' => 'vendor/pdfjs/pdf.min.mjs',
 		'pdf.worker.mjs' => 'vendor/pdfjs/pdf.worker.min.mjs',
+	];
+
+	/** Texty stránky podpisu pro tabletSign.js (fcadmin.tablets.sign.*) */
+	private const array TABLET_SIGN_TEXTS = [
+		'signHere', 'signed', 'modalTitle', 'hintDraw', 'hintReuse', 'hintSigned', 'caption',
+		'progress', 'documentProgress', 'documentDone', 'incomplete', 'loadFailed',
 	];
 
 	/** JS plátna podpisu z balíčku adt/biometric-signature (jedna verze s PHP) */
@@ -221,25 +232,44 @@ trait TabletDevicePresenterTrait
 	// --- podpis dokumentu ----------------------------------------------------------------------
 
 	/**
-	 * Podpis dokumentu k žádosti, kterou tablet právě zobrazuje. Bez ní (jiné zařízení, tablet
+	 * Podpis dokumentů k žádosti, kterou tablet právě zobrazuje. Bez ní (jiné zařízení, tablet
 	 * už je volný, žádost podepsaná nebo zrušená) zpět na čekací stránku - odkaz sám nic neotevře.
 	 */
 	public function actionSign(): void
 	{
-		[$request, $document] = $this->requireTabletSignDocument();
+		[$request, $documents] = $this->requireTabletSignDocuments();
+
+		$places = [];
+		$errors = [];
+		foreach ($documents as $key => $document) {
+			$key = (string) $key; // číselný klíč pole je int
+			if ($document->error !== null) {
+				$errors[] = $document->error;
+				continue;
+			}
+
+			$places[$key] = array_map(fn (TabletSignPlace $place): array => $place->toArray(), $this->_tabletSigning->getPlaces($key, $document));
+		}
 
 		$this->tabletSignRequest = $request;
 		$this->prepareTabletPage();
-		$this->template->document = $document;
+		$this->template->request = $request;
+		$this->template->documents = $documents;
+		$this->template->places = $places;
+		$this->template->errors = $errors;
+		$this->template->signTexts = array_map(
+			fn (string $message): string => $this->translateTabletText('fcadmin.tablets.sign.' . $message),
+			array_combine(self::TABLET_SIGN_TEXTS, self::TABLET_SIGN_TEXTS),
+		);
 		$this->template->idleSeconds = self::TABLET_SIGN_IDLE_RETURN;
 		$this->setTabletDeviceTemplateFile(__DIR__ . '/sign.latte');
 	}
 
 	/** PDF dokumentu k náhledu na stránce podpisu - jen tabletu s otevřenou žádostí */
-	public function actionDocument(): void
+	public function actionDocument(string $key = '1'): void
 	{
-		[, $document] = $this->requireTabletSignDocument();
-		$pdf = $document->getPdf();
+		[, $documents] = $this->requireTabletSignDocuments();
+		$pdf = isset($documents[$key]) ? $documents[$key]->getPdf() : null;
 		if ($pdf === null) {
 			$this->error();
 		}
@@ -251,31 +281,41 @@ trait TabletDevicePresenterTrait
 		$this->sendResponse(new TextResponse($pdf));
 	}
 
+	/**
+	 * Formulář stránky podpisu: jediné skryté pole s podpisy a jejich místy (tabletSign.js,
+	 * TabletSignSubmission). Odesílá se až po podepsání všech míst všech dokumentů.
+	 */
 	protected function createComponentTabletSignForm(): Form
 	{
 		$form = new Form();
-		$signature = BiometricSignatureInput::addBiometricSignature($form, 'signature');
-		$signature->setRequired($this->translateTabletText('fcadmin.tablets.sign.required'));
-		$signature->setClearCaption($this->translateTabletText('fcadmin.biometricSignature.clear'));
-		$signature->setInvalidMessage($this->translateTabletText('fcadmin.biometricSignature.invalid'));
+		$form->addHidden('signing');
 		$form->addSubmit('submit');
 
 		$form->onSuccess[] = function (Form $form): void {
 			// dokument mezitím přestal jít podepsat - stránka po odeslání ukáže důvod
-			if ($this->_tabletSigning->getDocument($this->tabletSignRequest)?->error !== null) {
-				return;
+			foreach ($this->_tabletSigning->getDocuments($this->tabletSignRequest) ?? [] as $document) {
+				if ($document->error !== null) {
+					return;
+				}
 			}
 
-			/** @var SignatureCapture $capture */
-			$capture = $form['signature']->getValue();
 			$httpRequest = $this->getHttpRequest();
 
 			try {
-				$this->_tabletSigning->sign($this->tabletSignRequest, $capture, $httpRequest->getRemoteAddress(), $httpRequest->getHeader('User-Agent'));
+				$submission = TabletSignSubmission::fromJson((string) $form['signing']->getValue());
+				$this->_tabletSigning->sign($this->tabletSignRequest, $submission, $httpRequest->getRemoteAddress(), $httpRequest->getHeader('User-Agent'));
 			} catch (\Nette\Application\AbortException $e) {
 				throw $e;
+			} catch (InvalidSignatureException) {
+				$form->addError($this->translateTabletText('fcadmin.biometricSignature.invalid'));
+
+				return;
+			} catch (TabletSignIncompleteException) {
+				$form->addError($this->translateTabletText('fcadmin.tablets.sign.incomplete'));
+
+				return;
 			} catch (\Throwable $e) {
-				// podpis zůstal neověřený, žádost je dál otevřená - jde podepsat znovu
+				// nic se neuložilo, žádost je dál otevřená - jde podepsat znovu
 				Debugger::log($e, ILogger::EXCEPTION);
 				$form->addError($this->translateTabletText('fcadmin.tablets.sign.failed'));
 
@@ -391,24 +431,24 @@ trait TabletDevicePresenterTrait
 	}
 
 	/**
-	 * Otevřená žádost tabletu, ze kterého přišel požadavek, a co k ní tablet ukáže. Bez žádosti
-	 * nebo když už nejde podepsat, končí požadavek na čekací stránce (ta tablet uvolní).
+	 * Otevřená žádost tabletu, ze kterého přišel požadavek, a dokumenty, které k ní tablet ukáže.
+	 * Bez žádosti nebo když už nejde podepsat, končí požadavek na čekací stránce (ta tablet uvolní).
 	 *
-	 * @return array{TabletSignRequest, TabletSignDocument}
+	 * @return array{TabletSignRequest, array<int|string, TabletSignDocument>}
 	 */
-	private function requireTabletSignDocument(): array
+	private function requireTabletSignDocuments(): array
 	{
 		if (!$this->_tabletSigning->isEnabled()) {
 			$this->error();
 		}
 
 		$request = $this->_tabletService->getCurrentRequest();
-		$document = $request === null ? null : $this->_tabletSigning->getDocument($request);
-		if ($request === null || $document === null) {
+		$documents = $request === null ? null : $this->_tabletSigning->getDocuments($request);
+		if ($request === null || $documents === null) {
 			$this->redirect('default');
 		}
 
-		return [$request, $document];
+		return [$request, $documents];
 	}
 
 	private function requirePostFromTablet(): Tablet

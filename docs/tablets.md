@@ -296,14 +296,17 @@ na vlastní stránku projektu (dotazník k vyplnění apod.) - tu dělá projekt
 
 ### Podpis dokumentu
 
-Fancyadmin umí dokument na tabletu rovnou podepsat - stránka s náhledem a podpisem, uložení
-podpisu i evidence jsou stejné ve všech projektech. Projekt dodá jen to, co se podepisuje,
-a podepsané PDF. Potřebuje balíček `adt/biometric-signature` (`docs/biometric-signature.md`).
+Fancyadmin umí dokumenty na tabletu rovnou podepsat - stránka s náhledy a místy pro podpis,
+uložení podpisů i evidence jsou stejné ve všech projektech. Projekt dodá jen to, co se
+podepisuje, a podepsaná PDF uloží. Potřebuje balíček `adt/biometric-signature`
+(`docs/biometric-signature.md`) a k vložení podpisů do PDF `setasign/fpdi` s `setasign/fpdf`
+nebo `tecnickcom/tcpdf`.
 
 ```neon
 fancyadmin:
 	tablet:
-		signedDocumentEntity: App\Model\Entities\SignedDocument   # zapíná podpis dokumentu
+		signedDocumentEntity: App\Model\Entities\SignedDocument          # zapíná podpis dokumentu
+		documentSignatureEntity: App\Model\Entities\DocumentSignature    # povinná s ní
 
 services:
 	- App\Model\Signing\DocumentSignHandler   # implements ADT\FancyAdmin\Model\Tablet\TabletSignHandler
@@ -317,62 +320,106 @@ class SignedDocument extends BaseEntity implements \ADT\FancyAdmin\Model\Entitie
 {
 	use \ADT\FancyAdmin\Model\Entities\SignedDocumentTrait;
 }
+
+#[ORM\Entity]
+#[ORM\Table(name: 'document_signature')]
+class DocumentSignature extends BaseEntity implements \ADT\FancyAdmin\Model\Entities\DocumentSignature
+{
+	use \ADT\FancyAdmin\Model\Entities\DocumentSignatureTrait;
+}
 ```
 
-**Podepsaný dokument** (`signed_document`) je jeden řádek za každý podpis: biometrický podpis
-(obrázek, záznam průběhu psaní, důkazní záznam a jeho otisk), vazba na žádost o podpis,
-podepsané PDF (soubor `adt/files`) a obecně to, čeho se podpis týká - `type`, `subjectId`,
-`data` převzaté ze žádosti. Entity projektu se na podepsaný dokument jen odkazují (cizím
-klíčem na `signed_document`, nebo ho dohledají podle `type` + `subjectId`).
+**Žádost** může nést víc dokumentů (smlouva, souhlasy, prohlášení). **Kam se podepisuje, si PDF
+označí samo** - místy pro podpis z `adt/biometric-signature` (`SignatureBox::html('client', 60, 22)`
+v HTML šabloně PDF, odkaz na `https://signature.invalid/client` jinde, viz README knihovny).
 
-Odeslání k podpisu: `TabletService::send()` s odkazem na akci `sign` presenteru tabletu
-a s tím, co se podepisuje (`setSubject()`). Stránka `sign` pak:
+**Stránka `sign`** na širším displeji ukáže vlevo navigaci mezi dokumenty (náhled první stránky,
+kolik míst je podepsaných), na užším ji dá nahoru. Vpravo je dokument po stránkách a místa pro
+podpis jsou v něm zvýrazněná („Kliknutím podepsat“, jméno podepisujícího). Klepnutí do místa
+otevře okno s plátnem:
 
-1. vezme otevřenou žádost tabletu (`getCurrentRequest()`) - bez ní zpět na čekací stránku,
-2. zeptá se projektu, co ukázat (`TabletSignHandler::getDocument()`): název, PDF k náhledu
-   (vykreslí se po stránkách pod sebou), případně text nebo důvod, proč podepsat nejde,
-3. po podpisu (`TabletSigning::sign()`) uloží podepsaný dokument, dokončí podpis bez kódu
-   (tablet patří provozovateli, totožnost ověřil personál - `completeOnSite()`), nechá projekt
-   vygenerovat a uložit podepsané PDF (`createSignedPdf()`), žádost označí jako podepsanou
-   a zavolá `onSigned()` (e-mail, změna stavu záznamu),
-4. přejde na poděkování (`done`), odkud se tablet sám vrátí na čekací stránku.
+- první podpis se nakreslí („Začít znovu“, „Zpět“, „Použít tento podpis“),
+- do dalšího místa se nabídne **předchozí podpis** - stačí ho potvrdit, nebo se podepsat znovu;
+  nový podpis platí **jen pro místo, kam se klepnulo**,
+- podepsané místo ukáže podpis a jde ho podepsat znovu.
+
+Předchozí podpis se nabízí **jen do míst stejného podepisujícího** (`signerName` dokumentu).
+Když žádost nese dokumenty pro víc lidí (klient a zákonný zástupce), musí mít každý dokument
+jméno svého podepisujícího - podpis jednoho se pak druhému nenabídne a server ho do jeho místa
+ani nepřijme. Podpisy žijí jen v paměti stránky jedné žádosti, do další žádosti (dalšího
+klienta) se nic nepřenáší.
+
+Spodní lišta ukazuje, kolik míst je podepsaných, a umí dokument přiblížit (− / + po krocích do
+250 %, klepnutí na procenta vrátí 100 %) - stránky se pak posouvají i vodorovně a překreslí se
+ostře. „Další podpis“ přeskočí na další nepodepsané místo (i v dalším dokumentu). „Dokončit podpis“
+odešle všechno najednou, až jsou podepsaná všechna místa všech dokumentů. Dokument bez
+označených míst (bez PDF, PDF bez míst, nebo projekt bez `setasign/fpdi`) má jedno místo pod
+náhledem.
+
+**Po odeslání** (`TabletSigning::sign()`) vznikne:
+
+| Entita | Řádek za | Nese |
+|---|---|---|
+| `SignedDocument` (`signed_document`) | každý dokument | klíč dokumentu v žádosti, `type`, `subjectId`, `data` (z dokumentu, jinak ze žádosti), otisk PDF, které podepisující viděl, podepsané PDF (`adt/files`) a jeho otisk |
+| `DocumentSignature` (`document_signature`) | každé nakreslení podpisu | obrázek, záznam průběhu psaní, důkazní záznam a jeho otisk, místa, do kterých byl podpis vložen (`getPlacements()`: dokument + pořadí místa) |
+
+Podpis, který podepisující přepsal a v žádném místě nezůstal, se neukládá. Důkazní záznam každého
+podpisu uvádí dokumenty a místa, kam byl vložen (s otiskem PDF, které podepisující viděl), komu
+a kdy to obsluha poslala, a co dodá projekt (`getEvidenceSubject()`). Podpisy se pak vloží do PDF
+na svá místa (`SignatureStamper::stampBoxes()`), projekt podepsaná PDF uloží a žádost se označí
+jako podepsaná. Všechno běží v jedné databázové transakci (projekt v `createSignedPdf()` smí
+ukládat soubory i flushovat) - když cokoli selže (PDF, chybějící místo), neuloží se nic a podepsat
+jde znovu. `onSigned()` (e-maily, navazující kroky) se volá až po potvrzení transakce.
 
 ```php
 class DocumentSignHandler implements TabletSignHandler
 {
-	public function getDocument(TabletSignRequest $request): ?TabletSignDocument
+	public function getDocuments(TabletSignRequest $request): ?array
 	{
 		$contract = $this->contracts->find((int) $request->getSubjectId());
 		if ($contract === null) {
 			return null; // není co podepsat - tablet se vrátí na čekací stránku
 		}
 
-		return new TabletSignDocument($contract->getTitle(), fn (): string => $contract->getUnsignedPdf());
+		return [
+			new TabletSignDocument(
+				$contract->getTitle(),
+				fn (): string => $contract->getUnsignedPdf(),  // PDF s místy SignatureBox
+				key: 'contract',                               // klíč v žádosti, jinak pořadí
+				signerName: $contract->getClient()->getName(), // do míst a okna s podpisem
+				boxNames: ['client'],                          // místa pro člověka u tabletu, null = všechna
+			),
+			new TabletSignDocument('Souhlas GDPR', fn (): string => $this->gdprPdf($contract), key: 'gdpr', type: 'consent'),
+		];
 	}
 
-	public function getEvidenceSubject(SignedDocument $document): array
+	public function getEvidenceSubject(DocumentSignature $signature): array
 	{
-		// do důkazního záznamu: kdo podepisuje, otisk originálu …
+		// do důkazního záznamu: kdo podepisuje …
 		return ['client' => ['id' => 17, 'name' => 'Jan Novák']];
 	}
 
-	public function createSignedPdf(SignedDocument $document): ?SignedPdf
+	public function createSignedPdf(SignedDocument $document, ?string $stampedPdf, array $signatures): ?SignedPdf
 	{
-		// obrázek podpisu $document->getImageDataUri(), otisk do PDF $document->getDocumentHash()
-		$pdf = $this->pdfGenerator->render($document);
-		$file = $this->files->save($pdf, 'smlouva.pdf'); // adt/files
+		// $stampedPdf: originál s podpisy na jejich místech (null = dokument bez míst - PDF
+		// si projekt vygeneruje sám z getImageDataUri()); otisky podpisů getDocumentHash()
+		$file = $this->files->save($stampedPdf, $document->getDocumentKey() . '.pdf'); // adt/files
 
-		return new SignedPdf($file, $pdf);
+		return new SignedPdf($file, $stampedPdf);
 	}
 
-	public function onSigned(SignedDocument $document): void
+	public function onSigned(TabletSignRequest $request, array $documents, array $signatures): void
 	{
-		// e-mail klientovi, změna stavu smlouvy …
+		// e-mail klientovi, změna stavu smlouvy, obrázek podpisu ke klientovi
+		// (end($signatures)->getImageDataUri()) …
 	}
 }
 ```
 
-Bez handleru nebo entity je podpis vypnutý (`TabletSigning::isEnabled()`), akce `sign` vrací
+Místa, která patří někomu jinému (`boxNames` je nepokrývá, např. podpis pracovníka), zůstanou
+v podepsaném PDF označená a podpis do nich jde doplnit později (`SignatureStamper`).
+
+Bez handleru nebo entit je podpis vypnutý (`TabletSigning::isEnabled()`), akce `sign` vrací
 404 a tablet otevírá stránky formulářů projektu (viz Stránka formuláře na tabletu).
 
 ## Provoz tabletu

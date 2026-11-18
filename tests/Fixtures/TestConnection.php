@@ -15,9 +15,27 @@ final class TestConnection extends Connection
 	/** @var list<array{table: string, data: array, criteria: array, types: array}> */
 	public array $updates = [];
 
+	/** @var list<string> průběh transakcí: begin, commit, rollBack */
+	public array $transactions = [];
+
 	/** @noinspection PhpMissingParentConstructorInspection */
 	public function __construct()
 	{
+	}
+
+	public function beginTransaction(): void
+	{
+		$this->transactions[] = 'begin';
+	}
+
+	public function commit(): void
+	{
+		$this->transactions[] = 'commit';
+	}
+
+	public function rollBack(): void
+	{
+		$this->transactions[] = 'rollBack';
 	}
 
 	public function insert(string $table, array $data, array $types = []): int|string
