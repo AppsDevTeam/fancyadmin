@@ -1,0 +1,81 @@
+{varType ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardControl $dashboard}
+{var $_format = ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardFormat::class}
+
+<div class="fa-dashboard fa-dashboard-cols-{$dashboard->getColumns()}">
+	{foreach $dashboard->getWidgets() as $widget}
+		<section class="fa-dashboard-widget fa-dashboard-widget-{$widget->getType()} fa-dashboard-span-{$dashboard->getSpan($widget)}" data-dashboard-widget="{$widget->getName()}">
+			{if $widget->getType() === 'tiles'}
+				{include widgetHeader, widget: $widget}
+				{include tiles, widget: $widget, format: $_format}
+			{else}
+				<div class="card fa-dashboard-card">
+					{include widgetHeader, widget: $widget}
+					<div class="card-body fa-dashboard-card-body">
+						{include block ('widget-' . $widget->getType()), widget: $widget, format: $_format}
+					</div>
+				</div>
+			{/if}
+		</section>
+	{/foreach}
+</div>
+
+{define widgetHeader, ADT\FancyAdmin\UI\Components\Controls\Dashboard\DashboardWidget $widget}
+	<div n:if="$widget->getTitle() !== null && $widget->getType() !== 'stat'" class="fa-dashboard-widget-header">
+		<h2 class="fa-dashboard-widget-title">{$widget->getTitle()}</h2>
+		<p n:if="$widget->getDescription()" class="fa-dashboard-widget-description">{$widget->getDescription()}</p>
+	</div>
+{/define}
+
+{define widget-stat, ADT\FancyAdmin\UI\Components\Controls\Dashboard\StatWidget $widget, string $format}
+	<div class="fa-dashboard-stat fa-dashboard-tone-{$widget->getTone()->value}">
+		<div class="fa-dashboard-stat-head">
+			<span n:if="$widget->getIcon()" class="fa-dashboard-icon"><i class="{$format::icon($widget->getIcon())}" aria-hidden="true"></i></span>
+			<span class="fa-dashboard-stat-label">{$widget->getTitle()}</span>
+		</div>
+		<div class="fa-dashboard-stat-value">{$format::value($widget->getValue())}</div>
+		<div n:ifcontent class="fa-dashboard-stat-note">{$widget->getNote()}</div>
+		<a n:if="$widget->getLink()" href="{$widget->getLink()}" class="stretched-link" aria-label="{$widget->getTitle()}"></a>
+	</div>
+{/define}
+
+{define tiles, ADT\FancyAdmin\UI\Components\Controls\Dashboard\TilesWidget $widget, string $format}
+	<div class="fa-dashboard-tiles">
+		<div n:foreach="$widget->getTiles() as $tile" class="card fa-dashboard-tile fa-dashboard-tone-{$tile->tone->value}">
+			<div class="fa-dashboard-stat-head">
+				<span n:if="$tile->icon" class="fa-dashboard-icon"><i class="{$format::icon($tile->icon)}" aria-hidden="true"></i></span>
+				<span class="fa-dashboard-stat-label">{$tile->label}</span>
+			</div>
+			<div class="fa-dashboard-tile-value">{$format::value($tile->value)}</div>
+			<div n:if="$tile->note !== null" class="fa-dashboard-stat-note">{$tile->note}</div>
+			<a n:if="$tile->link" href="{$tile->link}" class="stretched-link" aria-label="{$tile->label}"></a>
+		</div>
+	</div>
+{/define}
+
+{define widget-table, ADT\FancyAdmin\UI\Components\Controls\Dashboard\TableWidget $widget, string $format}
+	{if $widget->getRows()}
+		<div class="table-responsive">
+			<table class="table fa-dashboard-table mb-0">
+				<thead>
+					<tr>
+						<th n:foreach="$widget->getColumns() as $column" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$widget->getRows() as $row">
+						{foreach $widget->getColumns() as $key => $column}
+							{var $_value = $row[$key] ?? null}
+							<td n:class="$column->numeric ? 'text-end text-nowrap'">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</td>
+						{/foreach}
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	{else}
+		<p class="fa-dashboard-empty">{_fcadmin.dashboard.empty}</p>
+	{/if}
+{/define}
+
+{define widget-template, ADT\FancyAdmin\UI\Components\Controls\Dashboard\TemplateWidget $widget, string $format}
+	{include $widget->getFile(), presenter: $presenter, dashboard: $dashboard, widget: $widget, ...$widget->getParameters()}
+{/define}

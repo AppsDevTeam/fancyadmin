@@ -1130,6 +1130,12 @@ Formuláře stránky jako karty pod sebou s jednou otevřenou sekcí (šablony e
 blok `accordionSection` pro `{embed}`, otevření sekce s chybou, zapamatování otevřené sekce, `?section=`
 a odznak napojený na zaškrtávátko. Návod v `docs/accordion.md`.
 
+### Dashboard (`DashboardControl`, trait `Dashboard`)
+
+Přehled jako mřížka widgetů - velké číslo (`addStat`), řada dlaždic (`addTiles`), tabulka (`addTable`)
+a vlastní šablona (`addTemplate`). Rozložení skládá presenter v `configureDashboard()`, data se načtou
+až při vykreslení. Návod v `docs/dashboard.md`.
+
 ### CSRF ochrana signálů
 
 Stavové akce administrace se spouštějí signály (`?do=...`). SameSite cookie ani hlavička

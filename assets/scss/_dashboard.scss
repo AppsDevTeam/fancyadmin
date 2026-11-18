@@ -1,0 +1,181 @@
+@use 'variables' as *;
+
+// Dashboard (docs/dashboard.md): mřížka widgetů, pod lg nejvýš 2 sloupce, pod md jeden.
+// Jen proměnné --fa-* / --primaryColor - světlý i tmavý režim. Staré .dashboard-card v _theme.scss zůstávají.
+
+.fa-dashboard {
+	--fa-dashboard-columns: 3;
+	display: grid;
+	grid-template-columns: repeat(var(--fa-dashboard-columns), minmax(0, 1fr));
+	gap: 20px;
+	align-items: stretch;
+}
+
+@for $i from 1 through 6 {
+	.fa-dashboard-cols-#{$i} {
+		--fa-dashboard-columns: #{$i};
+	}
+
+	.fa-dashboard-span-#{$i} {
+		grid-column: span $i;
+	}
+}
+
+@include media-breakpoint-down(lg) {
+	.fa-dashboard:not(.fa-dashboard-cols-1) {
+		--fa-dashboard-columns: 2;
+	}
+
+	@for $i from 3 through 6 {
+		.fa-dashboard-span-#{$i} {
+			grid-column: span 2;
+		}
+	}
+}
+
+@include media-breakpoint-down(md) {
+	.fa-dashboard {
+		--fa-dashboard-columns: 1;
+	}
+
+	.fa-dashboard-widget {
+		grid-column: auto;
+	}
+}
+
+.fa-dashboard-widget {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+}
+
+.fa-dashboard-card {
+	flex: 1 1 auto;
+	background-color: var(--fa-surface);
+	border: 1px solid var(--fa-border);
+	border-radius: var(--bs-border-radius-lg);
+
+	> .fa-dashboard-widget-header {
+		padding: 16px 20px 0;
+	}
+}
+
+.fa-dashboard-card-body {
+	padding: 16px 20px 20px;
+}
+
+.fa-dashboard-widget-title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--fa-heading, var(--fa-text));
+}
+
+.fa-dashboard-widget-description {
+	margin: 4px 0 0;
+	font-size: .875rem;
+	color: var(--fa-text-muted);
+}
+
+.fa-dashboard-stat,
+.fa-dashboard-tile {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.fa-dashboard-stat-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--fa-text-muted);
+	font-size: .875rem;
+	font-weight: 600;
+}
+
+.fa-dashboard-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	flex: 0 0 32px;
+	border-radius: var(--bs-border-radius);
+	background-color: color-mix(in srgb, var(--fa-dashboard-tone) 14%, transparent);
+	color: var(--fa-dashboard-tone);
+}
+
+.fa-dashboard-stat-value {
+	font-size: 2.5rem;
+	font-weight: 700;
+	line-height: 1.1;
+	color: var(--fa-heading, var(--fa-text));
+}
+
+.fa-dashboard-stat-note {
+	font-size: .875rem;
+	color: var(--fa-text-muted);
+}
+
+.fa-dashboard-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 20px;
+}
+
+.fa-dashboard-tile {
+	padding: 16px 20px;
+	background-color: var(--fa-surface);
+	border: 1px solid var(--fa-border);
+	border-radius: var(--bs-border-radius-lg);
+}
+
+.fa-dashboard-tile-value {
+	font-size: 1.75rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--fa-heading, var(--fa-text));
+}
+
+.fa-dashboard-tone-neutral,
+.fa-dashboard-tone-primary {
+	--fa-dashboard-tone: var(--primaryColor);
+}
+
+.fa-dashboard-tone-success {
+	--fa-dashboard-tone: var(--bs-success);
+}
+
+.fa-dashboard-tone-warning {
+	--fa-dashboard-tone: var(--bs-warning);
+}
+
+.fa-dashboard-tone-danger {
+	--fa-dashboard-tone: var(--bs-danger);
+}
+
+.fa-dashboard-tone-info {
+	--fa-dashboard-tone: var(--bs-info);
+}
+
+.fa-dashboard-tone-neutral .fa-dashboard-icon {
+	background-color: var(--fa-surface-hover);
+	color: var(--fa-text-muted);
+}
+
+.fa-dashboard-table {
+	--bs-table-bg: transparent;
+
+	th {
+		font-size: .8125rem;
+		font-weight: 600;
+		color: var(--fa-text-muted);
+	}
+}
+
+.fa-dashboard-empty {
+	margin: 0;
+	color: var(--fa-text-muted);
+}

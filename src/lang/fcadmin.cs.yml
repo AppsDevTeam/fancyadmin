@@ -12,6 +12,9 @@ accordion:
   active: Aktivní
   inactive: Neaktivní
 
+dashboard:
+  empty: Za zvolené období nejsou žádná data.
+
 layout:
   sideMenu:
     collapse: Sbalit
