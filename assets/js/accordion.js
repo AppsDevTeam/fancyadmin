@@ -128,6 +128,29 @@ document.addEventListener('change', (e) => {
 	}
 });
 
+// Jeden formulář přes víc sekcí (jedno Uložit pro všechny): validace v prohlížeči označí pole i ve sbalené
+// sekci, kde by chybu nikdo neviděl. Validuje se v obsluze odeslání, proto se kontroluje až po ní.
+document.addEventListener('click', (e) => {
+	const form = e.target.closest?.('[type="submit"]')?.form;
+	if (!form?.querySelector('.accordion-sections')) {
+		return;
+	}
+	setTimeout(() => {
+		const field = form.querySelector('.accordion-sections ' + SECTION + ' .is-invalid');
+		const section = field?.closest(SECTION);
+		if (!section || body(section)?.classList.contains('show')) {
+			return;
+		}
+		if (window.bootstrap?.Collapse) {
+			body(section).addEventListener('shown.bs.collapse', () => field.focus(), { once: true });
+			openSection(section);
+		} else {
+			openSection(section);
+			field.focus();
+		}
+	});
+});
+
 // Chyby z AJAXového odeslání formuláře přijdou překreslením snippetu `…-errors` uvnitř sekce
 onContentLoaded(($snippet) => {
 	$snippet.each((_, element) => {

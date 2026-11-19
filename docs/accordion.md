@@ -50,7 +50,9 @@ Obsah sekce je blok `body`; v něm platí proměnné stránky (`$control`, `$pre
 Při načtení stránky (i po AJAX překreslení) vyhrává v tomto pořadí:
 
 1. **sekce s chybou validace** (`.is-invalid`, `.alert-danger` nebo neprázdný `snippet-…-errors`) - jinak by
-   hláška zůstala ve sbalené sekci a nikdo by ji neviděl; chyby z AJAXového odeslání otevřou sekci i dodatečně,
+   hláška zůstala ve sbalené sekci a nikdo by ji neviděl; chyby z AJAXového odeslání otevřou sekci i dodatečně.
+   Jeden formulář přes víc sekcí (jedno *Uložit* pro všechny) zastaví už validace v prohlížeči: po kliknutí na
+   odeslání se otevře sekce prvního chybného pole a pole dostane fokus,
 2. **`?section=<id>`** v adrese (odkaz na konkrétní sekci; stránka na ni sroluje),
 3. **zapamatovaná sekce** - poslední otevřená v `sessionStorage` podle cesty stránky, takže po *Uložit*
    a `redirect('this')` zůstane otevřená ta, ve které se pracovalo, a nevrátí se na první,
