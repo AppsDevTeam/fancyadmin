@@ -65,7 +65,7 @@ const state = {
 	chatSelectionActions: [],
 	// Otevřený výběr položky s hledáním (pickInQuickbar)
 	picker: null,
-	ai: { config: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
+	ai: { config: null, loading: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
 let currentBar = null;
@@ -998,8 +998,11 @@ const aiRoot = () => document.querySelector('[data-quickbar-ai]');
 // Instanci widgetu na element věší aiChat.js; bez něj (projekt AI nemá) zůstane panel prázdný
 const aiWidget = () => state.ai.element?.adtAiChat ?? null;
 
+// Bez limitu by fetch po uspání počítače nebo výpadku sítě visel, dokud ho prohlížeč nevzdá (minuty)
+const AI_REQUEST_TIMEOUT_MS = 15000;
+
 function aiRequest(url) {
-	return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+	return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }, signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS) })
 		.then((response) => (response.ok ? response.json() : Promise.reject(response)));
 }
 
@@ -1029,16 +1032,33 @@ function openAi(focus = true) {
 		}
 		return;
 	}
+	if (state.ai.loading) {
+		render();
+		return;
+	}
+
+	const $chat = document.querySelector('[data-quickbar-ai-chat]');
+	$chat.innerHTML = `<div class="quickbar-empty">${esc($chat.dataset.loading)}</div>`;
+	// Výměna lišty (nová stránka) načítání zahodí - jeho výsledek už nepatří do nového panelu
+	const loading = state.ai.loading = {};
+	const current = () => state.ai.loading === loading;
 
 	// Po otevření vždy poslední konverzace, bez ní prázdný stav
 	aiRequest($root.dataset.quickbarAi)
 		.then((payload) => {
+			if (!current()) {
+				return Promise.reject(loading);
+			}
 			state.ai.config = payload.chat;
 			state.ai.historyUrl = payload.historyUrl;
 			state.ai.share = payload.shareUrl ? { url: payload.shareUrl, param: payload.shareParam } : null;
 			return loadAiConversations();
 		})
 		.then(() => {
+			if (!current()) {
+				return;
+			}
+			state.ai.loading = null;
 			// Po obnovení stránky konverzace, která byla otevřená (pokud ještě existuje)
 			const restore = state.ai.restore;
 			state.ai.restore = null;
@@ -1058,10 +1078,23 @@ function openAi(focus = true) {
 			}
 		})
 		.catch(() => {
-			const $chat = document.querySelector('[data-quickbar-ai-chat]');
+			if (!current()) {
+				return;
+			}
+			state.ai.loading = null;
+			// Config bez připojeného widgetu by další otevření bralo jako načtenou AI a panel by
+			// zůstal prázdný bez pole zprávy až do obnovení stránky
+			state.ai.config = null;
 			$chat.innerHTML = `<div class="quickbar-empty">${esc($chat.dataset.unavailable)}</div>`;
 		});
 }
+
+// Po návratu sítě se otevřený panel, kterému načtení selhalo, načte sám
+window.addEventListener('online', () => {
+	if (state.open === 'ai' && !state.ai.config && !state.ai.loading) {
+		openAi(false);
+	}
+});
 
 function loadAiConversations() {
 	return aiRequest(state.ai.config.urls.conversations).then((payload) => {
@@ -1905,6 +1938,7 @@ function init() {
 	// Nová lišta = nový (prázdný) AI panel, widget se připojí při dalším otevření
 	destroyAi();
 	state.ai.config = null;
+	state.ai.loading = null;
 	state.ai.waiting.clear();
 	observePanels();
 	firstBar ? loadCounts() : render();

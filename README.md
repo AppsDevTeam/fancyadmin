@@ -3154,7 +3154,9 @@ předchozího hledání). Pole je `role="combobox"`, výsledky `role="listbox"` 
 otevření načte jeho konfiguraci ze signálu `AiPresenterTrait::handleAiQuickbar()` (presenter hledá jako
 `Ai:default`, jinde přepsat `BasePresenterTrait::getQuickbarAiUrl()`), otevře poslední konverzaci
 a nedávné konverzace bere z `urls.conversations` widgetu. Projekt musí importovat `@fancyadmin/js/aiChat`
-(sekce 30), jinak zůstane panel prázdný.
+(sekce 30), jinak zůstane panel prázdný. Během načítání panel ukáže „Načítám AI asistenta…“, požadavky
+mají limit 15 s; když načtení selže (výpadek sítě, uspaný počítač), panel napíše, že AI není dostupná,
+a načte se znovu při dalším otevření nebo sám po návratu sítě (událost `online`).
 
 **Stránka za lištou** — lišta je v layoutu mimo snippet `body`, ajaxový přechod na jinou stránku ji
 nepřekreslí: otevřený panel, konverzace AI i rozepsaný text zůstanou. Zvýraznění aktuální položky

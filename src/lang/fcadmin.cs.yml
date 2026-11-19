@@ -44,6 +44,7 @@ layout:
       untitled: Nová konverzace
       unread: Nová odpověď
       allConversations: Zobrazit všechny konverzace
+      loadingChat: Načítám AI asistenta…
       unavailable: AI asistent teď není dostupný.
       expand: Otevřít na celou stránku
       shrink: Zmenšit
