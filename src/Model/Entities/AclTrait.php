@@ -7,7 +7,7 @@ namespace ADT\FancyAdmin\Model\Entities;
 use ADT\DoctrineLoggable\Attributes\LoggableProperty;
 use ADT\FancyAdmin\Model\Attributes\AuditedValue;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
-use ADT\FancyAdmin\Model\Entities\Traits\CreatedBy;
+use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use ADT\FancyAdmin\Model\Entities\Traits\IsActive;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\UpdatedBy;
@@ -16,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 trait AclTrait
 {
 	use CreatedAt;
-	use CreatedBy;
+	use CreatedByNullable;
 	use IsActive;
 	use UpdatedAt;
 	use UpdatedBy;
