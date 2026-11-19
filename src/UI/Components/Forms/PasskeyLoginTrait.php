@@ -168,6 +168,7 @@ trait PasskeyLoginTrait
 	{
 		return $this->_identityQueryFactory->create()
 			->byEmail($email)
+			->byContext($this->_fancyAdmin->getContext())
 			->fetchOneOrNull();
 	}
 }

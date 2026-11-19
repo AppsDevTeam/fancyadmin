@@ -30,6 +30,9 @@ final class TestEntityManager extends EntityManager
 	/** @var array<class-string, ClassMetadata> */
 	private array $metadata = [];
 
+	/** @var list<object> entity předané persist() */
+	public array $persisted = [];
+
 	/** @noinspection PhpMissingParentConstructorInspection */
 	public function __construct(array $entityClasses = [], ?Connection $connection = null)
 	{
@@ -59,6 +62,12 @@ final class TestEntityManager extends EntityManager
 	}
 
 	public int $flushCount = 0;
+
+	/** Nové entity se jen zapamatují - do databáze se nic neukládá */
+	public function persist(object $object): void
+	{
+		$this->persisted[] = $object;
+	}
 
 	public function flush(): void
 	{

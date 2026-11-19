@@ -536,6 +536,7 @@ class Keycloak
 
 			$identity = $this->identityQueryFactory->create()
 				->byEmail($email)
+				->byContext($this->fancyAdmin->getContext())
 				->fetchOneOrNull();
 		}
 
@@ -580,6 +581,7 @@ class Keycloak
 		/** @var Identity $identity */
 		$identity = new $identityClass();
 		$identity->setEmail($userInfo['email']);
+		$identity->setContext($this->fancyAdmin->getContext());
 		$identity->setFirstName($userInfo['given_name'] ?? null);
 		$identity->setLastName($userInfo['family_name'] ?? null);
 		$identity->setSsoSub($userInfo['sub'] ?? null);

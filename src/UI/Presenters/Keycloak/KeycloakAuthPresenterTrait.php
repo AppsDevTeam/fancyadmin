@@ -148,6 +148,7 @@ trait KeycloakAuthPresenterTrait
 			$identity = $this->_identityQueryFactory->create()
 				->disableSecurityFilter()
 				->byEmail($keycloakUser->getEmail())
+				->byContext($this->_fancyAdmin->getContext())
 				->fetchOneOrNull();
 		}
 
