@@ -164,7 +164,7 @@ trait IdentityProfileFormTrait
 				$this->redrawControl($this->getName());
 			};
 
-		if (!$isEdit && $this->_identityQueryFactory->create()->byEmail($container['email']->getValue())->fetchOneOrNull()) {
+		if (!$isEdit && $this->_identityQueryFactory->create()->byEmail($container['email']->getValue())->byContext($this->_fancyAdmin->getContext())->fetchOneOrNull()) {
 			$container['email']->addError('fcadmin.forms.user.errors.userAlreadyExists');
 		}
 

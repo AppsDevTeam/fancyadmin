@@ -11,6 +11,7 @@ use ADT\FancyAdmin\Model\Security\Keycloak\KeycloakManager;
 use ADT\FancyAdmin\Tests\Fixtures\FancyAdminFactory;
 use ADT\FancyAdmin\Tests\Fixtures\TestEntityManager;
 use ADT\FancyAdmin\Tests\Fixtures\TestIdentity;
+use ADT\FancyAdmin\Tests\Fixtures\TestIdentityQueryFactory;
 use ADT\FancyAdmin\UI\Components\Forms\IdentityProfileFormTrait;
 use Nette\Application\UI\Presenter;
 use Nette\Application\UI\Template;
@@ -97,6 +98,26 @@ class IdentityProfileFormHost
 	public function isAllowedToEdit(?Identity $identity): bool
 	{
 		return true;
+	}
+}
+
+
+/** Formulář odeslaný s danými daty, bez presenteru */
+final class SubmittedForm extends ADT\Forms\Form
+{
+	public function __construct(private readonly array $data)
+	{
+		parent::__construct();
+	}
+
+	public function isAnchored(): bool
+	{
+		return true;
+	}
+
+	protected function receiveHttpData(): ?array
+	{
+		return $this->data;
 	}
 }
 
@@ -217,4 +238,35 @@ test('projekt s vlastnim SSO pozna svou identitu prepsanim metody', function () 
 	$host->processUserForm($passwordIdentity);
 
 	Assert::same([$passwordIdentity], $mailer->passwordRecoveryMails);
+});
+
+
+/** @param list<TestIdentity> $identities */
+function emailErrors(array $identities, string $context): array
+{
+	[$em, $mailer] = createDependencies();
+	$host = new IdentityProfileFormHost($em, $mailer, FancyAdminFactory::create(['context' => $context]));
+	new ReflectionProperty($host, '_identityQueryFactory')->setValue($host, new TestIdentityQueryFactory($identities));
+
+	$form = new SubmittedForm(['email' => 'jan@example.com']);
+	new ReflectionMethod($host, 'addBasicIdentityFields')->invoke($host, $form, false);
+
+	return $form['email']->getErrors();
+}
+
+
+test('uzivatele nejde zalozit znovu ve stejnem kontextu', function () {
+	Assert::same(
+		['fcadmin.forms.user.errors.userAlreadyExists'],
+		emailErrors([new TestIdentity()->setEmail('jan@example.com')->setContext('cashdesk')], 'cashdesk'),
+	);
+});
+
+
+test('identita v jinem kontextu zalozeni nebrani', function () {
+	// Stejny e-mail muze mit identitu v kazdem kontextu, napr. pokladna a paydroid
+	Assert::same([], emailErrors([
+		new TestIdentity()->setEmail('jan@example.com')->setContext('paydroid'),
+		new TestIdentity()->setEmail('jan@example.com')->setContext('paydroid'),
+	], 'cashdesk'));
 });
