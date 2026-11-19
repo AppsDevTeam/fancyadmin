@@ -76,3 +76,55 @@ test('bez hubu se nic neodebírá ani neposílá', function () {
 	$push->publish('calendar');
 	Assert::null($push->subscription(['calendar']));
 });
+
+
+/** Presenter s BasePresenterTrait bez DI; odpověď signálu zachytí místo odeslání. */
+final class PushPresenter extends Nette\Application\UI\Presenter
+{
+	use ADT\FancyAdmin\UI\Presenters\BasePresenterTrait;
+
+	public mixed $json = false;
+
+	public function __construct(ADT\FancyAdmin\Model\Push\Push $push, bool $loggedIn)
+	{
+		parent::__construct();
+		$this->_push = $push;
+		$this->primaryTemplate = true;
+		$storage = new class ($loggedIn) implements Nette\Security\UserStorage {
+			public function __construct(private bool $loggedIn) {}
+			public function saveAuthentication(Nette\Security\IIdentity $identity): void {}
+			public function clearAuthentication(bool $clearIdentity): void {}
+			public function getState(): array { return [$this->loggedIn, new Nette\Security\SimpleIdentity(5), null]; }
+			public function setExpiration(?string $expire, bool $clearIdentity): void {}
+		};
+		$this->injectPrimary(new Nette\Http\Request(new Nette\Http\UrlScript('https://dent.test/')), new Nette\Http\Response(), user: new Nette\Security\User($storage));
+	}
+
+	protected function getPushTopics(): array
+	{
+		return ['calendar', 'user/' . $this->getUser()->getId()];
+	}
+
+	public function sendJson(mixed $data): void
+	{
+		$this->json = $data;
+		throw new Nette\Application\AbortException();
+	}
+}
+
+
+test('signál obnovy dá nový odběr s topiky presenteru', function () use ($push) {
+	$presenter = new PushPresenter($push, loggedIn: true);
+	Assert::exception(fn() => $presenter->handlePushSubscription(), Nette\Application\AbortException::class);
+
+	Assert::same(['https://dent.test/smile/calendar', 'https://dent.test/smile/user/5'], $presenter->json['topics']);
+	Assert::count(3, explode('.', $presenter->json['token']));
+});
+
+
+test('nepřihlášený odběr nedostane', function () use ($push) {
+	$presenter = new PushPresenter($push, loggedIn: false);
+	Assert::exception(fn() => $presenter->handlePushSubscription(), Nette\Application\AbortException::class);
+
+	Assert::null($presenter->json);
+});

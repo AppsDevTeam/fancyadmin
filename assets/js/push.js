@@ -4,6 +4,11 @@
 // polling, ptá se isPushConnected() a poslouchá onPushState() - bez hubu nebo po výpadku
 // spojení stránka polluje dál.
 //
+// Token platí 12 h, pak ho hub odmítne (401). Stránka si pak vyžádá nový odběr signálem
+// BasePresenterTrait::handlePushSubscription() (`refreshUrl` v konfiguraci) a připojí se znovu.
+// Když nový odběr nedostane (odhlášený uživatel, stránka zmizela) nebo hub odmítne i čerstvý
+// token, zůstane odpojená a polluje.
+//
 // Změnu, kterou udělala tahle stránka, si stránka obnoví sama (např. kalendář po uložení) - push
 // o ní by obnovil podruhé (kalendář by dvakrát problikl). Stránka má proto své ID, posílá ho
 // s každým AJAXem přes jQuery (hlavička X-Fancyadmin-Push-Client), server ho dá do zprávy
@@ -49,27 +54,62 @@ function dispatch(data) {
 	document.dispatchEvent(new CustomEvent('fancyadmin:push', { detail: data }));
 }
 
+function isSubscription(value) {
+	return typeof value?.url === 'string' && typeof value.token === 'string' && Array.isArray(value.topics) && value.topics.length > 0;
+}
+
+/** Nový odběr ze serveru; null = odběr nebude (přesměrování na přihlášení, 403, 404, null), výpadek sítě vyhodí */
+async function refreshSubscription(refreshUrl) {
+	const response = await fetch(refreshUrl, {
+		headers: { Accept: 'application/json' },
+		credentials: 'same-origin',
+		cache: 'no-store',
+	});
+	if (response.status >= 500) {
+		throw new Error('push');
+	}
+	if (!response.ok || response.redirected || !response.headers.get('Content-Type')?.includes('application/json')) {
+		return null;
+	}
+	const subscription = await response.json().catch(() => null);
+
+	return isSubscription(subscription) ? subscription : null;
+}
+
 /** Čte stream hubu; po výpadku se připojí znovu (1 s, pak dvojnásobně až 30 s) */
 async function read(config) {
-	const url = new URL(config.url, window.location.href);
-	config.topics.forEach((topic) => url.searchParams.append('match', topic));
+	let subscription = config;
+	// Token z obnovy, se kterým se ještě nepovedlo připojit - když ho hub odmítne, znovu se neobnovuje
+	let refreshed = false;
 	let delay = 1000;
 
 	for (;;) {
 		try {
+			const url = new URL(subscription.url, window.location.href);
+			subscription.topics.forEach((topic) => url.searchParams.append('match', topic));
 			const response = await fetch(url, {
-				headers: { Authorization: 'Bearer ' + config.token, Accept: 'text/event-stream' },
+				headers: { Authorization: 'Bearer ' + subscription.token, Accept: 'text/event-stream' },
 				cache: 'no-store',
 			});
-			// Neplatný nebo prošlý token - nový přinese až další načtení stránky, do té doby polling
+			// Prošlý nebo neplatný token - jednou zkusit nový odběr, jinak polling
 			if (response.status === 401 || response.status === 403) {
 				setOpen(false);
-				return;
+				if (!config.refreshUrl || refreshed) {
+					return;
+				}
+				const fresh = await refreshSubscription(config.refreshUrl);
+				if (!fresh) {
+					return;
+				}
+				subscription = fresh;
+				refreshed = true;
+				continue;
 			}
 			if (!response.ok || !response.body) {
 				throw new Error('push');
 			}
 			setOpen(true);
+			refreshed = false;
 			delay = 1000;
 
 			const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -118,7 +158,7 @@ function start() {
 	} catch {
 		return;
 	}
-	if (!config?.url || !config.topics?.length) {
+	if (!isSubscription(config)) {
 		return;
 	}
 	started = true;

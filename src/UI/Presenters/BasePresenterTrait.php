@@ -60,9 +60,10 @@ trait BasePresenterTrait
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];
 		$this->getTemplate()->quickbarAiUrl = in_array(QuickbarItem::Ai, $this->getTemplate()->quickbarItems, true) ? $this->getQuickbarAiUrl() : null;
-		$pushTopics = $this->primaryTemplate && $this->getUser()->isLoggedIn() ? $this->getPushTopics() : [];
-		$pushSubscription = $pushTopics !== [] ? $this->_push->subscription($pushTopics) : null;
-		$this->getTemplate()->pushSubscription = $pushSubscription !== null ? Json::encode($pushSubscription) : null;
+		$pushSubscription = $this->getPushSubscription();
+		$this->getTemplate()->pushSubscription = $pushSubscription !== null
+			? Json::encode($pushSubscription + ['refreshUrl' => $this->link('this', ['do' => 'pushSubscription'])])
+			: null;
 		$this->getTemplate()->persistentNotice = $this->loadRenderedPersistentNotice();
 		$this->_jsComponents->setComponents($this->_fancyAdmin->getJsComponentsConfig());
 		$this->getTemplate()->jsComponentsConfig = $this->_jsComponents->generateConfig();
@@ -155,6 +156,27 @@ trait BasePresenterTrait
 	protected function getPushTopics(): array
 	{
 		return [];
+	}
+
+	/**
+	 * Nový odběr pro push.js, když token z načtení stránky vyprší (docs/push.md). Topiky vždy
+	 * z getPushTopics() presenteru, nikdy od klienta. Null = odběr nebude, stránka polluje.
+	 *
+	 * Adresa (refreshUrl) míří na stránku z plného načtení, ne na aktuální po ajaxové navigaci:
+	 * ajaxová navigace odběr nemění, spojení dál odebírá topiky té stránky a obnova je zachová.
+	 * Když stránka mezitím zmizí (404), push.js přejde na polling.
+	 */
+	public function handlePushSubscription(): void
+	{
+		$this->sendJson($this->getPushSubscription());
+	}
+
+	/** @return array{url: string, topics: list<string>, token: string}|null */
+	private function getPushSubscription(): ?array
+	{
+		$topics = $this->primaryTemplate && $this->getUser()->isLoggedIn() ? $this->getPushTopics() : [];
+
+		return $topics !== [] ? $this->_push->subscription($topics) : null;
 	}
 
 	/**
