@@ -44,8 +44,9 @@ class CreateIdentityCommand extends \ADT\FancyAdmin\Console\Command
 		$this->validateInput($io, 'E-mail', $email);
 		$this->validateInput($io, 'Telefon', $phoneNumber);
 
+		// V konzoli nikdo prihlaseny neni - security filter roli by nepustil zadnou.
 		/** @var AclRole $role */
-		$role = $this->aclRoleQueryFactory->create()->byIsAdmin(true)->fetchOne(false);
+		$role = $this->aclRoleQueryFactory->create()->disableSecurityFilter()->byIsAdmin(true)->fetchOne(false);
 
 		/** @var Identity $identity */
 		$identity = (new $identityEntity);
