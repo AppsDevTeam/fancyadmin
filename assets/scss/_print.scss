@@ -1,0 +1,69 @@
+// Tisk stránky administrace (docs/print.md). Obsah má na obrazovce vlastní posuvník
+// (`position: fixed` + `overflow: auto` v _theme.scss), tiskárna by z něj vzala jen viditelný výřez.
+@media print {
+	html,
+	body {
+		height: auto !important;
+		overflow: visible !important;
+		background: #fff !important;
+	}
+
+	// Barvy tmavého režimu by se vytiskly jako bílý text na bílém papíře
+	:root,
+	:root[data-bs-theme="dark"] {
+		color-scheme: light;
+	}
+
+	// Štítky (.badge) si nechávají vlastní barvu textu k barvě pozadí
+	body,
+	body *:not(.badge) {
+		color: #000 !important;
+		box-shadow: none !important;
+		text-shadow: none !important;
+	}
+
+	.side-panel,
+	.side-panel-template-backdrop,
+	.side-panel-template-container,
+	.quickbar,
+	.quickbar-panel,
+	.quickbar-overlay,
+	.flash-stack,
+	.modal,
+	.modal-backdrop,
+	.back-link,
+	.page-back-btn,
+	.header-actions,
+	.navbar {
+		display: none !important;
+	}
+
+	body .container-main,
+	body.menu-wide:has(.side-panel .menu) .container-main {
+		position: static !important;
+		inset: auto !important;
+		width: auto !important;
+		overflow: visible !important;
+		padding: 0 !important;
+		margin: 0 !important;
+	}
+
+	.card {
+		background: none !important;
+		border: 1px solid #ccc !important;
+		break-inside: avoid;
+	}
+
+	.card-header,
+	.table > :not(caption) > * > * {
+		background: none !important;
+	}
+
+	a {
+		text-decoration: none !important;
+	}
+
+	.btn {
+		display: none !important;
+	}
+}
