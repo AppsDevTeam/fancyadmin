@@ -64,7 +64,6 @@ import AdtJsComponents from 'adt-js-components';
 // AdtJsComponents.initCurrencyInput();
 // // AdtJsComponents.initDateInput();
 // // AdtJsComponents.initRecaptcha();
-// AdtJsComponents.initSelect2();
 // AdtJsComponents.initAjaxSelect();
 // AdtJsComponents.initSubmitForm();
 // AdtJsComponents.initReplicator();

@@ -124,7 +124,8 @@ nav {
     margin-bottom: 0 !important;
   }
 
-  .select2-selection .select2-selection__rendered {
+  .select2-selection .select2-selection__rendered,
+  .ts-control .item {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -136,12 +137,14 @@ nav {
 
 }
 
-.select2-dropdown.select2-primary-dropdown {
+.select2-dropdown.select2-primary-dropdown,
+.ts-dropdown.select2-primary-dropdown {
   @include media-breakpoint-down(md) {
     max-width: 100vw !important;
     width: calc(100vw - 2rem) !important;
 
-    .select2-results__option {
+    .select2-results__option,
+    .option {
       text-wrap: wrap !important;
     }
   }

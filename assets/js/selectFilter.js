@@ -1,12 +1,12 @@
 import { onContentLoaded } from './naja';
-// Filtr (.select-filter) — šířka Select2 podle nejdelší volby jako u nativního selectu,
+// Filtr (.select-filter) — šířka Tom Selectu podle nejdelší volby jako u nativního selectu,
 // aby se při přepínání neměnila. Text se měří přes canvas: filtr bývá ve skryté záložce.
 
 const canvas = document.createElement('canvas').getContext('2d');
 
 function fit(select) {
 	const wrap = select.closest('.select-filter');
-	// Původní select má písmo svého stupně stejně jako jeho Select2 (_select2.scss)
+	// Původní select má písmo svého stupně stejně jako jeho Tom Select (_tomSelect.scss)
 	const style = getComputedStyle(select);
 	canvas.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
 	const width = Math.max(...[...select.options].map((option) => canvas.measureText(option.text).width));

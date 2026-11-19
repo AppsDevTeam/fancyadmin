@@ -25,8 +25,20 @@ $select-filter-arrow-space: calc(.75rem + 16px + 8px);
 		}
 	}
 
+	> .ts-wrapper {
+		width: calc(var(--select-filter-text-width, 0px) + var(--control-padding-x) + #{$select-filter-arrow-space} + 2px);
+		max-width: 240px;
+	}
+
 	@include media-breakpoint-down(sm) {
 		width: 100%;
+
+		> .ts-wrapper {
+			flex: 1;
+			min-width: 0;
+			width: auto;
+			max-width: none;
+		}
 
 		> .select2-container {
 			flex: 1;
@@ -42,6 +54,14 @@ $select-filter-arrow-space: calc(.75rem + 16px + 8px);
 	max-width: 320px;
 
 	.select2-results__option {
+		white-space: normal;
+	}
+}
+
+.select-filter .ts-dropdown {
+	max-width: 320px;
+
+	.option {
 		white-space: normal;
 	}
 }

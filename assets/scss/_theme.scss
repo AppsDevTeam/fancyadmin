@@ -251,7 +251,8 @@ input[type="color"]::-webkit-color-swatch {
 		--control-radius: #{$control-radius-xl};
 	}
 
-	> .select2-container {
+	> .select2-container,
+	> .ts-wrapper {
 		position: relative;
 		flex: 1 1 auto;
 		width: 1% !important;
@@ -266,7 +267,8 @@ input[type="color"]::-webkit-color-swatch {
 	}
 
 	> .select2-container--focus,
-	> .select2-container--open {
+	> .select2-container--open,
+	> .ts-wrapper.focus {
 		z-index: 5;
 	}
 

@@ -88,7 +88,7 @@ export default function timeSelect(pluginConfig = {}) {
 
 		const build = (field) => {
 			const select = document.createElement('select');
-			// select-default drží dál Select2 — ten by si select přebral a jeho dropdown
+			// select-default drží dál Select2 i Tom Select — ty by si select přebraly a jejich dropdown
 			// by se otvíral mimo kalendář (stejně jako u měsíce a roku).
 			select.className = 'flatpickr-timeDropdown select-default';
 			select.addEventListener('change', apply);

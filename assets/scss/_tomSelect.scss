@@ -1,0 +1,254 @@
+@use 'variables' as *;
+
+// Tom Select (adt-js-components: Select, AjaxSelect). Obal .ts-wrapper dostane třídy původního
+// selectu (form-select, form-select-sm, is-invalid, primary-select...), takže rámeček, pozadí,
+// šipku i velikost má stejné jako nativní select (_theme.scss). Tady se dorovnává jen to, v čem
+// se liší: výška u více hodnot, vnitřní .ts-control, štítky, křížky a rozbalený seznam.
+// !important tu zůstává jen jako štít proti tom-select.bootstrap5.css, které si stejné vlastnosti
+// nastavuje samo a načítá se až s komponentou.
+
+// Křížek pro „odebrat" / „vymazat výběr“ — kreslený vektorem místo znaku × z písma
+$tsCloseSize: 14px;
+$tsCloseIcon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 4l8 8M12 4l-8 8'/%3E%3C/svg%3E");
+$tsDropdownMinWidth: 300px;
+
+.ts-wrapper {
+	--ts-padding-y: 4px;
+	--ts-tag-gap: 8px;
+	--ts-tag-padding-x: 10px;
+}
+
+// Pole s více hodnotami roste se zalomenými štítky - výška je minimum, ne pevná
+:not(.form-group-filter) .ts-wrapper.form-select {
+	height: auto;
+	min-height: var(--control-height);
+	padding: 0 !important;
+	transition: all 0.15s;
+}
+
+.ts-wrapper .ts-control {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	min-height: var(--control-height, #{$control-height});
+	// Místo vpravo na šipku jako u nativního selectu (_theme.scss)
+	padding: 0 calc(var(--control-padding-x, #{$control-padding-x}) * 2 + 16px) 0 var(--control-padding-x, #{$control-padding-x}) !important;
+	border: 0 !important;
+	border-radius: inherit;
+	background: transparent !important;
+	box-shadow: none !important;
+	// Písmo okolí jako u běžného inputu, ať kompaktní lišty nemusí velikost přepisovat dvakrát
+	font-size: inherit;
+	line-height: normal;
+
+	> input {
+		min-width: 0;
+		font-size: inherit;
+	}
+
+	// Vybraná hodnota jednoho výběru se zkrátí, nesmí zalomit pole
+	.item {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.ts-wrapper.multi .ts-control {
+	flex-wrap: wrap;
+	gap: var(--ts-tag-gap);
+	padding-top: var(--ts-padding-y) !important;
+	padding-bottom: var(--ts-padding-y) !important;
+
+	> .item {
+		margin: 0 !important;
+		padding: 0 var(--ts-tag-padding-x) !important;
+		border: 0;
+		border-radius: var(--bs-border-radius);
+		background-color: $secondary-darker !important;
+		color: $black;
+		cursor: default;
+	}
+}
+
+// Otevřené pole jako nativní select ve focusu (wrapper sám :focus nedostane)
+.ts-wrapper.form-select.focus,
+.ts-wrapper.form-select.focus:hover {
+	background-color: var(--inputFocusBackground) !important;
+	border: var(--inputFocusBorder);
+}
+
+.ts-wrapper.form-select.is-invalid {
+	background-color: #FF42421F !important;
+}
+
+.ts-wrapper.disabled {
+	cursor: not-allowed;
+}
+
+// Pole formuláře jde přes celou šířku svého místa jako každý jiný input
+.mb-3 > .ts-wrapper,
+.row > :is(.col, [class^="col-"], [class*=" col-"]) > .ts-wrapper {
+	width: 100%;
+}
+
+select[readonly] + .ts-wrapper {
+	pointer-events: none;
+	touch-action: none;
+	background-color: $background-darker !important;
+	background-image: none !important;
+
+	.clear-button {
+		display: none;
+	}
+}
+
+// Rozbalený seznam je plovoucí vrstva nad stránkou — stejný jazyk jako karta gridu
+// a kalendář flatpickru: bílá plocha, vlasový rámeček, měkký stín a malá mezera od pole
+.ts-dropdown {
+	min-width: max(100%, #{$tsDropdownMinWidth});
+	margin-top: 4px !important;
+	border: 1px solid $color-light-gray !important;
+	border-radius: var(--overlay-radius) !important;
+	z-index: 10056 !important;
+	background-color: $background;
+	color: $black;
+	box-shadow: 0 12px 32px -12px var(--fa-shadow-color), 0 2px 6px -2px var(--fa-shadow-color);
+	// Zaoblení musí ořezat první a poslední položku, jinak jim podbarvení vyčuhuje do rohů
+	overflow: hidden;
+
+	// Výška a text jako pole, ze kterého se seznam otevřel (seznam je uvnitř jeho obalu)
+	.option,
+	.no-results,
+	.create,
+	.optgroup-header {
+		@include dropdown-option(var(--control-height, #{$control-height}), var(--control-padding-x, #{$control-padding-x}), true);
+		color: $black;
+	}
+
+	.active {
+		background-color: $background-dark !important;
+		color: $black !important;
+	}
+}
+
+.ts-wrapper .clear-button,
+.ts-wrapper.multi .ts-control > .item .remove {
+	cursor: pointer;
+}
+
+// Křížky „odebrat položku" a „vymazat výběr" kreslí Tom Select znakem × z písma projektu.
+// Každý řez ho má jinak velký, takže ikona vypadá pokaždé jinak. Nahrazujeme ji vektorem
+// obtaženým přes masku — barvu bere z currentColor, přizpůsobí se i tmavému režimu.
+// Bez podpory masky by ze čtverečku pozadí zbyl plný obdélník, tam zůstává původní znak.
+@supports ((mask-image: none) or (-webkit-mask-image: none)) {
+	.ts-wrapper .clear-button,
+	.ts-wrapper.multi .ts-control > .item .remove {
+		display: inline-flex !important;
+		align-items: center;
+		justify-content: center;
+		width: $tsCloseSize;
+		height: $tsCloseSize;
+		padding: 0 !important;
+		// Vlastní znak × zůstává kvůli čtečkám i klikací ploše, jen se nevykreslí
+		font-size: 0 !important;
+		color: $text-muted;
+		background-color: currentColor !important;
+		border: 0 !important;
+		-webkit-mask: $tsCloseIcon no-repeat center / #{$tsCloseSize - 4px};
+		mask: $tsCloseIcon no-repeat center / #{$tsCloseSize - 4px};
+		transition: color .15s;
+
+		&:hover {
+			color: $black;
+		}
+	}
+
+	.ts-wrapper.multi .ts-control > .item .remove {
+		margin-left: 6px;
+	}
+}
+
+// Výběr účtu v horní liště - bez rámečku a pozadí, šířka podle textu
+nav {
+	.ts-wrapper.form-select {
+		width: auto;
+		background-color: initial !important;
+
+		&:hover {
+			filter: opacity(.8);
+		}
+	}
+
+	.ts-control .item {
+		color: $black !important;
+
+		@include media-breakpoint-down(sm) {
+			font-size: 14px !important;
+		}
+	}
+}
+
+// dropdownCssClass výběru účtu (SelectAccountFormTrait) - Select2 i Tom Select ho převezme
+.ts-dropdown.select2-primary-dropdown {
+	margin-top: 20px !important;
+	border: 0 !important;
+	width: fit-content;
+	box-shadow: 0 4px 4px 0 #00000026;
+
+	.option {
+		padding: 15px !important;
+		line-height: 15px !important;
+		font-size: 14px !important;
+		text-wrap: nowrap;
+
+		&[data-value="settings"] {
+			border-top: 1px solid $background-darker;
+
+			&:before {
+				font-family: "Font Awesome 6 Pro";
+				content: '';
+				margin-right: 10px;
+			}
+		}
+	}
+
+	.selected {
+		background-color: var(--secondaryColor) !important;
+		color: var(--primaryColorDark) !important;
+	}
+
+	.active {
+		background-color: var(--secondaryColorDark) !important;
+	}
+}
+
+// Tmavý režim - plochy podle tématu fancyadminu, ne podle světlých barev výše
+:root[data-bs-theme="dark"] {
+	.ts-wrapper.multi .ts-control > .item {
+		color: var(--bs-body-color);
+	}
+
+	.ts-dropdown {
+		background-color: var(--fa-surface);
+		border-color: var(--fa-border) !important;
+		color: var(--bs-body-color);
+
+		.option,
+		.no-results,
+		.create,
+		.optgroup-header {
+			color: var(--bs-body-color);
+		}
+
+		.no-results {
+			color: var(--bs-secondary-color);
+		}
+
+		.active {
+			background-color: var(--fa-surface-hover) !important;
+			color: var(--bs-body-color) !important;
+		}
+	}
+}

@@ -1,8 +1,6 @@
 @use 'variables';
 @forward 'fontawesome';
 
-//@use 'select2/src/scss/core';
-//@use 'select2-bootstrap-5-theme/src/include-all';
 //@use 'daterangepicker';
 @use 'jquery-ui/datepicker';
 
@@ -23,7 +21,7 @@
 @use 'datagridDetail';
 @use 'theme';
 @use 'dropdownActions';
-@use 'select2';
+@use 'tomSelect';
 @use 'structured-filter';
 @use 'quickbar';
 @use 'tablets';

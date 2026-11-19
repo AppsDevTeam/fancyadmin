@@ -1041,9 +1041,18 @@ obecná hláška projektu o selhaném požadavku (posluchač `error`) ji má vyn
 | `settings.nette.el`, `settings.nette.form` | `e.detail.options.element`, jeho `form` |
 | `$(document).on('ajaxComplete', …)` | `naja.addEventListener('complete', …)` |
 
-Projekt odebere z `package.json` `nette.ajax.js` a `adt-nette-ajax`. Vestavěné komponenty
-`adt-js-components` 3 (Select2, DateInput, …) mají knihovny jako volitelné závislosti - projekt, který je
-registruje, si je přidá sám (`select2`, `select2-bootstrap-5-theme`, `scrollparent`, …).
+Projekt odebere z `package.json` `nette.ajax.js` a `adt-nette-ajax`.
+
+**Selecty:** fancyadmin styluje Select2 (`adt-js-components` do 3.2, `_select2.scss`) i Tom Select
+(`adt-js-components` ≥ 3.3, `_tomSelect.scss`) - každý projekt dostane ten, který spouští jeho verze.
+**Převod na 3.5:** Select2 nahradil [Tom Select](https://tom-select.js.org). Vestavěné
+komponenty se spouštějí samy a jejich knihovny jsou závislosti balíčku, projekt je neregistruje (`builtin`
+v `registerModules()` ani `init*()` nevolá) a z `package.json` odebere `select2`, `select2-bootstrap-5-theme`
+a `forms-replicator`. Tom Select se spouští jen na `select[data-adt-select]` / `select[data-adt-select2]`
+(volby Select2 jako `dropdownParent`, `minimumResultsForSearch` převede), `select-default` ho vypne. Vzhled
+je v `_tomSelect.scss`: obal `.ts-wrapper` přebírá třídy selectu (`form-select`, `form-select-sm`,
+`is-invalid`…), takže vypadá jako nativní select. Kód, který volal `$(el).select2(...)` nebo poslouchal
+`select2:*`, použije `el.tomselect` a jeho události; nativní `change` selectu zůstává.
 
 ### JS, které čte URL (`onPageReady()`)
 
@@ -1062,7 +1071,7 @@ onPageReady(() => {
 });
 ```
 
-Inicializace prvků z nových snippetů (Select2, datum, tooltipy) zůstává v `onContentLoaded()` - ta URL nečte.
+Inicializace prvků z nových snippetů (datum, tooltipy) zůstává v `onContentLoaded()` - ta URL nečte.
 
 ### Push změn do stránek (`Push`, `push.js`)
 
@@ -1270,10 +1279,10 @@ sekce 27 (Single-tenant režim).
 
 Pozadí pole (`--inputBackground`) a rámeček při najetí myší (`--inputHoverBorder`) v `colors`
 nejsou, projekt je nastaví v SCSS na `body`. Bez `--inputHoverBorder` se pole při najetí nemění
-(Select2 bere rámeček focusu). Přihlašovací pole jsou bez rámečku, dokud projekt nenastaví
+(Tom Select bere rámeček focusu). Přihlašovací pole jsou bez rámečku, dokud projekt nenastaví
 `--loginInputBorder` (případně `--loginInputHoverBorder`, `--loginInputFocusBorder`). Rozbalený seznam Select2 přebírá velikost pole přes
 `@fancyadmin/js/select2DropdownSize` — `app.js` ho importuje, projekt s vlastním entry pointem
-ho importuje sám.
+ho importuje sám. Seznam Tom Selectu je uvnitř obalu pole, velikost (`--control-*`) přebírá sám.
 
 ### Tmavý režim
 
