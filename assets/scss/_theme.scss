@@ -1873,6 +1873,12 @@ iframe {
 		}
 	}
 
+	// Pole v řádku se dělí o šířku; obal Tom Selectu (width: 100 %) by jinak zůstal na šířce popisku
+	.replicator-item-field {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
 	[data-adt-replicator-remove]:hover {
 		.delete-text  {
 			color: $red;

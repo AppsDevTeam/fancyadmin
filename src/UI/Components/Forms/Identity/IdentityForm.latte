@@ -28,8 +28,12 @@
 					{input $container['isActive']:}
 				</div>
 
-				{formPair $container['roles']}
-				{formPair $container['account']}
+				<div class="replicator-item-field">
+					{formPair $container['roles']}
+				</div>
+				<div class="replicator-item-field">
+					{formPair $container['account']}
+				</div>
 				{include renderEl, el => $container->getSections()['account']}
 
 				<div class="d-flex justify-content-center align-items-center">
