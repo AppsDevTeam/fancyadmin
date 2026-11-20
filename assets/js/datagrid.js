@@ -154,8 +154,9 @@ $(document).on('click', 'a.link-confirmation', function (e) {
 });
 
 $(document).on('click', 'tbody tr:not(.row-item-detail) td:not(.col-action)', function (event) {
-	if (event.target.tagName.toLowerCase() === 'a' || $(event.target).hasClass('menu-open-button')) {
-		return;  // Klik byl na odkaz, takže nevyvoláváme žádnou akci.
+	// Odkaz, tlačítko i prvek formuláře dělá své, detail řádku nepřepíná - ani klik na ikonu uvnitř nich
+	if ($(event.target).closest('a, button, input, select, textarea, label, .dropdown-menu, .menu-open-button', this).length) {
+		return;
 	}
 
 	let $tr = $(this).parent();

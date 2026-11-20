@@ -1,6 +1,7 @@
 # Rozbalovací detail řádku
 
-Grid se `setItemsDetail()` rozbalí po kliku kamkoli do řádku (mimo odkazy a sloupec akcí)
+Grid se `setItemsDetail()` rozbalí po kliku kamkoli do řádku (mimo sloupec akcí a odkazy, tlačítka,
+prvky formuláře a rozbalená menu včetně ikon uvnitř nich)
 mini-detail pod řádkem. Vzhled i chování dává fancyadmin (`_datagridDetail.scss`,
 `datagrid.js`), projekt dodává jen šablonu s obsahem.
 
