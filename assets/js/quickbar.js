@@ -18,6 +18,33 @@
 //            selectionActions(chatId) → [{ id, icon?, label }] - v nabídce přibude „Vybrat zprávy“,
 //            selectionAction(chatId, id, messageIds) → false = zrušeno (výběr zůstane), jinak se výběr ukončí.
 //            Akce si můžou nechat vybrat položku přes pickInQuickbar().
+//            Kanály, vlákna, připnuté zprávy, připomenutí a přílohy (volitelné, bez metody lišta prvek neukáže):
+//            list() položka může mít kind: 'channel' (avatar „#“) a private: true (zámek),
+//            browseChannels() → [{ id, name, private, members, joined }] - tlačítko Procházet kanály (id = id konverzace),
+//            joinChannel(id) → chat, createChannel({ name, private, memberIds }) → chat - tlačítko Nový kanál,
+//            colleagues() → [{ id, name, initials? }] - výběr členů nového kanálu (memberIds = jejich id),
+//            messages(chatId) → { messages, topic?, pinned?: [{ id, text, author?, time? }] } - pruh Připnuté nad zprávami,
+//            zpráva navíc s author?, system?, pinned?, canPin?, replyCount?, replyAuthors?: [iniciály], lastReplyTime?,
+//              attachments?: [{ name, url, size? (bajty nebo text), image? }],
+//            thread(chatId, messageId) → { parent, replies } - vlákno odpovědí na zprávu,
+//            send(chatId, text, options) - options = { parentId?, files?: File[] } jen u odpovědi ve vlákně nebo s přílohami,
+//            attachments: true - sponka u pole zprávy, soubory jdou v options.files (text pak může být prázdný),
+//            pin(chatId, messageId, pinned) - Připnout / Odepnout u zprávy s canPin,
+//            remind(chatId, messageId, when) → { label } - when = '20m' | '1h' | 'tomorrow' | čas v ISO 8601 (UTC),
+//              label se u zprávy krátce ukáže jako potvrzení.
+//            Sledovaná vlákna (volitelné):
+//            threadsUnread() → počet nových odpovědí ve sledovaných vláknech - přičte se k počtu u Chatu,
+//            threads() → [{ chatId, chatName, kind?, private?, messageId, text, author?, time?, replyCount, unread,
+//              lastReplyTime?, lastReply?: { author, text } }] od nejnovější odpovědi - tlačítko Vlákna vedle Nového kanálu,
+//            zpráva navíc s newReplies? (počet nových odpovědí - zvýrazněný souhrn vlákna),
+//            messages(chatId) → { …, threadsWithNews?: [messageId, …] } - pruh „Nové odpovědi ve vláknech“ nad zprávami,
+//            thread(chatId, messageId) → { parent, replies, following? }, follow(chatId, messageId, following) - Sledovat / Přestat sledovat.
+//            Otevření vlákna (thread) ho označí přečtené, po zavření vlákna lišta načte zprávy znovu.
+//            Připomenout později (volitelné, tlačítko vedle Vláken):
+//            remindersCount() → počet čekajících připomínek - jen u řádku, k počtu u Chatu se nepřičítá (připomínky se ozvou samy),
+//            reminders() → [{ id, chatId, chatName, kind?, private?, messageId, parentId?, text, author?, at, due }] podle času;
+//              at = hotový popisek času („dnes v 14:20“), due = čas už nastal; klik otevře konverzaci (u odpovědi vlákno)
+//              a zvýrazní zprávu, reminderDone(id) - tlačítko Hotovo u připomínky.
 // Otevřený chat obnovuje projekt voláním refreshQuickbarChat() (polling, push).
 //
 // Na mobilu je v liště i Menu (@quickbarMenu.latte) místo bočního menu a AI se neroztahuje na celou plochu.
@@ -33,7 +60,7 @@ const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
 const OPEN_KEY = 'fancyadmin-quickbar-open';
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
-const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-ai-recent, .ai-chat__messages';
+const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-channels, .quickbar-ai-recent, .ai-chat__messages';
 
 // Zlom sm Bootstrapu, stejně jako media-breakpoint-down(sm) v _quickbar.scss
 const mobileQuery = window.matchMedia('(max-width: 575.98px)');
@@ -65,6 +92,23 @@ const state = {
 	chatSelectionActions: [],
 	// Otevřený výběr položky s hledáním (pickInQuickbar)
 	picker: null,
+	// Nový kanál nebo procházení kanálů místo seznamu konverzací ({ mode: 'create' | 'browse', … })
+	channels: null,
+	// Otevřené vlákno odpovědí ({ messageId, parent, replies }), null = celá konverzace
+	chatReplies: null,
+	chatPinned: [],
+	chatPinnedOpen: false,
+	chatHighlight: null,
+	// Zpráva s otevřenou nabídkou pod třemi tečkami ({ id, view: 'menu' | 'remind' | 'custom' }) a krátké potvrzení u zprávy ({ id, text })
+	chatRemind: null,
+	chatNotice: null,
+	chatFiles: [],
+	chatUploading: false,
+	// Nové odpovědi ve sledovaných vláknech (threadsUnread) a vlákna s novinkami v otevřené konverzaci
+	threadsUnread: 0,
+	// Čekající připomínky (remindersCount) - počet u řádku Připomenout později
+	remindersCount: 0,
+	chatThreadNews: [],
 	ai: { config: null, loading: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
@@ -127,6 +171,7 @@ function open(name, focus = true) {
 	// Chat se otevírá seznamem konverzací
 	state.chatView = 'list';
 	resetChatThreadState();
+	resetChannels();
 	render();
 
 	if (name === 'search') {
@@ -186,6 +231,7 @@ function render() {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
 	});
 	panel('chat')?.classList.toggle('quickbar-panel--chat-thread', state.chatView === 'thread');
+	panel('chat')?.classList.toggle('quickbar-panel--channels', state.chatView === 'list' && state.channels !== null);
 	panel('ai')?.classList.toggle('quickbar-panel--full', aiFull());
 	document.querySelectorAll('[data-quickbar-toggle]').forEach((button) => {
 		const active = button.dataset.quickbarToggle === state.open;
@@ -229,7 +275,7 @@ function renderCounts() {
 	const counts = {
 		notifications: state.notifications.filter((n) => n.unread).length,
 		todo: state.todos.filter((t) => !t.done).length,
-		chat: state.chats.reduce((sum, c) => sum + (c.unread || 0), 0),
+		chat: state.chats.reduce((sum, c) => sum + (c.unread || 0), 0) + state.threadsUnread,
 		ai: state.ai.unread.size,
 	};
 	document.querySelectorAll('[data-quickbar-count]').forEach((badge) => {
@@ -247,7 +293,33 @@ function loadCounts() {
 		call('notifications.list').then((list) => { state.notifications = list || []; }),
 		call('todos.list').then((list) => { state.todos = list || []; }),
 		call('chats.list').then((list) => { state.chats = list || []; }),
+		loadThreadsUnread(false),
+		loadRemindersCount(false),
 	]).then(render);
+}
+
+function loadRemindersCount(rerender = true) {
+	if (!chatSourceHas('remindersCount')) {
+		return Promise.resolve();
+	}
+	return call('chats.remindersCount').then((count) => {
+		state.remindersCount = Number(count) || 0;
+		if (rerender) {
+			render();
+		}
+	});
+}
+
+function loadThreadsUnread(rerender = true) {
+	if (!chatSourceHas('threadsUnread')) {
+		return Promise.resolve();
+	}
+	return call('chats.threadsUnread').then((count) => {
+		state.threadsUnread = Number(count) || 0;
+		if (rerender) {
+			render();
+		}
+	});
 }
 
 // === Hledání ===
@@ -440,16 +512,23 @@ function renderChat() {
 	if (!$list || !$thread) {
 		return;
 	}
+	$list.hidden = state.channels !== null;
 	renderChatList($list);
+	renderChatTools();
+	renderChannels();
 	renderChatCurrent();
+	renderChatPinned();
+	renderChatNews();
 	renderChatTopic();
 	renderChatSelection();
+	renderChatFiles();
 	renderChatMenu();
 	renderPicker();
 
+	const replies = state.chatReplies;
 	$thread.classList.toggle('quickbar-thread--selecting', state.chatSelecting);
-	setHtml($thread, messageRuns(state.messages).map((run) => {
-		const messages = run.messages.map(messageRowHtml).join('');
+	setHtml($thread, replies ? repliesHtml(replies) : messageRuns(state.messages).map((run) => {
+		const messages = run.messages.map((m) => messageRowHtml(m)).join('');
 		return run.tag
 			? `<div class="quickbar-message-group">
 				<div class="quickbar-message-group-head">${messageTag(run.tag)}</div>
@@ -458,10 +537,31 @@ function renderChat() {
 			: messages;
 	}).join(''));
 	// Na konec jen při nové zprávě nebo jiné konverzaci - polling by jinak vracel čtenáře dolů
-	if (renderedThread.chat !== state.activeChat || renderedThread.count !== state.messages.length) {
+	const shown = replies ? `${state.activeChat}:${replies.messageId}` : state.activeChat;
+	const count = replies ? replies.replies.length : state.messages.length;
+	if (renderedThread.chat !== shown || renderedThread.count !== count) {
 		$thread.scrollTop = $thread.scrollHeight;
-		renderedThread = { chat: state.activeChat, count: state.messages.length };
+		renderedThread = { chat: shown, count };
 	}
+	placeMessageMenu();
+}
+
+const threadText = (key) => document.querySelector('[data-quickbar-thread]')?.dataset[key] ?? '';
+
+function repliesLabel(count) {
+	const form = count === 1 ? 'repliesOne' : (count >= 2 && count <= 4 ? 'repliesFew' : 'repliesMany');
+	return threadText(form).replace('%count%', count);
+}
+
+function newRepliesLabel(count) {
+	const form = count === 1 ? 'newRepliesOne' : (count >= 2 && count <= 4 ? 'newRepliesFew' : 'newRepliesMany');
+	return threadText(form).replace('%count%', count);
+}
+
+function repliesHtml(replies) {
+	return (replies.parent ? messageRowHtml(replies.parent, true) : '')
+		+ `<div class="quickbar-replies-divider"><span>${esc(repliesLabel(replies.replies.length))}</span></div>`
+		+ replies.replies.map((m) => messageRowHtml(m, true)).join('');
 }
 
 // Souvislá řada zpráv se stejným štítkem je jeden blok - je vidět, kde téma začíná a kde končí
@@ -479,19 +579,123 @@ function messageRuns(messages) {
 	return runs;
 }
 
-function messageRowHtml(m) {
+// inReplies - zpráva ve vlákně odpovědí (bez souhrnu odpovědí a bez Odpovědět ve vlákně)
+function messageRowHtml(m, inReplies = false) {
 	const selectable = state.chatSelecting && m.id != null;
 	const selected = selectable && state.chatSelected.has(String(m.id));
-	const classes = ['quickbar-message', m.mine ? 'quickbar-message--mine' : '', selected ? 'quickbar-message--selected' : ''];
-	const attributes = selectable ? ` role="checkbox" tabindex="0" aria-checked="${selected}" data-quickbar-message="${esc(m.id)}"` : '';
+	const highlighted = m.id != null && state.chatHighlight === String(m.id);
+	const classes = ['quickbar-message', m.mine ? 'quickbar-message--mine' : '', m.system ? 'quickbar-message--system' : '',
+		selected ? 'quickbar-message--selected' : '', highlighted ? 'quickbar-message--highlight' : ''];
+	const attributes = (m.id != null ? ` data-quickbar-message-id="${esc(m.id)}"` : '')
+		+ (selectable ? ` role="checkbox" tabindex="0" aria-checked="${selected}" data-quickbar-message="${esc(m.id)}"` : '');
+	const hasText = String(m.text ?? '') !== '';
 	return `
-		<div class="${classes.join(' ')}"${attributes}>
+		<div class="${classes.filter(Boolean).join(' ')}"${attributes}>
 			${selectable ? '<span class="quickbar-message-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>' : ''}
 			<div class="quickbar-message-content">
-				<div class="quickbar-bubble">${messageHtml(m)}</div>
-				<div class="quickbar-message-time">${esc(m.time)}</div>
+				${m.author && !m.mine && !m.system ? `<div class="quickbar-message-author">${esc(m.author)}</div>` : ''}
+				${hasText || !m.attachments?.length ? `<div class="quickbar-bubble">${messageHtml(m)}</div>` : ''}
+				${attachmentsHtml(m.attachments)}
+				<div class="quickbar-message-time">${m.pinned ? '<i class="fa-solid fa-thumbtack quickbar-message-pin" aria-hidden="true"></i>' : ''}${esc(m.time)}</div>
+				${inReplies ? '' : replySummaryHtml(m)}
+				${state.chatNotice && m.id != null && state.chatNotice.id === String(m.id)
+					? `<div class="quickbar-message-notice" role="status"><i class="fa-solid fa-clock"></i>${esc(state.chatNotice.text)}</div>`
+					: ''}
+				${messageActionsHtml(m, inReplies)}
 			</div>
 		</div>`;
+}
+
+function attachmentsHtml(attachments) {
+	if (!attachments?.length) {
+		return '';
+	}
+	return `<div class="quickbar-message-files">${attachments.map((file) => (file.image
+		? `<a class="quickbar-file-image" href="${esc(file.url)}" target="_blank" rel="noopener" title="${esc(file.name)}"><img src="${esc(file.url)}" alt="${esc(file.name)}" loading="lazy"></a>`
+		: `<a class="quickbar-file" href="${esc(file.url)}" target="_blank" rel="noopener">
+			<i class="fa-regular fa-file"></i>
+			<span class="quickbar-file-name">${esc(file.name)}</span>
+			${file.size != null ? `<span class="quickbar-file-size">${esc(fileSize(file.size))}</span>` : ''}
+		</a>`)).join('')}</div>`;
+}
+
+function fileSize(size) {
+	if (typeof size !== 'number') {
+		return String(size ?? '');
+	}
+	if (size < 1024) {
+		return `${size} B`;
+	}
+	if (size < 1024 * 1024) {
+		return `${Math.round(size / 1024)} kB`;
+	}
+	return `${(size / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
+}
+
+function replySummaryHtml(m) {
+	const count = Number(m.replyCount) || 0;
+	if (!count || m.id == null || !chatSourceHas('thread')) {
+		return '';
+	}
+	const avatars = (m.replyAuthors ?? []).slice(0, 3).map((author) => `<span class="quickbar-message-replies-avatar">${esc(author)}</span>`).join('');
+	const fresh = Number(m.newReplies) || 0;
+	const inner = (fresh ? '<span class="quickbar-message-replies-dot" aria-hidden="true"></span>' : '')
+		+ (avatars ? `<span class="quickbar-message-replies-avatars">${avatars}</span>` : '')
+		+ `<span class="quickbar-message-replies-count">${esc(fresh ? newRepliesLabel(fresh) : repliesLabel(count))}</span>`
+		+ (m.lastReplyTime ? `<span class="quickbar-message-replies-time">${esc(threadText('lastReply').replace('%time%', () => m.lastReplyTime))}</span>` : '');
+	const classes = `quickbar-message-replies${fresh ? ' quickbar-message-replies--new' : ''}`;
+	return state.chatSelecting
+		? `<span class="${classes}">${inner}</span>`
+		: `<button type="button" class="${classes}" data-quickbar-replies="${esc(m.id)}">${inner}</button>`;
+}
+
+// Akce zprávy jsou pod třemi tečkami vedle bubliny (jako na Facebooku), tlačítko se ukáže po najetí
+// (fokusu) - jen u zprávy s id, ne u systémové a ne při výběru zpráv
+function messageActionsHtml(m, inReplies) {
+	if (m.id == null || m.system || state.chatSelecting) {
+		return '';
+	}
+	const items = [
+		!inReplies && chatSourceHas('thread') ? ['data-quickbar-reply', 'fa-solid fa-reply', threadText('reply')] : null,
+		chatSourceHas('pin') && m.canPin ? ['data-quickbar-pin', 'fa-solid fa-thumbtack', threadText(m.pinned ? 'unpin' : 'pin')] : null,
+		chatSourceHas('remind') ? ['data-quickbar-remind', 'fa-solid fa-clock', threadText('remind')] : null,
+	].filter(Boolean);
+	if (!items.length) {
+		return '';
+	}
+	const id = esc(m.id);
+	const open = state.chatRemind?.id === String(m.id);
+	return `<div class="quickbar-message-actions${open ? ' quickbar-message-actions--open' : ''}">
+		<button type="button" class="quickbar-message-action${open ? ' active' : ''}" title="${esc(threadText('actions'))}" aria-label="${esc(threadText('actions'))}"
+			aria-haspopup="menu" aria-expanded="${open}" data-quickbar-message-more="${id}"><i class="fa-solid fa-ellipsis"></i></button>
+		${open ? messageMenuHtml(items, id) : ''}
+	</div>`;
+}
+
+const REMIND_OPTIONS = [['20m', 'remindMinutes'], ['1h', 'remindHour'], ['tomorrow', 'remindTomorrow'], ['custom', 'remindCustom']];
+
+const menuItemHtml = (attribute, value, icon, label) => `
+	<button type="button" class="quickbar-chat-menu-item" role="menuitem" ${attribute}="${value}">
+		${icon ? `<span class="quickbar-chat-menu-icon"><i class="${icon}"></i></span>` : ''}
+		<span class="quickbar-chat-menu-label">${esc(label)}</span>
+	</button>`;
+
+function messageMenuHtml(items, id) {
+	const view = state.chatRemind.view;
+	if (view === 'custom') {
+		return `<div class="quickbar-remind-menu quickbar-remind-menu--custom">
+			<input type="datetime-local" class="form-control form-control-sm date-default" aria-label="${esc(threadText('remindCustom'))}" data-quickbar-remind-at>
+			<button type="button" class="btn btn-sm btn-primary" data-quickbar-remind-set>${esc(threadText('remindSet'))}</button>
+		</div>`;
+	}
+	if (view === 'remind') {
+		return `<div class="quickbar-remind-menu" role="menu" aria-label="${esc(threadText('remind'))}">
+			${REMIND_OPTIONS.map(([when, key]) => menuItemHtml('data-quickbar-remind-when', when, null, threadText(key))).join('')}
+		</div>`;
+	}
+	return `<div class="quickbar-remind-menu" role="menu" aria-label="${esc(threadText('actions'))}">
+		${items.map(([attribute, icon, label]) => menuItemHtml(attribute, id, icon, label)).join('')}
+	</div>`;
 }
 
 // Při výběru zpráv je štítek jen popisek - klik vybírá zprávu, nenaviguje
@@ -507,7 +711,7 @@ function renderChatTopic() {
 	if (!$topic) {
 		return;
 	}
-	const topic = state.chatView === 'thread' ? state.chatTopic : null;
+	const topic = state.chatView === 'thread' && !state.chatReplies ? state.chatTopic : null;
 	$topic.hidden = !topic || state.chatSelecting;
 	if (!topic) {
 		return;
@@ -533,7 +737,7 @@ function renderChatSelection() {
 	$selection.hidden = !state.chatSelecting;
 	$form.hidden = state.chatSelecting;
 	const $plus = $form.querySelector('[data-quickbar-chat-plus]');
-	$plus.hidden = !chatSourceHas('menu') && !chatSourceHas('selectionActions');
+	$plus.hidden = state.chatReplies !== null || (!chatSourceHas('menu') && !chatSourceHas('selectionActions'));
 	$plus.setAttribute('aria-expanded', state.chatMenu ? 'true' : 'false');
 	$plus.classList.toggle('active', state.chatMenu !== null);
 	if (!state.chatSelecting) {
@@ -677,6 +881,14 @@ function resetChatThreadState() {
 	state.chatMenu = null;
 	state.chatSelecting = false;
 	state.chatSelected = new Set();
+	state.chatReplies = null;
+	state.chatPinned = [];
+	state.chatPinnedOpen = false;
+	state.chatThreadNews = [];
+	state.chatHighlight = null;
+	state.chatRemind = null;
+	state.chatNotice = null;
+	state.chatFiles = [];
 	if (state.picker) {
 		closePicker(null);
 	}
@@ -878,7 +1090,7 @@ function renderChatList($list) {
 			${chatAvatar(c)}
 			<span class="quickbar-chat-text">
 				<span class="quickbar-chat-line">
-					<span class="quickbar-chat-name">${esc(c.name)}</span>
+					<span class="quickbar-chat-name">${esc(c.name)}${c.private ? lockIcon : ''}</span>
 					${c.time ? `<span class="quickbar-chat-time">${esc(c.time)}</span>` : ''}
 				</span>
 				<span class="quickbar-chat-line">
@@ -899,9 +1111,12 @@ function setHtml($el, html) {
 	}
 }
 
+const lockIcon = '<i class="fa-solid fa-lock quickbar-chat-lock" aria-hidden="true"></i>';
+
 function chatAvatar(chat, small = false) {
-	const classes = ['quickbar-chat-avatar', chat.kind === 'group' ? 'quickbar-chat-avatar--group' : '', small ? 'quickbar-chat-avatar--sm' : ''];
-	return `<span class="${classes.join(' ')}">${esc(chat.initials || initials(chat.name))}</span>`;
+	const kind = { group: 'quickbar-chat-avatar--group', channel: 'quickbar-chat-avatar--channel' }[chat.kind] ?? '';
+	const classes = ['quickbar-chat-avatar', kind, small ? 'quickbar-chat-avatar--sm' : ''];
+	return `<span class="${classes.filter(Boolean).join(' ')}">${chat.kind === 'channel' ? '#' : esc(chat.initials || initials(chat.name))}</span>`;
 }
 
 function renderChatCurrent() {
@@ -910,16 +1125,36 @@ function renderChatCurrent() {
 	if (!$current || !chat) {
 		return;
 	}
+	if (state.chatReplies) {
+		const following = state.chatReplies.following;
+		const follow = chatSourceHas('follow') && typeof following === 'boolean'
+			? `<button type="button" class="btn btn-sm btn-ghost quickbar-thread-follow${following ? ' active' : ''}" aria-pressed="${following}" data-quickbar-thread-follow>${esc(following ? $current.dataset.unfollow : $current.dataset.follow)}</button>`
+			: '';
+		setHtml($current, `
+			<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.threadBack)}" data-quickbar-replies-back><i class="fa-solid fa-arrow-left"></i></button>
+			<span class="quickbar-chat-current-text">
+				<span class="quickbar-chat-current-name">${esc($current.dataset.thread)}</span>
+				<span class="quickbar-chat-current-sub">${esc(chat.name)}</span>
+			</span>
+			${follow}`);
+		return;
+	}
+	const sub = {
+		group: $current.dataset.group,
+		channel: chat.private ? $current.dataset.privateChannel : $current.dataset.channel,
+	}[chat.kind] ?? $current.dataset.colleague;
 	setHtml($current, `
 		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.back)}" data-quickbar-chat-back><i class="fa-solid fa-arrow-left"></i></button>
 		${chatAvatar(chat, true)}
 		<span class="quickbar-chat-current-text">
-			<span class="quickbar-chat-current-name">${esc(chat.name)}</span>
-			<span class="quickbar-chat-current-sub">${esc(chat.kind === 'group' ? $current.dataset.group : $current.dataset.colleague)}</span>
+			<span class="quickbar-chat-current-name">${esc(chat.name)}${chat.private ? lockIcon : ''}</span>
+			<span class="quickbar-chat-current-sub">${esc(sub)}</span>
 		</span>`);
 }
 
 function loadChats() {
+	loadThreadsUnread();
+	loadRemindersCount();
 	return call('chats.list').then((list) => {
 		state.chats = list || [];
 		// Server označí konverzaci přečtenou až načtením zpráv, otevřená nesmí znovu ukázat počet
@@ -937,6 +1172,8 @@ function loadMessages(id) {
 		if (state.activeChat === id) {
 			state.messages = (Array.isArray(payload) ? payload : payload?.messages) || [];
 			state.chatTopic = Array.isArray(payload) ? null : (payload?.topic ?? null);
+			state.chatPinned = Array.isArray(payload) ? [] : (payload?.pinned ?? []);
+			state.chatThreadNews = Array.isArray(payload) ? [] : (payload?.threadsWithNews ?? []);
 			render();
 		}
 	});
@@ -959,7 +1196,7 @@ function openChat(id) {
 	}
 	render();
 	panel('chat')?.querySelector('.quickbar-panel-form input')?.focus();
-	loadMessages(id);
+	return loadMessages(id);
 }
 
 function backToChatList() {
@@ -976,20 +1213,709 @@ export function refreshQuickbarChat() {
 	if (!bar() || state.open !== 'chat') {
 		return;
 	}
-	state.chatView === 'thread' && state.activeChat !== null ? loadMessages(state.activeChat) : loadChats();
+	if (state.chatView === 'thread' && state.activeChat !== null) {
+		refreshOpenChat();
+	} else if (state.channels?.mode === 'threads') {
+		loadThreads();
+		loadThreadsUnread();
+	} else if (state.channels?.mode === 'reminders') {
+		loadReminders();
+		loadRemindersCount();
+	} else {
+		loadChats();
+	}
 }
 
+function refreshOpenChat() {
+	loadMessages(state.activeChat);
+	if (state.chatReplies) {
+		loadReplies();
+	}
+}
+
+const chatAttachments = () => source.chats?.attachments === true;
+
+// Zpráva jde do otevřeného vlákna (parentId) a s vybranými soubory; options jen když je co předat
 function sendMessage(text) {
 	const chatId = state.activeChat;
-	if (chatId === null) {
+	if (chatId === null || state.chatUploading) {
 		return;
 	}
-	call('chats.send', chatId, text).then((message) => {
-		if (state.activeChat === chatId) {
-			state.messages.push(message || { mine: true, text, time: '' });
+	const replies = state.chatReplies;
+	const files = chatAttachments() ? [...state.chatFiles] : [];
+	if (!text && !files.length) {
+		return;
+	}
+	const options = {
+		...(replies ? { parentId: replies.messageId } : {}),
+		...(files.length ? { files } : {}),
+	};
+	state.chatUploading = files.length > 0;
+	render();
+	call('chats.send', chatId, text, ...(Object.keys(options).length ? [options] : [])).then((message) => {
+		if (files.length) {
+			state.chatFiles = [];
+		}
+		if (state.activeChat !== chatId) {
+			return;
+		}
+		const sent = message || { mine: true, text, time: '' };
+		if (replies) {
+			if (state.chatReplies?.messageId === replies.messageId) {
+				state.chatReplies.replies.push(sent);
+			}
+			const parent = state.messages.find((m) => m.id === replies.messageId);
+			if (parent) {
+				parent.replyCount = (Number(parent.replyCount) || 0) + 1;
+			}
+		} else {
+			state.messages.push(sent);
+		}
+		render();
+	}).finally(() => {
+		if (files.length) {
+			state.chatUploading = false;
 			render();
 		}
 	});
+}
+
+// === Vlákna odpovědí, připnuté zprávy, připomenutí, přílohy ===
+
+function findMessage(id) {
+	const replies = state.chatReplies ? [state.chatReplies.parent, ...state.chatReplies.replies] : [];
+	return [...replies, ...state.messages].find((m) => m?.id != null && String(m.id) === String(id)) ?? null;
+}
+
+function openReplies(id) {
+	const parent = state.messages.find((m) => m.id != null && String(m.id) === String(id));
+	if (!parent) {
+		return;
+	}
+	state.chatMenu = null;
+	state.chatRemind = null;
+	state.chatPinnedOpen = false;
+	state.chatReplies = { messageId: parent.id, parent, replies: [] };
+	render();
+	focusChatInput();
+	loadReplies();
+}
+
+function loadReplies() {
+	const chatId = state.activeChat;
+	const messageId = state.chatReplies?.messageId;
+	return call('chats.thread', chatId, messageId).then((payload) => {
+		const replies = state.chatReplies;
+		if (state.activeChat !== chatId || replies?.messageId !== messageId) {
+			return;
+		}
+		state.chatReplies = { messageId, parent: payload?.parent ?? replies.parent, replies: payload?.replies ?? [], following: payload?.following };
+		render();
+		// Načtením se vlákno označilo přečtené - počet u Chatu
+		loadThreadsUnread();
+	});
+}
+
+function toggleFollow() {
+	const chatId = state.activeChat;
+	const replies = state.chatReplies;
+	if (!replies || typeof replies.following !== 'boolean') {
+		return;
+	}
+	call('chats.follow', chatId, replies.messageId, !replies.following).then(() => {
+		if (state.activeChat === chatId && state.chatReplies?.messageId === replies.messageId) {
+			loadReplies();
+		}
+	});
+}
+
+// Pruh nad zprávami: vlákna konverzace s novými odpověďmi, klik otevře první z nich
+function renderChatNews() {
+	const $news = document.querySelector('[data-quickbar-chat-news]');
+	if (!$news) {
+		return;
+	}
+	const news = state.chatView === 'thread' && !state.chatReplies && !state.chatSelecting ? state.chatThreadNews : [];
+	$news.hidden = !news.length;
+	if (!news.length) {
+		return;
+	}
+	const count = news.length;
+	const label = (count === 1 ? $news.dataset.one : (count <= 4 ? $news.dataset.few : $news.dataset.many) ?? '').replace('%count%', count);
+	setHtml($news, `
+		<button type="button" class="quickbar-chat-news-button" data-quickbar-thread-news="${esc(news[0])}">
+			<span class="quickbar-chat-news-dot" aria-hidden="true"></span>
+			<span class="quickbar-chat-news-label">${esc(label)}</span>
+			<span class="quickbar-chat-news-open">${esc($news.dataset.open)}<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+		</button>`);
+}
+
+// === Sledovaná vlákna napříč konverzacemi ===
+
+function openThreads() {
+	const $channels = channelsRoot();
+	if (!$channels) {
+		return;
+	}
+	state.channels = { mode: 'threads', list: null };
+	$channels.innerHTML = `${channelsHeader($channels.dataset.threads)}
+		<div class="quickbar-channel-list quickbar-threads-list" data-quickbar-threads-list></div>`;
+	render();
+	$channels.querySelector('[data-quickbar-channels-back]').focus();
+	loadThreads();
+}
+
+function loadThreads() {
+	const threads = state.channels;
+	return call('chats.threads').then((list) => {
+		if (state.channels === threads) {
+			threads.list = list || [];
+			renderThreadsList();
+		}
+	});
+}
+
+function renderThreadsList() {
+	const $list = document.querySelector('[data-quickbar-threads-list]');
+	const list = state.channels?.list;
+	if (!$list || !list) {
+		return;
+	}
+	const ds = channelsRoot().dataset;
+	setHtml($list, list.length
+		? list.map((t) => {
+			const unread = Number(t.unread) || 0;
+			const meta = [repliesLabel(Number(t.replyCount) || 0), t.lastReplyTime ? threadText('lastReply').replace('%time%', () => t.lastReplyTime) : null]
+				.filter(Boolean).join(' · ');
+			return `
+			<button type="button" class="quickbar-chat-row quickbar-thread-item ${unread ? 'quickbar-chat-row--unread' : ''}"
+				data-quickbar-thread-open="${esc(t.chatId)}" data-quickbar-thread-message="${esc(t.messageId)}">
+				${chatAvatar({ name: t.chatName, kind: t.kind })}
+				<span class="quickbar-chat-text">
+					<span class="quickbar-chat-line">
+						<span class="quickbar-chat-name">${esc(t.chatName)}${t.private ? lockIcon : ''}</span>
+						${unread ? `<span class="badge bg-danger">${esc(unread)}</span>` : ''}
+					</span>
+					<span class="quickbar-thread-item-text">${t.author ? `<strong>${esc(t.author)}:</strong> ` : ''}${esc(t.text)}</span>
+					${t.lastReply ? `<span class="quickbar-chat-preview">${esc([t.lastReply.author, t.lastReply.text].filter(Boolean).join(': '))}</span>` : ''}
+					<span class="quickbar-thread-item-meta">${esc(meta)}</span>
+				</span>
+			</button>`;
+		}).join('')
+		: `<div class="quickbar-empty">${esc(ds.threadsEmpty)}</div>`);
+}
+
+// Vlákno ze seznamu Vlákna: konverzace a rovnou její vlákno (rodiče doplní thread())
+function openThreadFrom(chatId, messageId) {
+	const find = () => state.chats.find((c) => String(c.id) === String(chatId));
+	const show = () => {
+		const chat = find();
+		if (!chat) {
+			return;
+		}
+		resetChannels();
+		openChat(chat.id);
+		const parent = state.messages.find((m) => m.id != null && String(m.id) === String(messageId)) ?? null;
+		state.chatReplies = { messageId: parent?.id ?? messageId, parent, replies: [] };
+		render();
+		loadReplies();
+	};
+	find() ? show() : loadChats().then(show);
+}
+
+// === Připomenout později ===
+
+function openReminders() {
+	const $channels = channelsRoot();
+	if (!$channels) {
+		return;
+	}
+	state.channels = { mode: 'reminders', list: null };
+	$channels.innerHTML = `${channelsHeader($channels.dataset.reminders)}
+		<div class="quickbar-channel-list quickbar-threads-list" data-quickbar-reminders-list></div>`;
+	render();
+	$channels.querySelector('[data-quickbar-channels-back]').focus();
+	loadReminders();
+}
+
+function loadReminders() {
+	const reminders = state.channels;
+	return call('chats.reminders').then((list) => {
+		if (state.channels === reminders) {
+			reminders.list = list || [];
+			renderRemindersList();
+		}
+	});
+}
+
+function renderRemindersList() {
+	const $list = document.querySelector('[data-quickbar-reminders-list]');
+	const list = state.channels?.list;
+	if (!$list || !list) {
+		return;
+	}
+	const ds = channelsRoot().dataset;
+	setHtml($list, list.length
+		? list.map((r) => `
+			<div class="quickbar-reminder-item${r.due ? ' quickbar-reminder-item--due' : ''}">
+				<button type="button" class="quickbar-chat-row quickbar-thread-item" data-quickbar-reminder-open="${esc(r.id)}">
+					${chatAvatar({ name: r.chatName, kind: r.kind })}
+					<span class="quickbar-chat-text">
+						<span class="quickbar-chat-line">
+							<span class="quickbar-chat-name">${esc(r.chatName)}${r.private ? lockIcon : ''}</span>
+						</span>
+						<span class="quickbar-thread-item-text">${esc(r.text)}</span>
+						${r.author ? `<span class="quickbar-chat-preview">${esc(r.author)}</span>` : ''}
+						<span class="quickbar-reminder-at">${r.due ? '<span class="quickbar-chat-news-dot" aria-hidden="true"></span>' : ''}<i class="fa-solid fa-clock" aria-hidden="true"></i>${esc(r.at)}</span>
+					</span>
+				</button>
+				${chatSourceHas('reminderDone') ? `<button type="button" class="quickbar-message-action quickbar-reminder-done" title="${esc(ds.reminderDone)}"
+					aria-label="${esc(ds.reminderDone)}" data-quickbar-reminder-done="${esc(r.id)}"><i class="fa-solid fa-check"></i></button>` : ''}
+			</div>`).join('')
+		: `<div class="quickbar-empty">${esc(ds.remindersEmpty)}</div>`);
+}
+
+const findReminder = (id) => state.channels?.list?.find((r) => String(r.id) === String(id));
+
+function reminderDone(id) {
+	const reminder = findReminder(id);
+	if (!reminder) {
+		return;
+	}
+	call('chats.reminderDone', reminder.id).then(() => {
+		if (state.channels?.mode === 'reminders') {
+			loadReminders();
+		}
+		loadRemindersCount();
+	});
+}
+
+// Připomínka: konverzace a zvýrazněná zpráva, u odpovědi rovnou vlákno se zvýrazněnou odpovědí
+function openReminderFrom(reminder) {
+	const find = () => state.chats.find((c) => String(c.id) === String(reminder.chatId));
+	const show = () => {
+		const chat = find();
+		if (!chat) {
+			return;
+		}
+		resetChannels();
+		const loaded = openChat(chat.id);
+		if (reminder.parentId != null) {
+			const parent = state.messages.find((m) => m.id != null && String(m.id) === String(reminder.parentId)) ?? null;
+			state.chatReplies = { messageId: parent?.id ?? reminder.parentId, parent, replies: [] };
+			render();
+			loadReplies().then(() => highlightMessage(reminder.messageId));
+			return;
+		}
+		loaded.then(() => {
+			if (state.activeChat === chat.id && !state.chatReplies) {
+				highlightMessage(reminder.messageId);
+			}
+		});
+	};
+	find() ? show() : loadChats().then(show);
+}
+
+function closeReplies() {
+	state.chatReplies = null;
+	state.chatThreadNews = [];
+	state.chatRemind = null;
+	render();
+	focusChatInput();
+	// Počet odpovědí pod zprávou
+	loadMessages(state.activeChat);
+}
+
+function renderChatPinned() {
+	const $pinned = document.querySelector('[data-quickbar-chat-pinned]');
+	if (!$pinned) {
+		return;
+	}
+	const pinned = state.chatView === 'thread' && !state.chatReplies && !state.chatSelecting ? state.chatPinned : [];
+	$pinned.hidden = !pinned.length;
+	if (!pinned.length) {
+		return;
+	}
+	const open = state.chatPinnedOpen;
+	setHtml($pinned, `
+		<button type="button" class="quickbar-chat-pinned-toggle" aria-expanded="${open}" data-quickbar-pinned-toggle>
+			<i class="fa-solid fa-thumbtack"></i>
+			<span class="quickbar-chat-pinned-label">${esc(($pinned.dataset.label ?? '').replace('%count%', pinned.length))}</span>
+			<i class="fa-solid fa-chevron-down quickbar-chat-pinned-chevron"></i>
+		</button>
+		${open ? `<div class="quickbar-chat-pinned-list">${pinned.map((item) => `
+			<button type="button" class="quickbar-chat-pinned-item" data-quickbar-pinned-item="${esc(item.id)}">
+				${item.author || item.time ? `<span class="quickbar-chat-pinned-meta">${esc([item.author, item.time].filter(Boolean).join(' · '))}</span>` : ''}
+				<span class="quickbar-chat-pinned-text">${esc(item.text)}</span>
+			</button>`).join('')}</div>` : ''}`);
+}
+
+let highlightTimer = null;
+
+function highlightMessage(id) {
+	state.chatPinnedOpen = false;
+	state.chatHighlight = String(id);
+	render();
+	const $thread = document.querySelector('[data-quickbar-thread]');
+	[...($thread?.querySelectorAll('[data-quickbar-message-id]') ?? [])]
+		.find((el) => el.dataset.quickbarMessageId === String(id))
+		?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+	clearTimeout(highlightTimer);
+	highlightTimer = setTimeout(() => {
+		state.chatHighlight = null;
+		render();
+	}, 2000);
+}
+
+function togglePin(id) {
+	const chatId = state.activeChat;
+	const message = findMessage(id);
+	if (!message) {
+		return;
+	}
+	const pinned = !message.pinned;
+	message.pinned = pinned;
+	render();
+	call('chats.pin', chatId, message.id, pinned).then(() => {
+		if (state.activeChat === chatId) {
+			refreshOpenChat();
+		}
+	});
+}
+
+function toggleMessageMenu(id) {
+	state.chatRemind = state.chatRemind?.id === String(id) ? null : { id: String(id), view: 'menu' };
+	render();
+	document.querySelector('.quickbar-remind-menu .quickbar-chat-menu-item')?.focus();
+}
+
+function showRemindOptions() {
+	state.chatRemind.view = 'remind';
+	render();
+	document.querySelector('.quickbar-remind-menu [data-quickbar-remind-when]')?.focus();
+}
+
+// Nabídka pod tečkami: pravým okrajem k tlačítku, pod ním, a když se dolů nevejde, nad ním; vždy uvnitř
+// konverzace. Fixní prvek může mít za základ panel (backdrop-filter skla), proto se výsledná poloha dorovná.
+function placeMessageMenu() {
+	const $menu = document.querySelector('.quickbar-remind-menu');
+	const $button = $menu?.parentElement?.querySelector('[data-quickbar-message-more]');
+	const $thread = $menu?.closest('[data-quickbar-thread]');
+	if (!$menu || !$button || !$thread) {
+		return;
+	}
+	const button = $button.getBoundingClientRect();
+	const area = $thread.getBoundingClientRect();
+	const { width, height } = $menu.getBoundingClientRect();
+	const gap = 4;
+	const left = Math.max(area.left + gap, Math.min(button.right - width, area.right - width - gap));
+	let top = button.bottom + gap;
+	if (top + height > area.bottom - gap) {
+		top = Math.max(area.top + gap, button.top - height - gap);
+	}
+	$menu.style.setProperty('--quickbar-menu-left', '0px');
+	$menu.style.setProperty('--quickbar-menu-top', '0px');
+	const origin = $menu.getBoundingClientRect();
+	$menu.style.setProperty('--quickbar-menu-left', `${left - origin.left}px`);
+	$menu.style.setProperty('--quickbar-menu-top', `${top - origin.top}px`);
+}
+
+function closeRemind() {
+	state.chatRemind = null;
+	render();
+}
+
+let noticeTimer = null;
+
+function remind(when) {
+	const chatId = state.activeChat;
+	const message = findMessage(state.chatRemind?.id);
+	closeRemind();
+	if (!message) {
+		return;
+	}
+	call('chats.remind', chatId, message.id, when).then((result) => {
+		loadRemindersCount();
+		if (state.activeChat !== chatId || !result?.label) {
+			return;
+		}
+		state.chatNotice = { id: String(message.id), text: result.label };
+		render();
+		clearTimeout(noticeTimer);
+		noticeTimer = setTimeout(() => {
+			state.chatNotice = null;
+			render();
+		}, 4000);
+	});
+}
+
+function remindCustom() {
+	const $input = document.querySelector('[data-quickbar-remind-at]');
+	const at = $input?.value ? new Date($input.value) : null;
+	if (!at || Number.isNaN(at.getTime())) {
+		$input?.focus();
+		return;
+	}
+	remind(at.toISOString());
+}
+
+function renderChatFiles() {
+	const $form = panel('chat')?.querySelector('[data-quickbar-form="chat"]');
+	const $attach = $form?.querySelector('[data-quickbar-chat-attach]');
+	if ($attach) {
+		$attach.hidden = !chatAttachments();
+		$attach.disabled = state.chatUploading;
+	}
+	const $submit = $form?.querySelector('[type="submit"]');
+	if ($submit) {
+		$submit.disabled = state.chatUploading;
+	}
+	const $files = document.querySelector('[data-quickbar-chat-files]');
+	if (!$files) {
+		return;
+	}
+	const files = chatAttachments() && state.chatView === 'thread' ? state.chatFiles : [];
+	$files.hidden = !files.length;
+	setHtml($files, files.map((file, index) => `
+		<span class="quickbar-chat-file">
+			<i class="${state.chatUploading ? 'fa-solid fa-spinner fa-spin' : 'fa-regular fa-file'}"></i>
+			<span class="quickbar-file-name">${esc(file.name)}</span>
+			<span class="quickbar-file-size">${esc(fileSize(file.size))}</span>
+			${state.chatUploading ? '' : `<button type="button" class="quickbar-chat-file-remove" title="${esc($files.dataset.remove)}" aria-label="${esc($files.dataset.remove)}" data-quickbar-chat-file-remove="${index}"><i class="fa-solid fa-xmark"></i></button>`}
+		</span>`).join(''));
+}
+
+// === Kanály - nový kanál a procházení místo seznamu konverzací ===
+
+const channelsRoot = () => document.querySelector('[data-quickbar-channels]');
+
+// Nad seznamem konverzací: Nový kanál, Vlákna a Připomenout později - v seznamu jsou jen chaty
+function renderChatTools() {
+	const $tools = document.querySelector('[data-quickbar-chat-tools]');
+	const $list = document.querySelector('[data-quickbar-chats]');
+	if (!$tools || !$list) {
+		return;
+	}
+	const tool = (attribute, icon, label, badge = '', title = '') => `<button type="button" class="btn btn-sm btn-ghost" ${attribute}${title ? ` title="${esc(title)}"` : ''}><i class="${icon}"></i>${esc(label)}${badge}</button>`;
+	const buttons = [
+		chatSourceHas('createChannel') ? tool('data-quickbar-channel-new', 'fa-solid fa-square-plus', $tools.dataset.new) : '',
+		chatSourceHas('browseChannels') ? tool('data-quickbar-channel-browse', 'fa-solid fa-compass', $tools.dataset.browse) : '',
+		chatSourceHas('threads') ? tool('data-quickbar-threads', 'fa-solid fa-comments', $list.dataset.threads,
+			state.threadsUnread ? `<span class="badge bg-danger">${esc(state.threadsUnread)}</span>` : '', $list.dataset.threadsHint) : '',
+		// Počet připomínek je neutrální - v čas se ozvou notifikací samy
+		chatSourceHas('reminders') ? tool('data-quickbar-reminders', 'fa-solid fa-clock', $list.dataset.reminders,
+			state.remindersCount ? `<span class="badge quickbar-badge-neutral">${esc(state.remindersCount)}</span>` : '', $list.dataset.remindersHint) : '',
+	].join('');
+	$tools.hidden = !buttons || state.channels !== null || state.chatQuery.trim() !== '';
+	setHtml($tools, buttons);
+}
+
+function renderChannels() {
+	const $channels = channelsRoot();
+	if (!$channels) {
+		return;
+	}
+	$channels.hidden = state.channels === null;
+	if (state.channels?.mode === 'create') {
+		renderChannelMembers();
+	} else if (state.channels?.mode === 'browse') {
+		renderChannelList();
+	} else if (state.channels?.mode === 'threads') {
+		renderThreadsList();
+	} else if (state.channels?.mode === 'reminders') {
+		renderRemindersList();
+	}
+}
+
+function channelsHeader(title) {
+	const $channels = channelsRoot();
+	return `<div class="quickbar-channels-header">
+		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($channels.dataset.back)}" aria-label="${esc($channels.dataset.back)}" data-quickbar-channels-back><i class="fa-solid fa-arrow-left"></i></button>
+		<span class="quickbar-channels-title">${esc(title)}</span>
+	</div>`;
+}
+
+// Kostra formuláře se vykreslí jednou - překreslení by bralo polím kurzor a rozepsaný text
+function openChannelCreate() {
+	const $channels = channelsRoot();
+	if (!$channels) {
+		return;
+	}
+	const ds = $channels.dataset;
+	const channels = { mode: 'create', colleagues: null, members: new Set(), query: '', saving: false };
+	state.channels = channels;
+	$channels.innerHTML = `${channelsHeader(ds.new)}
+		<form class="quickbar-channel-form noajax" data-quickbar-channel-form>
+			<div class="quickbar-channel-field">
+				<label class="form-label" for="quickbar-channel-name">${esc(ds.name)}</label>
+				<input type="text" class="form-control form-control-sm" id="quickbar-channel-name" maxlength="80" autocomplete="off" required data-quickbar-channel-name>
+			</div>
+			<div class="form-check">
+				<input type="checkbox" class="form-check-input" id="quickbar-channel-private" data-quickbar-channel-private>
+				<label class="form-check-label" for="quickbar-channel-private">${esc(ds.private)}</label>
+				<div class="quickbar-channel-hint">${esc(ds.privateHint)}</div>
+			</div>
+			${chatSourceHas('colleagues') ? `<div class="quickbar-channel-field">
+				<span class="form-label quickbar-channel-members-label">${esc(ds.members)} <span class="badge" data-quickbar-channel-count hidden></span></span>
+				<div class="quickbar-search-field">
+					<i class="fa-solid fa-magnifying-glass"></i>
+					<input type="text" class="form-control form-control-sm" autocomplete="off" placeholder="${esc(ds.membersSearch)}" aria-label="${esc(ds.membersSearch)}" data-quickbar-channel-query>
+				</div>
+				<div class="quickbar-channel-members" data-quickbar-channel-members></div>
+			</div>` : ''}
+			<button type="submit" class="btn btn-sm btn-primary quickbar-channel-submit">${esc(ds.create)}</button>
+		</form>`;
+	render();
+	$channels.querySelector('[data-quickbar-channel-name]').focus();
+	call('chats.colleagues').then((list) => {
+		if (state.channels === channels) {
+			channels.colleagues = list || [];
+			renderChannelMembers();
+		}
+	});
+}
+
+function renderChannelMembers() {
+	const channels = state.channels;
+	const $members = document.querySelector('[data-quickbar-channel-members]');
+	if (!$members || channels?.mode !== 'create') {
+		return;
+	}
+	const $count = document.querySelector('[data-quickbar-channel-count]');
+	$count.hidden = !channels.members.size;
+	$count.textContent = String(channels.members.size);
+	if (channels.colleagues === null) {
+		return;
+	}
+	const query = normalize(channels.query.trim());
+	const list = query ? channels.colleagues.filter((c) => normalize(c.name).includes(query)) : channels.colleagues;
+	setHtml($members, list.length
+		? list.map((c) => `
+			<label class="quickbar-chat-row quickbar-channel-member">
+				<input type="checkbox" class="form-check-input" data-quickbar-channel-member="${esc(c.id)}"${channels.members.has(String(c.id)) ? ' checked' : ''}>
+				${chatAvatar(c, true)}
+				<span class="quickbar-chat-name">${esc(c.name)}</span>
+			</label>`).join('')
+		: `<div class="quickbar-empty">${esc(channelsRoot().dataset.colleaguesEmpty)}</div>`);
+}
+
+function toggleChannelMember(id, checked) {
+	const members = state.channels?.members;
+	if (!members) {
+		return;
+	}
+	checked ? members.add(id) : members.delete(id);
+	renderChannelMembers();
+}
+
+function createChannel(form) {
+	const channels = state.channels;
+	const $name = form.querySelector('[data-quickbar-channel-name]');
+	const name = $name.value.trim();
+	if (!name) {
+		$name.focus();
+		return;
+	}
+	if (channels.saving) {
+		return;
+	}
+	channels.saving = true;
+	const $submit = form.querySelector('[type="submit"]');
+	$submit.disabled = true;
+	const memberIds = (channels.colleagues ?? []).filter((c) => channels.members.has(String(c.id))).map((c) => c.id);
+	const isPrivate = form.querySelector('[data-quickbar-channel-private]').checked;
+	call('chats.createChannel', { name, private: isPrivate, memberIds }).then((chat) => {
+		if (state.channels === channels && chat) {
+			showChannelChat(chat);
+		}
+	}).finally(() => {
+		channels.saving = false;
+		$submit.disabled = false;
+	});
+}
+
+function openChannelBrowse() {
+	const $channels = channelsRoot();
+	if (!$channels) {
+		return;
+	}
+	const channels = { mode: 'browse', list: null };
+	state.channels = channels;
+	$channels.innerHTML = `${channelsHeader($channels.dataset.browse)}
+		<div class="quickbar-channel-list" data-quickbar-channel-list></div>`;
+	render();
+	$channels.querySelector('[data-quickbar-channels-back]').focus();
+	call('chats.browseChannels').then((list) => {
+		if (state.channels === channels) {
+			channels.list = list || [];
+			renderChannelList();
+		}
+	});
+}
+
+function renderChannelList() {
+	const $list = document.querySelector('[data-quickbar-channel-list]');
+	const list = state.channels?.list;
+	if (!$list || !list) {
+		return;
+	}
+	const ds = channelsRoot().dataset;
+	setHtml($list, list.length
+		? list.map((c) => `
+			<div class="quickbar-chat-row quickbar-channel-row">
+				${chatAvatar({ ...c, kind: 'channel' })}
+				<span class="quickbar-chat-text">
+					<span class="quickbar-chat-name">${esc(c.name)}${c.private ? lockIcon : ''}</span>
+					<span class="quickbar-chat-preview">${esc((ds.membersCount ?? '').replace('%count%', c.members ?? 0))}</span>
+				</span>
+				${c.joined
+					? `<button type="button" class="btn btn-sm btn-outline-secondary" data-quickbar-channel-open="${esc(c.id)}">${esc(ds.open)}</button>`
+					: `<button type="button" class="btn btn-sm btn-primary" data-quickbar-channel-join="${esc(c.id)}">${esc(ds.join)}</button>`}
+			</div>`).join('')
+		: `<div class="quickbar-empty">${esc(ds.empty)}</div>`);
+}
+
+function joinChannel(id) {
+	const channels = state.channels;
+	const channel = channels?.list?.find((c) => String(c.id) === id);
+	if (!channel) {
+		return;
+	}
+	call('chats.joinChannel', channel.id).then((chat) => {
+		if (state.channels === channels && chat) {
+			showChannelChat(chat);
+		}
+	});
+}
+
+function openChannel(id) {
+	const find = () => state.chats.find((c) => String(c.id) === id);
+	resetChannels();
+	if (find()) {
+		openChat(find().id);
+		return;
+	}
+	loadChats().then(() => openChat(find()?.id ?? null));
+}
+
+function showChannelChat(chat) {
+	resetChannels();
+	state.chats = [chat, ...state.chats.filter((c) => c.id !== chat.id)];
+	openChat(chat.id);
+}
+
+function resetChannels() {
+	state.channels = null;
+	const $channels = channelsRoot();
+	if ($channels) {
+		$channels.innerHTML = '';
+	}
+}
+
+function closeChannels() {
+	resetChannels();
+	render();
+	panel('chat')?.querySelector('[data-quickbar-chat-query]')?.focus();
 }
 
 // === AI asistent ===
@@ -1592,10 +2518,17 @@ function measurePanel() {
 document.addEventListener('scroll', (e) => {
 	if (e.target.closest?.('[data-quickbar-panel]')) {
 		scheduleMeasure();
+		// Nabídka u zprávy je fixní - jede s konverzací
+		if (state.chatRemind !== null) {
+			placeMessageMenu();
+		}
 	}
 }, true);
 
-window.addEventListener('resize', scheduleMeasure);
+window.addEventListener('resize', () => {
+	scheduleMeasure();
+	placeMessageMenu();
+});
 
 // Obsah panelů se mění i mimo render() - widget AI přidává zprávy, polling projektu vlákno chatu
 let panelObserver = null;
@@ -1660,6 +2593,16 @@ document.addEventListener('click', (e) => {
 	}
 	if (target.closest('[data-quickbar-chat-back]')) {
 		backToChatList();
+		return;
+	}
+	if (target.closest('[data-quickbar-replies-back]')) {
+		closeReplies();
+		return;
+	}
+	if (state.chatRemind !== null && !target.closest('.quickbar-remind-menu, [data-quickbar-message-more]')) {
+		closeRemind();
+	}
+	if (chatClick(target)) {
 		return;
 	}
 	if (state.chatMenu !== null && !target.closest('[data-quickbar-chat-menu], [data-quickbar-chat-plus]')) {
@@ -1754,6 +2697,76 @@ document.addEventListener('click', (e) => {
 	}
 });
 
+// Kanály, vlákna, připnuté zprávy, připomenutí a přílohy; true = klik obsloužen
+function chatClick(target) {
+	const handlers = [
+		['[data-quickbar-channel-new]', () => openChannelCreate()],
+		['[data-quickbar-channel-browse]', () => openChannelBrowse()],
+		['[data-quickbar-channels-back]', () => closeChannels()],
+		['[data-quickbar-threads]', () => openThreads()],
+		['[data-quickbar-reminders]', () => openReminders()],
+		['[data-quickbar-reminder-done]', (el) => reminderDone(el.dataset.quickbarReminderDone)],
+		['[data-quickbar-reminder-open]', (el) => {
+			const reminder = findReminder(el.dataset.quickbarReminderOpen);
+			if (reminder) {
+				openReminderFrom(reminder);
+			}
+		}],
+		['[data-quickbar-thread-open]', (el) => {
+			// Id ze zdroje, ne z data atributu - zdroj je dostane zpátky ve stejném typu
+			const t = state.channels?.list?.find((item) => String(item.chatId) === el.dataset.quickbarThreadOpen
+				&& String(item.messageId) === el.dataset.quickbarThreadMessage);
+			if (t) {
+				openThreadFrom(t.chatId, t.messageId);
+			}
+		}],
+		['[data-quickbar-thread-news]', (el) => openReplies(el.dataset.quickbarThreadNews)],
+		['[data-quickbar-thread-follow]', () => toggleFollow()],
+		['[data-quickbar-channel-join]', (el) => joinChannel(el.dataset.quickbarChannelJoin)],
+		['[data-quickbar-channel-open]', (el) => openChannel(el.dataset.quickbarChannelOpen)],
+		['[data-quickbar-message-more]', (el) => toggleMessageMenu(el.dataset.quickbarMessageMore)],
+		['[data-quickbar-reply]', (el) => {
+			closeRemind();
+			openReplies(el.dataset.quickbarReply);
+		}],
+		['[data-quickbar-replies]', (el) => openReplies(el.dataset.quickbarReplies)],
+		['[data-quickbar-pin]', (el) => {
+			closeRemind();
+			togglePin(el.dataset.quickbarPin);
+		}],
+		['[data-quickbar-remind]', () => showRemindOptions()],
+		['[data-quickbar-remind-when]', (el) => {
+			if (el.dataset.quickbarRemindWhen !== 'custom') {
+				remind(el.dataset.quickbarRemindWhen);
+				return;
+			}
+			state.chatRemind.view = 'custom';
+			render();
+			document.querySelector('[data-quickbar-remind-at]')?.focus();
+		}],
+		['[data-quickbar-remind-set]', () => remindCustom()],
+		['[data-quickbar-pinned-toggle]', () => {
+			state.chatPinnedOpen = !state.chatPinnedOpen;
+			render();
+		}],
+		['[data-quickbar-pinned-item]', (el) => highlightMessage(el.dataset.quickbarPinnedItem)],
+		['[data-quickbar-chat-attach]', () => panel('chat')?.querySelector('[data-quickbar-chat-file]')?.click()],
+		['[data-quickbar-chat-file-remove]', (el) => {
+			state.chatFiles.splice(Number(el.dataset.quickbarChatFileRemove), 1);
+			render();
+			focusChatInput();
+		}],
+	];
+	for (const [selector, handler] of handlers) {
+		const el = target.closest(selector);
+		if (el) {
+			handler(el);
+			return true;
+		}
+	}
+	return false;
+}
+
 // Najetí myší vybere výsledek jako šipky, jinak by byly označené dva řádky. Jen skutečný pohyb:
 // posun seznamu šipkami pod stojící myší výběr přebít nesmí.
 let lastPointer = null;
@@ -1774,6 +2787,18 @@ document.addEventListener('change', (e) => {
 	const checkbox = e.target.closest('[data-quickbar-todo]');
 	if (checkbox) {
 		setTodoDone(checkbox.dataset.quickbarTodo, checkbox.checked);
+		return;
+	}
+	const member = e.target.closest('[data-quickbar-channel-member]');
+	if (member) {
+		toggleChannelMember(member.dataset.quickbarChannelMember, member.checked);
+		return;
+	}
+	if (e.target.matches('[data-quickbar-chat-file]')) {
+		state.chatFiles.push(...e.target.files);
+		e.target.value = '';
+		render();
+		focusChatInput();
 	}
 });
 
@@ -1781,6 +2806,11 @@ document.addEventListener('input', (e) => {
 	if (e.target.matches('[data-quickbar-chat-query]')) {
 		state.chatQuery = e.target.value;
 		renderChat();
+		return;
+	}
+	if (e.target.matches('[data-quickbar-channel-query]') && state.channels) {
+		state.channels.query = e.target.value;
+		renderChannelMembers();
 		return;
 	}
 	if (e.target.matches('[data-quickbar-picker-query]') && state.picker) {
@@ -1809,20 +2839,33 @@ document.addEventListener('focusin', (e) => {
 });
 
 document.addEventListener('submit', (e) => {
+	const channelForm = e.target.closest('[data-quickbar-channel-form]');
 	const form = e.target.closest('[data-quickbar-form]');
-	if (!form) {
+	if (!form && !channelForm) {
 		return;
 	}
 	// Formuláře lišty nikam neodesílají - jinak by je odeslal ajax (naja.js)
 	e.preventDefault();
 	e.stopImmediatePropagation();
-	const input = form.querySelector('input');
+	if (channelForm) {
+		createChannel(channelForm);
+		return;
+	}
+	const input = form.querySelector('input:not([type="file"])');
 	const text = input.value.trim();
-	if (!text) {
+	if (form.dataset.quickbarForm === 'todo') {
+		if (text) {
+			input.value = '';
+			addTodo(text);
+		}
+		return;
+	}
+	// Zpráva může být jen přílohy bez textu
+	if ((!text && !(chatAttachments() && state.chatFiles.length)) || state.chatUploading) {
 		return;
 	}
 	input.value = '';
-	form.dataset.quickbarForm === 'todo' ? addTodo(text) : sendMessage(text);
+	sendMessage(text);
 }, true);
 
 document.addEventListener('keydown', (e) => {
@@ -1841,10 +2884,16 @@ document.addEventListener('keydown', (e) => {
 			closePicker(null);
 		} else if (state.open === 'chat' && state.chatMenu !== null) {
 			closeChatMenu(true);
+		} else if (state.open === 'chat' && state.chatRemind !== null) {
+			closeRemind();
 		} else if (state.open === 'chat' && state.chatSelecting) {
 			stopSelecting();
+		} else if (state.open === 'chat' && state.chatView === 'thread' && state.chatReplies) {
+			closeReplies();
 		} else if (state.open === 'chat' && state.chatView === 'thread') {
 			backToChatList();
+		} else if (state.open === 'chat' && state.channels !== null) {
+			closeChannels();
 		} else if (state.open === 'ai' && aiFull()) {
 			toggleAiFull();
 		} else if (state.open === 'ai' && state.ai.view === 'recent') {

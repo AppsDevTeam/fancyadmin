@@ -3306,6 +3306,51 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
   vybírají, Esc a křížek zavřou; Enter stisknutý před příchodem výsledků počká na první z nich.
   Vrací Promise s vybranou položkou, nebo `null`. Hodí se pro akce nabídky a výběru zpráv.
 
+**Chat - kanály, vlákna, připnuté zprávy, připomenutí a přílohy (volitelné)** - zase jen to, co zdroj umí:
+
+- Konverzace z `chats.list()` s `kind: 'channel'` má avatar „#“, s `private: true` zámek (v seznamu i v hlavičce).
+- `chats.createChannel({ name, private, memberIds })` → chat přidá pod hledání *Nový kanál*: formulář s názvem,
+  zaškrtávátkem *Soukromý* a výběrem členů s hledáním z `chats.colleagues() → [{ id, name, initials? }]`
+  (`memberIds` = jejich `id`). Vrácený chat lišta zařadí do seznamu a otevře.
+- `chats.browseChannels() → [{ id, name, private, members, joined }]` přidá *Procházet kanály*: u kanálu bez
+  `joined` je *Připojit* (`chats.joinChannel(id)` → chat, lišta ho otevře), u připojeného *Otevřít*
+  (`id` kanálu = `id` konverzace v `chats.list()`). Šipka zpět a Esc vrací do seznamu.
+- `chats.messages()` může vrátit i `pinned: [{ id, text, author?, time? }]` - sbalený pruh *Připnuté (n)* nad
+  zprávami, rozbalená položka zprávu posune do středu a krátce zvýrazní.
+- Zpráva může mít `author` (jméno nad bublinou cizí zprávy), `system: true` (šedý text uprostřed, bez akcí),
+  `attachments: [{ name, url, size?, image? }]` (obrázek jako náhled, jinak soubor s velikostí - `size`
+  v bajtech, nebo hotový text; obojí otevírá nová záložka) a `pinned` (špendlík u času).
+- Akce zprávy (zpráva s `id`) jsou pod třemi tečkami vedle bubliny, které se ukážou po najetí (u spodních zpráv se nabídka otevře nahoru): *Odpovědět ve vlákně* se `chats.thread`, *Připnout* /
+  *Odepnout* se `chats.pin` u zprávy s `canPin` (`pin(chatId, messageId, pinned)`, pak lišta zprávy načte znovu)
+  a *Připomenout později* se `chats.remind(chatId, messageId, when) → { label }`; `when` je `'20m'`, `'1h'`,
+  `'tomorrow'` nebo vlastní čas v ISO 8601 (UTC, `toISOString()`), `label` se u zprávy na 4 s ukáže jako potvrzení.
+- `chats.thread(chatId, messageId) → { parent, replies }` - pod zprávou s `replyCount` je souhrn (iniciály
+  z `replyAuthors`, počet, `lastReplyTime`), klik otevře vlákno místo konverzace (nahoře zpráva, pod ní
+  odpovědi, šipka zpět a Esc vrací). Odpověď jde přes `chats.send(chatId, text, { parentId })`.
+  `refreshQuickbarChat()` obnoví i otevřené vlákno.
+- `chats.attachments = true` přidá sponku k poli zprávy: vybrané soubory jsou čipy nad polem (jdou odebrat)
+  a odejdou jako `File` objekty v `chats.send(chatId, text, { files })` - text může být prázdný. Během
+  odesílání jsou sponka a odeslání zakázané, soubory zmizí až po úspěchu.
+- `send` dostane třetí argument jen ve vlákně nebo s přílohami, jinak je volání stejné jako dřív.
+- Sledovaná vlákna: `chats.threadsUnread() → počet` (nové odpovědi ve vláknech, která uživatel sleduje) se přičte
+  k počtu u Chatu a ukáže se u tlačítka *Vlákna* vedle *Nového kanálu* nad seznamem konverzací (v seznamu jsou jen konverzace) (jen se `chats.threads`).
+  `chats.threads() → [{ chatId, chatName, kind?, private?, messageId, text, author?, time?, replyCount, unread,
+  lastReplyTime?, lastReply?: { author, text } }]` (od nejnovější odpovědi) je seznam za tímto řádkem: konverzace,
+  zpráva vlákna, poslední odpověď a počet; vlákno s `unread` je tučné s počtem. Klik otevře konverzaci rovnou
+  ve vlákně, šipka zpět vede do konverzace, Esc ze seznamu do konverzací. `refreshQuickbarChat()` obnoví i seznam vláken.
+- Zpráva s `newReplies` (počet nových odpovědí) má souhrn vlákna zvýrazněný s tečkou a textem *N nová odpověď /
+  nové odpovědi / nových odpovědí*. `chats.messages()` může vrátit `threadsWithNews: [messageId, …]` - pruh
+  *Nové odpovědi ve vláknech* nad zprávami, klik otevře první z nich.
+- `chats.thread()` může vrátit `following` - se `chats.follow(chatId, messageId, following)` je v hlavičce vlákna
+  *Sledovat* / *Přestat sledovat*. Načtení vlákna ho má na serveru označit přečtené, po zavření vlákna lišta
+  načte zprávy znovu (zvýraznění zmizí) a obnoví `threadsUnread`.
+- Připomenout později: se `chats.reminders` je vedle *Vláken* tlačítko *Připomenout později* s neutrálním počtem
+  `chats.remindersCount() → počet` (k počtu u Chatu se nepřičítá, připomínka se v čas ozve sama; obnoví se i po
+  `remind()`). `chats.reminders() → [{ id, chatId, chatName, kind?, private?, messageId, parentId?, text, author?,
+  at, due }]` (podle času; `at` je hotový popisek času, `due` = čas už nastal a položka je zvýrazněná) je seznam
+  za řádkem. Klik otevře konverzaci a zvýrazní zprávu, s `parentId` rovnou vlákno se zvýrazněnou odpovědí;
+  tlačítko *Hotovo* volá `chats.reminderDone(id)` a seznam i počet načte znovu.
+
 **AI na celou plochu** — tlačítko v hlavičce roztáhne okno od bočního menu k okraji
 (`--side-panel-width`), vlevo seznam konverzací po dnech, vpravo konverzace v bublině.
 Zmenšit nebo Esc vrátí malé okno.

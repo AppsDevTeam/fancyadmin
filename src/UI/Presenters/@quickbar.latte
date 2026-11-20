@@ -29,7 +29,10 @@
 				<h2 class="quickbar-panel-title" data-quickbar-title="{_'fcadmin.layout.quickbar.' . $item->value . '.title'}">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
 				{* Ve vlákně chatu místo nadpisu šipka zpět a protějšek, vykresluje quickbar.js *}
 				<div n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat" class="quickbar-chat-current" data-quickbar-chat-current
-					data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"></div>
+					data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"
+					data-channel="{_fcadmin.layout.quickbar.chat.channel}" data-private-channel="{_fcadmin.layout.quickbar.chat.privateChannel}"
+					data-thread="{_fcadmin.layout.quickbar.chat.thread}" data-thread-back="{_fcadmin.layout.quickbar.chat.threadBack}"
+					data-follow="{_fcadmin.layout.quickbar.chat.follow}" data-unfollow="{_fcadmin.layout.quickbar.chat.unfollow}"></div>
 			</div>
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
@@ -101,9 +104,30 @@
 							<button type="button" class="quickbar-search-clear" title="{_fcadmin.layout.quickbar.clear}" data-quickbar-clear><i class="fa-solid fa-xmark"></i></button>
 						</div>
 					</div>
-					<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="{_fcadmin.layout.quickbar.chat.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
+					{* Nový kanál a procházení kanálů ukáže quickbar.js, jen když je zdroj umí *}
+					<div class="quickbar-chat-tools" data-quickbar-chat-tools data-new="{_fcadmin.layout.quickbar.chat.newChannel}" data-browse="{_fcadmin.layout.quickbar.chat.browseChannels}" hidden></div>
+					<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="{_fcadmin.layout.quickbar.chat.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"
+						data-threads="{_fcadmin.layout.quickbar.chat.threads}" data-threads-hint="{_fcadmin.layout.quickbar.chat.threadsHint}"
+						data-reminders="{_fcadmin.layout.quickbar.chat.reminders}" data-reminders-hint="{_fcadmin.layout.quickbar.chat.remindersHint}"></div>
+					<div class="quickbar-channels" data-quickbar-channels
+						data-new="{_fcadmin.layout.quickbar.chat.newChannel}" data-browse="{_fcadmin.layout.quickbar.chat.browseChannels}" data-back="{_fcadmin.layout.quickbar.chat.back}"
+						data-name="{_fcadmin.layout.quickbar.chat.channelName}" data-private="{_fcadmin.layout.quickbar.chat.channelPrivate}" data-private-hint="{_fcadmin.layout.quickbar.chat.channelPrivateHint}"
+						data-members="{_fcadmin.layout.quickbar.chat.channelMembers}" data-members-search="{_fcadmin.layout.quickbar.chat.channelMembersSearch}" data-create="{_fcadmin.layout.quickbar.chat.channelCreate}"
+						data-colleagues-empty="{_fcadmin.layout.quickbar.picker.empty}" data-empty="{_fcadmin.layout.quickbar.chat.channelsEmpty}"
+						data-members-count="{_fcadmin.layout.quickbar.chat.channelMembersCount}" data-join="{_fcadmin.layout.quickbar.chat.channelJoin}" data-open="{_fcadmin.layout.quickbar.chat.channelOpen}"
+						data-threads="{_fcadmin.layout.quickbar.chat.threads}" data-threads-empty="{_fcadmin.layout.quickbar.chat.threadsEmpty}"
+						data-reminders="{_fcadmin.layout.quickbar.chat.reminders}" data-reminders-empty="{_fcadmin.layout.quickbar.chat.remindersEmpty}" data-reminder-done="{_fcadmin.layout.quickbar.chat.reminderDone}" hidden></div>
 				</div>
-				<div class="quickbar-thread" data-quickbar-thread></div>
+				<div class="quickbar-chat-pinned" data-quickbar-chat-pinned data-label="{_fcadmin.layout.quickbar.chat.pinned}" hidden></div>
+				<div class="quickbar-chat-news" data-quickbar-chat-news data-one="{_fcadmin.layout.quickbar.chat.threadNewsOne}" data-few="{_fcadmin.layout.quickbar.chat.threadNewsFew}"
+					data-many="{_fcadmin.layout.quickbar.chat.threadNewsMany}" data-open="{_fcadmin.layout.quickbar.chat.threadNewsOpen}" hidden></div>
+				<div class="quickbar-thread" data-quickbar-thread
+					data-reply="{_fcadmin.layout.quickbar.chat.reply}" data-replies-one="{_fcadmin.layout.quickbar.chat.repliesOne}" data-replies-few="{_fcadmin.layout.quickbar.chat.repliesFew}"
+					data-replies-many="{_fcadmin.layout.quickbar.chat.repliesMany}" data-last-reply="{_fcadmin.layout.quickbar.chat.lastReply}"
+					data-pin="{_fcadmin.layout.quickbar.chat.pin}" data-unpin="{_fcadmin.layout.quickbar.chat.unpin}" data-actions="{_fcadmin.layout.quickbar.chat.actions}"
+					data-remind="{_fcadmin.layout.quickbar.chat.remind}" data-remind-minutes="{_fcadmin.layout.quickbar.chat.remindMinutes}" data-remind-hour="{_fcadmin.layout.quickbar.chat.remindHour}"
+					data-remind-tomorrow="{_fcadmin.layout.quickbar.chat.remindTomorrow}" data-remind-custom="{_fcadmin.layout.quickbar.chat.remindCustom}" data-remind-set="{_fcadmin.layout.quickbar.chat.remindSet}"
+					data-new-replies-one="{_fcadmin.layout.quickbar.chat.newRepliesOne}" data-new-replies-few="{_fcadmin.layout.quickbar.chat.newRepliesFew}" data-new-replies-many="{_fcadmin.layout.quickbar.chat.newRepliesMany}"></div>
 				{* Téma konverzace, výběr zpráv, nabídka plusu a výběr položky vykresluje quickbar.js *}
 				<div class="quickbar-chat-topic" data-quickbar-chat-topic data-label="{_fcadmin.layout.quickbar.chat.topic}" data-clear="{_fcadmin.layout.quickbar.chat.topicClear}" hidden></div>
 				<div class="quickbar-chat-selection" data-quickbar-chat-selection
@@ -112,10 +136,13 @@
 				<div class="quickbar-picker" data-quickbar-picker
 					data-close="{_fcadmin.layout.quickbar.picker.close}" data-empty="{_fcadmin.layout.quickbar.picker.empty}"
 					data-short="{_fcadmin.layout.quickbar.picker.short}" data-suggestions="{_fcadmin.layout.quickbar.picker.suggestions}" hidden></div>
+				<div class="quickbar-chat-files" data-quickbar-chat-files data-remove="{_fcadmin.layout.quickbar.chat.removeFile}" hidden></div>
 				<form class="quickbar-panel-form quickbar-chat-form noajax" data-quickbar-form="chat">
 					<button type="button" class="btn btn-icon btn-sm btn-ghost quickbar-chat-plus" title="{_fcadmin.layout.quickbar.chat.more}" aria-label="{_fcadmin.layout.quickbar.chat.more}"
 						aria-haspopup="menu" aria-expanded="false" data-quickbar-chat-plus hidden><i class="fa-regular fa-plus"></i></button>
+					<button type="button" class="btn btn-icon btn-sm btn-ghost" title="{_fcadmin.layout.quickbar.chat.attach}" aria-label="{_fcadmin.layout.quickbar.chat.attach}" data-quickbar-chat-attach hidden><i class="fa-solid fa-paperclip"></i></button>
 					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.placeholder}" aria-label="{_fcadmin.layout.quickbar.chat.placeholder}">
+					<input type="file" multiple hidden data-quickbar-chat-file>
 					<button type="submit" class="btn btn-icon btn-sm btn-primary" title="{_fcadmin.layout.quickbar.chat.send}"><i class="fa-regular fa-paper-plane"></i></button>
 				</form>
 		{/switch}

@@ -114,6 +114,55 @@ layout:
       selected: 'Vybráno: %count%'
       selectCancel: Zrušit
       selectHint: Vyberte zprávy
+      channel: Kanál
+      privateChannel: Soukromý kanál
+      newChannel: Nový kanál
+      browseChannels: Procházet kanály
+      channelName: Název kanálu
+      channelPrivate: Soukromý
+      channelPrivateHint: Uvidí ho jen pozvaní členové.
+      channelMembers: Členové
+      channelMembersSearch: Hledat kolegu
+      channelCreate: Vytvořit kanál
+      channelsEmpty: Zatím žádné kanály.
+      channelMembersCount: 'Členů: %count%'
+      channelJoin: Připojit
+      channelOpen: Otevřít
+      thread: Vlákno
+      threadBack: Zpět do konverzace
+      reply: Odpovědět ve vlákně
+      repliesOne: '%count% odpověď'
+      repliesFew: '%count% odpovědi'
+      repliesMany: '%count% odpovědí'
+      lastReply: 'poslední %time%'
+      actions: Další možnosti
+      pin: Připnout
+      unpin: Odepnout
+      pinned: 'Připnuté (%count%)'
+      remind: Připomenout později
+      remindMinutes: Za 20 minut
+      remindHour: Za hodinu
+      remindTomorrow: Zítra v 8:00
+      remindCustom: Vlastní čas…
+      remindSet: Nastavit
+      attach: Přiložit soubor
+      removeFile: Odebrat soubor
+      threads: Vlákna
+      threadsHint: Odpovědi ve vláknech, která sledujete
+      threadsEmpty: Zatím nesledujete žádné vlákno s odpověďmi.
+      newRepliesOne: '%count% nová odpověď'
+      newRepliesFew: '%count% nové odpovědi'
+      newRepliesMany: '%count% nových odpovědí'
+      threadNewsOne: Nové odpovědi ve vlákně
+      threadNewsFew: 'Nové odpovědi ve %count% vláknech'
+      threadNewsMany: 'Nové odpovědi v %count% vláknech'
+      threadNewsOpen: Zobrazit
+      follow: Sledovat
+      unfollow: Přestat sledovat
+      reminders: Připomenout později
+      remindersHint: Zprávy, ke kterým se máte vrátit
+      remindersEmpty: Nemáte žádné připomínky. Připomenout později najdete v nabídce zprávy pod třemi tečkami.
+      reminderDone: Hotovo
     picker:
       close: Zpět do konverzace
       empty: Nic nenalezeno

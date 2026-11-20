@@ -114,6 +114,55 @@ layout:
       selected: 'Vybrané: %count%'
       selectCancel: Zrušiť
       selectHint: Vyberte správy
+      channel: Kanál
+      privateChannel: Súkromný kanál
+      newChannel: Nový kanál
+      browseChannels: Prehľadávať kanály
+      channelName: Názov kanála
+      channelPrivate: Súkromný
+      channelPrivateHint: Uvidia ho len pozvaní členovia.
+      channelMembers: Členovia
+      channelMembersSearch: Hľadať kolegu
+      channelCreate: Vytvoriť kanál
+      channelsEmpty: Zatiaľ žiadne kanály.
+      channelMembersCount: 'Členov: %count%'
+      channelJoin: Pripojiť
+      channelOpen: Otvoriť
+      thread: Vlákno
+      threadBack: Späť do konverzácie
+      reply: Odpovedať vo vlákne
+      repliesOne: '%count% odpoveď'
+      repliesFew: '%count% odpovede'
+      repliesMany: '%count% odpovedí'
+      lastReply: 'posledná %time%'
+      actions: Ďalšie možnosti
+      pin: Pripnúť
+      unpin: Odopnúť
+      pinned: 'Pripnuté (%count%)'
+      remind: Pripomenúť neskôr
+      remindMinutes: O 20 minút
+      remindHour: O hodinu
+      remindTomorrow: Zajtra o 8:00
+      remindCustom: Vlastný čas…
+      remindSet: Nastaviť
+      attach: Priložiť súbor
+      removeFile: Odobrať súbor
+      threads: Vlákna
+      threadsHint: Odpovede vo vláknach, ktoré sledujete
+      threadsEmpty: Zatiaľ nesledujete žiadne vlákno s odpoveďami.
+      newRepliesOne: '%count% nová odpoveď'
+      newRepliesFew: '%count% nové odpovede'
+      newRepliesMany: '%count% nových odpovedí'
+      threadNewsOne: Nové odpovede vo vlákne
+      threadNewsFew: 'Nové odpovede v %count% vláknach'
+      threadNewsMany: 'Nové odpovede v %count% vláknach'
+      threadNewsOpen: Zobraziť
+      follow: Sledovať
+      unfollow: Prestať sledovať
+      reminders: Pripomenúť neskôr
+      remindersHint: Správy, ku ktorým sa máte vrátiť
+      remindersEmpty: Nemáte žiadne pripomienky. Pripomenúť neskôr nájdete v ponuke správy pod troma bodkami.
+      reminderDone: Hotovo
     picker:
       close: Späť do konverzácie
       empty: Nič sa nenašlo

@@ -105,7 +105,7 @@ body {
 				display: none;
 			}
 
-			// Tlačítka AI–Chat jako přímé položky lišty, jinak by se pod 400 px nedělila rovným dílem
+			// Tlačítka AI-Chat jako přímé položky lišty, jinak by se pod 400 px nedělila rovným dílem
 			.quickbar-buttons {
 				display: contents;
 			}
@@ -842,6 +842,13 @@ body {
 		color: var(--quickbar-secondary);
 	}
 
+	&.quickbar-chat-avatar--channel {
+		border-radius: var(--quickbar-item-radius);
+		background: color-mix(in srgb, var(--quickbar-secondary) 14%, transparent);
+		font-size: 16px;
+		color: var(--quickbar-secondary);
+	}
+
 	&.quickbar-chat-avatar--sm {
 		width: 30px;
 		height: 30px;
@@ -909,6 +916,150 @@ body {
 	}
 }
 
+.quickbar-chat-lock {
+	margin-left: 6px;
+	font-size: 10px;
+	color: var(--quickbar-faint);
+}
+
+// Nový kanál, Vlákna a Připomenout později pod hledáním (v seznamu pod nimi jsou jen konverzace)
+.quickbar-chat-tools {
+	flex: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 0 8px 4px;
+
+	&[hidden] {
+		display: none;
+	}
+
+	// Tři tlačítka se vejdou do panelu na jeden řádek
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding-inline: 8px;
+		color: var(--quickbar-muted);
+
+		&:hover {
+			color: var(--quickbar-primary);
+		}
+	}
+}
+
+.quickbar-panel--channels .quickbar-chat-search {
+	display: none;
+}
+
+.quickbar-panel-body.quickbar-chats[hidden] {
+	display: none;
+}
+
+// Nový kanál a procházení kanálů - místo seznamu konverzací
+.quickbar-channels {
+	@include thin-scrollbar;
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	display: flex;
+	flex-direction: column;
+	animation: quickbar-pop .14s ease-out;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-channels-header {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px 4px;
+}
+
+.quickbar-channels-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--quickbar-heading);
+}
+
+// Formulář nového kanálu vyplní panel - seznam kolegů zabere zbytek výšky, tlačítko je dole
+.quickbar-channel-form {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 8px 16px 16px;
+
+	.form-label {
+		margin-bottom: 4px;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--quickbar-text-strong);
+	}
+}
+
+.quickbar-channel-field {
+	display: flex;
+	flex-direction: column;
+
+	&:has(.quickbar-channel-members) {
+		flex: 1;
+		min-height: 160px;
+	}
+}
+
+.quickbar-channel-hint {
+	font-size: 12px;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-channel-members-label .badge {
+	background: var(--quickbar-tint);
+	color: var(--quickbar-primary);
+}
+
+.quickbar-channel-members {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	margin-top: 6px;
+	@include thin-scrollbar;
+}
+
+.quickbar-channel-member {
+	gap: 10px;
+	padding: 6px 8px;
+
+	.form-check-input {
+		flex: none;
+		margin: 0;
+	}
+}
+
+.quickbar-channel-submit {
+	align-self: flex-start;
+}
+
+.quickbar-channel-list {
+	display: flex;
+	flex-direction: column;
+	padding: 4px 6px 8px;
+}
+
+.quickbar-channel-row {
+	cursor: default;
+
+	.btn {
+		flex: none;
+	}
+}
+
 // Hlavička vlákna: šipka zpět, protějšek a jestli je to kolega nebo skupina
 .quickbar-chat-current {
 	min-width: 0;
@@ -951,7 +1102,7 @@ body {
 	color: var(--quickbar-muted);
 }
 
-.quickbar-panel--chat:not(.quickbar-panel--chat-thread) :is(.quickbar-thread, .quickbar-chat-form) {
+.quickbar-panel--chat:not(.quickbar-panel--chat-thread) :is(.quickbar-thread, .quickbar-chat-form, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
 	display: none;
 }
 
@@ -971,11 +1122,34 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 10px;
+
+	&.quickbar-message--mine {
+		justify-content: flex-end;
+	}
+
+	// Zpráva otevřená z připnutých - bublina krátce dostane prstenec, řádek zůstává bez podkladu
+	&.quickbar-message--highlight :is(.quickbar-bubble, .quickbar-message-files) {
+		animation: quickbar-message-highlight 2s ease-out;
+	}
 }
 
+@keyframes quickbar-message-highlight {
+	0%, 60% {
+		box-shadow: 0 0 0 2px var(--quickbar-surface), 0 0 0 4px var(--quickbar-primary);
+	}
+
+	100% {
+		box-shadow: 0 0 0 2px transparent, 0 0 0 4px transparent;
+	}
+}
+
+// Obsah zprávy je široký jen jako bublina - lišta akcí se k ní kotví, ne ke kraji panelu
 .quickbar-message-content {
-	flex: 1;
+	position: relative;
+	flex: 0 1 auto;
 	min-width: 0;
+	// Vedle bubliny zbývá místo na tři tečky akcí
+	max-width: calc(100% - 40px);
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -983,6 +1157,10 @@ body {
 
 	.quickbar-message--mine & {
 		align-items: flex-end;
+	}
+
+	.quickbar-bubble {
+		max-width: 100%;
 	}
 }
 
@@ -1122,6 +1300,507 @@ body {
 	padding: 0 4px;
 	font-size: 11px;
 	color: var(--quickbar-faint);
+}
+
+.quickbar-message-pin {
+	margin-right: 4px;
+	font-size: 9px;
+	color: var(--quickbar-primary);
+}
+
+.quickbar-message-author {
+	padding: 0 4px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--quickbar-text-strong);
+}
+
+.quickbar-message--system {
+	justify-content: center;
+
+	.quickbar-message-content {
+		align-items: center;
+	}
+
+	.quickbar-bubble {
+		border: 0;
+		background: transparent;
+		font-size: 12px;
+		color: var(--quickbar-muted);
+	}
+}
+
+// Akce zprávy (vlákno, připnout, připomenout) - tři tečky vedle bubliny po najetí, nabídka pod nimi
+.quickbar-message-actions {
+	position: absolute;
+	top: 5px;
+	left: calc(100% + 4px);
+	z-index: 1;
+	display: none;
+
+	.quickbar-message--mine & {
+		left: auto;
+		right: calc(100% + 4px);
+	}
+
+	.quickbar-message:hover &,
+	.quickbar-message:focus-within &,
+	&.quickbar-message-actions--open {
+		display: flex;
+	}
+}
+
+.quickbar-message-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	font-size: 12px;
+	color: var(--quickbar-muted);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-tint);
+		color: var(--quickbar-text-strong);
+	}
+
+	&.active {
+		color: var(--quickbar-primary);
+	}
+}
+
+// Nabídka je fixní (pozici dopočte placeMessageMenu() v quickbar.js) - uvnitř posuvné konverzace
+// by ji roztahovala a dělala posuvník
+.quickbar-remind-menu {
+	position: fixed;
+	top: var(--quickbar-menu-top, 0);
+	left: var(--quickbar-menu-left, 0);
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 200px;
+	padding: 6px;
+	white-space: nowrap;
+	border: 1px solid var(--quickbar-border);
+	border-radius: var(--bs-border-radius-sm);
+	background: var(--quickbar-surface);
+	box-shadow: 0 12px 32px -12px var(--fa-shadow-color, rgba(0, 0, 0, .25));
+	animation: quickbar-pop .14s ease-out;
+
+	&.quickbar-remind-menu--custom {
+		flex-direction: row;
+		align-items: center;
+		gap: 6px;
+		min-width: 260px;
+	}
+}
+
+.quickbar-message-notice {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 0 4px;
+	font-size: 12px;
+	color: var(--quickbar-primary);
+}
+
+// Souhrn vlákna pod zprávou - klik ho otevře
+.quickbar-message-replies {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 8px 3px 4px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	font-size: 12px;
+	color: var(--quickbar-muted);
+
+	&:is(button) {
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--quickbar-hover);
+		}
+	}
+}
+
+.quickbar-message-replies-avatars {
+	display: inline-flex;
+}
+
+.quickbar-message-replies-avatar {
+	width: 20px;
+	height: 20px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1.5px solid var(--quickbar-surface);
+	border-radius: 50%;
+	background: var(--quickbar-tint);
+	font-size: 9px;
+	font-weight: 600;
+	color: var(--quickbar-primary);
+
+	& + & {
+		margin-left: -6px;
+	}
+}
+
+.quickbar-message-replies-count {
+	font-weight: 600;
+	color: var(--quickbar-primary);
+}
+
+// Vlákno s novými odpověďmi - souhrn zvýrazněný a s tečkou
+.quickbar-message-replies--new {
+	background: var(--quickbar-tint);
+	color: var(--quickbar-text-strong);
+}
+
+.quickbar-message-replies-dot,
+.quickbar-chat-news-dot {
+	flex: none;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--quickbar-primary);
+}
+
+.quickbar-message-replies-dot {
+	margin-left: 4px;
+}
+
+// Pruh nad zprávami - vlákna konverzace s novými odpověďmi
+.quickbar-chat-news {
+	flex: none;
+	border-bottom: 1px solid var(--quickbar-line);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-chat-news-button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 7px 14px;
+	border: 0;
+	background: var(--quickbar-tint);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	text-align: left;
+	color: var(--quickbar-text-strong);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background: color-mix(in srgb, var(--quickbar-primary) 18%, var(--quickbar-surface));
+	}
+}
+
+.quickbar-chat-news-label {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.quickbar-chat-news-open {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--quickbar-primary);
+
+	i {
+		font-size: 10px;
+	}
+}
+
+// Sledovat / Přestat sledovat v hlavičce vlákna
+.quickbar-chat-current .quickbar-thread-follow {
+	flex: none;
+	margin-left: auto;
+	font-size: 12px;
+
+	&.active {
+		color: var(--quickbar-muted);
+	}
+}
+
+// Seznam sledovaných vláken (Vlákna)
+.quickbar-thread-item {
+	align-items: flex-start;
+
+	.quickbar-chat-text {
+		gap: 2px;
+	}
+
+	.quickbar-chat-preview {
+		font-size: 12px;
+	}
+}
+
+.quickbar-thread-item-text {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	font-size: 13px;
+	color: var(--quickbar-text);
+	text-align: left;
+
+	.quickbar-chat-row--unread & {
+		font-weight: 600;
+		color: var(--quickbar-text-strong);
+	}
+}
+
+// Připomínka: řádek s otevřením a vedle něj Hotovo (dvě tlačítka, ne vnořená)
+.quickbar-reminder-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+
+	> .quickbar-chat-row {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.quickbar-reminder-done {
+		flex: none;
+		margin-top: 8px;
+	}
+}
+
+.quickbar-reminder-at {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11px;
+	color: var(--quickbar-faint);
+
+	.quickbar-reminder-item--due & {
+		font-weight: 600;
+		color: var(--quickbar-primary);
+	}
+}
+
+.quickbar-badge-neutral {
+	background: var(--quickbar-tint);
+	color: var(--quickbar-muted);
+}
+
+.quickbar-thread-item-meta {
+	font-size: 11px;
+	color: var(--quickbar-faint);
+}
+
+.quickbar-replies-divider {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: var(--quickbar-muted);
+
+	&::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--quickbar-line);
+	}
+}
+
+// Přílohy zprávy - obrázek jako náhled, ostatní soubor s velikostí
+.quickbar-message-files {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	max-width: 80%;
+
+	.quickbar-message--mine & {
+		justify-content: flex-end;
+	}
+}
+
+.quickbar-file-image {
+	display: block;
+	overflow: hidden;
+	border: 1px solid var(--fa-line);
+	border-radius: var(--quickbar-item-radius);
+
+	img {
+		display: block;
+		max-width: 180px;
+		max-height: 140px;
+		object-fit: cover;
+	}
+}
+
+.quickbar-file,
+.quickbar-chat-file {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	max-width: 100%;
+	padding: 5px 10px;
+	border: 1px solid var(--fa-line);
+	border-radius: var(--quickbar-item-radius);
+	background: color-mix(in srgb, var(--quickbar-surface) 85%, transparent);
+	font-size: 13px;
+	color: var(--quickbar-text);
+	text-decoration: none;
+}
+
+.quickbar-file:hover {
+	border-color: var(--quickbar-primary);
+	color: var(--quickbar-primary);
+}
+
+.quickbar-file-name {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.quickbar-file-size {
+	flex: none;
+	font-size: 11px;
+	color: var(--quickbar-faint);
+}
+
+// Vybrané soubory nad polem zprávy
+.quickbar-chat-files {
+	flex: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 8px 12px 0;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-chat-file-remove {
+	flex: none;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--quickbar-faint);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--quickbar-text-strong);
+	}
+}
+
+// Připnuté zprávy - sbalený pruh pod hlavičkou konverzace
+.quickbar-chat-pinned {
+	flex: none;
+	border-bottom: 1px solid var(--quickbar-line);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-chat-pinned-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 7px 14px;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	text-align: left;
+	color: var(--quickbar-text-strong);
+	cursor: pointer;
+
+	> .fa-thumbtack {
+		font-size: 11px;
+		color: var(--quickbar-primary);
+	}
+
+	&:hover {
+		background: var(--quickbar-hover);
+	}
+
+	&[aria-expanded="true"] .quickbar-chat-pinned-chevron {
+		transform: rotate(180deg);
+	}
+}
+
+.quickbar-chat-pinned-label {
+	flex: 1;
+}
+
+.quickbar-chat-pinned-chevron {
+	font-size: 10px;
+	color: var(--quickbar-faint);
+	transition: transform .2s ease;
+}
+
+.quickbar-chat-pinned-list {
+	@include thin-scrollbar;
+	display: flex;
+	flex-direction: column;
+	max-height: 200px;
+	overflow: auto;
+	padding: 0 6px 6px;
+}
+
+.quickbar-chat-pinned-item {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	width: 100%;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-hover);
+	}
+}
+
+.quickbar-chat-pinned-meta {
+	font-size: 11px;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-chat-pinned-text {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: 13px;
+	color: var(--quickbar-text);
 }
 
 // Plus vlevo od pole zprávy - otevřený se otočí na křížek
@@ -1346,7 +2025,7 @@ body {
 	}
 }
 
-.quickbar-panel--picking :is(.quickbar-thread, .quickbar-chat-topic, .quickbar-chat-selection, .quickbar-chat-form, .quickbar-chat-menu) {
+.quickbar-panel--picking :is(.quickbar-thread, .quickbar-chat-topic, .quickbar-chat-selection, .quickbar-chat-form, .quickbar-chat-menu, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
 	display: none;
 }
 
