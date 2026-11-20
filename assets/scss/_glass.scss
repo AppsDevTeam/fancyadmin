@@ -25,8 +25,9 @@ body {
 	--glass-alpha: #{$alpha};
 	--glass-border: color-mix(in srgb, var(--fa-surface) #{$border}, transparent);
 	--glass-highlight: color-mix(in srgb, var(--fa-surface) #{$highlight}, transparent);
-	backdrop-filter: var(--glass-filter);
+	// Předpona před nepředponovanou: minifikace Vite (lightningcss) ze dvojice nechá jen poslední deklaraci
 	-webkit-backdrop-filter: var(--glass-filter);
+	backdrop-filter: var(--glass-filter);
 	background: color-mix(in srgb, var(--glass-base) var(--glass-alpha), transparent);
 	border: 1px solid var(--glass-border);
 	box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
