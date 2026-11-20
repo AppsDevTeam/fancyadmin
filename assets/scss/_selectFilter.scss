@@ -45,3 +45,11 @@ $select-filter-arrow-space: 24px;
 		white-space: normal;
 	}
 }
+
+.select-filter .ts-dropdown {
+	max-width: 320px;
+
+	.option {
+		white-space: normal;
+	}
+}

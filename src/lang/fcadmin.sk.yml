@@ -68,6 +68,7 @@ layout:
       untitled: Nová konverzácia
       unread: Nová odpoveď
       allConversations: Zobraziť všetky konverzácie
+      loadingChat: Načítavam AI asistenta…
       unavailable: AI asistent teraz nie je dostupný.
       expand: Otvoriť na celú stránku
       shrink: Zmenšiť
@@ -106,6 +107,18 @@ layout:
       back: Všetky konverzácie
       colleague: Kolega
       group: Skupina
+      more: Ďalšie možnosti
+      topic: Riešime
+      topicClear: Ukončiť
+      select: Vybrať správy
+      selected: 'Vybrané: %count%'
+      selectCancel: Zrušiť
+      selectHint: Vyberte správy
+    picker:
+      close: Späť do konverzácie
+      empty: Nič sa nenašlo
+      short: Napíšte aspoň %count% znaky
+      suggestions: Návrhy
 aclResource:
   title:
     portal:
@@ -766,9 +779,29 @@ tablets:
       button: Pridať na plochu
       ios: V Safari ťuknite na Zdieľať a zvoľte Pridať na plochu. Stránku potom otvárajte z plochy - len tak pôjdu povoliť notifikácie.
   sign:
-    label: Podpis
-    required: Podpíšte sa prosím.
-    submit: Podpísať
+    documents: Dokumenty na podpis
+    signHere: Kliknutím podpísať
+    signed: Podpísané
+    modalTitle: Podpis
+    hintDraw: Podpíšte sa prstom, perom alebo myšou do sivej plochy.
+    hintReuse: Použite svoj predchádzajúci podpis, alebo sa podpíšte znova.
+    hintSigned: Toto miesto je podpísané. Podpis môžete zmeniť - nový platí len pre toto miesto.
+    caption: Váš podpis
+    restart: Začať znova
+    redraw: Podpísať znova
+    back: Späť
+    use: Použiť tento podpis
+    zoom: Priblíženie dokumentu
+    zoomIn: Priblížiť
+    zoomOut: Oddialiť
+    zoomReset: Pôvodná veľkosť
+    next: Ďalší podpis
+    progress: "Podpísané %signed% z %total%"
+    documentProgress: "%signed% z %total% podpísané"
+    documentDone: Podpísané
+    incomplete: Podpíšte prosím všetky vyznačené miesta.
+    loadFailed: Dokument sa nepodarilo načítať.
+    submit: Dokončiť podpis
     failed: Podpis sa nepodarilo uložiť. Skúste to prosím znova.
     done: Podpísané
     doneThanks: Ďakujeme. Tablet prosím vráťte obsluhe.

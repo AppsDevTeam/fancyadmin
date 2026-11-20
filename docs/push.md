@@ -49,7 +49,12 @@ protected function getPushTopics(): array
 ```
 
 `BasePresenterTrait` z nich udělá odběr do `body[data-fancyadmin-push]` - token dovolí odebírat
-jen tyhle topiky (s prefixem projektu), platí 12 h. Odběr topiku dostává i jeho podtopiky
+jen tyhle topiky (s prefixem projektu), platí 12 h. Po vypršení ho hub odmítne a `push.js` si
+vyžádá nový signálem `BasePresenterTrait::handlePushSubscription()` - adresu (`refreshUrl`, i s CSRF
+tokenem `_sec`) dá server do odběru. Signál vrátí odběr s topiky z `getPushTopics()` (od klienta se
+nebere nic), nepřihlášenému nic. Adresa míří na stránku z plného načtení - ajaxová navigace odběr
+nemění. Když nový odběr nepřijde (odhlášení, stránka mezitím zmizela) nebo hub odmítne i čerstvý
+token, stránka přejde na polling. Odběr topiku dostává i jeho podtopiky
 na straně prohlížeče (`onPush('user/5', …)` dostane `user/5/tasks`), hub ale posílá jen
 topiky z tokenu - podtopiky proto publikuj na přesný topik odběru, nebo je do odběru přidej.
 
@@ -72,5 +77,8 @@ se svým ID přeskočí. Ostatní stránky a záložky téhož uživatele ji dos
 hlavičku nemají - po nich přijde push i stránce, která změnu udělala.
 
 Jedno spojení na stránku (fetch se streamem, token v hlavičce `Authorization` - hub ho v URL
-ani cookie nepřijme). Po výpadku se připojí znovu (1 s až 30 s). Každá zpráva je i DOM událost
+ani cookie nepřijme). Po výpadku se připojí znovu (1 s až 30 s). Prošlý token (401/403) obnoví
+jednou přes `refreshUrl` a připojí se znovu - `onPushState` pak dostane `false` a hned `true`,
+takže si stránka dožene, co zmeškala. Další obnova je možná až po úspěšném připojení, aby hub,
+který odmítá i nový token (špatný klíč, jiné `aud`), nevedl ke smyčce. Každá zpráva je i DOM událost
 `fancyadmin:push` (`event.detail`).

@@ -1,6 +1,6 @@
 // Accordion sekcí (assets/js/accordion.js): jedna otevřená sekce, sekce s chybou, ?section=, zapamatování
 // v sessionStorage a odznak napojený na zaškrtávátko. Bez window.bootstrap modul jen přepíná třídy.
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let naja;
 let stopObserving;
@@ -32,6 +32,8 @@ async function render(html, { single = true, search = '' } = {}) {
 const openIds = (wrap) => [...wrap.querySelectorAll('.accordion-section > .collapse.show')].map((el) => el.closest('.accordion-section').dataset.accordionSection);
 
 beforeAll(async () => {
+	// jsdom nemá scrollIntoView, ?section= na něj sekci posouvá
+	Element.prototype.scrollIntoView = vi.fn();
 	await import('../../assets/js/_jquery-global.js');
 	({ default: naja } = await import('../../assets/js/naja.js'));
 	({ stopObserving } = await import('../../assets/js/accordion.js'));

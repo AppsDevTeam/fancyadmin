@@ -219,6 +219,9 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				// Entita podepsaného dokumentu projektu (implements SignedDocument) - zapíná podpis
 				// dokumentu na tabletu, potřebuje adt/biometric-signature a službu TabletSignHandler
 				'signedDocumentEntity' => Expect::string()->nullable()->default(null),
+				// Entita podpisu projektu (implements DocumentSignature) - jeden řádek za každý
+				// nakreslený podpis s biometrikou, povinná se signedDocumentEntity
+				'documentSignatureEntity' => Expect::string()->nullable()->default(null),
 			]),
 			// Biometrický podpis (adt/biometric-signature, docs/biometric-signature.md)
 			'biometricSignature' => Expect::structure([
@@ -458,10 +461,17 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				throw new RuntimeException('fancyadmin: tablet.signedDocumentEntity zapíná podpis dokumentu na tabletu, ale chybí balíček adt/biometric-signature (composer require adt/biometric-signature). Viz docs/tablets.md.');
 			}
 
+			if ($this->config->tablet->signedDocumentEntity !== null && $this->config->tablet->documentSignatureEntity === null) {
+				throw new RuntimeException('fancyadmin: tablet.signedDocumentEntity zapíná podpis dokumentu na tabletu, ale chybí tablet.documentSignatureEntity - entita podpisu projektu (implements DocumentSignature, use DocumentSignatureTrait). Viz docs/tablets.md.');
+			}
+
 			// Podpis dokumentu na tabletu - TabletSignHandler projektu si služba autowiruje;
-			// bez něj nebo bez entity je podpis vypnutý (TabletSigning::isEnabled())
+			// bez něj nebo bez entit je podpis vypnutý (TabletSigning::isEnabled())
 			$builder->addDefinition($this->prefix('tabletSigning'))
-				->setFactory(TabletSigning::class, ['signedDocumentClass' => $this->config->tablet->signedDocumentEntity]);
+				->setFactory(TabletSigning::class, [
+					'signedDocumentClass' => $this->config->tablet->signedDocumentEntity,
+					'documentSignatureClass' => $this->config->tablet->documentSignatureEntity,
+				]);
 
 			$builder->addDefinition($this->prefix('tabletService'))
 				->setFactory(TabletService::class, [

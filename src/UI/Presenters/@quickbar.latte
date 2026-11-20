@@ -82,7 +82,7 @@
 						<span class="quickbar-ai-empty-title">{_fcadmin.layout.quickbar.ai.emptyTitle}</span>
 						<span class="quickbar-ai-empty-text">{_fcadmin.layout.quickbar.ai.emptyText}</span>
 					</div>
-					<div class="quickbar-ai-chat" data-quickbar-ai-chat data-unavailable="{_fcadmin.layout.quickbar.ai.unavailable}"></div>
+					<div class="quickbar-ai-chat" data-quickbar-ai-chat data-loading="{_fcadmin.layout.quickbar.ai.loadingChat}" data-unavailable="{_fcadmin.layout.quickbar.ai.unavailable}"></div>
 				</div>
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications}
 				<div class="quickbar-panel-body" data-quickbar-list="notifications" data-empty="{_fcadmin.layout.quickbar.notifications.empty}"></div>
@@ -104,7 +104,17 @@
 					<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="{_fcadmin.layout.quickbar.chat.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
 				</div>
 				<div class="quickbar-thread" data-quickbar-thread></div>
+				{* Téma konverzace, výběr zpráv, nabídka plusu a výběr položky vykresluje quickbar.js *}
+				<div class="quickbar-chat-topic" data-quickbar-chat-topic data-label="{_fcadmin.layout.quickbar.chat.topic}" data-clear="{_fcadmin.layout.quickbar.chat.topicClear}" hidden></div>
+				<div class="quickbar-chat-selection" data-quickbar-chat-selection
+					data-count="{_fcadmin.layout.quickbar.chat.selected}" data-cancel="{_fcadmin.layout.quickbar.chat.selectCancel}" data-hint="{_fcadmin.layout.quickbar.chat.selectHint}" hidden></div>
+				<div class="quickbar-chat-menu" data-quickbar-chat-menu data-select="{_fcadmin.layout.quickbar.chat.select}" role="menu" hidden></div>
+				<div class="quickbar-picker" data-quickbar-picker
+					data-close="{_fcadmin.layout.quickbar.picker.close}" data-empty="{_fcadmin.layout.quickbar.picker.empty}"
+					data-short="{_fcadmin.layout.quickbar.picker.short}" data-suggestions="{_fcadmin.layout.quickbar.picker.suggestions}" hidden></div>
 				<form class="quickbar-panel-form quickbar-chat-form noajax" data-quickbar-form="chat">
+					<button type="button" class="btn btn-icon btn-sm btn-ghost quickbar-chat-plus" title="{_fcadmin.layout.quickbar.chat.more}" aria-label="{_fcadmin.layout.quickbar.chat.more}"
+						aria-haspopup="menu" aria-expanded="false" data-quickbar-chat-plus hidden><i class="fa-regular fa-plus"></i></button>
 					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.placeholder}" aria-label="{_fcadmin.layout.quickbar.chat.placeholder}">
 					<button type="submit" class="btn btn-icon btn-sm btn-primary" title="{_fcadmin.layout.quickbar.chat.send}"><i class="fa-regular fa-paper-plane"></i></button>
 				</form>

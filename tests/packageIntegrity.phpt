@@ -27,6 +27,8 @@ const NENACITATELNY_NAMESPACE = 'ADT\FancyAdmin\Migrations\\';
  * tabletu) - bez nej se nacist nedaji. S nainstalovanym balickem se kontroluji jako ostatni.
  */
 const TYPY_BIOMETRICKEHO_PODPISU = [
+	'ADT\FancyAdmin\Model\Entities\DocumentSignature',
+	'ADT\FancyAdmin\Model\Entities\DocumentSignatureTrait',
 	'ADT\FancyAdmin\Model\Entities\SignedDocument',
 	'ADT\FancyAdmin\Model\Entities\SignedDocumentTrait',
 	'ADT\FancyAdmin\Model\Tablet\TabletSigningHandler',

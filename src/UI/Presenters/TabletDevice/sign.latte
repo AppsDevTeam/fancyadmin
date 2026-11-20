@@ -1,37 +1,120 @@
-{define title}{$document->title}{/define}
+{define title}{$request->getTitle()}{/define}
 
 {*
-  Podpis dokumentu na tabletu (TabletDevicePresenterTrait::actionSign). Stránku otevře jen
+  Podpis dokumentů na tabletu (TabletDevicePresenterTrait::actionSign). Stránku otevře jen
   spárovaný tablet se svou otevřenou žádostí o podpis; po nečinnosti se tablet vrátí na čekací
   stránku (tablet.js) a žádost se tím zruší - i po probuzení tabletu, a když mezitím přišel další
-  dokument. Náhled dokumentu a plátno podpisu: tabletSign.js.
+  dokument.
+
+  Víc dokumentů: vlevo navigace s náhledy (na úzkém displeji lišta nahoře), vpravo dokument.
+  Místa pro podpis jsou v náhledu PDF zvýrazněná, klepnutí otevře okno s plátnem. Podpis se
+  odesílá najednou, až jsou podepsaná všechna místa všech dokumentů (tabletSign.js).
 *}
 {block content}
 
 <div data-tablet-idle-return="{link default}" data-tablet-idle-seconds="{$idleSeconds}"></div>
 
-<div class="tablet-sign">
-	<h1>{$document->title}</h1>
 
-	<div n:if="$document->hasPdf()" data-tablet-document="{link document}" data-pdf-worker="{$tabletAssets['pdf.worker.mjs']}">
-		<p class="tablet-document-loading" data-tablet-document-loading><span class="tablet-spinner"></span></p>
-	</div>
-	<div n:if="$document->text !== null" class="tablet-document-text">{$document->text}</div>
-
-	{if $document->error !== null}
-		<p class="tablet-alert">{$document->error}</p>
+<div n:class="tablet-sign, count($documents) > 1 ? has-nav" data-tablet-sign="{Nette\Utils\Json::encode($signTexts)}">
+	{if $errors}
+		<h1>{$request->getTitle()}</h1>
+		<p n:foreach="$errors as $error" class="tablet-alert">{$error}</p>
 		<p class="tablet-sign-back"><a href="{link default}" class="tablet-btn">{_fcadmin.tablets.sign.doneBack}</a></p>
 	{else}
-	<form n:name="tabletSignForm" class="tablet-sign-form" data-tablet-sign-form>
-		<p n:foreach="$form->getOwnErrors() as $error" class="tablet-alert">{$error}</p>
+		<nav n:if="count($documents) > 1" class="tablet-sign-nav" aria-label="{_fcadmin.tablets.sign.documents}">
+			<p class="tablet-sign-nav-title">{_fcadmin.tablets.sign.documents}</p>
+			<button n:foreach="$documents as $key => $document" type="button" class="tablet-sign-nav-item"
+				data-tablet-sign-nav="{$key}" aria-current="{$iterator->first ? 'true' : 'false'}">
+				<span class="tablet-sign-thumb" data-tablet-sign-thumb>
+					<svg n:if="!$document->hasPdf()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+				</span>
+				<span class="tablet-sign-nav-text">
+					<span class="tablet-sign-nav-name">{$document->title}</span>
+					<span class="tablet-sign-nav-state" data-tablet-sign-nav-state></span>
+				</span>
+			</button>
+		</nav>
 
-		<span class="tablet-sign-label">{_fcadmin.tablets.sign.label}</span>
-		{input signature}
-		<p class="tablet-error" n:foreach="$form['signature']->getErrors() as $error">{$error}</p>
-		<p class="tablet-error" data-tablet-sign-required hidden>{_fcadmin.tablets.sign.required}</p>
+		<div class="tablet-sign-documents">
+			<section n:foreach="$documents as $key => $document" class="tablet-sign-document"
+				data-tablet-sign-document="{$key}"
+				data-tablet-sign-places="{Nette\Utils\Json::encode($places[$key])}"
+				data-tablet-sign-signer="{$document->signerName}"
+				n:attr="hidden => !$iterator->first">
+				<h1>{$document->title}</h1>
 
-		<button n:name="submit" class="tablet-btn tablet-btn-primary tablet-btn-lg">{_fcadmin.tablets.sign.submit}</button>
-	</form>
+				<div n:if="$document->hasPdf()" class="tablet-document" data-tablet-document="{link document, key => $key}" data-pdf-worker="{$tabletAssets['pdf.worker.mjs']}">
+					<p class="tablet-document-loading" data-tablet-document-loading><span class="tablet-spinner"></span></p>
+				</div>
+				<div n:if="$document->text !== null" class="tablet-document-text">{$document->text}</div>
+
+				{* dokument bez označených míst: jedno místo pod náhledem *}
+				<div class="tablet-sign-standalone" data-tablet-sign-standalone></div>
+			</section>
+		</div>
+
+		<form n:name="tabletSignForm" class="tablet-sign-bar" data-tablet-sign-form autocomplete="off">
+			<p n:foreach="$form->getOwnErrors() as $error" class="tablet-alert">{$error}</p>
+			<p class="tablet-error" data-tablet-sign-required hidden>{_fcadmin.tablets.sign.incomplete}</p>
+			<input n:name="signing" data-tablet-sign-input>
+
+			<div class="tablet-sign-bar-row">
+				<span class="tablet-sign-progress" data-tablet-sign-progress></span>
+
+				{* přiblížení dokumentu - klepnutí na procenta vrátí 100 % *}
+				<div class="tablet-sign-zoom" role="group" aria-label="{_fcadmin.tablets.sign.zoom}">
+					<button type="button" class="tablet-btn tablet-btn-ghost tablet-btn-icon" data-tablet-sign-zoom="-1" aria-label="{_fcadmin.tablets.sign.zoomOut}">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>
+					</button>
+					<button type="button" class="tablet-sign-zoom-value" data-tablet-sign-zoom="0" aria-label="{_fcadmin.tablets.sign.zoomReset}">100 %</button>
+					<button type="button" class="tablet-btn tablet-btn-ghost tablet-btn-icon" data-tablet-sign-zoom="1" aria-label="{_fcadmin.tablets.sign.zoomIn}">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg>
+					</button>
+				</div>
+
+				<div class="tablet-sign-bar-actions">
+					<button type="button" class="tablet-btn tablet-btn-soft" data-tablet-sign-next>{_fcadmin.tablets.sign.next}</button>
+					<button n:name="submit" class="tablet-btn tablet-btn-primary" data-tablet-sign-submit>{_fcadmin.tablets.sign.submit}</button>
+				</div>
+			</div>
+		</form>
+
+		<dialog class="tablet-sign-modal" data-tablet-sign-modal data-mode="draw" tabindex="-1">
+			<div class="tablet-sign-modal-header">
+				<div>
+					<h2 data-tablet-sign-modal-title></h2>
+					<p class="tablet-sign-modal-hint" data-tablet-sign-modal-hint></p>
+				</div>
+				<button type="button" class="tablet-btn tablet-btn-ghost tablet-btn-icon" data-tablet-sign-cancel aria-label="{_fcadmin.tablets.sign.back}">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+				</button>
+			</div>
+
+			<div class="tablet-sign-pad">
+				<canvas class="tablet-sign-canvas" data-tablet-sign-canvas></canvas>
+				<img class="tablet-sign-preview" data-tablet-sign-preview alt="">
+				<div class="tablet-sign-pad-line" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+				</div>
+				<span class="tablet-sign-pad-caption" data-tablet-sign-caption></span>
+				<input type="hidden" data-tablet-sign-image>
+				<input type="hidden" data-tablet-sign-biometrics>
+			</div>
+
+			<div class="tablet-sign-modal-footer">
+				<button type="button" class="tablet-btn tablet-btn-ghost tablet-sign-when-draw" data-tablet-sign-restart>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>
+					{_fcadmin.tablets.sign.restart}
+				</button>
+				<button type="button" class="tablet-btn tablet-btn-ghost tablet-sign-when-preview" data-tablet-sign-redraw>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M14.5 4.5l3 3L9 16H6v-3z"/></svg>
+					{_fcadmin.tablets.sign.redraw}
+				</button>
+				<span class="tablet-sign-modal-spacer"></span>
+				<button type="button" class="tablet-btn tablet-btn-soft" data-tablet-sign-cancel>{_fcadmin.tablets.sign.back}</button>
+				<button type="button" class="tablet-btn tablet-btn-primary" data-tablet-sign-use>{_fcadmin.tablets.sign.use}</button>
+			</div>
+		</dialog>
 	{/if}
 </div>
 

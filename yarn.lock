@@ -888,7 +888,7 @@ __metadata:
     "@popperjs/core": ^2.11.8
     "@regru/jquery-menu-aim": ^1.0.0
     "@rollup/plugin-inject": ^5.0.5
-    adt-js-components: ^3.4.0
+    adt-js-components: ^3.5.0
     autoprefixer: ^10.4.20
     bootstrap: ^5.3.3
     chart.js: ^4.4.4
@@ -911,9 +911,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"adt-js-components@npm:^3.4.0":
-  version: 3.4.0
-  resolution: "adt-js-components@npm:3.4.0"
+"adt-js-components@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "adt-js-components@npm:3.5.0"
   dependencies:
     "@googlemaps/js-api-loader": ^1.16.10
     "@here/flexpolyline": ^0.1.0
@@ -927,7 +927,7 @@ __metadata:
     tom-select: ^2.7.0
   peerDependencies:
     naja: ^3.3.3
-  checksum: 31c45c7463501b21331b66a2cbe34313e85f0cbd85b59910a1b3b07304b49e8312729804cfc2184fb089b388247e88fa02908505f21e5bae33cefa60f7790525
+  checksum: 230258720cceb09bc41718772ed147eebbd79b4a2fd059766c014c16dd0e2184dddeedaa9affa29085e03d34e85ae50ffe524f8d7407f1719774ce49fbc5724d
   languageName: node
   linkType: hard
 
