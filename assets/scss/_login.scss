@@ -180,12 +180,21 @@ $login-lost-password-offset: 6px;
 	}
 
 	// Odkrytí hesla (PasswordRevealInput): tlačítko sedí uvnitř inputu, aby si
-	// pilulkový login input udržel tvar. Pozicuje se od vršku inputu, ne od spodku
-	// .input-group - ta roste o chybovou hlášku a ikona by se posunula dolů.
+	// pilulkový login input udržel tvar. Input i tlačítko leží v téže buňce mřížky
+	// a tlačítko se v ní centruje, takže nezáleží na výšce inputu ani tlačítka;
+	// případná chybová hláška uvnitř .input-group spadne do dalšího řádku.
 	.input-group:has(> .toggle-password-input) {
-		position: relative;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 
-		> .toggle-password-input {
+		> .toggle-password-input,
+		> .toggle-password-reveal {
+			grid-area: 1 / 1;
+		}
+
+		// .form-control kvůli specificitě: obecné „div:has(> .input-group > .form-control)
+		// .form-control { padding }“ výše by jinak padding-right přebilo a text by vjel pod ikonu
+		> .form-control.toggle-password-input {
 			padding-right: calc(2 * #{$padding-input} + 20px);
 			border-radius: var(--bs-border-radius-lg) !important;
 
@@ -197,15 +206,16 @@ $login-lost-password-offset: 6px;
 		}
 
 		> .toggle-password-reveal {
-			position: absolute;
-			top: $padding-input;
-			right: $padding-input;
-			z-index: 5;
+			align-self: center;
+			justify-self: end;
+			z-index: 6; // nad inputem, který má při fokusu z-index 5 (bootstrap .input-group)
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			width: 20px;
 			height: 1.5em;
+			min-height: 0; // .btn má min-height: var(--control-height) - tlačítko by bylo 40 px vysoké
+			margin: 0 $padding-input 0 0;
 			padding: 0;
 			background: none;
 			border: none;
@@ -215,6 +225,14 @@ $login-lost-password-offset: 6px;
 			&:hover,
 			&:focus-visible {
 				opacity: 1;
+			}
+
+			// Tlačítko je v pořadí Tab (adt/nette-forms-components) - fokus z klávesnice musí být vidět.
+			// !important kvůli „.input-group > button.btn { border-radius: 0 … !important }“ v _theme.scss
+			&:focus-visible {
+				outline: 2px solid currentColor;
+				outline-offset: 2px;
+				border-radius: 4px !important;
 			}
 		}
 	}
