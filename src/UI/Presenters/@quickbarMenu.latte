@@ -80,7 +80,8 @@
 					<input class="form-check-input" type="checkbox" tabindex="-1" aria-hidden="true">
 				</span>
 			</button>
-			<a n:href=":Portal:Sign:out" class="quickbar-menu-sub-item quickbar-menu-sub-item--danger">
+			{* Odhlášení načte celou stránku - ajax by překreslil jen body a rychlá lišta i chat by zůstaly *}
+			<a n:href=":Portal:Sign:out" class="quickbar-menu-sub-item quickbar-menu-sub-item--danger noajax">
 				<i class="fa-solid fa-right-to-bracket"></i>{_fcadmin.layout.sideMenu.user.logout}
 			</a>
 		</div>
