@@ -283,7 +283,7 @@ function render() {
 		button.classList.toggle('btn-glass', !active);
 		button.setAttribute('aria-expanded', active ? 'true' : 'false');
 	});
-	document.querySelectorAll('[data-quickbar-pin]').forEach((button) => {
+	document.querySelectorAll('[data-quickbar-column-pin]').forEach((button) => {
 		button.classList.toggle('btn-primary', state.columnPinned);
 		button.classList.toggle('btn-glass', !state.columnPinned);
 		button.setAttribute('aria-pressed', state.columnPinned ? 'true' : 'false');
@@ -2711,7 +2711,7 @@ document.addEventListener('click', (e) => {
 		close();
 		return;
 	}
-	if (target.closest('[data-quickbar-pin]')) {
+	if (target.closest('[data-quickbar-column-pin]')) {
 		toggleColumnPin();
 		return;
 	}

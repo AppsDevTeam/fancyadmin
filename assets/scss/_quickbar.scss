@@ -523,7 +523,7 @@ body {
 
 // Připnout jde jen sloupec, pod md je panel nad lištou s překryvem
 @include media-breakpoint-down(md) {
-	.quickbar-panel .quickbar-pin {
+	.quickbar-panel .quickbar-column-pin {
 		display: none;
 	}
 }

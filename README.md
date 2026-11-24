@@ -3214,7 +3214,7 @@ vloží sám), styly `assets/scss/_quickbar.scss` (součást `app.scss`), chová
 Otevřený panel (kromě hledání) zůstane otevřený i na další stránce (i bez ajaxu) a po obnovení (F5) -
 AI i s otevřenou konverzací a režimem celé plochy, bez přesunu kurzoru do panelu. Stav drží
 `sessionStorage` záložky (ukládá se při `pagehide`), zavřený panel zůstane zavřený.
-**Připnutí** - připínáček v hlavičce panelu (`[data-quickbar-pin]`, jen od `md`, kde je panel sloupec)
+**Připnutí** - připínáček v hlavičce panelu (`[data-quickbar-column-pin]`, jen od `md`, kde je panel sloupec)
 nechá sloupec otevřený i po kliku na odkaz v panelu: výsledek hledání, notifikaci nebo odkaz ve
 zprávě chatu. Hledání tak zůstane i s dotazem a výsledky a dá se procházet výsledek po výsledku
 (šipky a Enter). Připnutí platí pro všechny panely a pamatuje si ho `localStorage`
