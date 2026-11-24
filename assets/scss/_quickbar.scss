@@ -26,8 +26,10 @@ body {
 	--quickbar-width: 440px;
 	--quickbar-width-open: 560px;
 	--quickbar-bottom: 20px;
-	// Panel 10 px nad lištou: 8 + 40 + 8 obsah, 2 rámeček
-	--quickbar-panel-bottom: calc(var(--quickbar-bottom) + 68px);
+	// 8 + 40 + 8 obsah, 2 rámeček
+	--quickbar-height: 58px;
+	// Panel 10 px nad lištou
+	--quickbar-panel-bottom: calc(var(--quickbar-bottom) + var(--quickbar-height) + 10px);
 }
 
 // Na mobilu lišta i okna 16 px od krajů; spodní menu fancyadminu se s lištou nevykresluje
@@ -35,16 +37,16 @@ body {
 	body {
 		--quickbar-width: calc(100vw - 32px);
 		--quickbar-width-open: var(--quickbar-width);
-		// Lišta 46 px (4 + 36 + 4 obsah, 2 rámeček), panel opět 10 px nad ní
-		--quickbar-panel-bottom: calc(var(--quickbar-bottom) + 56px);
+		// 4 + 36 + 4 obsah, 2 rámeček
+		--quickbar-height: 46px;
 	}
 }
 
 // Lišta jen s Menu (.quickbar--menu-only) je vidět jen na mobilu, rezervy pod ní tedy taky
 @mixin quickbar-reserve($bar) {
-	// Rezerva, aby lišta nepřekryla konec stránky („Načíst další")
+	// Rezerva, aby lišta nepřekryla konec stránky („Načíst další"); konec obsahu 16 px nad lištou
 	body:has(#{$bar}) .container-main {
-		padding-bottom: 120px;
+		padding-bottom: calc(var(--quickbar-bottom) + var(--quickbar-height) + 16px);
 	}
 
 	// Flash zprávy nad lištou, jinak je překryje
