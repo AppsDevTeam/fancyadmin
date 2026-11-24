@@ -92,7 +92,8 @@ test('text se prelozi s parametry a escapuje', function () {
 	$html = renderNotice(new PersistentNotice('app.notice.<b>', ['time' => '14:30']));
 
 	Assert::contains('class="persistent-notice"', $html);
-	Assert::contains('<span class="persistent-notice-text">[app.notice.&lt;b&gt;] &#123;"time":"14:30"}</span>', $html);
+	// Latte od 3.1.10 neescapuje `{` v textu, závorka se proto porovnává bez ohledu na verzi
+	Assert::true((bool) preg_match('~<span class="persistent-notice-text">\[app\.notice\.&lt;b&gt;\] (\{|&#123;)"time":"14:30"}</span>~', $html));
 	Assert::notContains('<b>', $html);
 	Assert::notContains('<a', $html);
 });
