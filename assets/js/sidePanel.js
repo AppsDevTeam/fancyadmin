@@ -1,3 +1,5 @@
+import { showConfirm } from './dialog';
+
 $(function () {
 	const panels = {
 		'snippet--sidePanel': { isDirty: false },
@@ -21,9 +23,21 @@ $(function () {
 
 	function tryClose(panelId) {
 		if (!panelId || !panels[panelId]) return;
-		const confirmMessage = $('#' + panelId + ' .side-panel-config').data('close-confirm') || 'Close without saving?';
-		if (panels[panelId].isDirty && !confirm(confirmMessage)) return;
-		closeSidePanel(panelId);
+		if (!panels[panelId].isDirty) {
+			closeSidePanel(panelId);
+			return;
+		}
+
+		// Primarni je zustat v uprave - zahozeni rozdelane prace je ta mene obvykla volba.
+		const config = $('#' + panelId + ' .side-panel-config').data();
+		showConfirm({
+			title: config.closeConfirm || 'Close without saving?',
+			text: config.closeConfirmText || null,
+			confirm: config.closeConfirmDiscard || null,
+			cancel: config.closeConfirmContinue || null,
+			primary: 'cancel',
+			onConfirm: () => closeSidePanel(panelId),
+		});
 	}
 
 	function getFormPanelId(settings) {

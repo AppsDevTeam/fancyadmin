@@ -139,12 +139,6 @@ $(document).on('click', '.click-line-detail-no-link ' + treeRowSelector, (e) => 
 	openTreeRowDetail(e, ':has(a, button, input, select)');
 });
 
-$(document).on('click', 'a.link-confirmation', function (e) {
-	if (!confirm($(this).data('confirm-text'))){
-		event.preventDefault();
-	}
-});
-
 $(document).on('click', 'tbody tr:not(.row-item-detail) td:not(.col-action)', function (event) {
 	if (event.target.tagName.toLowerCase() === 'a' || $(event.target).hasClass('menu-open-button')) {
 		return;  // Klik byl na odkaz, takže nevyvoláváme žádnou akci.

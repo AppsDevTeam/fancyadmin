@@ -72,6 +72,10 @@ $.nette.ext('live').after(function($el) {
 // Modular vendor JS files
 //
 import 'bootstrap';
+
+// Modal misto nativnich confirm()/alert() a potvrzovani odkazu (link-confirmation,
+// data-datagrid-confirm).
+import './dialog';
 // Alternatively, you may import plugins individually as needed
 // If you chose to import plugins individually, you must also install exports-loader
 // import 'bootstrap/js/dist/util';
