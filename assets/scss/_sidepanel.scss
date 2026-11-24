@@ -608,8 +608,8 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 
 	// Top-level has-submenu itemy - popover chování obdobné jako u skupin.
 	// Wrapper bez paddingu (padding jde na .item-header). Submenu se ve sbaleném
-	// režimu ukazuje jako popover vpravo od menu při hoveru (position: fixed +
-	// --item-top nastavené v JS z .item.offsetTop).
+	// režimu ukazuje jako popover vpravo od menu (position: fixed, --item-top a
+	// otevření nastavuje sideMenu.js).
 	.menu-body > .item.has-submenu {
 		padding: 0;
 		gap: 0;
@@ -626,16 +626,6 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			box-shadow: var(--menu-wide-popover-shadow);
 			padding: 8px;
 			z-index: 1500;
-
-			// Bridge překlene mezeru mezi item a popoverem (jen na výšku itemu, i když je popover posunutý nahoru)
-			&::before {
-				content: '';
-				position: absolute;
-				top: var(--popover-bridge-top, 0);
-				height: var(--menu-wide-collapsed-item-height);
-				left: calc(-1 * var(--side-panel-width));
-				width: var(--side-panel-width);
-			}
 
 			// V popoveru chceme submenu-heading vidět (label rodičovské položky)
 			.submenu-heading {
@@ -679,10 +669,9 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 			}
 		}
 
-		// Popover se otevírá na hover; .open z JS (rozbalený režim) se ve sbaleném ignoruje
-		&:hover .submenu,
-		&.menu-hover-hold .submenu,
-		.submenu:hover {
+		// Ne :hover - šikmý přejezd myši do popoveru přes jiné položky by ho přepnul (sideMenu.js);
+		// .open z rozbaleného režimu se ve sbaleném ignoruje
+		&.menu-popover-open .submenu {
 			display: block;
 		}
 	}
@@ -691,9 +680,11 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		cursor: default;
 	}
 
-	// hover na skupině / top-level itemu = podbarvení + (na skupině) otevření popoveru
-	.group:hover .group-heading,
-	.menu-body > .item:hover {
+	// Podbarvení položky s popoverem jde za otevřeným popoverem, ne za myší, která jen přejíždí
+	.group.menu-popover-open .group-heading,
+	.menu-body > .item.has-submenu.menu-popover-open:not(.active),
+	// :where - specificita jako dřív, jinak by hover přebil podbarvení aktivní položky
+	.menu-body > .item:where(:not(.has-submenu)):hover {
 		background: var(--menu-wide-hover-bg);
 		color: var(--menu-wide-hover-text);
 
@@ -714,7 +705,7 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 
 	// Tady rodič podsvícený zůstat má i při přejezdu do popoveru (na rozdíl od
 	// rozbaleného režimu výš) - popover je vedle menu a jinak není vidět, čí je
-	.menu-body > .item.has-submenu:not(.active):hover > .item-header {
+	.menu-body > .item.has-submenu.menu-popover-open:not(.active) > .item-header {
 		background: var(--menu-wide-hover-bg);
 		color: var(--menu-wide-hover-text);
 
@@ -745,11 +736,10 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		}
 	}
 
-	// === Popover s položkami vpravo od skupiny (na hover) ===
+	// === Popover s položkami vpravo od skupiny ===
 	// position: fixed + z-index 1500 aby popover překryl vendor .container-main.
-	// top se sync s Y skupiny přes CSS proměnnou --group-top (JS z .group.offsetTop),
-	// jinak by se popover ukázal pod heading (static position). Neviditelný bridge ::before
-	// překlene mezeru mezi sidebarem a popoverem, aby při přejezdu myši .group:hover nezmizel.
+	// top se sync s Y skupiny přes CSS proměnnou --group-top (sideMenu.js při otevření),
+	// jinak by se popover ukázal pod heading (static position).
 	.group-items {
 		display: none;
 		position: fixed;
@@ -762,30 +752,16 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		box-shadow: var(--menu-wide-popover-shadow);
 		padding: 8px;
 		z-index: 1500;
-
-		// Bridge překlene mezeru mezi group heading a popoverem. Musí být jen na výšku
-		// heading, NE přes celou výšku popoveru - jinak by kryl sidebar oblast nižších
-		// skupin a blokoval jejich hover.
-		&::before {
-			content: '';
-			position: absolute;
-			top: var(--popover-bridge-top, 0);
-			height: var(--menu-wide-collapsed-item-height);
-			left: calc(-1 * var(--side-panel-width));
-			width: var(--side-panel-width);
-		}
 	}
 
-	// Popover vyšší než okno (sideMenu.js / popoverPosition.js); posuvník ořízne i bridge, přejezd myší drží menu-hover-hold
+	// Popover vyšší než okno (sideMenu.js / popoverPosition.js)
 	.group-items.popover-scrollable,
 	.menu-body > .item.has-submenu .submenu.popover-scrollable {
 		max-height: calc(100dvh - 16px);
 		overflow-y: auto;
 	}
 
-	.group:hover .group-items,
-	.group.menu-hover-hold .group-items,
-	.group-items:hover {
+	.group.menu-popover-open .group-items {
 		display: block;
 	}
 

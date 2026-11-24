@@ -1,9 +1,9 @@
 import naja from 'naja';
 import { onBeforeSnippetUpdate, onContentLoaded } from './naja';
-import { fitPopover } from './popoverPosition';
+import { fitPopover, isAimingAt } from './popoverPosition';
 // Boční menu (wide layout) - toggle sbaleno/rozbaleno, toggleable skupiny, otevírání has-submenu itemů.
-// Stav se persistuje v localStorage. V sbaleném režimu se popovery skupin polohují přes CSS
-// proměnnou --group-top (fixed position potřebuje inline top odpovídající Y skupiny).
+// Stav se persistuje v localStorage. V sbaleném režimu otevírá popovery skupin a položek s podmenu JS
+// (třída menu-popover-open) a polohuje je přes CSS proměnnou --group-top / --item-top.
 
 const STORAGE_KEY = 'fancyadmin-side-menu';
 
@@ -76,41 +76,7 @@ function applyState() {
 		}
 		$(this).toggleClass('open', isOpen);
 	});
-
-	positionPopovers();
 }
-
-// Popover je position: fixed → potřebuje inline top nastavený podle Y kotvy (heading skupiny
-// nebo top-level has-submenu itemu), jinak by šel na top: 0. Nastavujeme CSS proměnnou
-// --group-top / --item-top na kotvu, popover ji čte v top:.
-function positionPopovers() {
-	$('.side-panel-wide .group').each(function () {
-		const top = this.offsetTop;
-		this.style.setProperty('--group-top', top + 'px');
-	});
-	$('.side-panel-wide .menu-body > .item.has-submenu').each(function () {
-		const top = this.offsetTop;
-		this.style.setProperty('--item-top', top + 'px');
-	});
-}
-
-// Výšku popoveru jde změřit až při otevření (do té doby má display: none)
-$(document).on('mouseenter', '.side-panel-wide .menu-body > .item.has-submenu, .side-panel-wide .group', function () {
-	if (!document.body.classList.contains('menu-collapsed')) {
-		return;
-	}
-
-	const isGroup = this.classList.contains('group');
-	const popover = this.querySelector(isGroup ? ':scope > .group-items' : ':scope > .submenu');
-	if (!popover) {
-		return;
-	}
-
-	const { top, bridgeTop, scrollable } = fitPopover(this.offsetTop, popover.scrollHeight, window.innerHeight);
-	this.style.setProperty(isGroup ? '--group-top' : '--item-top', top + 'px');
-	this.style.setProperty('--popover-bridge-top', bridgeTop + 'px');
-	popover.classList.toggle('popover-scrollable', scrollable);
-});
 
 $(document).on('click', '.side-panel-toggle', function () {
 	// Přepnutí šířky menu mění layout skupin a podmenu - nemá se animovat
@@ -169,43 +135,107 @@ $(document).on('click', '.side-panel-wide .item.has-submenu > .item-header', fun
 	applyState();
 });
 
-const HOVER_HOLD_CLASS = 'menu-hover-hold';
-const HOVER_HOLD_MS = 400;
-const HOVER_HOLD_OWNERS = '.side-panel-wide .menu-body > .item.has-submenu, .side-panel-wide .group';
-let hoverHoldTimer = null;
+// Popover sbaleného menu otevírá JS, ne :hover: myš jedoucí šikmo do otevřeného popoveru přejede
+// cestou jiné položky a ty ho nesmí přepnout (princip jquery-menu-aim, ale k opravdové poloze popoveru).
+const POPOVER_OPEN_CLASS = 'menu-popover-open';
+const POPOVER_OWNERS = '.side-panel-wide .menu-body > .item.has-submenu, .side-panel-wide .group';
+// Jak dlouho smí myš stát nad jinou položkou, než se popover přepne
+const AIM_DELAY_MS = 300;
+const LEAVE_DELAY_MS = 400;
+const TRACKED_POSITIONS = 3;
 
-function releaseHoverHold(except = null) {
-	document.querySelectorAll('.' + HOVER_HOLD_CLASS).forEach(element => {
-		if (element !== except) {
-			element.classList.remove(HOVER_HOLD_CLASS);
+let openOwner = null;
+let hoveredOwner = null;
+let aimTimer = null;
+let leaveTimer = null;
+const mousePositions = [];
+
+function popoverOf(owner) {
+	return owner.querySelector(owner.classList.contains('group') ? ':scope > .group-items' : ':scope > .submenu');
+}
+
+// Výšku popoveru jde změřit až otevřený; kotva podle okna, ne offsetTop - menu při nižším okně roluje
+function positionPopover(owner) {
+	const popover = popoverOf(owner);
+	if (!popover) {
+		return;
+	}
+
+	const { top, scrollable } = fitPopover(owner.getBoundingClientRect().top, popover.scrollHeight, window.innerHeight);
+	owner.style.setProperty(owner.classList.contains('group') ? '--group-top' : '--item-top', top + 'px');
+	popover.classList.toggle('popover-scrollable', scrollable);
+}
+
+function openPopover(owner) {
+	clearTimeout(aimTimer);
+	aimTimer = null;
+	document.querySelectorAll('.' + POPOVER_OPEN_CLASS).forEach(element => {
+		if (element !== owner) {
+			element.classList.remove(POPOVER_OPEN_CLASS);
 		}
 	});
+	openOwner = owner;
+
+	if (owner && !owner.classList.contains(POPOVER_OPEN_CLASS)) {
+		owner.classList.add(POPOVER_OPEN_CLASS);
+		positionPopover(owner);
+	}
+}
+
+function isAimingAtOpenPopover(position) {
+	if (!openOwner?.isConnected || !mousePositions.length) {
+		return false;
+	}
+
+	const popover = popoverOf(openOwner);
+
+	return !!popover && isAimingAt(mousePositions[0], position, popover.getBoundingClientRect());
+}
+
+function restartAimTimer() {
+	clearTimeout(aimTimer);
+	aimTimer = setTimeout(() => openPopover(hoveredOwner), AIM_DELAY_MS);
 }
 
 document.addEventListener('mouseover', function (event) {
-	const owner = event.target.closest(HOVER_HOLD_OWNERS);
+	if (!event.target.closest('.side-panel-wide') || !document.body.classList.contains('menu-collapsed')) {
+		return;
+	}
 
-	if (owner) {
-		clearTimeout(hoverHoldTimer);
-		releaseHoverHold(owner);
-	} else if (event.target.closest('.side-panel-wide')) {
-		// Hold pouští i prázdné místo pod položkami a footer, jinak by popover
-		// poslední položky zůstal viset při sjetí myši dolů mimo položky
-		clearTimeout(hoverHoldTimer);
-		releaseHoverHold();
+	clearTimeout(leaveTimer);
+	// Mimo položky (prázdné místo pod nimi, patička) = null, popover se zavře
+	hoveredOwner = event.target.closest(POPOVER_OWNERS);
+
+	if (hoveredOwner !== openOwner && isAimingAtOpenPopover({ x: event.clientX, y: event.clientY })) {
+		restartAimTimer();
+	} else {
+		openPopover(hoveredOwner);
+	}
+});
+
+document.addEventListener('mousemove', function (event) {
+	const position = { x: event.clientX, y: event.clientY };
+
+	if (aimTimer !== null) {
+		if (isAimingAtOpenPopover(position)) {
+			restartAimTimer();
+		} else {
+			openPopover(hoveredOwner);
+		}
+	}
+
+	mousePositions.push(position);
+	if (mousePositions.length > TRACKED_POSITIONS) {
+		mousePositions.shift();
 	}
 });
 
 document.addEventListener('mouseout', function (event) {
-	const owner = event.target.closest(HOVER_HOLD_OWNERS);
-
-	if (owner && !owner.contains(event.relatedTarget)) {
-		owner.classList.add(HOVER_HOLD_CLASS);
-	}
-
 	if (event.target.closest('.side-panel-wide') && !event.relatedTarget?.closest?.('.side-panel-wide')) {
-		clearTimeout(hoverHoldTimer);
-		hoverHoldTimer = setTimeout(() => releaseHoverHold(), HOVER_HOLD_MS);
+		clearTimeout(aimTimer);
+		aimTimer = null;
+		clearTimeout(leaveTimer);
+		leaveTimer = setTimeout(() => openPopover(null), LEAVE_DELAY_MS);
 	}
 });
 
@@ -213,9 +243,10 @@ $(function () {
 	applyState();
 });
 
-// při resize okna přepočítáme pozice popoverů (šířka sidebaru by mohla ovlivnit offsety)
 $(window).on('resize', function () {
-	positionPopovers();
+	if (openOwner?.isConnected) {
+		positionPopover(openOwner);
+	}
 });
 
 onContentLoaded(function () {
