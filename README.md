@@ -1161,6 +1161,14 @@ Formuláře stránky jako karty pod sebou s jednou otevřenou sekcí (šablony e
 blok `accordionSection` pro `{embed}`, otevření sekce s chybou, zapamatování otevřené sekce, `?section=`
 a odznak napojený na zaškrtávátko. Návod v `docs/accordion.md`.
 
+### Tooltip (`tooltip.js`, `_tooltip.scss`)
+
+Bootstrapový tooltip přestylovaný do tiché grafitové bubliny (bez barev značky), s nadpisem (`.tooltip-title`)
+a klávesovou zkratkou (`kbd`). Stačí `data-bs-toggle="tooltip"` a `data-bs-title`, nic se neinicializuje
+(i v ajaxových snippetech). Ukáže se po 400 ms najetí myší nebo fokusu z klávesnice, mezi sousedy hned,
+zavře ho i Esc, na dotyku se neukazuje.
+Návod v `docs/tooltip.md`.
+
 ### Widgety (`WidgetGridControl`, trait `Dashboard`)
 
 Mřížka widgetů - velké číslo (`addStat`), řada dlaždic (`addTiles`), tabulka (`addTable`), graf Chart.js
