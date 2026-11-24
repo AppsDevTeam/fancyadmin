@@ -187,13 +187,14 @@ test('tabulka formatuje ciselne sloupce, Html nechava a prazdna hlasi prazdna da
 		'sales' => new WidgetTableColumn('Tržba', numeric: true),
 	], fn() => [
 		['period' => '<i>Dnes</i>', 'orders' => 1200, 'sales' => Html::el('strong')->setText('5 000 Kč')],
-	])->setDescription('Bez stornovaných');
+	])->setDescription('Bez <b>stornovaných</b>');
 	$widgetGrid->addTable('empty', 'Prázdná', ['a' => 'A'], fn() => []);
 
 	$html = renderWidgetGrid($widgetGrid);
 
 	Assert::contains('<h2 class="fa-widget-title">Prodeje</h2>', $html);
-	Assert::contains('<p class="fa-widget-description">Bez stornovaných</p>', $html);
+	Assert::contains('data-bs-toggle="tooltip" data-bs-title="Bez &amp;lt;b&amp;gt;stornovaných&amp;lt;/b&amp;gt;" aria-label="Bez &lt;b&gt;stornovaných&lt;/b&gt;"', $html);
+	Assert::notContains('fa-widget-description', $html);
 	Assert::contains('<th class="text-end" scope="col">Objednávky</th>', $html);
 	Assert::contains('<td>&lt;i&gt;Dnes&lt;/i&gt;</td>', $html);
 	Assert::contains('<td class="text-end text-nowrap">1' . "\u{a0}" . '200</td>', $html);

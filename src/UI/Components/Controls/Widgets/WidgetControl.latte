@@ -16,8 +16,12 @@
 	<div n:if="$_title !== null || $widget->hasPeriods()" class="fa-widget-header">
 		<div n:if="$_title !== null" class="fa-widget-heading">
 			<h2 class="fa-widget-title">{$_title}</h2>
-			<p n:if="$widget->getDescription()" class="fa-widget-description">{$widget->getDescription()}</p>
 		</div>
+		{* Popis je nápověda k widgetu, ne obsah - tooltip ho na dotyku neukáže, nesmí v něm být nic nepostradatelného *}
+		<button n:if="$widget->getDescription()" type="button" class="btn btn-icon btn-sm fa-widget-hint"
+			data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}" aria-label="{$widget->getDescription()}">
+			<i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+		</button>
 		<form n:if="$widget->hasPeriods()" class="fa-widgets-period" method="get" action="{$control->getPeriodFormAction()}">
 			<input n:foreach="$control->getPeriodFormFields() as $_name => $_value" type="hidden" name="{$_name}" value="{$_value}">
 			<select name="{$control->getPeriodParameterName()}" class="form-select form-select-sm" aria-label="{_fcadmin.widgets.period.label}"

@@ -91,10 +91,16 @@
 	color: var(--fa-heading, var(--fa-text));
 }
 
-.fa-widget-description {
-	margin: 4px 0 0;
-	font-size: .875rem;
+// Otazník s popisem widgetu vpravo v hlavičce, za výběrem období
+.fa-widget-hint {
+	order: 1;
+	margin: -4px -8px -4px 0;
 	color: var(--fa-text-muted);
+
+	&:hover,
+	&:focus-visible {
+		color: var(--fa-text);
+	}
 }
 
 .fa-widgets-stat,

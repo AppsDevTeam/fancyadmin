@@ -126,7 +126,9 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
 - `setColumns(1-6)`, výchozí 3. Pod zlomem `lg` má mřížka nejvýš 2 sloupce, pod `md` jeden.
 - `setSpan(n)` - kolik sloupců widget zabere; víc, než má mřížka, se ořízne (pod `lg` na 2).
 - `setPosition(n)` - pořadí; widgety se stejnou pozicí (výchozí 0) zůstanou v pořadí přidání.
-- `setTitle()`, `setDescription()` - hlavička widgetu. Jméno widgetu (`data-widget`) je zároveň jméno
+- `setTitle()`, `setDescription()` - hlavička widgetu. Popis se nevypisuje pod nadpis, ukáže ho tooltip
+  otazníku vpravo v hlavičce (`.fa-widget-hint`, `docs/tooltip.md`); na dotyku se neukáže, patří do něj jen
+  doplňující vysvětlení, ne nic, bez čeho se widget nedá číst. Jméno widgetu (`data-widget`) je zároveň jméno
   podkomponenty, smí tedy obsahovat jen písmena, číslice a `_` a musí být v mřížce jedinečné (v jiné mřížce
   stejné jméno být smí).
 
