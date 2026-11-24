@@ -3198,6 +3198,12 @@ vloží sám), styly `assets/scss/_quickbar.scss` (součást `app.scss`), chová
 Otevřený panel (kromě hledání) zůstane otevřený i na další stránce (i bez ajaxu) a po obnovení (F5) -
 AI i s otevřenou konverzací a režimem celé plochy, bez přesunu kurzoru do panelu. Stav drží
 `sessionStorage` záložky (ukládá se při `pagehide`), zavřený panel zůstane zavřený.
+**Připnutí** - připínáček v hlavičce panelu (`[data-quickbar-pin]`, jen od `md`, kde je panel sloupec)
+nechá sloupec otevřený i po kliku na odkaz v panelu: výsledek hledání, notifikaci nebo odkaz ve
+zprávě chatu. Hledání tak zůstane i s dotazem a výsledky a dá se procházet výsledek po výsledku
+(šipky a Enter). Připnutí platí pro všechny panely a pamatuje si ho `localStorage`
+(`fancyadmin-quickbar-pinned`); připnuté hledání se obnoví i na stránce bez ajaxu a po F5. Křížek,
+Esc a tlačítko v liště zavřou i připnutý panel.
 
 **Zapnutí a položky** — řádek `quickbar` v tabulce `configuration` (Nastavení), zakládá ho
 migrace `Version20261026120000` (klíč `ai` doplní `Version20261027120000`). Výchozí je vypnutá:

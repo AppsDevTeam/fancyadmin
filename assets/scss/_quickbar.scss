@@ -521,6 +521,13 @@ body {
 	}
 }
 
+// Připnout jde jen sloupec, pod md je panel nad lištou s překryvem
+@include media-breakpoint-down(md) {
+	.quickbar-panel .quickbar-pin {
+		display: none;
+	}
+}
+
 @keyframes quickbar-column-in {
 	from {
 		transform: translateX(100%);

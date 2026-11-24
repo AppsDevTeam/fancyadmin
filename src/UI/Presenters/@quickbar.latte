@@ -12,7 +12,10 @@
 <section n:if="$hasSearch" class="quickbar-panel quickbar-panel--search" id="quickbar-panel-search" data-quickbar-panel="search" aria-label="{_fcadmin.layout.quickbar.search.title}" hidden>
 	<header class="quickbar-panel-header">
 		<h2 class="quickbar-panel-title">{_fcadmin.layout.quickbar.search.title}</h2>
-		{include closeButton}
+		<div class="quickbar-panel-actions">
+			{include pinButton}
+			{include closeButton}
+		</div>
 	</header>
 	{* Výsledky vybírají šipky z pole hledání (quickbar.js), kurzor v poli zůstává *}
 	<div class="quickbar-panel-body" role="listbox" aria-label="{_fcadmin.layout.quickbar.search.title}" data-quickbar-results data-empty="{_fcadmin.layout.quickbar.search.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
@@ -50,6 +53,7 @@
 						data-expand="{_fcadmin.layout.quickbar.ai.expand}" data-shrink="{_fcadmin.layout.quickbar.ai.shrink}"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
 				{/if}
 				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-solid fa-check-double"></i></button>
+				{include pinButton}
 				{include closeButton}
 			</div>
 		</header>
@@ -177,6 +181,12 @@
 		</button>
 	</div>
 </div>
+
+{* Připnutí sloupce (od md) - stav a popisek přepíná quickbar.js *}
+{define pinButton}
+	<button type="button" class="btn btn-icon btn-sm btn-glass quickbar-pin" title="{_fcadmin.layout.quickbar.pin}" aria-pressed="false"
+		data-pin="{_fcadmin.layout.quickbar.pin}" data-unpin="{_fcadmin.layout.quickbar.unpin}" data-quickbar-pin><i class="fa-solid fa-thumbtack"></i></button>
+{/define}
 
 {define closeButton}
 	<button type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.close}" data-quickbar-close><i class="fa-solid fa-xmark"></i></button>

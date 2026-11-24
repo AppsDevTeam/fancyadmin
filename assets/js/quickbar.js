@@ -60,12 +60,15 @@ const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
 const OPEN_KEY = 'fancyadmin-quickbar-open';
 const COLUMN_WIDTH_KEY = 'fancyadmin-quickbar-column-width';
+const PINNED_KEY = 'fancyadmin-quickbar-pinned';
 const COLUMN_KEY_STEP = 16;
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
 const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-channels, .quickbar-ai-recent, .ai-chat__messages';
 
 // Zlom sm Bootstrapu, stejně jako media-breakpoint-down(sm) v _quickbar.scss
 const mobileQuery = window.matchMedia('(max-width: 575.98px)');
+// Zlom md - od něj je panel sloupec vpravo a jde připnout (_quickbar.scss)
+const columnQuery = window.matchMedia('(min-width: 768px)');
 
 let source = {};
 
@@ -111,6 +114,8 @@ const state = {
 	// Čekající připomínky (remindersCount) - počet u řádku Připomenout později
 	remindersCount: 0,
 	chatThreadNews: [],
+	// Připnutý sloupec se po kliku na odkaz v panelu nezavře
+	columnPinned: loadColumnPinned(),
 	ai: { config: null, loading: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
@@ -135,6 +140,7 @@ const panel = (name) => document.querySelector(`[data-quickbar-panel="${name}"]`
 const searchInput = () => document.querySelector('[data-quickbar-search]');
 const resizer = () => document.querySelector('[data-quickbar-resizer]');
 const aiFull = () => state.ai.full && !mobileQuery.matches;
+const columnPinned = () => state.columnPinned && columnQuery.matches;
 
 function esc(value) {
 	return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -178,7 +184,9 @@ function open(name, focus = true) {
 	render();
 
 	if (name === 'search') {
-		searchInput()?.focus();
+		if (focus) {
+			searchInput()?.focus();
+		}
 		search(state.query);
 	} else {
 		if (focus) {
@@ -216,6 +224,31 @@ function toggle(name) {
 	state.open === name ? close() : open(name);
 }
 
+// Odkaz v panelu naviguje sám (naja.js), lišta se jen zavře - připnutá zůstane
+function closeUnlessPinned() {
+	if (!columnPinned()) {
+		close();
+	}
+}
+
+function loadColumnPinned() {
+	try {
+		return localStorage.getItem(PINNED_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
+function toggleColumnPin() {
+	state.columnPinned = !state.columnPinned;
+	try {
+		state.columnPinned ? localStorage.setItem(PINNED_KEY, '1') : localStorage.removeItem(PINNED_KEY);
+	} catch {
+		// Bez localStorage vydrží připnutí jen do konce stránky
+	}
+	render();
+}
+
 function render() {
 	const $bar = bar();
 	if (!$bar) {
@@ -249,6 +282,12 @@ function render() {
 		button.classList.toggle('btn-primary', active);
 		button.classList.toggle('btn-glass', !active);
 		button.setAttribute('aria-expanded', active ? 'true' : 'false');
+	});
+	document.querySelectorAll('[data-quickbar-pin]').forEach((button) => {
+		button.classList.toggle('btn-primary', state.columnPinned);
+		button.classList.toggle('btn-glass', !state.columnPinned);
+		button.setAttribute('aria-pressed', state.columnPinned ? 'true' : 'false');
+		button.title = state.columnPinned ? button.dataset.unpin : button.dataset.pin;
 	});
 
 	const input = searchInput();
@@ -2672,6 +2711,10 @@ document.addEventListener('click', (e) => {
 		close();
 		return;
 	}
+	if (target.closest('[data-quickbar-pin]')) {
+		toggleColumnPin();
+		return;
+	}
 	const toggleButton = target.closest('[data-quickbar-toggle]');
 	if (toggleButton) {
 		toggle(toggleButton.dataset.quickbarToggle);
@@ -2786,9 +2829,8 @@ document.addEventListener('click', (e) => {
 	const notification = target.closest('[data-quickbar-notification]');
 	if (notification) {
 		readNotification(notification.dataset.quickbarNotification);
-		// Odkaz naviguje sám (naja.js), lišta se jen zavře
 		if (notification.matches('a[href]')) {
-			close();
+			closeUnlessPinned();
 		}
 		return;
 	}
@@ -2798,9 +2840,8 @@ document.addEventListener('click', (e) => {
 		openChat(chat ? chat.id : null);
 		return;
 	}
-	// Odkaz ve zprávě chatu naviguje sám (naja.js), lišta se jen zavře
 	if (target.closest('.quickbar-bubble-link')) {
-		close();
+		closeUnlessPinned();
 		return;
 	}
 	const result = target.closest('[data-quickbar-result]');
@@ -2812,8 +2853,7 @@ document.addEventListener('click', (e) => {
 			searchInput().value = '';
 			open(item.panel);
 		} else {
-			// Odkaz si naviguje sám, lišta se jen zavře
-			close();
+			closeUnlessPinned();
 		}
 	}
 });
@@ -3119,12 +3159,12 @@ function init() {
 }
 
 // Otevřené okno zůstane otevřené i na další stránce a po obnovení (F5): při odchodu
-// ze stránky si stav uložíme do sessionStorage záložky. Hledání se neobnovuje.
+// ze stránky si stav uložíme do sessionStorage záložky. Hledání jen připnuté, i s dotazem.
 function openPanelState() {
-	if (state.open === null || state.open === 'search') {
+	if (state.open === null || (state.open === 'search' && !columnPinned())) {
 		return null;
 	}
-	return { open: state.open, conversationId: state.ai.conversationId, full: state.ai.full };
+	return { open: state.open, query: state.query, conversationId: state.ai.conversationId, full: state.ai.full };
 }
 
 function saveOpenPanel() {
@@ -3152,6 +3192,10 @@ function restoreOpenPanel(saved) {
 	}
 	if (saved.open === 'ai') {
 		state.ai.restore = saved;
+	}
+	if (saved.open === 'search') {
+		state.query = saved.query || '';
+		searchInput().value = state.query;
 	}
 	open(saved.open, false);
 }

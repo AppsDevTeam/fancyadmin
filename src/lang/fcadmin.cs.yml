@@ -48,6 +48,8 @@ layout:
   quickbar:
     clear: Vymazat hledání
     close: Zavřít
+    pin: Připnout panel - zůstane otevřený i po kliknutí na odkaz
+    unpin: Odepnout panel
     resize: Šířka panelu
     resizeHint: Tažením změníte šířku panelu, dvojklikem vrátíte původní
     search:
