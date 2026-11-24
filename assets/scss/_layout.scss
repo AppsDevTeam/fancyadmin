@@ -519,12 +519,12 @@ $sidePanelStackedOffset: 48px;
   border-radius: 50%;
   background: color-mix(in oklab, var(--fa-success, #{$success}) 14%, transparent);
   color: var(--fa-success, #{$success});
-  animation: side-panel-saved-pop .45s cubic-bezier(.2, .8, .2, 1) both;
+  animation: side-panel-saved-pop .25s cubic-bezier(.2, .8, .2, 1) both;
 
   path {
     stroke-dasharray: 22;
     stroke-dashoffset: 22;
-    animation: side-panel-saved-draw .4s .2s cubic-bezier(.65, 0, .35, 1) forwards;
+    animation: side-panel-saved-draw .2s .05s cubic-bezier(.65, 0, .35, 1) forwards;
   }
 }
 
@@ -532,7 +532,7 @@ $sidePanelStackedOffset: 48px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  animation: side-panel-saved-up .35s .25s cubic-bezier(.2, .8, .2, 1) both;
+  animation: side-panel-saved-up .2s .1s cubic-bezier(.2, .8, .2, 1) both;
 }
 
 .side-panel-saved-title {

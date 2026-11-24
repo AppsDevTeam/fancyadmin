@@ -172,7 +172,7 @@ $(function () {
 		ghost.append(layer);
 		requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('side-panel-saved--visible')));
 
-		// Zavře se jako běžný panel, ostatní zprávy z odpovědi až potom a postupně
+		// Panel se zavírá skoro hned, fajfka se dokreslí během odjezdu; ostatní zprávy z odpovědi až potom a postupně
 		setTimeout(() => {
 			ghost.classList.remove('side-panel-template-container--open');
 			backdrop.classList.remove('side-panel-template-backdrop--open');
@@ -181,7 +181,7 @@ $(function () {
 				ghost.remove();
 			}, 420);
 			items.filter((item) => item !== success).forEach((item, i) => setTimeout(() => showServerFlash(item), 300 + i * 200));
-		}, 1500);
+		}, 150);
 		return true;
 	});
 

@@ -34,8 +34,8 @@ pište jako krátké shrnutí a za ním, co dělat dál. Zpráva s HTML se nedě
 ## Uložení v bočním panelu
 
 Formulář odeslaný z bočního panelu neukáže úspěšnou zprávu jako toast. Přes celý panel se ukáže
-potvrzení (kolečko s fajfkou, nadpis a podtitul rozdělené stejně jako u toastu) a panel se po
-1,5 s zavře. Ostatní zprávy z téže odpovědi se ukážou
+potvrzení (kolečko s fajfkou, nadpis a podtitul rozdělené stejně jako u toastu) a panel se hned
+(po 0,15 s) zavře, fajfka se dokreslí během odjezdu. Ostatní zprávy z téže odpovědi se ukážou
 jako toasty až po zavření panelu (po 300 ms, další po 200 ms). Chyby validace zůstávají u polí,
 panel se nezavírá. Formuláře ve vlastní šabloně panelu (`setBodyTemplate()`) se netýká.
 
