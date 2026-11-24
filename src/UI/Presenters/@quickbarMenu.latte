@@ -73,6 +73,19 @@
 			<a n:foreach="$userMenu->getMenuItems() as $item" href="{$presenter->link($item->getLink(), $item->getLinkArgs())}" class="quickbar-menu-sub-item">
 				<i class="fa-solid fa-{$item->getFaIcon()}"></i>{_$item->getLabel()}
 			</a>
+			{* Výběry (UserMenuSelect) jako v uživatelském menu bočního panelu (userMenuSelect.js) *}
+			<label n:foreach="$userMenu->getSelects() as $select" class="quickbar-menu-sub-item quickbar-menu-select" data-fancyadmin-user-menu-select>
+				<i class="fa-solid fa-{$select->getFaIcon()}"></i>
+				<span class="user-menu-select-field">
+					<span class="user-menu-select-label">{_$select->getLabel()}</span>
+					<select class="form-select form-select-sm">
+						<option n:if="$select->getPrompt() !== null" value="" selected>{_$select->getPrompt()}</option>
+						<option n:foreach="$select->getOptions() as $value => $optionLabel" value="{$value}"
+							data-url="{$presenter->link($select->getLink(), $select->getLinkArgsFor($value))}"
+							n:attr="selected: $select->isSelected($value)">{$optionLabel}</option>
+					</select>
+				</span>
+			</label>
 			{* Přepíná themeToggle.js stejně jako v uživatelském menu bočního panelu *}
 			<button type="button" class="quickbar-menu-sub-item" data-fancyadmin-theme-toggle role="switch" aria-checked="false">
 				<i class="fa-solid fa-moon"></i>{_fcadmin.layout.sideMenu.user.darkMode}

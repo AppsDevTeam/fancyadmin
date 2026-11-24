@@ -949,6 +949,24 @@ class UserMenuFactory implements \ADT\FancyAdmin\Model\Menu\UserMenuFactory
 }
 ```
 
+Pod položky menu (nad přepínač tmavého režimu) jde přidat výběr - `UserMenu::addSelect()`
+s `UserMenuSelect`. Vykreslí se jako select (Tom Select) v menu bočního panelu i v menu rychlé
+lišty na mobilu; změna otevře ajaxem odkaz vybrané volby, typicky signál, který hodnotu uloží
+a přesměruje (`userMenuSelect.js`, projekt s vlastním výběrem modulů JS ho importuje jako
+`@fancyadmin/js/userMenuSelect`). Popisek prochází překladačem, popisky voleb ne (názvy záznamů).
+Parametr signálu se nesmí jmenovat jako parametr routy (`id`), odkaz by vedl na jinou stránku.
+
+```php
+$userMenu->addSelect((new UserMenuSelect())
+	->setLabel('Pobočka')
+	->setFaIcon('building')
+	->setOptions([1 => 'Praha', 2 => 'Brno'])
+	->setSelected($currentBranchId)
+	// Nic nevybráno = prázdná volba nahoře, jinak by select ukázal první, jako by byla vybraná
+	->setPrompt('- vyberte -')
+	->setLink('selectBranch!', 'selectedBranchId'));
+```
+
 `SecurityUser::canSelectAccount()` říká, jestli uživatel vidí v layoutu výběr účtu: v multi-tenant
 projektu, když má víc účtů (včetně podúčtů) nebo smí do všech účtů (plná data, backoffice).
 Layout se podle ní řídí taky, takže se podmínka nerozejde.

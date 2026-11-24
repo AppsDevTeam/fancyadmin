@@ -2766,6 +2766,17 @@ body {
 		color: var(--quickbar-primary);
 	}
 
+	// Výběr (UserMenuSelect) - řádek s popiskem a selectem, ne odkaz
+	&.quickbar-menu-select {
+		padding-top: 6px;
+		padding-bottom: 6px;
+		cursor: default;
+
+		&:hover {
+			background: transparent;
+		}
+	}
+
 	&.quickbar-menu-sub-item--danger {
 		&,
 		> #{$faIcon} {

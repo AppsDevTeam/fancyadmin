@@ -1980,6 +1980,31 @@ iframe {
 	height: 44px;
 }
 
+// Výběr v uživatelském menu (UserMenuSelect) - popisek nad selectem; řádek není odkaz,
+// takže se při najetí nezvýrazňuje
+.user-menu-select-field {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+	margin: 0;
+}
+
+.user-menu-select-label {
+	font-size: 12px;
+	color: var(--fa-text-muted);
+}
+
+.user-dropdown .user-menu-select {
+	cursor: default;
+
+	&:hover,
+	&:active {
+		background-color: transparent;
+	}
+}
+
 // Přepínač tmavého režimu v uživatelském menu (@userButton.latte) - <button>
 // místo odkazu, vzhledem stejný jako ostatní položky, switch vpravo
 .user-dropdown .theme-toggle {

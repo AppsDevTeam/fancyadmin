@@ -19,6 +19,9 @@ class UserMenu
 	/** @var UserMenuItem[] */
 	protected array $menuItems = [];
 
+	/** @var UserMenuSelect[] */
+	protected array $selects = [];
+
 	protected LinkGenerator $linkGenerator;
 
 	/**
@@ -53,6 +56,21 @@ class UserMenu
 	public function getMenuItems(): array
 	{
 		return $this->menuItems;
+	}
+
+	/** Výběr pod položkami menu (nad přepínačem tmavého režimu) */
+	public function addSelect(UserMenuSelect $select): self
+	{
+		$this->selects[] = $select;
+		return $this;
+	}
+
+	/**
+	 * @return UserMenuSelect[]
+	 */
+	public function getSelects(): array
+	{
+		return $this->selects;
 	}
 
 

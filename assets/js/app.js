@@ -94,6 +94,7 @@ import './quickbar';
 
 import './sideMenu'
 import './themeToggle'
+import './userMenuSelect'
 import './datagrid/datagrid'
 import './datagrid'
 import './datagridInfiniteScroll'

@@ -1003,6 +1003,13 @@ body.menu-wide .user-dropdown {
 			background-color: var(--menu-wide-hover-bg);
 			color: var(--menu-wide-hover-text);
 		}
+
+		// Výběr (UserMenuSelect) není odkaz - řádek se nezvýrazňuje
+		&.user-menu-select:hover,
+		&.user-menu-select:active {
+			background-color: transparent;
+			color: var(--menu-wide-text);
+		}
 	}
 
 	.dropdown-item:not(.user-item-wrapper):has(i#{$faIcon}) > div {

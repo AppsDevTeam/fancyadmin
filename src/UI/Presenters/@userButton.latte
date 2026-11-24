@@ -65,6 +65,23 @@
                     </div>
                 </a>
             {/foreach}
+            {* Výběry (UserMenuSelect) - změna otevře odkaz vybrané volby (userMenuSelect.js) *}
+            <li n:foreach="$userMenu->getSelects() as $select" class="dropdown-item user-menu-select" data-fancyadmin-user-menu-select>
+                <div>
+                    <div>
+                        <i class="fa-solid fa-{$select->getFaIcon()}"></i>
+                    </div>
+                    <label class="user-menu-select-field">
+                        <span class="user-menu-select-label">{_$select->getLabel()}</span>
+                        <select class="form-select form-select-sm">
+                            <option n:if="$select->getPrompt() !== null" value="" selected>{_$select->getPrompt()}</option>
+                            <option n:foreach="$select->getOptions() as $value => $optionLabel" value="{$value}"
+                                data-url="{$presenter->link($select->getLink(), $select->getLinkArgsFor($value))}"
+                                n:attr="selected: $select->isSelected($value)">{$optionLabel}</option>
+                        </select>
+                    </label>
+                </div>
+            </li>
             {* Přepínač barevného režimu (themeToggle.js) - klik dropdown nezavírá,
                aby uživatel změnu hned viděl a mohl ji vrátit. *}
             <li>
