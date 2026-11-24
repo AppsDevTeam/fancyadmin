@@ -9,6 +9,7 @@ use ADT\FancyAdmin\UI\RenderToStringTrait;
 use ADT\Forms\BaseForm;
 use Exception;
 use Nette\Application\UI\Control;
+use Nette\Application\UI\Presenter;
 use Stringable;
 use Nette\Http\Url;
 use Nette\Utils\Html;
@@ -42,6 +43,13 @@ class SidePanelControl extends Control
 
 	/** @var array<string, mixed> */
 	private array $bodyParameters = [];
+
+	public function __construct()
+	{
+		$this->monitor(Presenter::class, function (Presenter $presenter): void {
+			$presenter->onRender[] = $this->redrawWhenInvalid(...);
+		});
+	}
 
 	public function render(): void
 	{
@@ -227,6 +235,21 @@ class SidePanelControl extends Control
 	public function getSnippetName(): string
 	{
 		return $this->stacked ? 'sidePanelStacked' : 'sidePanel';
+	}
+
+	/**
+	 * Snippet uvnitř panelu (formulář překreslí část sebe, např. po změně výběru) se do stránky nedostane,
+	 * snippet panelu v layoutu je prázdný a plní se jen payloadem - překreslí se proto celý panel.
+	 */
+	private function redrawWhenInvalid(Presenter $presenter): void
+	{
+		if (!$presenter->isAjax() || !$this->isControlInvalid()) {
+			return;
+		}
+
+		$presenter->payload->snippets[$presenter->getSnippetId($this->getSnippetName())] = $this->renderToString();
+		// Vykreslení snippety uvnitř označí za platné a presenter by pak poslal celou stránku (body), která panel zavře
+		$this->redrawControl();
 	}
 
 	/**

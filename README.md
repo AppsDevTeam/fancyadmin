@@ -3125,6 +3125,13 @@ před tlačítko:
 Formulář se kvůli tomu nemění - je to jen přeskládání a nastylování toho, co už renderer
 vypsal. Odesílaná data i název pole zůstávají stejné.
 
+### Překreslení části formuláře
+
+Formulář v panelu, který po změně pole překreslí svou část (`$this->redrawControl('items')` v `onClick`
+skrytého tlačítka), nic dalšího nepotřebuje. Snippet panelu v layoutu je prázdný a plní se jen payloadem,
+snippet uvnitř panelu by se tedy do stránky nedostal - `SidePanelControl` proto při ajaxovém požadavku,
+kdy je cokoli uvnitř něj neplatné, pošle celý panel (`redrawWhenInvalid()` na `Presenter::$onRender`).
+
 ### Fokus na první pole
 
 Po vysunutí panelu dostane kurzor první pole formuláře (`focusFirstField()` z

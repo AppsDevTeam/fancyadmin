@@ -19,6 +19,16 @@ use Tester\Assert;
 require __DIR__ . '/bootstrap.php';
 
 
+final class SidePanelTestPresenter extends Nette\Application\UI\Presenter
+{
+	public bool $ajax = false;
+
+	public function isAjax(): bool
+	{
+		return $this->ajax;
+	}
+}
+
 class FormWithIsActiveField
 {
 	use IsActiveFormField;
@@ -148,6 +158,30 @@ test('vrstveny bocni panel kresli do vlastniho snippetu', function () {
 	Assert::same('sidePanel', $control->getSnippetName());
 });
 
+
+test('bocni panel se pri ajaxu s neplatnym snippetem uvnitr posle cely', function () {
+	foreach ([[true, true, true], [true, false, false], [false, true, false]] as [$ajax, $invalid, $sent]) {
+		$presenter = new SidePanelTestPresenter();
+		$presenter->ajax = $ajax;
+		$panel = new class extends SidePanelControl {
+			public function render(): void
+			{
+				echo '<div>panel</div>';
+			}
+		};
+		$presenter->addComponent($panel, 'documentSidePanel');
+		$panel->addComponent($form = new class extends Nette\Application\UI\Control {
+		}, 'form');
+		if ($invalid) {
+			$form->redrawControl('items');
+		}
+
+		Nette\Utils\Arrays::invoke($presenter->onRender, $presenter);
+
+		Assert::same($sent ? ['snippet--sidePanel' => '<div>panel</div>'] : [], (array) ($presenter->payload->snippets ?? []));
+		Assert::same($sent || $invalid, $presenter->isControlInvalid());
+	}
+});
 
 test('vysledek vrstveneho panelu bere popisek z __toString entity', function () {
 	$form = new ADT\DoctrineForms\Form();
