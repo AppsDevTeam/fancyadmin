@@ -306,6 +306,13 @@ input[type="color"]::-webkit-color-swatch {
 			border: var(--inputHoverBorder, var(--inputBorder));
 			border-left: var(--inputHoverBorder, 1px solid var(--secondaryColorDarker));
 		}
+
+		// Fokus z klávesnice jako u pole (TAB z pole na tlačítko); navrch jako aktivní pole
+		&:focus-visible {
+			z-index: 5;
+			border: var(--inputFocusBorder);
+			outline: 0;
+		}
 	}
 }
 

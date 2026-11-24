@@ -1,6 +1,7 @@
 import naja from 'naja';
 import { interceptServerFlashes, showServerFlash, splitMessage } from './flashes';
 import { onBeforeSnippetUpdate } from './naja';
+import { focusFirstField, keepTabInside } from './formFocus';
 
 $(function () {
 	const panels = {
@@ -228,14 +229,19 @@ $(function () {
 		const title = container.querySelector('.side-panel-template-title');
 		const config = container.querySelector('[id^="snippet--sidePanel"] .side-panel-config');
 		if (title) {
-			title.textContent = (config && config.dataset.title) || container.dataset.triggerTitle || '';
+			setText(title, (config && config.dataset.title) || container.dataset.triggerTitle || '');
 		}
 		[['.side-panel-template-subtitle', 'subtitle'], ['.side-panel-template-avatar', 'avatar']].forEach(([selector, key]) => {
 			const el = container.querySelector(selector);
 			if (!el) return;
-			el.textContent = (config && config.dataset[key]) || '';
+			setText(el, (config && config.dataset[key]) || '');
 			el.hidden = !el.textContent;
 		});
+	}
+
+	// Jen při změně - zápis textu je mutace a observer panelu by applyPanelState točil pořád dokola
+	function setText(el, text) {
+		if (el.textContent !== text) el.textContent = text;
 	}
 
 	// Záložky ze začátku formuláře patří do hlavičky pod nadpis
@@ -358,6 +364,32 @@ $(function () {
 		container.classList.toggle('side-panel-template-container--more', scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 1);
 	}
 
+	// Kurzor do prvního pole až po vysunutí panelu - Tom Select a flatpickr se na nová pole napojují asynchronně
+	const pendingFocus = new Map();
+
+	function scheduleFocus(container) {
+		const state = { slid: false };
+		pendingFocus.set(container, state);
+		const slid = (e) => {
+			if (e && (e.target !== container || e.propertyName !== 'transform')) return;
+			container.removeEventListener('transitionend', slid);
+			state.slid = true;
+			focusWhenReady(container);
+		};
+		container.addEventListener('transitionend', slid);
+		// Bez animace (prefers-reduced-motion) transitionend nepřijde
+		setTimeout(slid, 600);
+	}
+
+	// Formulář může dorazit až po vysunutí (panel se otevřel s načítáním)
+	function focusWhenReady(container) {
+		const state = pendingFocus.get(container);
+		const form = container.querySelector('[id^="snippet--sidePanel"] form');
+		if (!state || !state.slid || !form) return;
+		pendingFocus.delete(container);
+		if (!form.closest('.side-panel-body')) focusFirstField(form);
+	}
+
 	// Otevřený stav panelů jako třídy - CSS se podle nich vysouvá a ztmavuje pozadí.
 	// Přes :has(form) se změna v Chrome projeví naráz a přechod neproběhne. Třída se
 	// nastavuje až o dva snímky později: vložený obsah přepočítá :has() pravidla
@@ -379,8 +411,13 @@ $(function () {
 				// Šířku určuje velikost z obsahu (:has v CSS), zapamatujeme ji pro zavírání
 				container.style.removeProperty('--width');
 				container.dataset.openWidth = getComputedStyle(container).maxWidth;
+				if (!container.classList.contains('side-panel-template-container--open')) {
+					scheduleFocus(container);
+				}
+				focusWhenReady(container);
 			}
 			if (!open) {
+				pendingFocus.delete(container);
 				buildHeaderTabs(container);
 			}
 			container.classList.toggle('side-panel-template-container--open', open);
@@ -437,6 +474,11 @@ $(function () {
 	}, true);
 	window.addEventListener('resize', () => {
 		document.querySelectorAll('.side-panel-template-container--open').forEach(updateLines);
+	});
+	// TAB z panelu nevyjde na stránku za pozadím
+	document.addEventListener('keydown', (e) => {
+		const container = e.target instanceof Element && e.target.closest('.side-panel-template-container--open');
+		if (container) keepTabInside(e, container);
 	});
 	applyPanelState();
 

@@ -11,6 +11,7 @@ obstarává Bootstrap (`data-bs-toggle="modal"`). Vyjíždějící boční panel
 | `src/UI/Components/Modal/modal.latte` | blok `modal` pro `{embed}`, blok `modalClose` (tlačítko Zavřít do patičky) |
 | `assets/scss/_modal.scss` | užší dialog `.modal-dialog-narrow` (600 px), hlavní tlačítko formuláře v modalu min. 240 px (formulář z rendereru ho má na střed), flex formuláře ve scrollovatelném modalu, z-index backdropu |
 | `src/lang/fcadmin.*.yml` | `fcadmin.modal.close` |
+| `assets/js/lazyModal.js` | po zobrazení dá kurzor do prvního pole (`focusFirstField()`, u líného modalu po načtení obsahu) a TAB drží uvnitř modalu (`keepTabInside()`), README - Fokus na první pole |
 
 ## Šablona
 

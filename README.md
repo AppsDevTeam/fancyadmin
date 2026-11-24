@@ -3099,6 +3099,22 @@ před tlačítko:
 Formulář se kvůli tomu nemění - je to jen přeskládání a nastylování toho, co už renderer
 vypsal. Odesílaná data i název pole zůstávají stejné.
 
+### Fokus na první pole
+
+Po vysunutí panelu dostane kurzor první pole formuláře (`focusFirstField()` z
+`assets/js/formFocus.js`), takže se dá hned psát. Totéž udělá `lazyModal.js` po zobrazení
+modalu (u líného až po načtení obsahu). Přednost má pole s atributem `autofocus`
+(`->setHtmlAttribute('autofocus')`), pak pole s chybou (`.is-invalid`). Přeskočí se skrytá,
+zakázaná a jen pro čtení pole, zaškrtávátka, přepínače a výběr souboru. Tom Select ani kalendář
+flatpickru se při tom nerozbalí, jen se do pole postaví kurzor. Formulář ve vlastní šabloně panelu
+(`setBodyTemplate()`) fokus nedostane a na dotykovém zařízení (bez `pointer: fine`) se nedělá
+vůbec, aby nevyjela klávesnice.
+
+Klávesa TAB z otevřeného panelu ani modalu nevyjde ven (na stránku za pozadím, do lišty
+prohlížeče): z posledního prvku skočí na první, Shift+TAB obráceně (`keepTabInside()`).
+Neviditelné prvky v pořadí nejsou, křížek pro vymazání Tom Selectu vyřazuje adt-js-components
+(≥ 3.5.1).
+
 ---
 
 ## 27. Single-tenant režim (volitelné)

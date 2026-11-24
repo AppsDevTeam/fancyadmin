@@ -5,6 +5,7 @@
 // na ni počká přes whenLazyModalLoaded().
 
 import { ajax, onContentLoaded } from './naja';
+import { focusFirstField, keepTabInside } from './formFocus';
 
 export function whenLazyModalLoaded(modal, callback) {
 	if (!modal.dataset.lazyUrl || modal.dataset.lazyState === 'loaded') {
@@ -29,6 +30,18 @@ $(document).on('show.bs.modal', '.modal[data-lazy-url]', function () {
 			// Další otevření to zkusí znovu
 			delete modal.dataset.lazyState;
 		});
+});
+
+// Kurzor do prvního pole; obsah líného modalu se na Tom Select napojí až po vložení
+$(document).on('shown.bs.modal', '.modal', function () {
+	const modal = this;
+	whenLazyModalLoaded(modal, () => requestAnimationFrame(() => focusFirstField(modal)));
+});
+
+// Bootstrap vrací jen fokus, který vyšel ven - TAB z posledního prvku by se zastavil v liště prohlížeče
+document.addEventListener('keydown', (e) => {
+	const modal = e.target instanceof Element && e.target.closest('.modal.show');
+	if (modal) keepTabInside(e, modal);
 });
 
 // Formulář v modalu se uloží a přesměruje, překreslení stránky nahradí otevřený modal novým zavřeným.
