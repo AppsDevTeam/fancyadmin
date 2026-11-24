@@ -1,4 +1,5 @@
 import { showSortableError } from '../flashes';
+import { confirmClick, isConfirmed } from '../dialog';
 
 var dataGridRegisterExtension, dataGridRegisterAjaxCall, dataGridLoad, dataGridSubmitForm;
 
@@ -117,37 +118,32 @@ if (typeof naja !== "undefined") {
 var datagridFitlerMultiSelect, datagridGroupActionMultiSelect, datagridShiftGroupSelection, datagridSortable, datagridSortableTree, getEventDomPath,
 	indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-$(document).on('click', '[data-datagrid-confirm]:not(.ajax)', function(e) {
-	if (!confirm($(e.target).closest('a').attr('data-datagrid-confirm'))) {
-		e.stopPropagation();
-		return e.preventDefault();
+// Klik na `[data-datagrid-confirm]` potvrzuje dialog.js (modal misto confirm()). Tady
+// zustava jen pojistka pro ajaxove pozadavky, ktere nevznikly klikem - zastavi se, zepta
+// a po potvrzeni se element klikne znovu.
+var datagridConfirm = function(settings) {
+	var el, confirm_message;
+	if (settings.nette) {
+		el = settings.nette.el;
+		confirm_message = el.data('datagrid-confirm');
+		if (confirm_message && !isConfirmed(el[0])) {
+			confirmClick(el[0], confirm_message);
+			return false;
+		}
 	}
-});
+	return true;
+};
 
 if (typeof naja !== "undefined") {
 	dataGridRegisterExtension('datagrid.confirm', {
 		interaction: function(settings) {
-			var confirm_message;
-			if (settings.nette) {
-				confirm_message = settings.nette.el.data('datagrid-confirm');
-				if (confirm_message) {
-					return confirm(confirm_message);
-				}
-			}
-			return true;
+			return datagridConfirm(settings);
 		}
 	});
 } else {
 	dataGridRegisterExtension('datagrid.confirm', {
 		before: function(xhr, settings) {
-			var confirm_message;
-			if (settings.nette) {
-				confirm_message = settings.nette.el.data('datagrid-confirm');
-				if (confirm_message) {
-					return confirm(confirm_message);
-				}
-			}
-			return true;
+			return datagridConfirm(settings);
 		}
 	});
 }

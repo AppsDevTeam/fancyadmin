@@ -74,7 +74,7 @@
 			</button>
 			<ul class="dropdown-menu dropdown-menu-end">
 				<li>
-					<a n:href="logoutAll!" class="dropdown-item text-danger" onclick="if(!confirm('{_fcadmin.presenters.profile.logoutAllConfirm}')){ event.preventDefault(); return false; }">
+					<a n:href="logoutAll!" class="dropdown-item text-danger link-confirmation" data-confirm-text="{_fcadmin.presenters.profile.logoutAllConfirm}">
 						{_fcadmin.presenters.profile.logoutAll}
 					</a>
 				</li>

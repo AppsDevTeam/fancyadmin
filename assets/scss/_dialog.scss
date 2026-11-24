@@ -1,0 +1,47 @@
+// Potvrzovaci a informacni dialog (assets/js/dialog.js) misto nativnich confirm() a alert().
+
+.fcadmin-dialog {
+	.modal-dialog {
+		max-width: 560px;
+	}
+
+	.modal-content {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		padding: 32px;
+		border: 0;
+		border-radius: 12px;
+	}
+
+	.fcadmin-dialog__title {
+		margin: 0;
+		font-size: 24px;
+		line-height: 30px;
+		font-weight: 500;
+	}
+
+	.fcadmin-dialog__text {
+		font-size: 16px;
+		line-height: 24px;
+
+		p {
+			margin: 0;
+		}
+
+		p + p {
+			margin-top: 12px;
+		}
+	}
+
+	.fcadmin-dialog__buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+
+		> .btn {
+			flex: 1 1 auto;
+			padding: 0 25px;
+		}
+	}
+}

@@ -538,12 +538,20 @@ aiChat:
       idle: Hotovo
       terminated: Zastaveno
 
+dialog:
+  confirm: Potvrdit
+  cancel: Zrušit
+  close: Zavřít
+
 sidePanels:
   control:
     itemEdit: "Položka byla upravena."
     itemAdd: "Položka byla přidána."
     formSaved: "Formulář byl úspěšně uložen."
     closeConfirm: "Opravdu zavřít bez uložení?"
+    closeConfirmText: "Změny ještě nejsou uložené. Chcete je zahodit, nebo pokračovat v úpravách?"
+    closeConfirmDiscard: "Zahodit změny"
+    closeConfirmContinue: "Pokračovat v úpravách"
 
 firebase:
   notifications:
