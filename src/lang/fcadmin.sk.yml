@@ -48,6 +48,8 @@ layout:
   quickbar:
     clear: Vymazať hľadanie
     close: Zavrieť
+    resize: Šírka panela
+    resizeHint: Ťahaním zmeníte šírku panela, dvojklikom vrátite pôvodnú
     search:
       title: Hľadanie
       placeholder: Hľadať

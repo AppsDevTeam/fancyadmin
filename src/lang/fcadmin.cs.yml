@@ -48,6 +48,8 @@ layout:
   quickbar:
     clear: Vymazat hledání
     close: Zavřít
+    resize: Šířka panelu
+    resizeHint: Tažením změníte šířku panelu, dvojklikem vrátíte původní
     search:
       title: Hledání
       placeholder: Hledat

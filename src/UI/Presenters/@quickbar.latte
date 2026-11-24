@@ -5,6 +5,7 @@
 {var $buttons = array_filter($quickbarItems, fn($item) => $item !== ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Search)}
 
 <div class="quickbar-overlay" data-quickbar-close hidden></div>
+<div class="quickbar-column-resizer" data-quickbar-resizer role="separator" aria-orientation="vertical" aria-label="{_fcadmin.layout.quickbar.resize}" title="{_fcadmin.layout.quickbar.resizeHint}" tabindex="0" hidden></div>
 
 {include @quickbarMenu.latte}
 

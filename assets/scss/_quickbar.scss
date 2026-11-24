@@ -411,7 +411,8 @@ body {
 // body.quickbar-column-open přepíná quickbar.js. Na mobilu zůstává panel nad lištou.
 @include media-breakpoint-up(md) {
 	body {
-		--quickbar-column-width: 440px;
+		// --quickbar-column-user nastavuje táhlo (quickbar.js), meze hlídá jen tenhle clamp - stránce zůstane aspoň 400 px
+		--quickbar-column-width: clamp(320px, var(--quickbar-column-user, 440px), calc(100vw - var(--side-panel-width, 0px) - 400px));
 		--quickbar-column: 0px;
 	}
 
@@ -463,6 +464,60 @@ body {
 		left: var(--side-panel-width, 0px);
 		width: auto;
 		animation: none;
+	}
+
+	// Táhlo šířky na levém okraji sloupce, linka uprostřed pruhu 8 px
+	.quickbar-column-resizer {
+		position: fixed;
+		top: 0;
+		bottom: 0;
+		right: calc(var(--quickbar-column) - 4px);
+		z-index: 1051;
+		width: 8px;
+		cursor: col-resize;
+		touch-action: none;
+
+		&::after {
+			content: '';
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: 3px;
+			width: 2px;
+			transition: background-color .15s;
+		}
+
+		&:hover::after {
+			background-color: var(--quickbar-border);
+		}
+
+		&:focus-visible {
+			outline: none;
+		}
+
+		&:focus-visible::after,
+		body.quickbar-column-resizing &::after {
+			background-color: var(--quickbar-primary);
+		}
+	}
+
+	// Při tažení stránka i panely jedou s kurzorem bez animace a text se neoznačuje
+	body.quickbar-column-resizing {
+		cursor: col-resize;
+		user-select: none;
+
+		.container-main,
+		.quickbar,
+		.side-panel-template-container {
+			transition: none !important;
+		}
+	}
+}
+
+// Pod md je panel nad lištou a táhlo nemá co měnit
+@include media-breakpoint-down(md) {
+	.quickbar-column-resizer {
+		display: none;
 	}
 }
 

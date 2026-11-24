@@ -3188,7 +3188,11 @@ Plovoucí lišta dole uprostřed backoffice: hledání (Ctrl/⌘ K, „/") a iko
 (`--quickbar-column-width`, 440 px) a stránka se o něj zúží - `.container-main`, lišta i otevřený
 boční panel záznamu se posunou, nic se nepřekrývá a se stránkou jde dál pracovat (klik vedle
 panel nezavře, zavírá křížek, Esc a tlačítko v liště). Třídu `body.quickbar-column-open` přepíná
-`quickbar.js` a po animaci pošle `resize` (kalendář, grafy). Na mobilu je panel nad lištou
+`quickbar.js` a po animaci pošle `resize` (kalendář, grafy). Šířku sloupce mění táhlo na jeho levém
+okraji (`[data-quickbar-resizer]`): tažení myší, šipky ←/→ na zaměřeném táhle, dvojklik vrátí 440 px.
+Šířka je jedna pro všechny panely a pamatuje si ji `localStorage` prohlížeče
+(`fancyadmin-quickbar-column-width`). Meze drží jen `clamp()` v `_quickbar.scss` (320 px, stránce
+zůstane aspoň 400 px); JS nastaví `--quickbar-column-user` na `body`. Na mobilu je panel nad lištou
 s překryvem. Šablona `src/UI/Presenters/@quickbar.latte` (layout ji
 vloží sám), styly `assets/scss/_quickbar.scss` (součást `app.scss`), chování `assets/js/quickbar.js`.
 Otevřený panel (kromě hledání) zůstane otevřený i na další stránce (i bez ajaxu) a po obnovení (F5) -

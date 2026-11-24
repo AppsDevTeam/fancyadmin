@@ -59,6 +59,8 @@ import { onContentLoaded } from './naja';
 const SEARCH_DEBOUNCE_MS = 200;
 const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
 const OPEN_KEY = 'fancyadmin-quickbar-open';
+const COLUMN_WIDTH_KEY = 'fancyadmin-quickbar-column-width';
+const COLUMN_KEY_STEP = 16;
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
 const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-channels, .quickbar-ai-recent, .ai-chat__messages';
 
@@ -131,6 +133,7 @@ function call(path, ...args) {
 const bar = () => document.querySelector('[data-quickbar]');
 const panel = (name) => document.querySelector(`[data-quickbar-panel="${name}"]`);
 const searchInput = () => document.querySelector('[data-quickbar-search]');
+const resizer = () => document.querySelector('[data-quickbar-resizer]');
 const aiFull = () => state.ai.full && !mobileQuery.matches;
 
 function esc(value) {
@@ -230,6 +233,14 @@ function render() {
 	document.querySelectorAll('[data-quickbar-panel]').forEach((el) => {
 		el.hidden = el.dataset.quickbarPanel !== state.open;
 	});
+	const $resizer = resizer();
+	if ($resizer) {
+		const wasHidden = $resizer.hidden;
+		$resizer.hidden = state.open === null || aiFull();
+		if (wasHidden && !$resizer.hidden) {
+			updateResizerValue();
+		}
+	}
 	panel('chat')?.classList.toggle('quickbar-panel--chat-thread', state.chatView === 'thread');
 	panel('chat')?.classList.toggle('quickbar-panel--channels', state.chatView === 'list' && state.channels !== null);
 	panel('ai')?.classList.toggle('quickbar-panel--full', aiFull());
@@ -270,6 +281,116 @@ function setColumnOpen(open) {
 	clearTimeout(resizeTimer);
 	resizeTimer = setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
 }
+
+// === Šířka sloupce (táhlo na levém okraji) ===
+// Meze drží clamp v _quickbar.scss, skutečnou šířku proto čteme z otevřeného panelu
+
+let columnDrag = null;
+
+function columnWidth() {
+	return state.open === null ? 0 : panel(state.open)?.offsetWidth || 0;
+}
+
+function setColumnWidth(width) {
+	document.body.style.setProperty('--quickbar-column-user', `${Math.round(width)}px`);
+	updateResizerValue();
+}
+
+// Tažením za mez proměnná uteče za clamp - srovná se na skutečnou šířku, aby po zvětšení okna panel neposkočil
+function saveColumnWidth() {
+	const width = columnWidth();
+	if (width === 0) {
+		return;
+	}
+	setColumnWidth(width);
+	try {
+		localStorage.setItem(COLUMN_WIDTH_KEY, String(width));
+	} catch {
+		// Bez localStorage šířka vydrží jen do konce stránky
+	}
+}
+
+function restoreColumnWidth() {
+	try {
+		const width = parseInt(localStorage.getItem(COLUMN_WIDTH_KEY), 10);
+		if (width > 0) {
+			document.body.style.setProperty('--quickbar-column-user', `${width}px`);
+		}
+	} catch {
+		// Zůstane výchozí šířka
+	}
+}
+
+function resetColumnWidth() {
+	document.body.style.removeProperty('--quickbar-column-user');
+	try {
+		localStorage.removeItem(COLUMN_WIDTH_KEY);
+	} catch {
+		// Nic uloženého není
+	}
+	updateResizerValue();
+	window.dispatchEvent(new Event('resize'));
+}
+
+function updateResizerValue() {
+	const width = columnWidth();
+	const $resizer = resizer();
+	if ($resizer && width > 0) {
+		$resizer.setAttribute('aria-valuenow', String(width));
+		$resizer.setAttribute('aria-valuetext', `${width} px`);
+	}
+}
+
+function endColumnDrag() {
+	if (columnDrag === null) {
+		return;
+	}
+	columnDrag = null;
+	document.body.classList.remove('quickbar-column-resizing');
+	saveColumnWidth();
+	window.dispatchEvent(new Event('resize'));
+}
+
+document.addEventListener('pointerdown', (e) => {
+	const handle = e.target.closest?.('[data-quickbar-resizer]');
+	if (!handle || e.button !== 0) {
+		return;
+	}
+	e.preventDefault();
+	handle.setPointerCapture(e.pointerId);
+	// Kurzor nemusí sedět přesně na okraji - posun drží, aby panel při chycení neposkočil
+	const width = columnWidth();
+	columnDrag = { offset: document.documentElement.clientWidth - e.clientX - width };
+	setColumnWidth(width);
+	document.body.classList.add('quickbar-column-resizing');
+});
+
+document.addEventListener('pointermove', (e) => {
+	if (columnDrag !== null) {
+		setColumnWidth(document.documentElement.clientWidth - e.clientX - columnDrag.offset);
+	}
+});
+
+document.addEventListener('pointerup', endColumnDrag);
+document.addEventListener('pointercancel', endColumnDrag);
+
+document.addEventListener('dblclick', (e) => {
+	if (e.target.closest?.('[data-quickbar-resizer]')) {
+		resetColumnWidth();
+	}
+});
+
+// Šipky na zaměřeném táhle: doleva panel rozšíří, doprava zúží
+document.addEventListener('keydown', (e) => {
+	if (!e.target.closest?.('[data-quickbar-resizer]') || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) {
+		return;
+	}
+	e.preventDefault();
+	setColumnWidth(columnWidth() + (e.key === 'ArrowLeft' ? COLUMN_KEY_STEP : -COLUMN_KEY_STEP));
+	saveColumnWidth();
+	clearTimeout(resizeTimer);
+	resizeTimer = setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+});
 
 function renderCounts() {
 	const counts = {
@@ -2990,6 +3111,7 @@ function init() {
 	state.ai.loading = null;
 	state.ai.waiting.clear();
 	observePanels();
+	restoreColumnWidth();
 	firstBar ? loadCounts() : render();
 	if (previous) {
 		restoreOpenPanel(previous);
