@@ -8,6 +8,7 @@ use ADT\BiometricSignature\Biometrics\BiometricsNormalizer;
 use ADT\BiometricSignature\BiometricSigning;
 use ADT\BiometricSignature\Evidence\EvidenceVerifier;
 use ADT\BiometricSignature\SignatureCapture;
+use ADT\BiometricSignature\SignatureId;
 use ADT\DoctrineComponents\Entities\Traits\Identifier;
 use ADT\FancyAdmin\Model\Entities\Enums\TabletSignRequestState;
 use ADT\BiometricSignature\Exception\InvalidSignatureException;
@@ -23,6 +24,8 @@ use ADT\FancyAdmin\Model\Entities\TabletSignRequestTrait;
 use ADT\FancyAdmin\Model\Entities\TabletTrait;
 use ADT\FancyAdmin\Model\Tablet\SignedPdf;
 use ADT\FancyAdmin\Model\Tablet\TabletService;
+use ADT\FancyAdmin\Model\Tablet\TabletSignAuditLog;
+use ADT\FancyAdmin\Model\Tablet\TabletSignAuditRenderer;
 use ADT\FancyAdmin\Model\Tablet\TabletSignDocument;
 use ADT\FancyAdmin\Model\Tablet\TabletSignHandler;
 use ADT\FancyAdmin\Model\Tablet\TabletSignIncompleteException;
@@ -367,6 +370,112 @@ test('dokumenty bez klíče se číslují, klíč musí být v žádosti jedine�
 });
 
 
+test('auditní stopa: ID obálky, dokumenty s otisky, ID a čas každého podepsaného místa (stejné jako pod podpisem v PDF)', function () use ($now) {
+	[$signing, , $request, $handler] = signing($now);
+	Assert::null($request->getAuditLogJson());
+
+	// tablet žádost otevřel minutu před odesláním; stránka poslala, před jak dlouhou dobou se do
+	// kterého místa podepsal, a že zobrazila jen smlouvu
+	$submission = TabletSignSubmission::fromJson(json_encode([
+		'signatures' => ['s1' => signatureInput(), 's2' => signatureInput(1)],
+		'placements' => ['contract:0' => 's1', 'contract:2' => 's1', 'consent:-' => 's2'],
+		'placedAgo' => ['contract:0' => 40000, 'contract:2' => 20500, 'consent:-' => 9999999, 'cizi:0' => 'x'],
+		'viewed' => ['contract', 'contract'],
+	], JSON_THROW_ON_ERROR));
+	Assert::same(['contract:0' => 40000, 'contract:2' => 20500, 'consent:-' => 9999999], $submission->placedAgo);
+	Assert::same(['contract'], $submission->viewed);
+
+	[$contract, $consent] = $signing->sign($request, $submission, '192.0.2.10', 'Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1');
+
+	$json = $request->getAuditLogJson();
+	Assert::same(hash('sha256', $json), $request->getAuditLogHash());
+	$log = TabletSignAuditLog::ofRequest($request)->toArray();
+
+	Assert::same(TabletSignAuditLog::FORMAT, $log['format']);
+	Assert::true(SignatureId::isValid($request->getEnvelopeId()));
+	Assert::same([
+		'id' => $request->getEnvelopeId(),
+		'title' => 'Smlouva a souhlas',
+		'sender' => ['id' => '5', 'name' => 'Jana Nováková'],
+		'tablet' => 'Recepce',
+		'requestedAt' => $now->modify('-2 minutes')->format(DATE_ATOM),
+		'openedAt' => $now->modify('-1 minute')->format(DATE_ATOM),
+		'completedAt' => $now->format(DATE_ATOM),
+		'timezone' => $now->getTimezone()->getName(),
+	], $log['envelope']);
+
+	// dokumenty: původní a finální otisk, počet stran, jestli je stránka zobrazila
+	Assert::same([
+		[
+			'number' => 1,
+			'key' => 'contract',
+			'title' => 'Smlouva o poskytování služeb',
+			'type' => 'order',
+			'mimeType' => 'application/pdf',
+			'pages' => 2,
+			'originalSha256' => hash('sha256', contractPdf(1)),
+			'signedSha256' => $contract->getPdfHash(),
+			'displayed' => true,
+		],
+		[
+			'number' => 2,
+			'key' => 'consent',
+			'title' => 'Souhlas se zpracováním údajů',
+			'type' => 'consent',
+			'mimeType' => null,
+			'pages' => null,
+			'originalSha256' => null,
+			'signedSha256' => $consent->getPdfHash(),
+			'displayed' => false,
+		],
+	], $log['documents']);
+
+	// podepisující (smlouva má jméno podepisujícího, souhlas ne) a jejich podpisy v pořadí, jak vznikaly
+	Assert::same(['Jan Novák', null], array_column($log['signers'], 'name'));
+	[$signer, $unnamed] = $log['signers'];
+	Assert::same(['method' => 'onSite', 'verifiedBy' => ['id' => '5', 'name' => 'Jana Nováková']], $signer['identity']);
+	$rows = fn (array $signer): array => array_map(fn (array $signature): array => [$signature['document'], $signature['documentKey'], $signature['box'], $signature['signedAt']], $signer['signatures']);
+	Assert::same([
+		[1, 'contract', 0, $now->modify('-40 seconds')->format(DATE_ATOM)],
+		[1, 'contract', 2, $now->modify('-20500 milliseconds')->format(DATE_ATOM)],
+	], $rows($signer));
+	// víc než od otevření žádosti to být nemohlo - čas se ořízne na otevření
+	Assert::same([[2, 'consent', null, $now->modify('-60 seconds')->format(DATE_ATOM)]], $rows($unnamed));
+	foreach ([...$signer['signatures'], ...$unnamed['signatures']] as $signature) {
+		Assert::true(SignatureId::isValid($signature['id']));
+		Assert::same('handwritten', $signature['method']);
+		Assert::same('192.0.2.10', $signature['ipAddress']);
+		Assert::same('Safari 17.5 (iPad)', $signature['browser']);
+		Assert::match('~^[0-9a-f]{64}$~', $signature['evidenceSha256']);
+	}
+
+	// stopa jako stránka HTML: údaje obálky, otisky, řádek za každý podpis; hodnoty jsou escapované
+	$translator = new TestTranslator([
+		'fcadmin.tablets.audit.signature' => 'Podpis ID %id% na dokumentu #%document%, IP %ip%, prohlížeč %browser%, čas %date%.',
+		'fcadmin.tablets.audit.finalHash' => 'Finální otisk: %hash%',
+		'fcadmin.tablets.audit.hash' => 'Otisk auditní stopy: %hash%',
+	]);
+	$html = (new TabletSignAuditRenderer($translator))->renderRequest($request);
+	Assert::contains($request->getEnvelopeId(), $html);
+	Assert::contains('Smlouva a souhlas', $html);
+	Assert::contains('Finální otisk: ' . $contract->getPdfHash(), $html);
+	Assert::contains(sprintf(
+		'Podpis ID %s na dokumentu #1, IP 192.0.2.10, prohlížeč Safari 17.5 (iPad), čas %s.',
+		$signer['signatures'][0]['id'],
+		$now->modify('-40 seconds')->format('j. n. Y H:i:s'),
+	), $html);
+	Assert::contains($request->getAuditLogHash(), $html);
+	Assert::null((new TabletSignAuditRenderer($translator))->renderRequest(signing($now)[2]));
+
+	// stejné ID a čas stojí pod podpisem v podepsaném PDF
+	preg_match_all('~stream\r?\n(.*?)\r?\nendstream~s', $handler->stamped['contract'], $streams);
+	$content = implode("\n", array_map(fn (string $stream): string => @gzuncompress($stream) ?: $stream, $streams[1]));
+	foreach ($signer['signatures'] as $signature) {
+		Assert::contains('(ID: ' . $signature['id'] . ') Tj', $content);
+		Assert::contains('(' . (new DateTimeImmutable($signature['signedAt']))->format('d.m.Y H:i:s') . ') Tj', $content);
+	}
+});
+
 test('podpis uloží dokumenty a podpisy s důkazními záznamy, vloží podpisy do PDF na jejich místa a žádost vyřídí', function () use ($now) {
 	[$signing, $service, $request, $handler, $em] = signing($now);
 
@@ -388,8 +497,14 @@ test('podpis uloží dokumenty a podpisy s důkazními záznamy, vloží podpisy
 	$signatures = only($em->persisted, DocumentSignature::class);
 	Assert::count(2, $signatures);
 	[$first, $second] = $signatures;
-	Assert::same([['document' => 'contract', 'box' => 0], ['document' => 'contract', 'box' => 2]], $first->getPlacements());
-	Assert::same([['document' => 'consent', 'box' => null]], $second->getPlacements());
+	$places = fn (DocumentSignature $signature): array => array_map(fn (array $placement): array => [$placement['document'], $placement['box']], $signature->getPlacements());
+	Assert::same([['contract', 0], ['contract', 2]], $places($first));
+	Assert::same([['consent', null]], $places($second));
+	// každé místo má vlastní ID (UUID) a čas - bez údaje ze stránky čas odeslání
+	$ids = array_map(fn (array $placement): string => $placement['id'], [...$first->getPlacements(), ...$second->getPlacements()]);
+	Assert::count(3, array_unique($ids));
+	Assert::true(SignatureId::isValid($ids[0]));
+	Assert::same($now->format(DATE_ATOM), $first->getPlacements()[0]['signedAt']);
 
 	// na tabletu provozovatele: bez kódu, ověřený rovnou
 	Assert::true($first->isOnSite());
@@ -412,7 +527,12 @@ test('podpis uloží dokumenty a podpisy s důkazními záznamy, vloží podpisy
 		'data' => ['client' => 17],
 		'pdfSha256' => hash('sha256', contractPdf(1)),
 		'boxes' => [0, 2],
+		'signatures' => [
+			['id' => $ids[0], 'box' => 0, 'signedAt' => $now->format(DATE_ATOM)],
+			['id' => $ids[1], 'box' => 2, 'signedAt' => $now->format(DATE_ATOM)],
+		],
 	]], $evidence['subject']['documents']);
+	Assert::same($request->getEnvelopeId(), $evidence['subject']['envelopeId']);
 	Assert::same('Jan Novák', $evidence['subject']['signerName']);
 	Assert::same('Recepce', $evidence['subject']['tablet']['name']);
 	Assert::same('Jana Nováková', $evidence['subject']['tablet']['requesterName']);

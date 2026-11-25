@@ -859,6 +859,35 @@ tablets:
     done: Podepsáno
     doneThanks: Děkujeme. Tablet prosím vraťte obsluze.
     doneBack: Zpět na čekací stránku
+  audit:
+    title: Auditní stopa podpisu
+    intro: Dokumenty v této obálce byly podepsány vlastnoručním podpisem na dotykovém zařízení. Záznam vznikl při dokončení podpisu a nese stejná ID a časy, jaké stojí pod podpisy v dokumentech.
+    envelope: Obálka
+    envelopeId: ID obálky
+    envelopeTitle: Název obálky
+    sender: Odesílatel
+    tablet: Zařízení
+    content: Obsah obálky
+    contentSummary: 'Dokumentů: %documents%, stran celkem: %pages%'
+    originalHash: 'Původní otisk (SHA256): %hash%'
+    finalHash: 'Finální otisk (SHA256): %hash%'
+    fileType: 'Typ souboru: %type%'
+    pages: 'Počet stran: %pages%'
+    signersCount: Podepisujících osob
+    timezone: Časové pásmo
+    state: Stav
+    completed: 'DOKONČENO %date%'
+    signers: Podepisující osoby
+    unnamedSigner: Podepisující
+    signed: PODEPSÁNO
+    sent: 'Dokumenty k podpisu poslal(a) %sender% na zařízení %tablet% v čase %date%.'
+    opened: 'Zařízení dokumenty otevřelo v čase %date%.'
+    identityOnSite: 'Totožnost podepisujícího ověřil(a) na místě %name%.'
+    signature: 'Podpis ID %id% na dokumentu #%document% proveden vlastnoručním podpisem na dotykovém zařízení, IP adresa %ip%, prohlížeč %browser%, datum a čas %date%.'
+    displayed: 'Během podepisování byly zobrazeny dokumenty: %documents%'
+    displayedNone: Stránka podpisu nenahlásila žádný zobrazený dokument.
+    hash: 'Otisk auditní stopy (SHA256): %hash%'
+    unknown: neuvedeno
 modules:
   web:
     navbar:

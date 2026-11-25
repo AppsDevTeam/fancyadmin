@@ -361,7 +361,7 @@ náhledem.
 | Entita | Řádek za | Nese |
 |---|---|---|
 | `SignedDocument` (`signed_document`) | každý dokument | klíč dokumentu v žádosti, `type`, `subjectId`, `data` (z dokumentu, jinak ze žádosti), otisk PDF, které podepisující viděl, podepsané PDF (`adt/files`) a jeho otisk |
-| `DocumentSignature` (`document_signature`) | každé nakreslení podpisu | obrázek, záznam průběhu psaní, důkazní záznam a jeho otisk, místa, do kterých byl podpis vložen (`getPlacements()`: dokument + pořadí místa) |
+| `DocumentSignature` (`document_signature`) | každé nakreslení podpisu | obrázek, záznam průběhu psaní, důkazní záznam a jeho otisk, místa, do kterých byl podpis vložen (`getPlacements()`: dokument, pořadí místa, ID a čas místa) |
 
 Podpis, který podepisující přepsal a v žádném místě nezůstal, se neukládá. Důkazní záznam každého
 podpisu uvádí dokumenty a místa, kam byl vložen (s otiskem PDF, které podepisující viděl), komu
@@ -415,6 +415,47 @@ class DocumentSignHandler implements TabletSignHandler
 	}
 }
 ```
+
+#### Auditní stopa a ID pod podpisem
+
+Každá podepsaná žádost je **obálka** s vlastním ID (UUID, `TabletSignRequest::getEnvelopeId()`) a každé
+podepsané místo má **vlastní ID a čas**. Obojí se vypíše pod podpis přímo do PDF (`ID: …` a datum
+s časem, skutečný text dokumentu - `SignatureStamp` z `adt/biometric-signature`) a stejné údaje nese
+**auditní stopa**, takže podpis v dokumentu jde spárovat se záznamem o tom, kdo, odkud a čím podepsal.
+
+Čas místa: stránka pošle, před kolika ms od odeslání se do něj podepisující podepsal, a server ho
+odečte od svého času (nezáleží na hodinách tabletu; nejdřív v okamžiku, kdy tablet žádost otevřel).
+Stránka taky pošle, které dokumenty podepisujícímu zobrazila.
+
+Stopa (`TabletSignAuditLog`) vzniká při dokončení podpisu a uloží se k žádosti doslova
+(`getAuditLogJson()`, otisk `getAuditLogHash()`):
+
+| Část | Údaje |
+|---|---|
+| `envelope` | ID a název obálky, kdo a kdy ji poslal na které zařízení, kdy ji tablet otevřel, kdy byla dokončena, časové pásmo |
+| `documents` | pořadí, název, typ, počet stran, otisk PDF, které podepisující viděl, otisk podepsaného PDF, jestli ho stránka zobrazila |
+| `signers` | jméno (`signerName` dokumentu), jak byla ověřena totožnost (personál na místě), podpisy: ID, dokument a místo, čas, IP adresa, prohlížeč a zařízení, otisk důkazního záznamu nakresleného podpisu |
+
+```php
+// v administraci projektu nebo jako podklad pro PDF k podepsaným dokumentům
+$html = $this->tabletSignAuditRenderer->renderRequest($request);   // null = žádost stopu nemá
+$data = TabletSignAuditLog::ofRequest($request)?->toArray();
+```
+
+`TabletSignAuditRenderer` vrací samostatnou stránku HTML (texty `fcadmin.tablets.audit.*`); PDF z ní
+projekt udělá svým nástrojem, stejně jako podepsaná PDF. V `onSigned()` je stopa už u žádosti.
+
+Entita žádosti má nové sloupce `envelope_id`, `audit_log_json` (text) a `audit_log_hash` - projekt
+potřebuje migraci. Místa podpisu (`DocumentSignature::getPlacements()`) nově nesou `id` a `signedAt`;
+podpisy z doby před auditní stopou je nemají.
+
+**Co stopa nezaručí - elektronická pečeť (zatím chybí, dořešit).** ID, čas i stopu počítá a ukládá
+aplikace sama; kdo má zápis do databáze a úložiště, může je přepsat. Nezávislé potvrzení dá až
+elektronická pečeť podepsaných PDF: každý podpis jako podpisové pole `SIGNATURE_<ID podpisu>`
+zapečetěné certifikátem provozovatele, na konci pečeť obálky `ENVELOPE_<ID obálky>`, ideálně
+s kvalifikovaným časovým razítkem. Potřebuje certifikát pro elektronickou pečeť od kvalifikovaného
+poskytovatele a nástroj, který umí PDF podepisovat přírůstkově - viz Plán v README
+`adt/biometric-signature`. ID podpisů a obálky jsou na to připravené.
 
 Místa, která patří někomu jinému (`boxNames` je nepokrývá, např. podpis pracovníka), zůstanou
 v podepsaném PDF označená a podpis do nich jde doplnit později (`SignatureStamper`).

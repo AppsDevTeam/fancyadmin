@@ -25,15 +25,22 @@ final class TabletSignSubmission
 	/**
 	 * @param array<string, SignatureCapture> $signatures ID podpisu na stránce => podpis
 	 * @param array<string, string> $placements ID místa (TabletSignPlace::getId()) => ID podpisu
+	 * @param array<string, int> $placedAgo ID místa => před kolika ms od odeslání se do něj
+	 *        podepisující podepsal (rozdíl dvou časů téhož zařízení, takže nezáleží na tom, jak má
+	 *        tablet nastavené hodiny); místo bez údaje má čas odeslání
+	 * @param list<string> $viewed klíče dokumentů, které stránka podepisujícímu zobrazila
 	 */
 	public function __construct(
 		public readonly array $signatures,
 		public readonly array $placements,
+		public readonly array $placedAgo = [],
+		public readonly array $viewed = [],
 	) {
 	}
 
 	/**
-	 * {"signatures": {"<id>": {"image": "<data URI>", "biometrics": "<JSON>"}}, "placements": {"<místo>": "<id>"}}
+	 * {"signatures": {"<id>": {"image": "<data URI>", "biometrics": "<JSON>"}}, "placements": {"<místo>": "<id>"},
+	 *  "placedAgo": {"<místo>": <ms>}, "viewed": ["<klíč dokumentu>"]} - poslední dvě nepovinné (auditní stopa)
 	 *
 	 * @throws InvalidSignatureException obsah nejde přečíst nebo některý podpis neprošel kontrolou
 	 */
@@ -71,6 +78,20 @@ final class TabletSignSubmission
 			$placements[(string) $place] = (string) $id;
 		}
 
-		return new self($signatures, $placements);
+		$placedAgo = [];
+		foreach (is_array($input['placedAgo'] ?? null) ? $input['placedAgo'] : [] as $place => $milliseconds) {
+			if (is_int($milliseconds) || is_float($milliseconds)) {
+				$placedAgo[(string) $place] = max(0, (int) $milliseconds);
+			}
+		}
+
+		$viewed = [];
+		foreach (is_array($input['viewed'] ?? null) ? $input['viewed'] : [] as $key) {
+			if (is_string($key) || is_int($key)) {
+				$viewed[] = (string) $key;
+			}
+		}
+
+		return new self($signatures, $placements, $placedAgo, array_values(array_unique($viewed)));
 	}
 }

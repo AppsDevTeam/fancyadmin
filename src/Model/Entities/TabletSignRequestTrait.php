@@ -71,6 +71,21 @@ trait TabletSignRequestTrait
 	#[ORM\Column(nullable: true)]
 	protected ?\DateTimeImmutable $cancelledAt = null;
 
+	/** ID obálky (UUID): stojí v auditní stopě a spojuje ji s žádostí a jejími dokumenty */
+	#[ORM\Column(length: 36, nullable: true)]
+	protected ?string $envelopeId = null;
+
+	/**
+	 * Auditní stopa podpisu (TabletSignAuditLog) doslova, jak vznikla při dokončení - text, ne JSON
+	 * sloupec, aby ji databáze nepřeskládala a seděl otisk
+	 */
+	#[ORM\Column(type: 'text', nullable: true)]
+	#[Anonymize(AnonymizationType::FREE_TEXT)]
+	protected ?string $auditLogJson = null;
+
+	#[ORM\Column(length: 64, nullable: true)]
+	protected ?string $auditLogHash = null;
+
 	public static function create(Tablet $tablet, string $url, string $title, \DateTimeImmutable $now, \DateTimeImmutable $expiresAt): static
 	{
 		$request = new static();
@@ -87,6 +102,36 @@ trait TabletSignRequestTrait
 	public function getTablet(): ?Tablet
 	{
 		return $this->tablet;
+	}
+
+	public function getEnvelopeId(): ?string
+	{
+		return $this->envelopeId;
+	}
+
+	public function setEnvelopeId(string $envelopeId): static
+	{
+		$this->envelopeId = $envelopeId;
+
+		return $this;
+	}
+
+	public function getAuditLogJson(): ?string
+	{
+		return $this->auditLogJson;
+	}
+
+	public function getAuditLogHash(): ?string
+	{
+		return $this->auditLogHash;
+	}
+
+	public function recordAuditLog(string $json): static
+	{
+		$this->auditLogJson = $json;
+		$this->auditLogHash = hash('sha256', $json);
+
+		return $this;
 	}
 
 	public function getTabletName(): string

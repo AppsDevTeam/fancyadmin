@@ -45,6 +45,7 @@ use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
 use ADT\FancyAdmin\Model\Tablet\DoctrineTabletSignRequests;
 use ADT\FancyAdmin\Model\Tablet\TabletService;
+use ADT\FancyAdmin\Model\Tablet\TabletSignAuditRenderer;
 use ADT\FancyAdmin\Model\Tablet\TabletSigning;
 use ADT\FancyAdmin\Model\WebPush\WebPushSender;
 use ADT\FancyAdmin\Model\AiChat\AuditPiiCheckListener;
@@ -472,6 +473,10 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'signedDocumentClass' => $this->config->tablet->signedDocumentEntity,
 					'documentSignatureClass' => $this->config->tablet->documentSignatureEntity,
 				]);
+
+			// auditní stopa podpisu jako HTML (administrace projektu, podklad pro PDF)
+			$builder->addDefinition($this->prefix('tabletSignAuditRenderer'))
+				->setFactory(TabletSignAuditRenderer::class);
 
 			$builder->addDefinition($this->prefix('tabletService'))
 				->setFactory(TabletService::class, [
