@@ -4,7 +4,8 @@
 // Zdroj dat (všechny metody vrací Promise, chybějící metoda = prázdný výsledek):
 //   search(query) → [{ label, items: [{ label, meta?, initials?, icon?, tone?, badge?: { label, class }, href?, panel? }] }]
 //   notifications: { list() → [{ id, icon, tone?, title, text, time, unread, href? }], read(id), readAll() }
-//   todos: { list() → [{ id, text, due?, done }], add(text) → todo, setDone(id, done) }
+//   todos: { list() → [{ id, text, due?, done, href? }], add(text) → todo, setDone(id, done) }
+//            href = detail úkolu po kliku na název, hotovo pak jen zaškrtávátko (bez href celý řádek)
 //   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials?, contact? }] (od nejnovější zprávy;
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
 //            messages(chatId) → [{ mine, text, time, link?: { text, href } }], send(chatId, text) → message, read(chatId) }
@@ -632,13 +633,13 @@ function renderTodos() {
 	}
 	setHtml($list, state.todos.length
 		? state.todos.map((t) => `
-			<label class="quickbar-item quickbar-todo ${t.done ? 'quickbar-todo--done' : ''}">
-				<input type="checkbox" class="form-check-input" data-quickbar-todo="${esc(t.id)}" ${t.done ? 'checked' : ''}>
-				<span class="quickbar-item-text">
+			<${t.href ? 'div' : 'label'} class="quickbar-item quickbar-todo ${t.done ? 'quickbar-todo--done' : ''}">
+				<input type="checkbox" class="form-check-input" data-quickbar-todo="${esc(t.id)}" ${t.done ? 'checked' : ''} aria-label="${esc(t.text)}">
+				<${t.href ? `a href="${esc(t.href)}" data-quickbar-todo-link` : 'span'} class="quickbar-item-text">
 					<span class="quickbar-item-label">${esc(t.text)}</span>
 					${t.due ? `<span class="quickbar-item-meta"><i class="fa-regular fa-clock"></i> ${esc(t.due)}</span>` : ''}
-				</span>
-			</label>`).join('')
+				</${t.href ? 'a' : 'span'}>
+			</${t.href ? 'div' : 'label'}>`).join('')
 		: `<div class="quickbar-empty">${esc($list.dataset.empty)}</div>`);
 }
 
@@ -2824,6 +2825,10 @@ document.addEventListener('click', (e) => {
 	}
 	if (target.closest('[data-quickbar-read-all]')) {
 		readAllNotifications();
+		return;
+	}
+	if (target.closest('[data-quickbar-todo-link]')) {
+		closeUnlessPinned();
 		return;
 	}
 	const notification = target.closest('[data-quickbar-notification]');
