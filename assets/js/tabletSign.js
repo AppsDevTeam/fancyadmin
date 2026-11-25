@@ -37,14 +37,19 @@ const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
  * se druhému nenabídne. Stav žije jen v paměti stránky jedné žádosti.
  *
  * @param {Array<{id: string, document: string, signer?: string}>} places všechna místa všech dokumentů v pořadí stránky
+ * @param {() => number} now hodiny zařízení v ms (v testech jdou nahradit)
  */
-export function createSignState(places) {
+export function createSignState(places, now = () => Date.now()) {
 	/** @type {Map<string, {image: string, biometrics: string}>} */
 	const signatures = new Map();
 	/** @type {Map<string, string>} místo => podpis */
 	const placements = new Map();
 	/** @type {Map<string, string>} podepisující => jeho poslední nakreslený podpis */
 	const last = new Map();
+	/** @type {Map<string, number>} místo => kdy se do něj podepisující podepsal (hodiny zařízení, ms) */
+	const placedAt = new Map();
+	/** @type {Set<string>} dokumenty, které stránka zobrazila */
+	const viewed = new Set();
 	let counter = 0;
 
 	const signerOf = (placeId) => places.find((place) => place.id === placeId)?.signer || '';
@@ -59,6 +64,7 @@ export function createSignState(places) {
 			const id = `s${++counter}`;
 			signatures.set(id, { image: signature.image, biometrics: signature.biometrics });
 			placements.set(placeId, id);
+			placedAt.set(placeId, now());
 			last.set(signerOf(placeId), id);
 			return id;
 		},
@@ -70,6 +76,7 @@ export function createSignState(places) {
 				throw new Error('Není co převzít - podepisující místa se zatím nepodepsal.');
 			}
 			placements.set(placeId, id);
+			placedAt.set(placeId, now());
 			return id;
 		},
 
@@ -106,19 +113,31 @@ export function createSignState(places) {
 			return places.length > 0 && signedIn(places) === places.length;
 		},
 
-		/** Obsah formuláře (TabletSignSubmission) - jen podpisy, které v některém místě zůstaly */
+		/** Stránka dokument zobrazila (jde do auditní stopy) */
+		markViewed(documentKey) {
+			viewed.add(String(documentKey));
+		},
+
+		/**
+		 * Obsah formuláře (TabletSignSubmission) - jen podpisy, které v některém místě zůstaly.
+		 * Čas podpisu místa se posílá jako stáří (před kolika ms od teď): server ho odečte od svého
+		 * času, takže nezáleží na tom, jak má zařízení nastavené hodiny.
+		 */
 		toJSON() {
 			const used = {};
 			const placed = {};
+			const placedAgo = {};
+			const sentAt = now();
 			places.forEach((place) => {
 				const id = placements.get(place.id);
 				if (id !== undefined) {
 					placed[place.id] = id;
+					placedAgo[place.id] = Math.max(0, Math.round(sentAt - (placedAt.get(place.id) ?? sentAt)));
 					const { image, biometrics } = signatures.get(id);
 					used[id] = { image, biometrics };
 				}
 			});
-			return { signatures: used, placements: placed };
+			return { signatures: used, placements: placed, placedAgo, viewed: [...viewed] };
 		},
 	};
 }
@@ -520,6 +539,7 @@ export function initTabletSignPage(root = document) {
 			section.hidden = section.dataset.tabletSignDocument !== key;
 		});
 		navItems.forEach((item) => item.setAttribute('aria-current', item.dataset.tabletSignNav === key ? 'true' : 'false'));
+		state.markViewed(key);
 		if (!rendered.has(key)) {
 			rendered.set(key, renderDocument(sections.find((section) => section.dataset.tabletSignDocument === key)));
 		}

@@ -66,4 +66,17 @@ interface TabletSignRequest extends Entity
 	public function isOpen(): bool;
 
 	public function getState(DateTimeImmutable $now): TabletSignRequestState;
+
+	/** ID obálky (UUID) - spojuje žádost, podepsané dokumenty a auditní stopu; null u žádosti bez podpisu dokumentů */
+	public function getEnvelopeId(): ?string;
+
+	public function setEnvelopeId(string $envelopeId): static;
+
+	/** Auditní stopa podpisu doslova, jak vznikla při dokončení (TabletSignAuditLog); null = žádost není podepsaná */
+	public function getAuditLogJson(): ?string;
+
+	/** SHA-256 auditní stopy */
+	public function getAuditLogHash(): ?string;
+
+	public function recordAuditLog(string $json): static;
 }

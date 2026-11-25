@@ -27,7 +27,13 @@ trait DocumentSignatureTrait
 	#[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
 	protected ?TabletSignRequest $request = null;
 
-	/** @var list<array{document: string, box: int|null}> */
+	/**
+	 * Místa, do kterých byl podpis vložen: dokument, pořadí místa, ID místa a čas, kdy se do něj
+	 * podepisující podepsal (stojí pod podpisem v PDF a v auditní stopě; podpisy z doby před
+	 * auditní stopou je nemají)
+	 *
+	 * @var list<array{document: string, box: int|null, id?: string, signedAt?: string}>
+	 */
 	#[ORM\Column(type: 'json')]
 	protected array $placements = [];
 
