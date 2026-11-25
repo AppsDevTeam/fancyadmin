@@ -1,7 +1,7 @@
 import naja from 'naja';
 import { interceptServerFlashes, showServerFlash, splitMessage } from './flashes';
 import { onBeforeSnippetUpdate } from './naja';
-import { focusFirstField, keepTabInside } from './formFocus';
+import { focusFirstField, keepTabInside, leaveFieldOnEscape } from './formFocus';
 
 $(function () {
 	const panels = {
@@ -479,6 +479,15 @@ $(function () {
 	document.addEventListener('keydown', (e) => {
 		const container = e.target instanceof Element && e.target.closest('.side-panel-template-container--open');
 		if (container) keepTabInside(e, container);
+	});
+	// Na window, aby přednost měl Esc rozbaleného seznamu, kalendáře nebo rychlé lišty (zavolají preventDefault)
+	window.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('.modal.show')) return;
+		const container = document.querySelector('.side-panel-template-container--stacked.side-panel-template-container--open')
+			|| document.querySelector('.side-panel-template-container--open');
+		if (!container || leaveFieldOnEscape(e, container)) return;
+		e.preventDefault();
+		tryClose(getPanelId(container));
 	});
 	applyPanelState();
 

@@ -3148,6 +3148,14 @@ prohlížeče): z posledního prvku skočí na první, Shift+TAB obráceně (`ke
 Neviditelné prvky v pořadí nejsou, křížek pro vymazání Tom Selectu vyřazuje adt-js-components
 (≥ 3.5.1).
 
+Esc v poli formuláře (`input`, `select`, `textarea`, editor) panel ani modal nezavře, jen dá
+fokus na samotný panel nebo modal (`leaveFieldOnEscape()`), takže další TAB začne zase uvnitř.
+Až další Esc zavře horní panel (u rozepsaného formuláře s potvrzením jako křížek) nebo modal.
+Esc, který si vezme jiný prvek a zavolá `preventDefault()` (rozbalený Tom Select, kalendář
+flatpickru, rozbalovací menu, okno rychlé lišty), formulář nechá být; vlastní prvek s Esc
+v panelu dělá totéž. Panel poslouchá na `window`, modal na `.modal-dialog` (Bootstrap zavírá
+modal posluchačem přímo na `.modal`). Panel s otevřeným modalem na Esc nereaguje.
+
 ---
 
 ## 27. Single-tenant režim (volitelné)

@@ -5,7 +5,7 @@
 // na ni počká přes whenLazyModalLoaded().
 
 import { ajax, onContentLoaded } from './naja';
-import { focusFirstField, keepTabInside } from './formFocus';
+import { focusFirstField, keepTabInside, leaveFieldOnEscape } from './formFocus';
 
 export function whenLazyModalLoaded(modal, callback) {
 	if (!modal.dataset.lazyUrl || modal.dataset.lazyState === 'loaded') {
@@ -42,6 +42,19 @@ $(document).on('shown.bs.modal', '.modal', function () {
 document.addEventListener('keydown', (e) => {
 	const modal = e.target instanceof Element && e.target.closest('.modal.show');
 	if (modal) keepTabInside(e, modal);
+});
+
+// Bootstrap zavírá modal na Esc posluchačem přímo na .modal, Esc z pole proto zastaví už .modal-dialog
+const escapeDialogs = new WeakSet();
+
+$(document).on('show.bs.modal', '.modal', function () {
+	const modal = this;
+	const dialog = modal.querySelector('.modal-dialog');
+	if (!dialog || escapeDialogs.has(dialog)) return;
+	escapeDialogs.add(dialog);
+	dialog.addEventListener('keydown', (e) => {
+		if (leaveFieldOnEscape(e, modal)) e.stopPropagation();
+	});
 });
 
 // Formulář v modalu se uloží a přesměruje, překreslení stránky nahradí otevřený modal novým zavřeným.

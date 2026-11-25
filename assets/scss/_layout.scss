@@ -280,6 +280,8 @@ $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' v
   overflow: hidden;
   border-radius: var(--bs-border-radius);
   z-index: 9020;
+  // Fokus dostane po Esc v poli (formFocus.js), obrys by orámoval celý panel
+  outline: none;
 
   transition: transform $sidePanelTemplateAnimation ease, right $sidePanelTemplateAnimation ease, max-width $sidePanelTemplateAnimation ease, filter $sidePanelTemplateAnimation ease;
 
