@@ -839,6 +839,20 @@ body {
 		font-weight: 400;
 	}
 
+	// S detailem úkolu ukončí úkol jen zaškrtávátko, název je odkaz
+	&:not(label) {
+		cursor: default;
+	}
+
+	a.quickbar-item-text {
+		color: inherit;
+		text-decoration: none;
+
+		&:hover .quickbar-item-label {
+			text-decoration: underline;
+		}
+	}
+
 	&.quickbar-todo--done .quickbar-item-label {
 		text-decoration: line-through;
 		color: var(--quickbar-faint);
