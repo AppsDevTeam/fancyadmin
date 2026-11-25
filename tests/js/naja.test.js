@@ -48,6 +48,7 @@ beforeEach(() => {
 	document.getElementById('snippet--content').innerHTML = `
 		<a id="link" href="/connector/files">Soubory</a>
 		<a id="same" href="/connector?do=grid-page&amp;_sec=abc">Stejná stránka</a>
+		<a id="panel" href="/connector?patientId=5&amp;do=patientPanel&amp;_sec=abc">Boční panel</a>
 		<a id="target" href="/connector/files" target="_blank">Nové okno</a>
 		<a id="noajax" class="noajax" href="/connector/files">Bez ajaxu</a>
 		<a id="hash" href="#top">Kotva</a>
@@ -77,6 +78,23 @@ describe('odkazy', () => {
 		expect(requests).toHaveLength(1);
 		expect(window.history.length).toBe(length);
 		expect(window.location.pathname + window.location.search).toBe('/connector');
+	});
+
+	it('Zpět po odkazu se signálem načte stránku bez signálu', async () => {
+		let done = waitForRequests();
+		click('#panel');
+		await done;
+		done = waitForRequests();
+		click('#link');
+		await done;
+
+		done = waitForRequests();
+		window.history.back();
+		await done;
+
+		const back = new URL(requests[2].url);
+		expect(back.pathname + back.search).toBe('/connector?patientId=5');
+		expect(window.location.pathname + window.location.search).toBe('/connector?patientId=5');
 	});
 
 	it.each(['#target', '#noajax', '#hash', '#external', '#prevented'])('%s nejde ajaxem', async (selector) => {
