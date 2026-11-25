@@ -82,11 +82,11 @@
 		{
 			position: sticky;
 			left: 0;
-			width: 300px;
-			max-width: min(30%, 300px);
+			// Šířka podle obsahu, volné místo tabulky dostanou ostatní sloupce
+			width: 1%;
 
 			> div:not(.item-detail-content) {
-				width: 300px;
+				width: max-content;
 				max-width: min(30vw, 300px);
 				white-space: normal;
 				overflow: hidden;
