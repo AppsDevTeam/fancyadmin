@@ -917,6 +917,11 @@ může injectnout služby — přihlášeného uživatele, překladač… Factor
 stejně jako dřív přes `new`. Projekt, jehož presentery neleží v namespace `…\Presenters\…`,
 přepíše `getMenuFactoryNamespace()` (vrací namespace, ve kterém factory leží).
 
+V rozbaleném bočním menu se položka s podmenu i skupina s nadpisem (`isToggleable()`) rozbalují
+kliknutím a stav si pamatuje `localStorage` (`assets/js/sideMenu.js`). Rozbalené podmenu, které
+zasahuje pod spodní okraj menu (nízké okno), se po animaci samo doroluje do pohledu; když je
+delší než menu, zastaví se s nadpisem nahoře.
+
 Hlavička uživatelského menu ukazuje vedle avataru jméno a e-mail uživatele. Projekt ji může
 nahradit vlastními řádky přes `UserMenu::setHeaderLines()`: první řádek je zvýrazněný titulek,
 ostatní jsou pod ním. Texty se vypisují tak, jak jsou — překlad udělá factory. `null` (výchozí)
