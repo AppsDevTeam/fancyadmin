@@ -127,8 +127,10 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
 - `setSpan(n)` - kolik sloupců widget zabere; víc, než má mřížka, se ořízne (pod `lg` na 2).
 - `setPosition(n)` - pořadí; widgety se stejnou pozicí (výchozí 0) zůstanou v pořadí přidání.
 - `setTitle()`, `setDescription()` - hlavička widgetu. Popis se nevypisuje pod nadpis, ukáže ho tooltip
-  otazníku vpravo v hlavičce (`.fa-widget-hint`, `docs/tooltip.md`); na dotyku se neukáže, patří do něj jen
-  doplňující vysvětlení, ne nic, bez čeho se widget nedá číst. Jméno widgetu (`data-widget`) je zároveň jméno
+  otazníku vpravo v hlavičce (`.fa-widget-hint`, `docs/tooltip.md`); karty `kpi`, `figures` a `alerts`
+  ho mají místo otazníku na nadpisu (najetí myší, fokus z klávesnice). Na dotyku se neukáže, patří do něj
+  jen doplňující vysvětlení, ne nic, bez čeho se widget nedá číst. U karty s proklikem je nadpis nad
+  odkazem - klik na něj kartu neotevře, jen ukáže nápovědu. Jméno widgetu (`data-widget`) je zároveň jméno
   podkomponenty, smí tedy obsahovat jen písmena, číslice a `_` a musí být v mřížce jedinečné (v jiné mřížce
   stejné jméno být smí).
 
@@ -162,7 +164,7 @@ selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se
 | `addFigures($name, $title, fn() => WidgetFigure[])` | řada údajů v jedné kartě oddělených linkou; `WidgetFigure`: label, value, unit, note (šedý doplněk), tone, title (bublina popisku), badges |
 | `addAlerts($name, $title, fn() => WidgetAlert[])` | upozornění k řešení: text, tón (`Warning` / `Danger` - ikona a podbarvení), poznámka, hodnota, odkaz s popiskem (výchozí `fcadmin.widgets.detail`); prázdné `fcadmin.widgets.alerts.empty` |
 | `addTiles($name, fn() => WidgetTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `WidgetTile`: label, value, note, icon, link, tone |
-| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty` |
+| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava; `wrap: true` zalomí dlouhý text, jinak je řádek jako v gridu na jednom řádku), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty` |
 | `addChart($name, $title, fn() => WidgetChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
 | `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$widgetGrid`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
 

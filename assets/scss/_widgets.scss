@@ -103,6 +103,18 @@
 	}
 }
 
+// Karty kpi, figures a alerts mají popis jako tooltip nadpisu (bez ikony). Nad proklikem celé karty
+// (.stretched-link) musí být nadpis i údaje s nápovědou, jinak by na ně myš nedosáhla.
+.fa-widget-title[data-bs-toggle] {
+	cursor: help;
+}
+
+.fa-widgets-linked [data-bs-toggle="tooltip"],
+.fa-widgets-linked [title] {
+	position: relative;
+	z-index: 2;
+}
+
 .fa-widgets-stat,
 .fa-widgets-tile {
 	position: relative;
@@ -717,8 +729,8 @@
 	}
 }
 
-// Text v tabulce widgetu se zalamuje (čísla mají text-nowrap) - i když projekt tabulkám nastavuje nowrap
-.fa-widgets-table td:not(.text-nowrap) {
+// Sloupec s WidgetTableColumn(wrap: true) se zalamuje, ostatní zůstávají na jednom řádku
+.fa-widgets-table td.fa-widgets-wrap {
 	white-space: normal;
 	overflow-wrap: anywhere;
 }
