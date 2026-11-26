@@ -141,7 +141,7 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
   a důvod, data widgetu se nevolají. Rozložení drží místo i pro ukazatele, které teprve přibudou; karta
   natažená na výšku souseda v řadě má hlášku uprostřed.
 - `setCollapsible()` - sbalitelná karta (`<details>`): vidět je nadpis, obsah po kliknutí; sbalitelné widgety
-  jedné mřížky jsou otevřené po jednom (atribut `name`) a rozbalený nenatahuje sousedy v řadě.
+  se otevírají a zavírají každý zvlášť a rozbalený nenatahuje sousedy v řadě.
 
 ## Hlavička a společné období mřížky
 

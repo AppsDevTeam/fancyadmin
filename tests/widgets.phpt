@@ -712,14 +712,15 @@ test('widget bez dat ukaze hlasku a duvod, jeho data se nevolaji', function () {
 	Assert::same(1, substr_count($html, 'fa-widgets-unavailable-reason'));
 });
 
-test('sbalitelny widget je details se summary, sbalitelne widgety mrizky jsou otevrene po jednom', function () {
+test('sbalitelny widget je details se summary, kazdy se otevira a zavira zvlast', function () {
 	$widgetGrid = widgetGrid();
 	$widgetGrid->addFigures('marketing', 'Marketing', fn() => [new WidgetFigure('Leady', 5)])->setCollapsible()->setLink('/admin/leads');
 	$widgetGrid->addFigures('quality', 'Kvalita', fn() => [new WidgetFigure('Reakce', '2 h')])->setCollapsible();
 
 	$html = renderWidgetGrid($widgetGrid);
 
-	Assert::same(2, substr_count($html, '<details class="card fa-widgets-card fa-widgets-collapsible" name="dashboard-collapsible">'));
+	// každý se otevírá a zavírá zvlášť - bez atributu name (ten by z nich udělal akordeon)
+	Assert::same(2, substr_count($html, '<details class="card fa-widgets-card fa-widgets-collapsible">'));
 	Assert::contains('<summary class="fa-widget-header fa-widgets-collapsible-summary">', $html);
 	Assert::contains('<span class="fa-widget-title">Marketing</span>', $html);
 	// proklik celé karty by zabral i summary - sbalitelný widget ho nemá

@@ -3,11 +3,10 @@
 {varType string $format}
 
 {* Dlaždice jsou samy kartami, ostatní widgety jsou v kartě. Sbalitelný widget je <details> - hlavička je
-   <summary>, otevřít jde i klávesnicí; sbalitelné widgety jedné mřížky jsou otevřené po jednom (atribut name). *}
+   <summary>, otevřít i zavřít jde i klávesnicí; každý se otevírá a zavírá zvlášť. *}
 {var $_card = $widget->getType() !== 'tiles' || $widget->isUnavailable()}
 {var $_link = $widget->getLink() !== null && $widget->getLinkLabel() === null && $widget->getType() !== 'stat' && !$widget->isCollapsible() ? $widget->getLink() : null}
-<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked"
-	n:attr="name: $widget->isCollapsible() ? $widgetGrid->getUniqueId() . '-collapsible'">
+<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked">
 	{if $widget->isCollapsible()}
 		<summary class="fa-widget-header fa-widgets-collapsible-summary">
 			<span class="fa-widget-heading">
