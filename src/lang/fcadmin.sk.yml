@@ -68,6 +68,7 @@ datagrid:
       sent: 'Export odíde na %email%.'
       subject: 'Export: %name%'
       body: 'V prílohe je export „%name%“ (%count% záznamov) podľa filtrov v administrácii.'
+      link: 'Súbor si môžete stiahnuť aj po prihlásení do administrácie: %link%'
     presets:
       title: Uložené zostavy
       mine: Moje zostavy

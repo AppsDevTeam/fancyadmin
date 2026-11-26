@@ -127,7 +127,9 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   XLSX / CSV, „Jen sloupce zobrazené v tabulce“ (výchozí) a „Poslat na e-mail“ s předvyplněnou adresou. Stažení
   otevře JS mimo AJAX na adrese signálu `exportGrid!` (parametry `format`, `visible`), odeslání jde AJAXem
   (POST `format`, `visible`, `email`); neplatnou adresu vrátí `payload.faFiltersExportError`. Data a soubor
-  připraví `$handler` vlastníka gridu podle aktuálních filtrů a hledání.
+  připraví `$handler` vlastníka gridu podle aktuálních filtrů a hledání - typicky přes adt/exporter (`ExportRequest`
+  s `forceBackground` pro e-mail, ke stažení `FileResponse`); texty e-mailu jsou
+  `fcadmin.datagrid.columnFilters.export.subject` / `body` / `link`.
 - **Sloupce:** tlačítko Sloupce (jen grid s `setColumnsHideable()`) nahrazuje ozubené kolo knihovny a otevře dialog
   se zaškrtávátkem viditelnosti, šířkou Úzký / Auto / Široký (`fa-filters-col-narrow` / `-wide` na buňkách) a
   šipkami pořadí. Uloží se až Použít (signál `saveColumns!`, POST `columns` = JSON). Skryté sloupce knihovny

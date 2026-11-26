@@ -68,6 +68,7 @@ datagrid:
       sent: 'Export odejde na %email%.'
       subject: 'Export: %name%'
       body: 'V příloze je export „%name%“ (%count% záznamů) podle filtrů v administraci.'
+      link: 'Soubor si můžete stáhnout i po přihlášení do administrace: %link%'
     presets:
       title: Uložené sestavy
       mine: Moje sestavy
