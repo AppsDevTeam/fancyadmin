@@ -113,3 +113,22 @@ describe('změna selectu', () => {
 		expect(request).not.toHaveBeenCalled();
 	});
 });
+
+describe('společné období mřížky', () => {
+	it('změna odešle formulář mřížky (stránka se načte znovu), ajaxový požadavek widgetu nespustí', () => {
+		const request = vi.spyOn(naja, 'makeRequest').mockResolvedValue({});
+		document.body.insertAdjacentHTML('beforeend', `<form class="fa-widgets-period" method="get" action="/admin/">
+			<select name="dashboard-period" data-widget-grid-period>
+				<option value="thisMonth" selected>Tento měsíc</option>
+				<option value="thisYear">Tento rok</option>
+			</select>
+		</form>`);
+		const form = document.querySelector('select[name="dashboard-period"]').form;
+		const submit = vi.spyOn(form, 'requestSubmit').mockImplementation(() => {});
+
+		choose(document.querySelector('[name="dashboard-period"]'), 'thisYear');
+
+		expect(submit).toHaveBeenCalledTimes(1);
+		expect(request).not.toHaveBeenCalled();
+	});
+});

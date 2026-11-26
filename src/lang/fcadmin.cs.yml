@@ -19,6 +19,10 @@ modal:
   close: Zavřít
 
 widgets:
+  unavailable: Data zatím nejsou k dispozici.
+  alerts:
+    empty: Nic k řešení.
+  detail: Zobrazit podrobnosti
   empty: Za zvolené období nejsou žádná data.
   period:
     label: Období
@@ -31,6 +35,7 @@ widgets:
     lastMonth: Minulý měsíc
     thisQuarter: Toto čtvrtletí
     thisYear: Tento rok
+    last12Months: Posledních 12 měsíců
 
 layout:
   sideMenu:

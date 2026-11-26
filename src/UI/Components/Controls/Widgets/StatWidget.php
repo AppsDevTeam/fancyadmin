@@ -19,8 +19,6 @@ final class StatWidget extends Widget
 
 	private ?string $icon = null;
 
-	private ?string $link = null;
-
 	private WidgetTone $tone = WidgetTone::Neutral;
 
 	/** @param callable(?WidgetPeriod): (int|float|string) $value */
@@ -65,17 +63,6 @@ final class StatWidget extends Widget
 	public function getIcon(): ?string
 	{
 		return $this->icon;
-	}
-
-	public function setLink(?string $link): static
-	{
-		$this->link = $link;
-		return $this;
-	}
-
-	public function getLink(): ?string
-	{
-		return $this->link;
 	}
 
 	public function setTone(WidgetTone $tone): static

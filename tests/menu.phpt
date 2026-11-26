@@ -355,3 +355,21 @@ test('polozka uzivatelskeho menu pozna aktualni odkaz', function () {
 	Assert::true($item->isCurrent(new TestComponent(['Profile:default'])));
 	Assert::false($item->isCurrent(new TestComponent()));
 });
+
+test('viditelne polozky podmenu: nadpis jen nad viditelnymi polozkami', function () {
+	$item = new NavbarMenuItem();
+	$item->setupSubmenuItems(function (NavbarSubmenu $submenu) {
+		$submenu->addMenuItem(new NavbarSubmenuItem()->setLabel('Dokumenty'));
+		$submenu->addHeading('Vozidla');
+		$submenu->addMenuItem(new NavbarSubmenuItem()->setLabel('Nabídka')->setAclResource(new StringResource('vehicles')));
+		$submenu->addHeading('Administrace');
+		$submenu->addMenuItem(new NavbarSubmenuItem()->setLabel('Pobočky')->setAclResource(new StringResource('branches')));
+		$submenu->addMenuItem(new NavbarSubmenuItem()->setLabel('Uživatelé')->setAclResource(new StringResource('users')));
+		$submenu->addHeading('Prázdný');
+	});
+	$labels = fn(TestSecurityUser $user) => array_map(fn($i) => $i->getLabel(), $item->getSubmenu()->getVisibleSubMenuItems($user, new TestComponent()));
+
+	Assert::same(['Dokumenty', 'Administrace', 'Uživatelé'], $labels(new TestSecurityUser(['users'])));
+	Assert::same(['Dokumenty', 'Vozidla', 'Nabídka', 'Administrace', 'Pobočky', 'Uživatelé'], $labels(new TestSecurityUser(isAdmin: true)));
+	Assert::same(['Dokumenty'], $labels(new TestSecurityUser()));
+});

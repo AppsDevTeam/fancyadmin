@@ -19,8 +19,17 @@ export function periodUrls(select, location = window.location) {
 	return { url: url.toString(), request: request.toString() };
 }
 
+const GRID_SELECT = 'select[data-widget-grid-period]';
+
 function onChange(event) {
-	const select = event.target instanceof Element ? event.target.closest(SELECT) : null;
+	const target = event.target instanceof Element ? event.target : null;
+	// Společné období mřížky mění skoro všechny widgety - odešle se formulář a stránka se načte znovu
+	const gridSelect = target?.closest(GRID_SELECT);
+	if (gridSelect) {
+		gridSelect.form?.requestSubmit();
+		return;
+	}
+	const select = target?.closest(SELECT);
 	if (!select) {
 		return;
 	}

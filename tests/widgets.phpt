@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use ADT\FancyAdmin\DI\FancyAdminExtension;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetAlert;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetBadge;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetChart;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetFigure;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControlFactory;
@@ -245,7 +248,7 @@ test('neplatne nastaveni skonci vyjimkou', function () {
 	Assert::exception(fn() => $widgetGrid->addStat('with-dash', 'B', fn() => 2), InvalidArgumentException::class);
 	Assert::exception(fn() => $widgetGrid->getWidget('same')->setPeriods(WidgetPeriod::TODAY, [WidgetPeriod::THIS_MONTH]), InvalidArgumentException::class);
 	Assert::exception(fn() => $widgetGrid->setColumns(0), InvalidArgumentException::class);
-	Assert::exception(fn() => $widgetGrid->setColumns(7), InvalidArgumentException::class);
+	Assert::exception(fn() => $widgetGrid->setColumns(13), InvalidArgumentException::class);
 	Assert::exception(fn() => $widgetGrid->getWidget('same')->setSpan(0), InvalidArgumentException::class);
 	Assert::exception(fn() => $widgetGrid->getWidget('missing'), InvalidArgumentException::class);
 });
@@ -536,9 +539,10 @@ test('WidgetPeriod: hodnota z URL a klic prekladu', function () {
 /** @return array<string, mixed> konfigurace z data-adt-chart */
 function chartConfig(string $html): array
 {
-	Assert::same(1, preg_match("~<canvas data-adt-chart='([^']+)' role=\"img\" aria-label=\"([^\"]*)\"></canvas>~", $html, $match));
+	// uvozovky atributu volí Latte podle verze, obsah je vždy escapovaný
+	Assert::same(1, preg_match("~<canvas data-adt-chart=(['\"])([^'\"]+)\\1 role=\"img\" aria-label=\"([^\"]*)\"></canvas>~", $html, $match));
 
-	return json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
+	return json_decode(html_entity_decode($match[2], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
 }
 
 test('graf: canvas s konfiguraci pro builtin Chart, plugin tematu, format a zvolene obdobi', function () {
@@ -590,3 +594,210 @@ test('graf: vodorovne sloupce jsou vyssi, prazdna data hlasi prazdne obdobi, spa
 	Assert::exception(fn() => new WidgetChart('bar', ['A'], [['label' => 'bez dat']]), InvalidArgumentException::class);
 	Assert::exception(fn() => new WidgetChart('bar', [], [], indexAxis: 'z'), InvalidArgumentException::class);
 });
+
+test('kpi: hodnota s jednotkou, krivka vyvoje, stitky pod hodnotou, popisek a proklik cele karty', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpi('turnover', 'Obrat', fn() => '42,8')
+		->setUnit('mil. Kč')
+		->setTone(WidgetTone::Success)
+		->setSparkline(fn() => [1, null, 3, 2])
+		->setBadges(fn() => [new WidgetBadge('↑ 8,4 %', WidgetTone::Success, 'meziročně')])
+		->setNote('123 % plánu')
+		->setLink('/admin/sales');
+	$widgetGrid->addKpi('flat', 'Bez křivky', fn() => null)->setSparkline(fn() => [5])->setUnit(fn(?WidgetPeriod $period) => 'ks ' . ($period?->value ?? 'bez období'));
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('<h2 class="fa-widget-title">Obrat</h2>', $html);
+	Assert::match('%A%<div class="fa-widgets-kpi-value fa-widgets-value-tone-success">%A%42,8<span class="fa-widgets-unit">mil. Kč</span>%A%', $html);
+	// null mezi hodnotami vypadne, tři body na šířku 66 px, poslední nahoře
+	Assert::contains('<polyline points="3,25 36,3 69,14"', $html);
+	Assert::contains('<circle cx="69" cy="14" r="2.6"', $html);
+	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-success" title="meziročně">↑ 8,4 %</span>', $html);
+	Assert::contains('<span class="fa-widgets-kpi-note">123 % plánu</span>', $html);
+	Assert::contains('<a href="/admin/sales" class="stretched-link fa-widgets-link" aria-label="Obrat"></a>', $html);
+	Assert::contains('fa-widgets-link-arrow', $html);
+	// štítky KPI nejsou v hlavičce, jen pod hodnotou
+	Assert::same(1, substr_count($html, '↑ 8,4 %'));
+	// prázdná hodnota je pomlčka, jedna hodnota křivku nedělá
+	Assert::match('%A%<div class="fa-widgets-kpi-value fa-widgets-value-tone-neutral">%A%–%A%', $html);
+	Assert::same(1, substr_count($html, '<svg'));
+	Assert::contains('<span class="fa-widgets-unit">ks bez období</span>', $html);
+});
+
+test('kpi s castmi: cast ma popisek, hodnotu, jednotku, stitky a poznamku; hodnota nebo casti, ne oboje', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpiParts('network', 'Pobočky a makléři', fn() => [
+		new WidgetFigure('Pobočky', 27, note: 'celkem v síti'),
+		new WidgetFigure('Makléři', 286, badges: [new WidgetBadge('+34 noví', WidgetTone::Success), new WidgetBadge('−14 ukončeno', WidgetTone::Danger)]),
+	]);
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::same(2, substr_count($html, 'class="fa-widgets-kpi-part"'));
+	Assert::contains('<div class="fa-widgets-kpi-part-label">Pobočky</div>', $html);
+	Assert::contains('<span class="fa-widgets-kpi-note">celkem v síti</span>', $html);
+	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-danger">−14 ukončeno</span>', $html);
+
+	Assert::exception(fn() => new ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget('x', 'X'), InvalidArgumentException::class);
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpiParts('bad', 'Špatně', fn() => ['neni cast']);
+	Assert::exception(fn() => renderWidgetGrid($widgetGrid), UnexpectedValueException::class, "%a%'bad'%a%");
+});
+
+test('rada udaju: hodnota v barve tonu, jednotka, doplnek, bublina popisku a stitky v hlavicce s podtitulem', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addFigures('recruitment', 'Nábor nemovitostí', fn() => [
+		new WidgetFigure('Nové nábory', 124),
+		new WidgetFigure('Exkluzivita', '58 %', note: 'z aktivních', tone: WidgetTone::Success, title: 'Podíl exkluzivních'),
+		new WidgetFigure('Ztracená provize', '3,35', unit: 'mil. Kč', tone: WidgetTone::Danger),
+	])->setSubtitle(fn() => 'říjen 2026')
+		->setBadges([new WidgetBadge('3 pobočky po splatnosti', WidgetTone::Danger)]);
+	$widgetGrid->addFigures('empty', 'Prázdná', fn() => []);
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('<span class="fa-widget-subtitle">říjen 2026</span>', $html);
+	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-danger">3 pobočky po splatnosti</span>', $html);
+	Assert::contains('<div class="fa-widgets-figure-label" title="Podíl exkluzivních">Exkluzivita</div>', $html);
+	Assert::match('%A%fa-widgets-value-tone-success">%A%58 %%%A%<span class="fa-widgets-figure-note">z aktivních</span>%A%', $html);
+	Assert::match('%A%fa-widgets-value-tone-danger">%A%3,35<span class="fa-widgets-unit">mil. Kč</span>%A%', $html);
+	Assert::match('%A%fa-widgets-value-tone-neutral">%A%124%A%', $html);
+	Assert::contains('[fcadmin.widgets.empty]', $html);
+});
+
+test('upozorneni: zavaznost, poznamka, hodnota, proklik s vychozim popiskem a odkaz v paticce; prazdny seznam', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addAlerts('alerts', 'Upozornění k řešení', fn() => [
+		new WidgetAlert('Plzeň: realizované provize −28 %', WidgetTone::Danger, link: '/admin/branch/1', linkLabel: 'Řešit'),
+		new WidgetAlert('12 makléřů bez náboru', note: '30+ dní', value: 12, link: '/admin/user'),
+	])->setLink('/admin/alerts', 'Všechna upozornění');
+	$widgetGrid->addAlerts('none', 'Nic', fn() => []);
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('<li class="fa-widgets-alert fa-widgets-tone-danger">', $html);
+	Assert::contains('fa-triangle-exclamation', $html);
+	Assert::contains('fa-circle-exclamation', $html);
+	Assert::contains('<div class="fa-widgets-alert-note">30+ dní</div>', $html);
+	Assert::contains('<span class="fa-widgets-alert-value">12</span>', $html);
+	Assert::match('%A%<a href="/admin/branch/1" class="fa-widgets-alert-link">Řešit <i%A%', $html);
+	Assert::match('%A%<a href="/admin/user" class="fa-widgets-alert-link">[fcadmin.widgets.detail] <i%A%', $html);
+	Assert::match('%A%<a href="/admin/alerts" class="fa-widgets-footer-link">Všechna upozornění <i%A%', $html);
+	// odkaz s popiskem je v patičce, karta jako celek odkazem není
+	Assert::notContains('fa-widgets-link-arrow', $html);
+	Assert::contains('[fcadmin.widgets.alerts.empty]', $html);
+});
+
+test('widget bez dat ukaze hlasku a duvod, jeho data se nevolaji', function () {
+	$called = false;
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addFigures('economy', 'Hospodaření', function () use (&$called) {
+		$called = true;
+		return [];
+	})->setUnavailable('Náklady poboček v systému nejsou.')->setBadges(function () use (&$called) {
+		$called = true;
+		return [];
+	});
+	$widgetGrid->addTiles('tiles', fn() => [], 'Dlaždice')->setUnavailable('');
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::false($called);
+	Assert::contains('<h2 class="fa-widget-title">Hospodaření</h2>', $html);
+	Assert::contains('<div class="fa-widgets-unavailable-text">[fcadmin.widgets.unavailable]</div>', $html);
+	Assert::contains('<div class="fa-widgets-unavailable-reason">Náklady poboček v systému nejsou.</div>', $html);
+	// dlaždice bez dat dostanou kartu, prázdný důvod se nevypíše
+	Assert::contains('<h2 class="fa-widget-title">Dlaždice</h2>', $html);
+	Assert::same(1, substr_count($html, 'fa-widgets-unavailable-reason'));
+});
+
+test('sbalitelny widget je details se summary, sbalitelne widgety mrizky jsou otevrene po jednom', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addFigures('marketing', 'Marketing', fn() => [new WidgetFigure('Leady', 5)])->setCollapsible()->setLink('/admin/leads');
+	$widgetGrid->addFigures('quality', 'Kvalita', fn() => [new WidgetFigure('Reakce', '2 h')])->setCollapsible();
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::same(2, substr_count($html, '<details class="card fa-widgets-card fa-widgets-collapsible" name="dashboard-collapsible">'));
+	Assert::contains('<summary class="fa-widget-header fa-widgets-collapsible-summary">', $html);
+	Assert::contains('<span class="fa-widget-title">Marketing</span>', $html);
+	// proklik celé karty by zabral i summary - sbalitelný widget ho nemá
+	Assert::notContains('stretched-link', $html);
+	Assert::contains('Leady', $html);
+});
+
+test('obdobi mrizky: widgety bez vlastniho vyberu ho dostanou, vlastni vyber ma prednost, odkazy a hlavicka', function () {
+	$received = [];
+	$presenter = pagePresenter('dashboard-period=thisYear&dashboard-own-period=today&x=1');
+	$widgetGrid = new WidgetGridControl();
+	$widgetGrid->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR, WidgetPeriod::LAST_12_MONTHS])
+		->setHeader('Dobrý den', fn(?WidgetPeriod $period) => 'období ' . $period?->value);
+	$widgetGrid->addKpi('shared', 'Společné', function (?WidgetPeriod $period) use (&$received) {
+		$received['shared'] = $period;
+		return 1;
+	})->setSubtitle(fn(?WidgetPeriod $period) => $period?->value);
+	$widgetGrid->addKpi('own', 'Vlastní', function (?WidgetPeriod $period) use (&$received) {
+		$received['own'] = $period;
+		return 2;
+	})->setPeriods(WidgetPeriod::YESTERDAY);
+	$presenter->addComponent($widgetGrid, 'dashboard');
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::same(WidgetPeriod::THIS_YEAR, $received['shared']);
+	Assert::same(WidgetPeriod::TODAY, $received['own']);
+	Assert::contains('<h1 class="fa-widgets-header-title">Dobrý den</h1>', $html);
+	Assert::contains('<div class="fa-widgets-header-note">období thisYear</div>', $html);
+	Assert::contains('<span class="fa-widget-subtitle">thisYear</span>', $html);
+	Assert::match('%A%<select name="dashboard-period" class="form-select form-select-sm" aria-label="[fcadmin.widgets.period.label]" data-widget-grid-period>%A%', $html);
+	Assert::contains('<option value="thisYear" selected>[fcadmin.widgets.period.thisYear]</option>', $html);
+	Assert::contains('<option value="last12Months">[fcadmin.widgets.period.last12Months]</option>', $html);
+	// formulář mřížky nese ostatní parametry, formulář widgetu i období mřížky
+	$gridForm = substr($html, 0, strpos($html, '</form>'));
+	Assert::contains('<input type="hidden" name="x" value="1">', $gridForm);
+	Assert::contains('<input type="hidden" name="dashboard-own-period" value="today">', $gridForm);
+	Assert::notContains('type="hidden" name="dashboard-period"', $gridForm);
+	Assert::contains('<input type="hidden" name="dashboard-period" value="thisYear">', substr($html, strlen($gridForm)));
+
+	// období mřížky jde do odkazů mřížky, ne widgetů bez vlastního výběru
+	$params = [];
+	$widgetGrid->saveState($params);
+	Assert::same('thisYear', $params['period']);
+	Assert::null(linkPeriod($widgetGrid['shared']));
+
+	$widgetGrid->loadState(['period' => 'thisMonth']);
+	$params = [];
+	$widgetGrid->saveState($params);
+	Assert::null($params['period']);
+	$widgetGrid->loadState(['period' => 'today']);
+	Assert::same(WidgetPeriod::THIS_MONTH, $widgetGrid->getPeriod());
+});
+
+test('mrizka bez obdobi a hlavicky hlavicku nevykresli', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpi('a', 'A', fn() => 1);
+
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::notContains('fa-widgets-header', $html);
+	Assert::null($widgetGrid->getPeriod());
+});
+
+test('poslednich 12 mesicu: od 1. dne mesice pred 11 mesici do dneska, predchozi o rok driv', function () {
+	$now = new DateTimeImmutable('2026-10-20 13:40');
+	[$from, $to] = WidgetPeriod::LAST_12_MONTHS->getRange($now);
+	Assert::same('2025-11-01 00:00', $from->format('Y-m-d H:i'));
+	Assert::same('2026-10-21 00:00', $to->format('Y-m-d H:i'));
+	[$from, $to] = WidgetPeriod::LAST_12_MONTHS->getPreviousRange($now);
+	Assert::same('2024-11-01', $from->format('Y-m-d'));
+	Assert::same('2025-10-21', $to->format('Y-m-d'));
+});
+
+test('graf se zvyraznenym pasmem: volba pluginu, spatne zadani vyhodi vyjimku', function () {
+	$chart = new WidgetChart('line', ['1/2026', '2/2026', '3/2026'], [['label' => 'Obrat', 'data' => [1, 2, 3]]], highlight: [1, 2]);
+	Assert::same([1, 2], $chart->toConfig()['options']['plugins']['fancyadminTheme']['highlight']);
+	Assert::false(isset((new WidgetChart('line', ['a'], [['data' => [1]]]))->toConfig()['options']['plugins']));
+	Assert::exception(fn() => new WidgetChart('line', ['a'], [['data' => [1]]], highlight: [1]), InvalidArgumentException::class);
+});
+

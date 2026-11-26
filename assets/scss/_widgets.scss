@@ -11,7 +11,7 @@
 	align-items: stretch;
 }
 
-@for $i from 1 through 6 {
+@for $i from 1 through 12 {
 	.fa-widgets-cols-#{$i} {
 		--fa-widgets-columns: #{$i};
 	}
@@ -26,7 +26,7 @@
 		--fa-widgets-columns: 2;
 	}
 
-	@for $i from 3 through 6 {
+	@for $i from 3 through 12 {
 		.fa-widgets-span-#{$i} {
 			grid-column: span 2;
 		}
@@ -212,4 +212,402 @@
 .fa-widgets-empty {
 	margin: 0;
 	color: var(--fa-text-muted);
+}
+
+// Hlavička mřížky (setHeader / setPeriods): pás v barvě primární barvy s nadpisem, textem a obdobím
+.fa-widgets-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 24px;
+	margin-bottom: 20px;
+	padding: 18px 24px;
+	border-radius: var(--bs-border-radius-lg);
+	background-color: var(--primaryColor);
+	color: #fff;
+
+	.fa-widgets-header-period .form-select {
+		background-color: rgba(255, 255, 255, .14);
+		border-color: rgba(255, 255, 255, .35);
+		color: #fff;
+		--bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+
+		option {
+			color: var(--fa-text);
+			background-color: var(--fa-surface);
+		}
+	}
+}
+
+.fa-widgets-header-title {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: inherit;
+}
+
+.fa-widgets-header-note {
+	margin-top: 2px;
+	font-size: .875rem;
+	opacity: .85;
+}
+
+.fa-widget-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	min-width: 0;
+}
+
+.fa-widget-subtitle {
+	font-size: .8125rem;
+	color: var(--fa-text-muted);
+}
+
+// Proklik celé karty: šipka vpravo v hlavičce, zvýraznění okraje
+.fa-widgets-linked {
+	position: relative;
+
+	&:hover {
+		border-color: color-mix(in srgb, var(--primaryColor) 35%, var(--fa-border));
+	}
+}
+
+.fa-widgets-link-arrow {
+	margin-left: auto;
+	font-size: .75rem;
+	color: var(--primaryColor);
+}
+
+.fa-widgets-footer {
+	margin-top: 12px;
+}
+
+.fa-widgets-footer-link,
+.fa-widgets-alert-link {
+	position: relative;
+	z-index: 2;
+	font-size: .8125rem;
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+
+	.fa-solid {
+		font-size: .625rem;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+// Štítek: počet, změna, stav - tón barví text i podklad
+.fa-widgets-badge {
+	display: inline-block;
+	padding: 2px 7px;
+	border-radius: 2px;
+	font-size: .75rem;
+	font-weight: 500;
+	line-height: 1.4;
+	white-space: nowrap;
+	color: var(--fa-widgets-tone);
+	background-color: color-mix(in srgb, var(--fa-widgets-tone) 12%, transparent);
+}
+
+.fa-widgets-badge.fa-widgets-tone-neutral {
+	color: var(--fa-text-muted);
+	background-color: var(--fa-surface-hover);
+}
+
+// Barva hodnoty podle tónu; neutrální je běžný text
+@each $tone, $color in (primary: var(--primaryColor), success: var(--bs-success), warning: var(--bs-warning), danger: var(--bs-danger), info: var(--bs-info)) {
+	.fa-widgets-value-tone-#{$tone} {
+		color: $color;
+	}
+}
+
+.fa-widgets-unit {
+	margin-left: .3em;
+	font-size: .8125rem;
+	font-weight: 400;
+	color: var(--fa-text-muted);
+}
+
+// KPI karta
+.fa-widget-kpi .fa-widget-title,
+.fa-widget-figures .fa-widget-title,
+.fa-widget-alerts .fa-widget-title,
+.fa-widgets-collapsible .fa-widget-title {
+	font-size: .75rem;
+	font-weight: 600;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+	color: var(--fa-text-muted);
+}
+
+.fa-widget-kpi .fa-widgets-card-body,
+.fa-widget-figures .fa-widgets-card-body {
+	padding-top: 10px;
+}
+
+.fa-widgets-kpi {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	height: 100%;
+}
+
+.fa-widgets-kpi-main {
+	display: flex;
+	align-items: flex-end;
+	gap: 14px;
+}
+
+.fa-widgets-kpi-value {
+	font-size: 2rem;
+	font-weight: 500;
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.fa-widgets-kpi-value.fa-widgets-value-tone-neutral,
+.fa-widgets-figure-value.fa-widgets-value-tone-neutral {
+	color: var(--fa-heading, var(--fa-text));
+}
+
+.fa-widgets-sparkline {
+	flex: 0 0 auto;
+	margin-bottom: 4px;
+	color: var(--fa-widgets-tone);
+}
+
+.fa-widgets-sparkline.fa-widgets-tone-neutral {
+	color: var(--primaryColor);
+}
+
+.fa-widgets-kpi-foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 8px;
+	margin-top: auto;
+}
+
+.fa-widgets-kpi-note {
+	font-size: .75rem;
+	line-height: 1.25;
+	color: var(--fa-text-muted);
+}
+
+// Dělená KPI karta: části oddělené svislou linkou
+.fa-widgets-kpi-parts {
+	display: grid;
+	grid-auto-columns: minmax(0, 1fr);
+	grid-auto-flow: column;
+}
+
+.fa-widgets-kpi-part {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 0 14px;
+
+	&:first-child {
+		padding-left: 0;
+	}
+
+	& + & {
+		border-left: 1px solid var(--fa-line, var(--fa-border));
+	}
+
+	.fa-widgets-kpi-value {
+		font-size: 1.7rem;
+	}
+}
+
+.fa-widgets-kpi-part-label,
+.fa-widgets-figure-label {
+	font-size: .75rem;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-kpi-part-label {
+	font-size: .6875rem;
+	font-weight: 500;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+}
+
+// Řada údajů
+.fa-widgets-figures {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+	row-gap: 12px;
+}
+
+.fa-widgets-figure {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 0 12px;
+	min-width: 0;
+
+	&:first-child {
+		padding-left: 0;
+	}
+
+	& + & {
+		border-left: 1px solid var(--fa-line, var(--fa-border));
+	}
+}
+
+.fa-widgets-figure-value {
+	font-size: 1.3rem;
+	font-weight: 500;
+	line-height: 1.2;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.fa-widgets-figure-note {
+	margin-left: .3em;
+	font-size: .75rem;
+	font-weight: 400;
+	color: var(--fa-text-muted);
+}
+
+@include media-breakpoint-down(md) {
+	.fa-widgets-figures {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.fa-widgets-figure,
+	.fa-widgets-figure + .fa-widgets-figure {
+		padding: 0;
+		border-left: 0;
+	}
+}
+
+// Upozornění
+.fa-widgets-alerts {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fa-widgets-alert {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 14px;
+	background-color: color-mix(in srgb, var(--fa-widgets-tone) 9%, transparent);
+}
+
+.fa-widgets-alert-icon {
+	color: var(--fa-widgets-tone);
+}
+
+.fa-widgets-alert-body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.fa-widgets-alert-text {
+	overflow: hidden;
+	font-size: .875rem;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fa-widgets-alert-note {
+	font-size: .75rem;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-alert-value {
+	font-weight: 500;
+	white-space: nowrap;
+	color: var(--fa-widgets-tone);
+}
+
+// Widget bez dat
+.fa-widgets-unavailable {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	color: var(--fa-text-muted);
+	font-size: .875rem;
+
+	> .fa-regular {
+		margin-top: 3px;
+	}
+}
+
+.fa-widgets-unavailable-text {
+	font-weight: 500;
+}
+
+.fa-widgets-unavailable-reason {
+	font-size: .8125rem;
+}
+
+// Sbalitelný widget (<details>): rozbalený nenatahuje sousedy v řadě
+.fa-widget:has(> .fa-widgets-collapsible) {
+	align-self: start;
+}
+
+.fa-widgets-collapsible {
+	> .fa-widgets-collapsible-summary {
+		padding: 14px 20px;
+		align-items: center;
+		cursor: pointer;
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
+
+		.fa-widget-title {
+			color: var(--primaryColor);
+		}
+	}
+
+	> .fa-widgets-card-body {
+		padding-top: 0;
+	}
+
+	&[open] .fa-widgets-collapsible-chevron {
+		transform: rotate(180deg);
+	}
+}
+
+.fa-widgets-collapsible-chevron {
+	margin-left: auto;
+	font-size: .75rem;
+	color: var(--primaryColor);
+	transition: transform .2s ease;
+}
+
+// Ve sbalitelné dlaždici je málo místa - údaje se zalamují, svislé linky by visely na začátku řádku
+.fa-widgets-collapsible .fa-widgets-figures {
+	gap: 12px 16px;
+
+	.fa-widgets-figure,
+	.fa-widgets-figure + .fa-widgets-figure {
+		padding: 0;
+		border-left: 0;
+	}
+}
+
+// Text v tabulce widgetu se zalamuje (čísla mají text-nowrap) - i když projekt tabulkám nastavuje nowrap
+.fa-widgets-table td:not(.text-nowrap) {
+	white-space: normal;
+	overflow-wrap: anywhere;
 }

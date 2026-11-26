@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 
 use InvalidArgumentException;
+use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Control;
 
 /**
@@ -13,12 +14,27 @@ use Nette\Application\UI\Control;
  */
 class WidgetGridControl extends Control
 {
-	public const MAX_COLUMNS = 6;
+	public const MAX_COLUMNS = 12;
+
+	/** Období mřížky (setPeriods()) - platí pro widgety bez vlastního výběru. */
+	#[Persistent]
+	public ?string $period = null;
 
 	private int $columns = 3;
 
 	/** @var array<string, Widget> */
 	private array $widgets = [];
+
+	private ?WidgetPeriod $defaultPeriod = null;
+
+	/** @var list<WidgetPeriod> */
+	private array $periodOptions = [];
+
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $headerTitle = null;
+
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $headerText = null;
 
 	public function setColumns(int $columns): static
 	{
@@ -32,6 +48,89 @@ class WidgetGridControl extends Control
 	public function getColumns(): int
 	{
 		return $this->columns;
+	}
+
+	/**
+	 * Společné období mřížky: výběr v hlavičce mřížky, platí pro všechny widgety bez vlastního výběru
+	 * (Widget::setPeriods()). Změna načte stránku znovu - mění se tím většina widgetů.
+	 *
+	 * @param list<WidgetPeriod>|null $options nabízená období, výchozí všechna
+	 */
+	public function setPeriods(WidgetPeriod $default, ?array $options = null): static
+	{
+		$options ??= WidgetPeriod::cases();
+		if (!in_array($default, $options, true)) {
+			throw new InvalidArgumentException('Výchozí období musí být mezi nabízenými.');
+		}
+		$this->defaultPeriod = $default;
+		$this->periodOptions = $options;
+		return $this;
+	}
+
+	public function hasPeriods(): bool
+	{
+		return $this->defaultPeriod !== null;
+	}
+
+	/** @return list<WidgetPeriod> */
+	public function getPeriodOptions(): array
+	{
+		return $this->periodOptions;
+	}
+
+	/** Zvolené období mřížky; neznámé nebo nenabízené znamená výchozí, bez setPeriods() null. */
+	public function getPeriod(): ?WidgetPeriod
+	{
+		if ($this->defaultPeriod === null) {
+			return null;
+		}
+		$period = WidgetPeriod::fromUrl($this->period, $this->defaultPeriod);
+		return in_array($period, $this->periodOptions, true) ? $period : $this->defaultPeriod;
+	}
+
+	/** @param array<string, mixed> $params */
+	public function saveState(array &$params): void
+	{
+		if (!array_key_exists('period', $params)) {
+			// Výchozí nebo neplatné období do odkazů nepatří
+			$period = $this->getPeriod();
+			$params['period'] = $period !== $this->defaultPeriod ? $period?->value : null;
+		}
+		parent::saveState($params);
+	}
+
+	/** Jméno pole s obdobím mřížky v URL (`dashboard-period`). */
+	public function getPeriodParameterName(): string
+	{
+		return $this->getParameterId('period');
+	}
+
+	/**
+	 * Hlavička mřížky (pás nad widgety): nadpis, text a výběr období mřížky.
+	 *
+	 * @param string|(\Closure(?WidgetPeriod): ?string) $title
+	 * @param string|(\Closure(?WidgetPeriod): ?string)|null $text
+	 */
+	public function setHeader(string|\Closure $title, string|\Closure|null $text = null): static
+	{
+		$this->headerTitle = $title;
+		$this->headerText = $text;
+		return $this;
+	}
+
+	public function getHeaderTitle(): ?string
+	{
+		return $this->headerTitle instanceof \Closure ? ($this->headerTitle)($this->getPeriod()) : $this->headerTitle;
+	}
+
+	public function getHeaderText(): ?string
+	{
+		return $this->headerText instanceof \Closure ? ($this->headerText)($this->getPeriod()) : $this->headerText;
+	}
+
+	public function hasHeader(): bool
+	{
+		return $this->headerTitle !== null || $this->hasPeriods();
 	}
 
 	/** @param callable(?WidgetPeriod): (int|float|string) $value */
@@ -53,6 +152,30 @@ class WidgetGridControl extends Control
 	public function addTable(string $name, string $title, array $columns, callable $rows): TableWidget
 	{
 		return $this->addWidget(new TableWidget($name, $title, $columns, $rows));
+	}
+
+	/** @param callable(?WidgetPeriod): (int|float|string|null) $value */
+	public function addKpi(string $name, string $title, callable $value): KpiWidget
+	{
+		return $this->addWidget(new KpiWidget($name, $title, value: $value));
+	}
+
+	/** @param callable(?WidgetPeriod): iterable<WidgetFigure> $parts */
+	public function addKpiParts(string $name, string $title, callable $parts): KpiWidget
+	{
+		return $this->addWidget(new KpiWidget($name, $title, parts: $parts));
+	}
+
+	/** @param callable(?WidgetPeriod): iterable<WidgetFigure> $figures */
+	public function addFigures(string $name, string $title, callable $figures): FiguresWidget
+	{
+		return $this->addWidget(new FiguresWidget($name, $title, $figures));
+	}
+
+	/** @param callable(?WidgetPeriod): iterable<WidgetAlert> $alerts */
+	public function addAlerts(string $name, string $title, callable $alerts): AlertsWidget
+	{
+		return $this->addWidget(new AlertsWidget($name, $title, $alerts));
 	}
 
 	/** @param callable(?WidgetPeriod): WidgetChart $chart */
@@ -78,6 +201,7 @@ class WidgetGridControl extends Control
 			throw new InvalidArgumentException("Widget '{$widget->getName()}' už v mřížce je.");
 		}
 		$this->widgets[$widget->getName()] = $widget;
+		$widget->setPeriodFallback($this->getPeriod(...));
 		$this->addComponent(new WidgetControl($widget), $widget->getName());
 		return $widget;
 	}

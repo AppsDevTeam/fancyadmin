@@ -174,3 +174,28 @@ describe('graf v překresleném widgetu', () => {
 		expect(chartUpdateOperation(document.getElementById('snippet--other'), '<canvas data-adt-chart="{}"></canvas>')).toBeNull();
 	});
 });
+
+describe('zvýrazněné období v grafu', () => {
+	const scale = { getPixelForValue: (index) => 100 + index * 50 };
+	const chart = (labels) => ({ scales: { x: scale }, chartArea: { left: 60, right: 400, top: 10, bottom: 200 }, data: { labels } });
+
+	it('pásmo jde od poloviny mezery před prvním do poloviny za posledním popiskem, oříznuté na plochu', () => {
+		expect(theme.highlightBounds(chart(['1', '2', '3', '4', '5', '6', '7']), [1, 2])).toEqual({ left: 125, right: 225, top: 10, bottom: 200 });
+		expect(theme.highlightBounds(chart(['1', '2', '3']), [0, 0])).toEqual({ left: 75, right: 125, top: 10, bottom: 200 });
+		expect(theme.highlightBounds(chart(['1', '2', '3', '4', '5', '6', '7', '8']), [6, 99]).right).toBe(400);
+	});
+
+	it('bez zadání, s nesmyslným zadáním nebo bez os nic nekreslí', () => {
+		expect(theme.highlightBounds(chart(['1', '2']), undefined)).toBeNull();
+		expect(theme.highlightBounds(chart(['1', '2']), [5, 6])).toBeNull();
+		expect(theme.highlightBounds(chart([]), [0, 0])).toBeNull();
+		expect(theme.highlightBounds({ data: { labels: ['1'] } }, [0, 0])).toBeNull();
+	});
+
+	it('plugin pásmo vykreslí pod datasety v průhledné primární barvě', () => {
+		const ctx = { save: vi.fn(), restore: vi.fn(), fillRect: vi.fn(), fillStyle: '' };
+		theme.fancyadminTheme.beforeDatasetsDraw({ ...chart(['1', '2', '3']), ctx }, {}, { highlight: [1, 1] });
+		expect(ctx.fillRect).toHaveBeenCalledWith(125, 10, 50, 190);
+		expect(ctx.fillStyle).toBe('rgba(255, 0, 0, 0.08)');
+	});
+});
