@@ -337,6 +337,25 @@ document.addEventListener('change', (e) => {
 	}
 });
 
+// Výběr více hodnot se skupinami: klik na nadpis skupiny vybere celou skupinu, u vybrané ji odznačí
+document.addEventListener('mousedown', (e) => {
+	const header = e.target.closest('.fa-filters-panel .optgroup-header');
+	const tomSelect = header?.closest('.ts-dropdown')?._faTomSelect;
+	if (!tomSelect || !tomSelect.settings.mode || tomSelect.settings.mode !== 'multi') {
+		return;
+	}
+	e.preventDefault();
+	const group = header.closest('[data-group]').dataset.group;
+	const values = Object.values(tomSelect.options).filter((option) => String(option.optgroup) === group).map((option) => String(option.value));
+	const selected = tomSelect.items.map(String);
+	if (values.every((value) => selected.includes(value))) {
+		values.forEach((value) => tomSelect.removeItem(value, true));
+	} else {
+		tomSelect.addItems(values, true);
+	}
+	tomSelect.refreshOptions(false);
+});
+
 // Smazání sestavy se potvrzuje dřív, než odkaz převezme Naja
 document.addEventListener('click', (e) => {
 	const link = e.target.closest('[data-fa-filters-confirm]');
@@ -523,6 +542,7 @@ document.addEventListener('shown.bs.dropdown', (e) => {
 		if (dropdown.parentElement === wrapper) {
 			wrapper.after(dropdown);
 		}
+		dropdown._faTomSelect = select.tomselect;
 	});
 	const first = panel.querySelector('.fa-filters-field input:not([type="hidden"]):not([readonly]), .fa-filters-field select, .fa-filters-field .ts-control input');
 	(first?.tomselect?.control_input ?? first)?.focus();

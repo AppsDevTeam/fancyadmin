@@ -346,6 +346,10 @@
 	color: var(--fa-text);
 }
 
+.fa-filters-panel .ts-wrapper.multi + .ts-dropdown .optgroup-header {
+	cursor: pointer;
+}
+
 .fa-filters-panel .ts-dropdown .optgroup-header {
 	background: var(--fa-surface);
 	color: var(--fa-text-muted);

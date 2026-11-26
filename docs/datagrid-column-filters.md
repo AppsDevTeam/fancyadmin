@@ -128,6 +128,9 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
 - **Pole podle typu filtru:** text (Obsahuje), výběr a výběr více hodnot (Tom Select, nabídka je v toku panelu),
   výběr s volbami jen 1 a 0 jako přepínač Vše / Ano / Ne, datum, období (rychlé volby + flatpickr `range`
   vložený do panelu, hodnoty do skrytých polí od/do filtru knihovny), rozsah čísel a zaškrtávátko.
+- **Výběr více hodnot se skupinami** (`addFilterMultiSelect()` s volbami ve skupinách = `optgroup`): klik na nadpis
+  skupiny v nabídce Tom Selectu vybere celou skupinu, u celé vybrané ji odznačí. Celá vybraná skupina (víc než
+  jedna volba) je v čipu jednou položkou „Skupina (vše)“.
 - **Prázdný výsledek** s aktivním filtrem nabídne „Zrušit všechny filtry“.
 - Hledání (`search`), přepínač aktivity, období (`FilterPeriod`), přepínače a exporty zůstávají v liště.
   Pokročilé hledání (`advancedSearch`) trait nevykresluje.

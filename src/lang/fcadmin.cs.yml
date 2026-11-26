@@ -17,6 +17,7 @@ datagrid:
   columnFilters:
     count: '{0}%formatted% záznamů|{1}%formatted% záznam|[2,4]%formatted% záznamy|[5,+Inf[%formatted% záznamů'
     of: z
+    wholeGroup: '%group% (vše)'
     more: Další filtry
     activeFilters: Aktivní filtry
     chipEdit: 'Upravit filtr %label%: %value%'

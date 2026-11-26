@@ -887,7 +887,16 @@ trait ColumnFiltersTrait
 		if ($filter instanceof FilterSelect) {
 			$options = self::flattenOptions($filter->getOptions());
 			$labels = [];
-			foreach (is_array($value) ? $value : [$value] as $_value) {
+			$values = is_array($value) ? array_map('strval', $value) : [$value];
+			// Celá vybraná skupina voleb (optgroup) je v čipu jednou položkou „Zásilkovna (vše)“
+			foreach (is_array($value) ? $filter->getOptions() : [] as $group => $groupOptions) {
+				$keys = is_array($groupOptions) ? array_map('strval', array_keys($groupOptions)) : [];
+				if ($keys !== [] && count($keys) > 1 && array_diff($keys, $values) === []) {
+					$labels[] = $translator->translate('fcadmin.datagrid.columnFilters.wholeGroup', ['group' => $this->getOptionLabel((string) $group)]);
+					$values = array_diff($values, $keys);
+				}
+			}
+			foreach ($values as $_value) {
 				if (!self::isFilled($_value)) {
 					continue;
 				}
