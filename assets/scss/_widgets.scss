@@ -795,6 +795,13 @@
 }
 
 // Hlavička podstránky (setPage + renderPage): drobečky a období v jednom řádku, pod nimi nadpis a podtitul
+// Lišta podstránky pod hlavičkou (přepínač režimu, záložky) - stejná šířka jako mřížka
+.fa-widgets-page-toolbar {
+	max-width: var(--fa-widgets-max-width, none);
+	margin-inline: auto;
+	margin-bottom: 16px;
+}
+
 .fa-widgets-page-header {
 	max-width: var(--fa-widgets-max-width, none);
 	margin-inline: auto;
