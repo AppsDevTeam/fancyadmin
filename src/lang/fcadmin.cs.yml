@@ -13,6 +13,11 @@ accordion:
   inactive: Neaktivní
 
 datagrid:
+  a11y:
+    filter: 'Filtrovat podle sloupce %column%'
+    filterFrom: 'Filtrovat podle sloupce %column% - od'
+    filterTo: 'Filtrovat podle sloupce %column% - do'
+    perPage: Počet položek na stránku
   filters: Filtry
   columnFilters:
     count: '{0}%formatted% záznamů|{1}%formatted% záznam|[2,4]%formatted% záznamy|[5,+Inf[%formatted% záznamů'

@@ -17,6 +17,10 @@ use Contributte\Datagrid\Filter\FilterText;
 use Contributte\Datagrid\Filter\OneColumnFilter;
 use DateTimeImmutable;
 use Nette\Application\Attributes\Persistent;
+use Nette\Application\UI\Form;
+use Nette\Forms\Container;
+use Nette\Forms\Controls\BaseControl;
+use Nette\Utils\Json;
 use Nette\Utils\Validators;
 
 /**
@@ -1089,5 +1093,151 @@ trait ColumnFiltersTrait
 		}
 
 		return null;
+	}
+
+	public function addFilterDate(string $key, string $name, ?string $column = null): FilterDate
+	{
+		$filter = parent::addFilterDate($key, $name, $column);
+		self::useFlatpickr($filter);
+
+		return $filter;
+	}
+
+	public function addFilterDateRange(string $key, string $name, ?string $column = null, string $nameSecond = '-'): FilterDateRange
+	{
+		$filter = parent::addFilterDateRange($key, $name, $column, $nameSecond);
+		self::useFlatpickr($filter)
+			->setPlaceholders([
+				$this->getTranslator()->translate('fcadmin.datagrid.columnFilters.from'),
+				$this->getTranslator()->translate('fcadmin.datagrid.columnFilters.to'),
+			]);
+
+		return $filter;
+	}
+
+	/**
+	 * Kalendář knihovny je bootstrap-datepicker, který fancyadmin nenačítá. Flatpickr `dateInput` se zapne
+	 * atributem `data-flatpickr`, filtr dostane ISO datum a uživatel vidí `d.m.Y`.
+	 */
+	private static function useFlatpickr(FilterDate|FilterDateRange $filter): FilterDate|FilterDateRange
+	{
+		$filter->setFormat('Y-m-d', 'yyyy-mm-dd');
+		$filter->setAttribute('data-flatpickr', Json::encode([
+			'dateFormat' => 'Y-m-d',
+			'altInput' => true,
+			'altFormat' => 'j.n.Y',
+			'allowInput' => true,
+		]));
+
+		return $filter;
+	}
+
+	/**
+	 * Hodnota datumového filtru → `DateTimeImmutable` o půlnoci, jinak `null`. Bere `dd.mm.rrrr` i s mezerami
+	 * a bez nul (`1. 9. 2026`, starší hodnoty v session) a ISO `rrrr-mm-dd` z kalendáře flatpickru.
+	 */
+	public static function parseFilterDate(mixed $value): ?DateTimeImmutable
+	{
+		if (!is_string($value)) {
+			return null;
+		}
+
+		$value = preg_replace('~\s+~', '', $value) ?? '';
+		$format = match (true) {
+			(bool) preg_match('~^\d{4}-\d{1,2}-\d{1,2}$~', $value) => '!Y-n-j',
+			(bool) preg_match('~^\d{1,2}\.\d{1,2}\.\d{4}$~', $value) => '!j.n.Y',
+			default => null,
+		};
+		if ($format === null) {
+			return null;
+		}
+
+		$date = DateTimeImmutable::createFromFormat($format, $value);
+		$errors = DateTimeImmutable::getLastErrors();
+
+		return $date !== false && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0)) ? $date : null;
+	}
+
+	public function createComponentFilter(): Form
+	{
+		$form = parent::createComponentFilter();
+		$this->labelFilterControlsForScreenReaders($form);
+
+		return $form;
+	}
+
+	/** Název sloupce pro odečítač. Sloupec `#` nebo bez názvu si ho může dát do překladů přes getColumnA11yTranslationKey(). */
+	public function getColumnA11yLabel(string $key, ?string $fallbackName = null): string
+	{
+		if ($explicit = $this->getColumnA11yTranslationKey($key)) {
+			$translated = $this->getTranslator()->translate($explicit);
+			if ($translated !== $explicit) {
+				return $translated;
+			}
+		}
+
+		$candidates = [];
+		if (isset($this->columns[$key])) {
+			$candidates[] = $this->columns[$key]->getName();
+		}
+		if ($fallbackName !== null) {
+			$candidates[] = $fallbackName;
+		}
+
+		foreach ($candidates as $candidate) {
+			$label = trim($this->getTranslator()->translate($candidate));
+
+			// `#`, `-` a podobné značky jsou popisky pro oko, ne pro odečítač
+			if (mb_strlen($label) > 1 && $label !== $key) {
+				return $label;
+			}
+		}
+
+		return trim((string) $this->getTranslator()->translate($key));
+	}
+
+	/** Překladový klíč s názvem sloupce pro odečítač, null = jen název sloupce. */
+	protected function getColumnA11yTranslationKey(string $key): ?string
+	{
+		return null;
+	}
+
+	/**
+	 * Filtr stojí pod názvem sloupce v jiné buňce tabulky, takže by ho odečítač ohlásil jen jako „edit text“.
+	 * Rozsahový filtr má dva prvky („od“ / „do“), proto se prochází formulář, ne seznam filtrů.
+	 */
+	private function labelFilterControlsForScreenReaders(Form $form): void
+	{
+		$container = $form->getComponent('filter', false);
+		if (!$container instanceof Container) {
+			return;
+		}
+
+		foreach ($this->filters as $key => $filter) {
+			$element = $container->getComponent((string) $key, false);
+			$column = $this->getColumnA11yLabel((string) $key, $filter->getName());
+
+			if ($element instanceof Container) {
+				foreach ($element->getComponents() as $name => $part) {
+					if ($part instanceof BaseControl) {
+						$part->setHtmlAttribute('aria-label', $this->translateA11yLabel('fcadmin.datagrid.a11y.filter' . ($name === 'to' ? 'To' : 'From'), $column));
+					}
+				}
+			} elseif ($element instanceof BaseControl) {
+				$element->setHtmlAttribute('aria-label', $this->translateA11yLabel('fcadmin.datagrid.a11y.filter', $column));
+			}
+		}
+
+		$perPage = $form->getComponent('perPage', false);
+		if ($perPage instanceof BaseControl) {
+			$perPage->setHtmlAttribute('aria-label', $this->getTranslator()->translate('fcadmin.datagrid.a11y.perPage'));
+		}
+	}
+
+	private function translateA11yLabel(string $key, string $column): string
+	{
+		$translated = $this->getTranslator()->translate($key, ['column' => $column]);
+
+		return $translated === $key ? $column : $translated;
 	}
 }

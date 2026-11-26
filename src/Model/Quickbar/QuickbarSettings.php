@@ -11,7 +11,8 @@ use Nette\Utils\JsonException;
 
 /**
  * Rychlá lišta - Configuration klíč `quickbar` (JSON, zakládá ho migrace balíčku):
- * vypínač celé lišty a které položky v ní jsou. Edituje se v Nastavení.
+ * vypínač celé lišty a které položky v ní jsou. Edituje se v Nastavení. Projekt bez tabulky
+ * configuration ho dá napevno do konfigurace (fancyadmin: quickbar: [enabled: false, mobileMenu: true]).
  */
 class QuickbarSettings
 {
@@ -39,8 +40,10 @@ class QuickbarSettings
 	/** @var array<string, mixed>|null Cache v rámci requestu */
 	private ?array $values = null;
 
+	/** @param array<string, bool>|null $fixedValues nastavení z konfigurace, databáze se pak nečte */
 	public function __construct(
-		private readonly ConfigurationQueryFactory $configurationQueryFactory,
+		private readonly ?ConfigurationQueryFactory $configurationQueryFactory = null,
+		private readonly ?array $fixedValues = null,
 	) {
 	}
 
@@ -74,6 +77,10 @@ class QuickbarSettings
 	{
 		if ($this->values !== null) {
 			return $this->values;
+		}
+
+		if ($this->fixedValues !== null || !$this->configurationQueryFactory) {
+			return $this->values = $this->fixedValues ?? [];
 		}
 
 		/** @var Configuration|null $configuration */

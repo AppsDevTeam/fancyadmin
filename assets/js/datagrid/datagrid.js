@@ -296,9 +296,11 @@ document.addEventListener('change', function(e) {
 	grid = e.target.getAttribute('data-check');
 	if (grid) {
 		checked_inputs = document.querySelectorAll('input[data-check-all-' + grid + ']:checked');
-		select = document.querySelector('.datagrid-' + grid + ' select[name="group_action[group_action]"]');
-		buttons = document.querySelectorAll('.datagrid-' + grid + ' .row-group-actions *[type="submit"]');
-		counter = document.querySelector('.datagrid-' + grid + ' .datagrid-selected-rows-count');
+		// data-check nese plné jméno gridu, třída datagrid-{jméno} jen krátké - kořen gridu se proto hledá podle data-datagrid-name
+		var root = '[data-datagrid-name="' + CSS.escape(grid) + '"]';
+		select = document.querySelector(root + ' select[name="group_action[group_action]"]');
+		buttons = document.querySelectorAll(root + ' .row-group-actions *[type="submit"]');
+		counter = document.querySelector(root + ' .datagrid-selected-rows-count');
 
 		if (checked_inputs.length) {
 			if (buttons) {

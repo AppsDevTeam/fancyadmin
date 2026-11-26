@@ -210,6 +210,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				// kontakt na provozovatele pro push služby prohlížečů (mailto: nebo https:)
 				'subject' => Expect::string()->default(''),
 			]),
+			// Rychlá lišta napevno místo klíče quickbar v tabulce configuration (QuickbarSettings::DEFAULTS)
+			'quickbar' => Expect::arrayOf('bool', 'string')->nullable()->default(null),
 			// Uložené sestavy a nastavení sloupců gridů (docs/datagrid-column-filters.md)
 			'datagrid' => Expect::structure([
 				// Entita uložených filtrů projektu (implements GridFilter, use GridFilterTrait) - zapíná sestavy
@@ -443,7 +445,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			->setAutowired(JsComponents::class);
 
 		$builder->addDefinition($this->prefix('quickbarSettings'))
-			->setFactory(QuickbarSettings::class);
+			->setFactory(QuickbarSettings::class, ['fixedValues' => $this->config->quickbar]);
 
 		$builder->addDefinition($this->prefix('passkeyService'))
 			->setFactory(PasskeyService::class);
