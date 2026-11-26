@@ -98,6 +98,8 @@ layout:
       title: Moje úlohy
       placeholder: Pridať úlohu…
       empty: Žiadne úlohy
+      showDone: Zobraziť aj hotové úlohy
+      hideDone: Skryť hotové úlohy
     menu:
       label: Menu
       title: Menu

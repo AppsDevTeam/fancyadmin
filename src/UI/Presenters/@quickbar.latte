@@ -53,6 +53,9 @@
 						data-expand="{_fcadmin.layout.quickbar.ai.expand}" data-shrink="{_fcadmin.layout.quickbar.ai.shrink}"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
 				{/if}
 				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.notifications.readAll}" data-quickbar-read-all><i class="fa-solid fa-check-double"></i></button>
+				{* Hotové úkoly pod nehotovými - volbu si pamatuje prohlížeč (quickbar.js) *}
+				<button n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Todo" type="button" class="btn btn-icon btn-sm btn-glass" title="{_fcadmin.layout.quickbar.todo.showDone}" aria-pressed="false"
+					data-show="{_fcadmin.layout.quickbar.todo.showDone}" data-hide="{_fcadmin.layout.quickbar.todo.hideDone}" data-quickbar-todo-done-toggle><i class="fa-solid fa-list-check"></i></button>
 				{include pinButton}
 				{include closeButton}
 			</div>

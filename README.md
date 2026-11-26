@@ -3349,7 +3349,9 @@ metoda se bere jako prázdný výsledek.
 **Notifikace** — položka z `notifications.list()` s `href` je odkaz: klik ji označí jako přečtenou
 (`read(id)`), naviguje (ajaxem) a lištu zavře; bez `href` ji klik jen přečte.
 
-**Úkoly** — úkol z `todos.list()` s `href` má název jako odkaz na detail (naviguje a lištu zavře),
+**Úkoly** — přepínač v hlavičce panelu („Zobrazit i hotové úkoly“, volbu si pamatuje prohlížeč) volá
+`todos.list({ withDone: true })` a zdroj vrátí i hotové úkoly; odškrtnutím se hotový úkol vrátí mezi nehotové.
+Úkol z `todos.list()` s `href` má název jako odkaz na detail (naviguje a lištu zavře),
 hotový ho označí jen zaškrtávátko (`setDone(id, done)`); bez `href` zaškrtne úkol klik kamkoli na řádek.
 
 **Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější
