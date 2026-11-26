@@ -66,7 +66,9 @@
 	color: var(--fa-text-muted);
 }
 
-.fa-filters-search .form-control {
+// :not(:disabled) přebije obecný styl polí fancyadminu (.form-control:not(:disabled))
+.fa-filters-search .form-control,
+.fa-filters-search .form-control:not(:disabled) {
 	flex: 1 1 auto;
 	min-width: 4rem;
 	height: calc(var(--fa-filters-search-height) - 2px);
@@ -76,7 +78,10 @@
 	box-shadow: none;
 }
 
-.fa-filters-search .form-control:focus {
+.fa-filters-search .form-control:focus,
+.fa-filters-search .form-control:not(:disabled):focus {
+	border: 0;
+	background: transparent;
 	box-shadow: none;
 }
 
@@ -439,6 +444,121 @@
 	margin: 0;
 	font-size: 1.125rem;
 	font-weight: 600;
+}
+
+// Uložené sestavy: štítek vybrané sestavy ve vyhledávání a seznam sestav [data-part="set-token"], [data-part="sets"]
+.fa-filters-token {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	min-width: 0;
+	max-width: 16rem;
+	height: 2rem;
+	padding-left: .625rem;
+	border: 1px solid var(--fa-filters-accent-line);
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-surface);
+	color: var(--fa-filters-accent-text);
+	font-size: .8125rem;
+	font-weight: 600;
+}
+
+.fa-filters-token-edit {
+	display: inline-flex;
+	align-items: center;
+	gap: .375rem;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+}
+
+.fa-filters-token-text {
+	overflow: hidden;
+	max-width: 11rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fa-filters-token-state {
+	color: var(--fa-text-muted);
+	font-weight: 400;
+	white-space: nowrap;
+}
+
+.fa-filters-set {
+	display: flex;
+	align-items: center;
+	gap: .25rem;
+	border-radius: .75rem;
+}
+
+.fa-filters-set:hover {
+	background: var(--fa-surface-hover);
+}
+
+.fa-filters-set-pick {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: .625rem;
+	min-width: 0;
+	min-height: 2.75rem;
+	padding: .375rem .625rem;
+	border: 0;
+	background: none;
+	color: var(--fa-text);
+	text-align: left;
+}
+
+.fa-filters-set-check {
+	width: 1rem;
+	color: var(--fa-filters-accent-text);
+}
+
+.fa-filters-set-name {
+	display: block;
+	font-weight: 600;
+}
+
+.fa-filters-set-meta {
+	display: block;
+	color: var(--fa-text-muted);
+	font-size: .8125rem;
+}
+
+.fa-filters-section {
+	margin: .25rem 0 0;
+	color: var(--fa-text-muted);
+	font-size: .75rem;
+	font-weight: 700;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+}
+
+.fa-filters-set-pick,
+.fa-filters-set-pick:hover {
+	color: var(--fa-text);
+	text-decoration: none;
+}
+
+.fa-filters-set-edit {
+	display: flex;
+	flex: 1 0 100%;
+	flex-direction: column;
+	gap: .5rem;
+	padding: .25rem .625rem .75rem;
+}
+
+.fa-filters-set {
+	flex-wrap: wrap;
+}
+
+.fa-filters-token-edit:focus-visible {
+	outline: 0;
+	box-shadow: 0 0 0 .25rem var(--bs-focus-ring-color);
 }
 
 // Snippet uvnitř lišty, jeho obsah jsou přímo položky lišty

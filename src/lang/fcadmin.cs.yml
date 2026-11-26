@@ -53,7 +53,34 @@ datagrid:
     to: do
     period: Období
     periodPlaceholder: od - do
-    presets: Rychlá volba období
+    presetsLabel: Rychlá volba období
+    presets:
+      title: Uložené sestavy
+      mine: Moje sestavy
+      shared: Sdílené sestavy
+      empty: Zatím tu nejsou žádné sestavy. Nastavte filtry a sloupce a uložte je tlačítkem Uložit sestavu.
+      private: Jen pro mě
+      sharedOwn: Sdílená s týmem
+      sharedBy: 'Sdílená · %author%'
+      teamShared: Sdílená s týmem
+      token: 'Sestava %name% - změnit'
+      tokenModified: 'Sestava %name%, upraveno - změnit'
+      modified: '· upraveno'
+      clear: Zrušit sestavu
+      edit: 'Upravit sestavu %name%'
+      delete: Smazat sestavu
+      deleteConfirm: 'Opravdu smazat sestavu %name%?'
+      saveButton: Uložit sestavu
+      saveChanges: 'Uložit změny do „%name%“'
+      saveAsNew: Nebo jako novou sestavu
+      name: Název sestavy
+      namePlaceholder: např. K expedici
+      visibility: Viditelnost
+      save: Uložit
+      saved: Sestava je uložená.
+      deleted: Sestava je smazaná.
+      nameRequired: Vyplňte název sestavy.
+      nameTaken: Sestavu s tímto názvem už máte.
     preset:
       today: Dnes
       yesterday: Včera

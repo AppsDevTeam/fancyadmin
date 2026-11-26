@@ -183,6 +183,49 @@ document.addEventListener('click', (e) => {
 		return;
 	}
 
+	const show = e.target.closest('[data-fa-filters-show]');
+	if (show) {
+		const toggle = document.getElementById(show.dataset.faFiltersShow);
+		if (toggle) {
+			setTimeout(() => Dropdown.getOrCreateInstance(toggle).show());
+		}
+		return;
+	}
+
+	const presetEdit = e.target.closest('[data-fa-filters-preset-edit]');
+	if (presetEdit) {
+		const form = presetEdit.parentElement.querySelector('[data-fa-filters-preset-form]');
+		form.hidden = !form.hidden;
+		presetEdit.setAttribute('aria-expanded', form.hidden ? 'false' : 'true');
+		if (!form.hidden) {
+			form.querySelector('[data-fa-filters-preset-name]').focus();
+		}
+		return;
+	}
+
+	const presetSave = e.target.closest('[data-fa-filters-preset-save]');
+	if (presetSave) {
+		savePreset(presetSave.closest('[data-fa-filters-preset-form], [data-fa-filters-preset-save-form]'));
+		return;
+	}
+
+	const overwrite = e.target.closest('[data-fa-filters-preset-overwrite]');
+	if (overwrite) {
+		const panel = overwrite.closest('[data-fa-filters-preset-save-form]');
+		sendPreset(panel, { overwrite: overwrite.dataset.faFiltersPresetOverwrite });
+		return;
+	}
+
+	const cancel = e.target.closest('[data-fa-filters-preset-cancel]');
+	if (cancel) {
+		const panel = cancel.closest('.dropdown-menu');
+		const toggle = document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`);
+		if (toggle) {
+			Dropdown.getOrCreateInstance(toggle).hide();
+		}
+		return;
+	}
+
 	const move = e.target.closest('[data-fa-filters-column-move]');
 	if (move) {
 		moveColumn(move);
@@ -220,6 +263,39 @@ document.addEventListener('click', (e) => {
 function gridName(el) {
 	return el.closest('[data-datagrid-name]')?.dataset.datagridName ?? null;
 }
+
+// Uložené sestavy: nová sestava a úprava názvu a viditelnosti jdou signálem gridu, pole nejsou ve formuláři filtrů
+function savePreset(form) {
+	const data = {
+		name: form.querySelector('[data-fa-filters-preset-name]').value,
+		shared: form.querySelector('[data-fa-filters-preset-shared]')?.checked ? '1' : '0',
+	};
+	if (form.dataset.id) {
+		data.id = form.dataset.id;
+	}
+	sendPreset(form, data);
+}
+
+function sendPreset(form, data) {
+	const name = form.querySelector('[data-fa-filters-preset-name]');
+	const error = form.querySelector('[data-fa-filters-preset-error]');
+	naja.makeRequest('POST', form.dataset.url, data, { history: false }).then((payload) => {
+		if (payload?.faFiltersPresetError && name) {
+			name.classList.add('is-invalid');
+			error.textContent = payload.faFiltersPresetError;
+			name.focus();
+		}
+	});
+}
+
+// Smazání sestavy se potvrzuje dřív, než odkaz převezme Naja
+document.addEventListener('click', (e) => {
+	const link = e.target.closest('[data-fa-filters-confirm]');
+	if (link && !window.confirm(link.dataset.faFiltersConfirm)) {
+		e.preventDefault();
+		e.stopImmediatePropagation();
+	}
+}, true);
 
 // Hledání ve viditelných sloupcích: 400 ms po posledním znaku a aspoň 2 znaky, smazání a Enter hned
 const FULLTEXT_DELAY = 400;
@@ -413,6 +489,11 @@ document.addEventListener('hide.bs.dropdown', (e) => {
 // Enter v textovém poli panelu = Použít (formulář gridu má víc tlačítek, výchozí by bylo jiné)
 document.addEventListener('keydown', (e) => {
 	if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') {
+		return;
+	}
+	if (e.target.matches('[data-fa-filters-preset-name]')) {
+		e.preventDefault();
+		savePreset(e.target.closest('[data-fa-filters-preset-form], [data-fa-filters-preset-save-form]'));
 		return;
 	}
 	if (e.target.matches('[data-fa-filters-fulltext]')) {

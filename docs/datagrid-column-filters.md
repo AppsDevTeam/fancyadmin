@@ -44,6 +44,12 @@ v databázi je projekt uloží přes `GridColumnSettingsStorage`:
 $grid->setColumnSettingsStorage($storage, $presenter->getName() . ':' . $grid->getFullName());
 ```
 
+Uložené sestavy (filtry + nastavení sloupců pod názvem, soukromé nebo sdílené) potřebují úložiště projektu:
+
+```php
+$grid->setPresetStorage($presets, $key); // GridPresetStorage, vrací GridPreset
+```
+
 JS a styly:
 
 ```js
@@ -60,6 +66,7 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
 | `src/UI/Components/Grids/ColumnFiltersTrait.php` | šablona, filtry do panelů, čipy, hodnoty čipů, počty, výchozí filtr |
 | `src/UI/Components/Grids/FilterChip.php` | jeden čip pruhu |
 | `src/UI/Components/Grids/GridColumnSettingsStorage.php` | úložiště nastavení sloupců u uživatele |
+| `src/UI/Components/Grids/GridPresetStorage.php`, `GridPreset.php`, `GridPresetException.php` | uložené sestavy |
 | `src/UI/Components/Grids/DataGridColumnFilters.latte` | lišta, pruh, hlavička s panely, pole podle typu, prázdný výsledek |
 | `assets/js/columnFilters.js` | panely (Popper `fixed`), Použít, Zrušit filtr, vrácení hodnot při zavření, období, fokus |
 | `assets/scss/_datagridColumnFilters.scss` | vzhled, proměnné `--fa-filters-*` pro světlý i tmavý režim |
@@ -93,6 +100,14 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   gridu (`createQueryObject()` + `initQueryObject()`, vlastní podmínka filtru, jinak `by(sloupce, CONTAINS)`),
   sjednotí nalezená ID a grid omezí `by('id', $ids)` - filtry s vlastní podmínkou přes NEBO jinak spojit nejde.
   Hledání není aktivní filtr: nemá čip ani počet.
+- **Uložené sestavy:** štítek vybrané sestavy (persistentní parametr gridu `preset`) a tlačítko seznamu jsou ve
+  vyhledávání, Uložit sestavu v liště (na telefonu v nabídce ⋯). Sestava ukládá filtry kromě hledání a nastavení
+  sloupců; výběr (`applyPreset!`) nastaví obojí, křížek na štítku (`clearPreset!`) vrátí výchozí filtry. Když se
+  filtry nebo sloupce od sestavy liší, štítek ukáže „· upraveno“ a panel uložení nabídne Uložit změny do sestavy
+  (POST `overwrite`). Nová sestava `savePreset!` (POST `name`, `shared`), přejmenování a viditelnost
+  `updatePreset!` (POST `id`, `name`, `shared`), smazání `deletePreset!`. Pole sestav nemají `name`, do formuláře
+  filtrů se neposílají. Kdo smí sestavu měnit, rozhoduje úložiště (`GridPreset::$editable`, jinak
+  `GridPresetException` 403); neplatný název vrátí JS v `payload.faFiltersPresetError`.
 - **Sloupce:** tlačítko Sloupce (jen grid s `setColumnsHideable()`) nahrazuje ozubené kolo knihovny a otevře dialog
   se zaškrtávátkem viditelnosti, šířkou Úzký / Auto / Široký (`fa-filters-col-narrow` / `-wide` na buňkách) a
   šipkami pořadí. Uloží se až Použít (signál `saveColumns!`, POST `columns` = JSON). Skryté sloupce knihovny

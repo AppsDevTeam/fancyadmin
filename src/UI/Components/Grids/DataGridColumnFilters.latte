@@ -69,8 +69,8 @@
 	{var $_form = $control['filter']}
 	<div class="fa-filters-bar d-flex flex-wrap align-items-center gap-2" data-part="bar">
 		{* Hledání je mimo snippet: překreslení po hledání by uživateli vzalo rozepsaný text i fokus *}
-		{if $control->hasFulltext()}
-			{include fulltext-search, input => $_form['filter'][$control::FULLTEXT_FILTER]}
+		{if $control->hasFulltext() || $control->hasPresets()}
+			{include fulltext-search, input => $control->hasFulltext() ? $_form['filter'][$control::FULLTEXT_FILTER] : null}
 		{/if}
 		{ifset $filters['search']}
 			{include filter-search, filter => $filters['search'], input => $_form['filter'][$filters['search']->getKey()]}
@@ -111,6 +111,7 @@
 				{include $_periodFilter->getTemplate(), filter => $_periodFilter, input => $_form['filter'][$_periodFilter->getKey()], outer => TRUE}
 			{/foreach}
 			{include switchers}
+			{if $control->hasPresets()}{include preset-save}{/if}
 			<div n:if="$exports" class="d-none d-sm-flex">{include exports-area}</div>
 			{include toolbar-settings}
 			{include more-actions}
@@ -155,21 +156,137 @@
 	</div>
 {/define}
 
-{* Hledání ve viditelných sloupcích (ColumnFiltersTrait::addFilterFulltext) *}
+{* Hledání ve viditelných sloupcích (ColumnFiltersTrait::addFilterFulltext) a uložené sestavy (štítek vybrané
+   sestavy, tlačítko seznamu sestav) *}
 {define fulltext-search}
-	<div class="fa-filters-search" data-part="search">
+	<div class="fa-filters-search" role="search" data-part="search">
 		<i class="fa-solid fa-magnifying-glass fa-filters-search-icon" aria-hidden="true"></i>
-		{input $input, class => 'form-control', type => search, autocomplete => off,
-			placeholder => ('fcadmin.datagrid.columnFilters.searchPlaceholder'|translate),
-			aria-label => ('fcadmin.datagrid.columnFilters.searchPlaceholder'|translate),
-			data-fa-filters-fulltext => $control::FULLTEXT_MIN_LENGTH,
-			data-autosubmit => null, data-autosubmit-change => null}
+		<div n:snippet="columnFiltersPresets" class="fa-filters-contents">
+			{if $control->hasPresets()}
+				{var $_active = $control->getActivePreset()}
+				{var $_modified = $control->isActivePresetModified()}
+				{var $_setsId = $control->getFullName() . '-sets'}
+				<span n:if="$_active" class="fa-filters-token" data-part="set-token">
+					<button type="button" class="fa-filters-token-edit" data-fa-filters-show="{$_setsId}-toggle"
+						aria-label="{_($_modified ? 'fcadmin.datagrid.columnFilters.presets.tokenModified' : 'fcadmin.datagrid.columnFilters.presets.token'), [name => $_active->name]}"
+					>
+						<i class="fa-regular fa-bookmark" aria-hidden="true"></i>
+						<span class="fa-filters-token-text">{$_active->name}</span>
+						<span n:if="$_modified" class="fa-filters-token-state">{_fcadmin.datagrid.columnFilters.presets.modified}</span>
+					</button>
+					<a n:href="clearPreset!" class="ajax fa-filters-icon-btn is-small" aria-label="{_fcadmin.datagrid.columnFilters.presets.clear}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></a>
+				</span>
+			{/if}
+		</div>
+		{if $input}
+			{input $input, class => 'form-control', type => search, autocomplete => off,
+				placeholder => ('fcadmin.datagrid.columnFilters.searchPlaceholder'|translate),
+				aria-label => ('fcadmin.datagrid.columnFilters.searchPlaceholder'|translate),
+				data-fa-filters-fulltext => $control::FULLTEXT_MIN_LENGTH,
+				data-autosubmit => null, data-autosubmit-change => null}
+		{else}
+			<span class="flex-grow-1"></span>
+		{/if}
+		<div n:snippet="columnFiltersPresetList" class="fa-filters-contents">
+			{if $control->hasPresets()}
+				{include preset-list, active => $control->getActivePreset(), setsId => $control->getFullName() . '-sets'}
+			{/if}
+		</div>
+	</div>
+{/define}
+
+{define preset-list}
+	{var $_own = array_filter($control->getPresets(), fn($preset) => $preset->own)}
+	{var $_shared = array_filter($control->getPresets(), fn($preset) => !$preset->own)}
+	<button type="button" n:class="fa-filters-icon-btn, $active ? is-active" id="{$setsId}-toggle" data-part="sets-toggle"
+		data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8"
+		aria-expanded="false" aria-haspopup="dialog" aria-controls="{$setsId}" aria-label="{_fcadmin.datagrid.columnFilters.presets.title}"
+	><i class="fa-solid fa-sliders" aria-hidden="true"></i></button>
+	<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$setsId}" role="dialog" aria-labelledby="{$setsId}-title" data-part="sets" data-fa-filters-panel>
+		<div class="fa-filters-panel-head"><p class="fa-filters-panel-title" id="{$setsId}-title">{_fcadmin.datagrid.columnFilters.presets.title}</p></div>
+		<div class="fa-filters-panel-body" role="radiogroup" aria-labelledby="{$setsId}-title">
+			<p n:if="!$_own && !$_shared" class="fa-filters-panel-note m-0">{_fcadmin.datagrid.columnFilters.presets.empty}</p>
+			{foreach ['mine' => $_own, 'shared' => $_shared] as $_section => $_items}
+				{continueIf !$_items}
+				<p class="fa-filters-section">{_'fcadmin.datagrid.columnFilters.presets.' . $_section}</p>
+				<ul class="list-unstyled m-0">
+					<li n:foreach="$_items as $_preset" class="fa-filters-set" data-part="set" data-fa-filters-preset-id="{$_preset->id}">
+						{var $_checked = $active && $active->id === $_preset->id}
+						<a n:href="applyPreset!, id => $_preset->id" class="ajax fa-filters-set-pick" role="radio" aria-checked="{$_checked ? 'true' : 'false'}">
+							<span class="fa-filters-set-check"><i n:if="$_checked" class="fa-solid fa-check" aria-hidden="true"></i></span>
+							<span class="min-w-0">
+								<span class="fa-filters-set-name">{$_preset->name}</span>
+								<span class="fa-filters-set-meta">
+									{if !$_preset->shared}{_fcadmin.datagrid.columnFilters.presets.private}{elseif $_preset->own}{_fcadmin.datagrid.columnFilters.presets.sharedOwn}{else}{_fcadmin.datagrid.columnFilters.presets.sharedBy, [author => $_preset->author]}{/if}
+								</span>
+							</span>
+						</a>
+						<button n:if="$_preset->editable" type="button" class="fa-filters-icon-btn" data-fa-filters-preset-edit
+							aria-expanded="false" aria-label="{_fcadmin.datagrid.columnFilters.presets.edit, [name => $_preset->name]}"
+						><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+						<div n:if="$_preset->editable" class="fa-filters-set-edit" hidden data-fa-filters-preset-form data-url="{link updatePreset!}" data-id="{$_preset->id}">
+							<label class="fa-filters-field-label" for="{$setsId}-{$_preset->id}-name">{_fcadmin.datagrid.columnFilters.presets.name}</label>
+							<input class="form-control rounded-pill" id="{$setsId}-{$_preset->id}-name" type="text" maxlength="100" value="{$_preset->name}" data-fa-filters-preset-name>
+							<div class="invalid-feedback" data-fa-filters-preset-error></div>
+							<div class="form-check form-switch">
+								<input class="form-check-input" type="checkbox" role="switch" id="{$setsId}-{$_preset->id}-shared" n:attr="checked => $_preset->shared" data-fa-filters-preset-shared>
+								<label class="form-check-label" for="{$setsId}-{$_preset->id}-shared">{_fcadmin.datagrid.columnFilters.presets.teamShared}</label>
+							</div>
+							<div class="d-flex align-items-center gap-2">
+								<a n:href="deletePreset!, id => $_preset->id" class="ajax fa-filters-link me-auto" data-fa-filters-confirm="{_fcadmin.datagrid.columnFilters.presets.deleteConfirm, [name => $_preset->name]}">{_fcadmin.datagrid.columnFilters.presets.delete}</a>
+								<button type="button" class="btn btn-primary btn-sm rounded-pill px-3" data-fa-filters-preset-save>{_fcadmin.datagrid.columnFilters.presets.save}</button>
+							</div>
+						</div>
+					</li>
+				</ul>
+			{/foreach}
+		</div>
+	</div>
+{/define}
+
+{* Panel Uložit sestavu v liště *}
+{define preset-save}
+	{var $_active = $control->getActivePreset()}
+	{var $_saveId = $control->getFullName() . '-save'}
+	<div class="dropdown" data-part="set-save-wrap">
+		<button type="button" class="btn btn-outline-secondary rounded-pill d-none d-sm-inline-flex align-items-center gap-1" id="{$_saveId}-toggle" data-part="set-save-toggle"
+			data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8" aria-expanded="false" aria-haspopup="dialog" aria-controls="{$_saveId}"
+		><i class="fa-regular fa-bookmark" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.presets.saveButton}</button>
+		<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$_saveId}" role="dialog" aria-labelledby="{$_saveId}-title" data-part="set-save" data-fa-filters-panel data-fa-filters-preset-save-form data-url="{link savePreset!}">
+			<div class="fa-filters-panel-head"><p class="fa-filters-panel-title" id="{$_saveId}-title">{_fcadmin.datagrid.columnFilters.presets.saveButton}</p></div>
+			<div class="fa-filters-panel-body">
+				{if $_active && $_active->editable && $control->isActivePresetModified()}
+					<button type="button" class="btn btn-outline-secondary rounded-pill text-start" data-part="set-overwrite" data-fa-filters-preset-overwrite="{$_active->id}">{_fcadmin.datagrid.columnFilters.presets.saveChanges, [name => $_active->name]}</button>
+					<p class="fa-filters-section">{_fcadmin.datagrid.columnFilters.presets.saveAsNew}</p>
+				{/if}
+				<div>
+					<label class="fa-filters-field-label" for="{$_saveId}-name">{_fcadmin.datagrid.columnFilters.presets.name}</label>
+					<input class="form-control rounded-pill" id="{$_saveId}-name" type="text" maxlength="100" placeholder="{_fcadmin.datagrid.columnFilters.presets.namePlaceholder}" data-fa-filters-preset-name>
+					<div class="invalid-feedback" data-fa-filters-preset-error></div>
+				</div>
+				<fieldset>
+					<legend class="fa-filters-field-label">{_fcadmin.datagrid.columnFilters.presets.visibility}</legend>
+					<div class="form-check">
+						<input class="form-check-input" type="radio" name="_presetVisibility" id="{$_saveId}-private" value="0" checked>
+						<label class="form-check-label" for="{$_saveId}-private">{_fcadmin.datagrid.columnFilters.presets.private}</label>
+					</div>
+					<div class="form-check">
+						<input class="form-check-input" type="radio" name="_presetVisibility" id="{$_saveId}-shared" value="1" data-fa-filters-preset-shared>
+						<label class="form-check-label" for="{$_saveId}-shared">{_fcadmin.datagrid.columnFilters.presets.teamShared}</label>
+					</div>
+				</fieldset>
+			</div>
+			<div class="fa-filters-panel-foot">
+				<button type="button" class="fa-filters-link" data-fa-filters-preset-cancel>{_fcadmin.datagrid.columnFilters.cancel}</button>
+				<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-filters-preset-save>{_fcadmin.datagrid.columnFilters.presets.save}</button>
+			</div>
+		</div>
 	</div>
 {/define}
 
 {* Akce lišty na telefonu: tlačítka jsou tam skrytá, nabídka ⋯ je nabízí s textem *}
 {define more-actions}
-	{var $_moreItems = $control->canHideColumns() || $exports}
+	{var $_moreItems = $control->canHideColumns() || $exports || $control->hasPresets()}
 	<div n:if="$_moreItems" class="dropdown d-sm-none" data-part="more">
 		<button type="button" class="fa-filters-icon-btn" data-bs-toggle="dropdown" data-bs-offset="0,8"
 			aria-expanded="false" aria-haspopup="menu" aria-controls="{$control->getFullName()}-more-menu"
@@ -178,6 +295,11 @@
 		<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$control->getFullName()}-more-menu" data-part="more-menu" data-fa-filters-panel>
 			<div class="fa-filters-panel-head"><p class="fa-filters-panel-title">{_fcadmin.datagrid.columnFilters.moreActions}</p></div>
 			<ul class="list-unstyled m-0 pb-2">
+					<li n:if="$control->hasPresets()">
+						<button type="button" class="dropdown-item fa-filters-more-item" data-fa-filters-show="{$control->getFullName()}-save-toggle">
+							<i class="fa-regular fa-bookmark fa-fw" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.presets.saveButton}
+						</button>
+					</li>
 					<li n:if="$control->canHideColumns()">
 						<button type="button" class="dropdown-item fa-filters-more-item" data-bs-toggle="modal" data-bs-target="#{$control->getFullName()}-columns">
 							<i class="fa-solid fa-table-columns fa-fw" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.editColumns}
@@ -262,7 +384,7 @@
 		{elseif $_type === 'daterange'}
 			{var $_from = $input['from']}
 			{var $_to = $input['to']}
-			<div class="fa-filters-presets" role="group" aria-label="{_fcadmin.datagrid.columnFilters.presets}">
+			<div class="fa-filters-presets" role="group" aria-label="{_fcadmin.datagrid.columnFilters.presetsLabel}">
 				<button n:foreach="['today', 'yesterday', 'last7', 'last30', 'thisMonth', 'lastMonth', 'thisYear'] as $_preset" type="button"
 					class="btn btn-sm btn-outline-secondary rounded-pill fa-filters-preset" aria-pressed="false" data-fa-filters-preset="{$_preset}"
 				>{_'fcadmin.datagrid.columnFilters.preset.' . $_preset}</button>

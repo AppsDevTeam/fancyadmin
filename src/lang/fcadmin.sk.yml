@@ -53,7 +53,34 @@ datagrid:
     to: do
     period: Obdobie
     periodPlaceholder: od - do
-    presets: Rýchla voľba obdobia
+    presetsLabel: Rýchla voľba obdobia
+    presets:
+      title: Uložené zostavy
+      mine: Moje zostavy
+      shared: Zdieľané zostavy
+      empty: Zatiaľ tu nie sú žiadne zostavy. Nastavte filtre a stĺpce a uložte ich tlačidlom Uložiť zostavu.
+      private: Len pre mňa
+      sharedOwn: Zdieľaná s tímom
+      sharedBy: 'Zdieľaná · %author%'
+      teamShared: Zdieľaná s tímom
+      token: 'Zostava %name% - zmeniť'
+      tokenModified: 'Zostava %name%, upravené - zmeniť'
+      modified: '· upravené'
+      clear: Zrušiť zostavu
+      edit: 'Upraviť zostavu %name%'
+      delete: Zmazať zostavu
+      deleteConfirm: 'Naozaj zmazať zostavu %name%?'
+      saveButton: Uložiť zostavu
+      saveChanges: 'Uložiť zmeny do „%name%“'
+      saveAsNew: Alebo ako novú zostavu
+      name: Názov zostavy
+      namePlaceholder: napr. Na expedíciu
+      visibility: Viditeľnosť
+      save: Uložiť
+      saved: Zostava je uložená.
+      deleted: Zostava je zmazaná.
+      nameRequired: Vyplňte názov zostavy.
+      nameTaken: Zostavu s týmto názvom už máte.
     preset:
       today: Dnes
       yesterday: Včera

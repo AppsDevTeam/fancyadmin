@@ -16,6 +16,7 @@ use Contributte\Datagrid\Filter\FilterSelect;
 use Contributte\Datagrid\Filter\FilterText;
 use Contributte\Datagrid\Filter\OneColumnFilter;
 use DateTimeImmutable;
+use Nette\Application\Attributes\Persistent;
 
 /**
  * Filtr v hlavičce sloupce (docs/datagrid-column-filters.md): klik na název sloupce otevře panel s polem filtru,
@@ -66,6 +67,17 @@ trait ColumnFiltersTrait
 	private ?string $revealedColumn = null;
 
 	private ?GridColumnSettingsStorage $columnSettingsStorage = null;
+
+	/** Uložená sestava, kterou uživatel vybral; jen kvůli štítku ve vyhledávání, filtry nese URL jako vždy. */
+	#[Persistent]
+	public ?int $preset = null;
+
+	private ?GridPresetStorage $presetStorage = null;
+
+	private string $presetKey = '';
+
+	/** @var list<GridPreset>|null */
+	private ?array $presets = null;
 
 	private string $columnSettingsKey = '';
 
@@ -447,6 +459,206 @@ trait ColumnFiltersTrait
 		parent::handleHideColumn($column);
 	}
 
+	/** Uložené sestavy gridu u uživatele; `$key` grid jednoznačně určí (presenter a komponenta). */
+	public function setPresetStorage(GridPresetStorage $storage, string $key): static
+	{
+		$this->presetStorage = $storage;
+		$this->presetKey = $key;
+		$this->presets = null;
+
+		return $this;
+	}
+
+	/** Sestavy mají smysl gridu, který jde filtrovat nebo mu jde nastavit sloupce. */
+	public function hasPresets(): bool
+	{
+		return $this->presetStorage !== null && ($this->getPanelFilters([], []) !== [] || $this->canHideColumns());
+	}
+
+	/** @return list<GridPreset> */
+	public function getPresets(): array
+	{
+		return $this->presets ??= $this->presetStorage?->findAll($this->presetKey) ?? [];
+	}
+
+	public function getActivePreset(): ?GridPreset
+	{
+		foreach ($this->preset !== null ? $this->getPresets() : [] as $preset) {
+			if ($preset->id === $this->preset) {
+				return $preset;
+			}
+		}
+
+		return null;
+	}
+
+	/** Filtry nebo sloupce se od vybrané sestavy liší („· upraveno“). */
+	public function isActivePresetModified(): bool
+	{
+		$preset = $this->getActivePreset();
+		if (!$preset) {
+			return false;
+		}
+
+		return self::normalizeFilters($preset->filters) != $this->getPresetFilters()
+			|| ($preset->columns !== [] && self::normalizeColumns($preset->columns) != self::normalizeColumns($this->getPresetColumns()));
+	}
+
+	/**
+	 * Filtry, které se ukládají do sestavy: všechny vyplněné kromě hledání (to se neukládá).
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function getPresetFilters(): array
+	{
+		return self::normalizeFilters($this->filter);
+	}
+
+	/** @return array<string, mixed> */
+	public function getPresetColumns(): array
+	{
+		if ($this->canHideColumns()) {
+			// výchozí skryté sloupce knihovna doplní do nastavení až při prvním čtení
+			parent::getColumns();
+		}
+
+		return $this->canHideColumns()
+			? array_intersect_key($this->getColumnSettings(), array_flip(['order', 'widths', ...self::HIDDEN_COLUMNS_KEYS]))
+			: [];
+	}
+
+	public function handleApplyPreset(int $id): void
+	{
+		$preset = $this->presetStorage?->find($this->presetKey, $id) ?? $this->getPresenter()->error();
+
+		$this->setFilter($preset->filters);
+		if ($preset->columns !== [] && $this->canHideColumns()) {
+			$this->saveColumnSettings($preset->columns + $this->getColumnSettings());
+		}
+		$this->preset = $preset->id;
+		$this->page = 1;
+
+		$this->reloadTheWholeGrid();
+	}
+
+	/** Křížek na štítku sestavy: grid se vrátí do výchozího stavu (výchozí filtry), sloupce zůstanou. */
+	public function handleClearPreset(): void
+	{
+		$this->preset = null;
+
+		$this->handleResetFilter();
+	}
+
+	/**
+	 * Uložení sestavy z panelu Uložit sestavu: POST `name` + `shared` (nová), nebo `overwrite` = ID vlastní sestavy,
+	 * do které se uloží současné filtry a sloupce.
+	 */
+	public function handleSavePreset(): void
+	{
+		$request = $this->getPresenter()->getRequest();
+		$overwrite = (int) $request->getPost('overwrite');
+
+		$preset = $this->runPresetChange(function () use ($request, $overwrite): GridPreset {
+			if ($overwrite) {
+				$current = $this->presetStorage?->find($this->presetKey, $overwrite) ?? throw new GridPresetException('', GridPresetException::NOT_FOUND);
+
+				return $this->presetStorage->update($this->presetKey, $current->id, $current->name, $current->shared, $this->getPresetFilters(), $this->getPresetColumns());
+			}
+
+			return $this->presetStorage->create($this->presetKey, trim((string) $request->getPost('name')), (bool) $request->getPost('shared'), $this->getPresetFilters(), $this->getPresetColumns());
+		});
+
+		$this->preset = $preset->id;
+		$this->getPresenter()->flashMessageSuccess('fcadmin.datagrid.columnFilters.presets.saved');
+		$this->reloadTheWholeGrid();
+	}
+
+	/** Úprava názvu a viditelnosti sestavy v seznamu sestav: POST `id`, `name`, `shared`. */
+	public function handleUpdatePreset(): void
+	{
+		$request = $this->getPresenter()->getRequest();
+
+		$this->runPresetChange(fn(): GridPreset => $this->presetStorage->update(
+			$this->presetKey,
+			(int) $request->getPost('id'),
+			trim((string) $request->getPost('name')),
+			(bool) $request->getPost('shared'),
+		));
+
+		$this->reloadTheWholeGrid();
+	}
+
+	public function handleDeletePreset(int $id): void
+	{
+		$this->runPresetChange(function () use ($id): void {
+			$this->presetStorage->delete($this->presetKey, $id);
+		});
+
+		if ($this->preset === $id) {
+			$this->preset = null;
+		}
+		$this->getPresenter()->flashMessageSuccess('fcadmin.datagrid.columnFilters.presets.deleted');
+		$this->reloadTheWholeGrid();
+	}
+
+	/**
+	 * Zakázaná nebo neexistující sestava je chyba požadavku, neplatný název se vrátí JS k poli (`faFiltersPresetError`).
+	 *
+	 * @template T
+	 * @param callable(): T $change
+	 * @return T
+	 */
+	private function runPresetChange(callable $change): mixed
+	{
+		if (!$this->presetStorage) {
+			$this->getPresenter()->error();
+		}
+
+		try {
+			$result = $change();
+		} catch (GridPresetException $e) {
+			if ($e->getCode() !== GridPresetException::INVALID) {
+				$this->getPresenter()->error('', $e->getCode());
+			}
+
+			$presenter = $this->getPresenter();
+			$presenter->payload->faFiltersPresetError = $this->getTranslator()->translate($e->getMessage());
+			$presenter->sendPayload();
+		}
+
+		$this->presets = null;
+
+		return $result;
+	}
+
+	/** @return array<string, mixed> */
+	private static function normalizeFilters(array $filters): array
+	{
+		$normalized = [];
+		foreach ($filters as $key => $value) {
+			if ($key === self::FULLTEXT_FILTER || !self::isFilled($value)) {
+				continue;
+			}
+			$normalized[(string) $key] = is_array($value)
+				? array_map(static fn($item) => is_array($item) ? $item : (string) $item, array_filter($value, self::isFilled(...)))
+				: (string) $value;
+		}
+		ksort($normalized);
+
+		return $normalized;
+	}
+
+	/** @return array<string, mixed> */
+	private static function normalizeColumns(array $columns): array
+	{
+		$hidden = array_values((array) ($columns['_grid_hidden_columns'] ?? []));
+		sort($hidden);
+		$widths = (array) ($columns['widths'] ?? []);
+		ksort($widths);
+
+		return ['order' => array_values((array) ($columns['order'] ?? [])), 'hidden' => $hidden, 'widths' => $widths];
+	}
+
 	/** Třída šířky na buňkách hlavičky i těla; prototyp sloupce se mění, proto se stará třída nejdřív odebere. */
 	private function applyColumnWidths(): void
 	{
@@ -705,7 +917,7 @@ trait ColumnFiltersTrait
 	 */
 	public function reload(array $snippets = []): void
 	{
-		parent::reload([...$snippets, 'columnFilters', 'columnFiltersActive', 'table']);
+		parent::reload([...$snippets, 'columnFilters', 'columnFiltersActive', 'columnFiltersPresets', 'columnFiltersPresetList', 'table']);
 	}
 
 	/** Křížek u čipu výchozího filtru, který uživatel změnil, vrací výchozí hodnotu - knihovna by filtr vyprázdnila. */
