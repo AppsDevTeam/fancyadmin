@@ -356,9 +356,10 @@ test('polozka uzivatelskeho menu pozna aktualni odkaz', function () {
 	Assert::false($item->isCurrent(new TestComponent()));
 });
 
-test('viditelne polozky podmenu: nadpis jen nad viditelnymi polozkami', function () {
+test('viditelne polozky podmenu: nadpisy vzdy (vychozi), s setHideEmptyHeadings jen nad viditelnymi polozkami', function () {
 	$item = new NavbarMenuItem();
 	$item->setupSubmenuItems(function (NavbarSubmenu $submenu) {
+		$submenu->setHideEmptyHeadings();
 		$submenu->addMenuItem(new NavbarSubmenuItem()->setLabel('Dokumenty'));
 		$submenu->addHeading('Vozidla');
 		$submenu->addMenuItem(new NavbarSubmenuItem()->setLabel('Nabídka')->setAclResource(new StringResource('vehicles')));
@@ -372,4 +373,8 @@ test('viditelne polozky podmenu: nadpis jen nad viditelnymi polozkami', function
 	Assert::same(['Dokumenty', 'Administrace', 'Uživatelé'], $labels(new TestSecurityUser(['users'])));
 	Assert::same(['Dokumenty', 'Vozidla', 'Nabídka', 'Administrace', 'Pobočky', 'Uživatelé'], $labels(new TestSecurityUser(isAdmin: true)));
 	Assert::same(['Dokumenty'], $labels(new TestSecurityUser()));
+
+	// výchozí chování jako dřív: nadpisy se zobrazují vždy, skrývají se jen nedostupné položky
+	$item->getSubmenu()->setHideEmptyHeadings(false);
+	Assert::same(['Dokumenty', 'Vozidla', 'Administrace', 'Uživatelé', 'Prázdný'], $labels(new TestSecurityUser(['users'])));
 });

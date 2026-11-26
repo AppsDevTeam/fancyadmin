@@ -324,14 +324,18 @@
 	}
 }
 
-// Mřížka je kontext vrstvení: obrázek hlavičky (vrstva pod pásem) je nad pozadím stránky a pod widgety.
-// Vzhled jde projektu nastavit proměnnými (výchozí = vzhled administrace): --fa-widgets-radius (zaoblení
-// karet a pásu), --fa-widgets-max-width (nejširší obsah, na širokém monitoru uprostřed).
+// Obal mřížky. Vzhled jde projektu nastavit proměnnými (bez nich vzhled administrace beze změny):
+// --fa-widgets-radius (zaoblení karet a pásu), --fa-widgets-max-width (nejširší obsah, uprostřed).
 .fa-widgets-board {
-	position: relative;
-	isolation: isolate;
 	max-width: var(--fa-widgets-max-width, none);
 	margin-inline: auto;
+}
+
+// Jen s obrázkem v hlavičce (setHeaderImage) je obal kontext vrstvení - vrstva obrázku pod pásem je nad
+// pozadím stránky a pod widgety
+.fa-widgets-board:has(> .fa-widgets-header-image) {
+	position: relative;
+	isolation: isolate;
 }
 
 // Pás s obrázkem (setHeaderImage): zleva primární barva, vpravo obrázek; vrstva sahá 155 px pod pás a maska

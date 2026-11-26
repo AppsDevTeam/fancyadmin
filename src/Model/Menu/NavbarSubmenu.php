@@ -36,9 +36,20 @@ class NavbarSubmenu
 		return $this->subMenuItems;
 	}
 
+	private bool $hideEmptyHeadings = false;
+
 	/**
-	 * Položky, které uživatel vidí; nadpis jen tehdy, když pod ním (do dalšího nadpisu) nějaká viditelná
-	 * položka je - jinak by v seskupeném podmenu zůstal nadpis bez položek.
+	 * Skrýt nadpis, pod kterým (do dalšího nadpisu) uživatel nevidí žádnou položku - v seskupeném podmenu by
+	 * jinak zůstal nadpis bez položek. Výchozí je jako dřív: nadpisy se zobrazují vždy.
+	 */
+	public function setHideEmptyHeadings(bool $hide = true): static
+	{
+		$this->hideEmptyHeadings = $hide;
+		return $this;
+	}
+
+	/**
+	 * Položky, které uživatel vidí, a nadpisy (s setHideEmptyHeadings() jen ty, pod kterými je viditelná položka).
 	 *
 	 * @return array<NavbarSubmenuItem|NavbarSubmenuHeading>
 	 */
@@ -48,6 +59,10 @@ class NavbarSubmenu
 		$heading = null;
 		foreach ($this->subMenuItems as $item) {
 			if ($item instanceof NavbarSubmenuHeading) {
+				if (!$this->hideEmptyHeadings) {
+					$visible[] = $item;
+					continue;
+				}
 				$heading = $item;
 				continue;
 			}
