@@ -12,8 +12,8 @@ widgetu dodává `callable`, které se zavolá až při vykreslení a jen jednou
 | `src/UI/Components/Controls/Widgets/WidgetGridControl.php` | control - mřížka, přidávání widgetů, pořadí, šířka |
 | `src/UI/Components/Controls/Widgets/WidgetGridControl.latte` | markup mřížky a widgetů |
 | `src/UI/Components/Controls/Widgets/Widget.php` | společný předek widgetů - titulek, popis, šířka, pořadí, období |
-| `src/UI/Components/Controls/Widgets/*Widget.php` | widgety `stat`, `tiles`, `table`, `chart`, `template` (data a nastavení) |
-| `src/UI/Components/Controls/Widgets/WidgetTile.php`, `WidgetTableColumn.php`, `WidgetTone.php` | dlaždice, sloupec tabulky a barva ikony (hodnotové objekty pro widgety) |
+| `src/UI/Components/Controls/Widgets/*Widget.php` | widgety `stat`, `kpi`, `figures`, `alerts`, `tiles`, `table`, `chart`, `template` (data a nastavení) |
+| `src/UI/Components/Controls/Widgets/WidgetTile.php`, `WidgetTableColumn.php`, `WidgetTone.php`, `WidgetBadge.php`, `WidgetFigure.php`, `WidgetAlert.php` | dlaždice, sloupec tabulky, barva, štítek, údaj a upozornění (hodnotové objekty pro widgety) |
 | `src/UI/Components/Controls/Widgets/WidgetFormat.php` | formát čísel a ikon pro šablony |
 | `src/UI/Components/Controls/Widgets/WidgetGridControlFactory.php` | generovaná továrna controlu, registruje ji rozšíření |
 | `src/UI/Components/Controls/Widgets/WidgetControl.php` + `.latte` | vykreslení jednoho widgetu - podkomponenta mřížky se snippetem `body` a persistentním `period` |
@@ -23,7 +23,7 @@ widgetu dodává `callable`, které se zavolá až při vykreslení a jen jednou
 | `src/UI/Components/Controls/Widgets/WidgetChart.php` | data grafu widgetu `chart` |
 | `src/UI/Presenters/Dashboard.php` | trait přehledu - komponenta `dashboard` z továrny `WidgetGridControlFactory`, rozložení v `configureDashboard()` |
 | `assets/scss/_widgets.scss` | vzhled (součást `app.scss`), prefix `.fa-widgets-*`, světlý i tmavý režim |
-| `src/lang/fcadmin.*.yml` | `fcadmin.widgets.empty` (prázdná tabulka), `fcadmin.widgets.period.*` (období, popisek, tlačítko bez JS) |
+| `src/lang/fcadmin.*.yml` | `fcadmin.widgets.empty` (prázdná tabulka), `fcadmin.widgets.unavailable`, `fcadmin.widgets.alerts.empty`, `fcadmin.widgets.detail`, `fcadmin.widgets.period.*` (období, popisek, tlačítko bez JS) |
 
 Starší třídy `.dashboard-card` v `_theme.scss` s widgety nesouvisí a zůstávají.
 
@@ -123,22 +123,60 @@ Formulář období každého widgetu nese ve skrytých polích období všech os
 tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
 ## Mřížka
 
-- `setColumns(1-6)`, výchozí 3. Pod zlomem `lg` má mřížka nejvýš 2 sloupce, pod `md` jeden.
+- `setColumns(1-12)`, výchozí 3. Pod zlomem `lg` má mřížka nejvýš 2 sloupce, pod `md` jeden.
 - `setSpan(n)` - kolik sloupců widget zabere; víc, než má mřížka, se ořízne (pod `lg` na 2).
 - `setPosition(n)` - pořadí; widgety se stejnou pozicí (výchozí 0) zůstanou v pořadí přidání.
 - `setTitle()`, `setDescription()` - hlavička widgetu. Popis se nevypisuje pod nadpis, ukáže ho tooltip
-  otazníku vpravo v hlavičce (`.fa-widget-hint`, `docs/tooltip.md`); na dotyku se neukáže, patří do něj jen
-  doplňující vysvětlení, ne nic, bez čeho se widget nedá číst. Jméno widgetu (`data-widget`) je zároveň jméno
+  otazníku vpravo v hlavičce (`.fa-widget-hint`, `docs/tooltip.md`); karty `kpi`, `figures` a `alerts`
+  ho mají místo otazníku na nadpisu (najetí myší, fokus z klávesnice). Na dotyku se neukáže, patří do něj
+  jen doplňující vysvětlení, ne nic, bez čeho se widget nedá číst. U karty s proklikem je nadpis nad
+  odkazem - klik na něj kartu neotevře, jen ukáže nápovědu. Jméno widgetu (`data-widget`) je zároveň jméno
   podkomponenty, smí tedy obsahovat jen písmena, číslice a `_` a musí být v mřížce jedinečné (v jiné mřížce
   stejné jméno být smí).
+
+- `setSubtitle()` - šedý dovětek za nadpisem (období, „stav k …“), text nebo `Closure` s obdobím.
+- `setBadges()` - štítky `WidgetBadge($text, WidgetTone, ?$title)` v hlavičce (u `kpi` pod hodnotou), pole nebo `Closure`.
+- `setLink($url, ?$label)` - bez popisku je odkazem celá karta (šipka vpravo v hlavičce), s popiskem odkaz
+  v patičce („Všechna upozornění ›“). Místo adresy jde předat `Closure` s obdobím widgetu - proklik pak
+  otevře podrobnosti na zvoleném období (`fn(?WidgetPeriod $period) => $this->link('Stats:', [...])`).
+- `setUnavailable($reason)` - widget, pro který zatím nejsou data: místo obsahu „Data zatím nejsou k dispozici“
+  a důvod, data widgetu se nevolají. Rozložení drží místo i pro ukazatele, které teprve přibudou; karta
+  natažená na výšku souseda v řadě má hlášku uprostřed.
+- `setCollapsible()` - sbalitelná karta (`<details>`): vidět je nadpis, obsah po kliknutí; sbalitelné widgety
+  se otevírají a zavírají každý zvlášť a rozbalený nenatahuje sousedy v řadě.
+
+## Hlavička a společné období mřížky
+
+`setHeader($title, $text)` vykreslí nad widgety pás v primární barvě (pozdrav, datum). `setHeaderImage($url)`
+do pásu dá obrázek (vpravo, zleva překrytý primární barvou), který dolů měkce přejde do pozadí stránky za
+první řadou widgetů. `setPeriods($default,
+$options)` na mřížce přidá do pásu výběr období, které dostanou všechny widgety **bez vlastního** výběru
+(`Widget::setPeriods()` má přednost). Stav je v URL (`dashboard-period`), výchozí do odkazů nejde. Změna
+selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se tím skoro všechny widgety.
+
+Podstránka dashboardu (detail, na který se z karty proklikne) má hlavičku `setPage($title, $subtitle,
+$breadcrumbs)` + `{control dashboard:page}` (`renderPage()`): drobečková navigace (`['Dashboard' => odkaz, …,
+'Aktuální' => null]`, poslední položka bez odkazu), ve stejném řádku vpravo výběr období, pod ní nadpis
+a šedý podtitul (text nebo `Closure` s obdobím). Přepínač nebo záložky pod hlavičkou dejte do
+`<div class="fa-widgets-page-toolbar">` (stejná šířka jako mřížka). Samotný výběr období bez hlavičky:
+`{control dashboard:period}` (`renderPeriod()`) ho vykreslí samostatně jako tónované tlačítko a mřížka
+vykreslená potom ho už nemá; bez `setHeader()` pak nemá ani pás hlavičky. Stejné jméno komponenty
+(`dashboard`) znamená stejný parametr období, odkaz z dashboardu ho tak může předat.
+
+Vzhled mřížky jde projektu nastavit CSS proměnnými (výchozí = vzhled administrace): `--fa-widgets-radius`
+(zaoblení karet a pásu) a `--fa-widgets-max-width` (nejširší obsah mřížky a hlavičky podstránky, uprostřed).
 
 ## Widgety
 
 | metoda | widget |
 |---|---|
 | `addStat($name, $title, fn() => int\|float\|string)` | velké číslo; `setNote()` (text nebo callable), `setIcon()`, `setLink()` (celá karta je odkaz), `setTone()` |
+| `addKpi($name, $title, fn() => int\|float\|string\|null)` | KPI karta: hodnota, `setUnit()` (text nebo `Closure` - jednotka podle velikosti čísla), `setSparkline(fn() => list<number\|null>)` (křivka 72 × 28 v SVG), `setBadges()` pod hodnotou, `setNote()`, `setTone()` (barva hodnoty a křivky); `null` = „–“ |
+| `addKpiParts($name, $title, fn() => WidgetFigure[])` | dělená KPI karta - části vedle sebe oddělené linkou (popisek, hodnota, jednotka, štítky, poznámka) |
+| `addFigures($name, $title, fn() => WidgetFigure[])` | řada údajů v jedné kartě oddělených linkou; `WidgetFigure`: label, value, unit, note (šedý doplněk), tone, title (bublina popisku), badges |
+| `addAlerts($name, $title, fn() => WidgetAlert[])` | upozornění k řešení: text, tón (`Warning` / `Danger` - ikona a podbarvení), poznámka, hodnota, odkaz s popiskem (výchozí `fcadmin.widgets.detail`); prázdné `fcadmin.widgets.alerts.empty` |
 | `addTiles($name, fn() => WidgetTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `WidgetTile`: label, value, note, icon, link, tone |
-| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty` |
+| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava; `wrap: true` zalomí dlouhý text, jinak je řádek jako v gridu na jednom řádku), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty`. Volitelně `WidgetTableColumn(group: '…')` (nadpis skupiny nad sousedními sloupci), `setTotal(řádek|fn)` (řádek Celkem v patičce) a `setRowLink(fn(array $row): ?string)` (proklik řádku - odkazem je první buňka a celý řádek) |
 | `addChart($name, $title, fn() => WidgetChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
 | `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$widgetGrid`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
 
@@ -176,6 +214,7 @@ zvolené `WidgetPeriod` jako parametr; widget bez období dostane `null`.
 | `THIS_MONTH` | od 1. do dneška | 1. až N. den minulého měsíce (zkráceno na jeho konec) |
 | `LAST_MONTH` | celý minulý měsíc | celý měsíc před ním |
 | `THIS_QUARTER`, `THIS_YEAR` | od začátku do dneška | stejně dlouhý úsek od začátku předchozího čtvrtletí / roku |
+| `LAST_12_MONTHS` | od 1. dne měsíce před 11 měsíci do dneška | stejný úsek o rok dřív |
 
 ## Grafy
 
@@ -197,9 +236,12 @@ $widgetGrid->addChart('revenue', 'Tržba po dnech', fn(WidgetPeriod $period) => 
   plocha, např. top 10).
 - `labels`: popisek je text, nebo pole textů = víc řádků (dlouhý název produktu u vodorovných sloupců).
 - `datasets`: každý musí mít pole `data`, další klíče jsou volby datasetu Chart.js (vlastní barva, `type`).
+- `highlight: [od, do]` - podbarvené pásmo přes popisky osy x (indexy včetně), např. zvolené období v grafu
+  delšího vývoje; kreslí ho plugin `fancyadminTheme` průhlednou primární barvou pod datasety.
 - `format` jsou volby `Intl.NumberFormat` pro osu hodnot a tooltip (builtin `Chart`), `options` další volby
   Chart.js (mají přednost před výchozími `maintainAspectRatio: false`, `interaction: index`).
-- Šablona vypíše `<canvas data-adt-chart='{…}'>` s `plugins: ["fancyadminTheme"]`; prázdné `labels` nebo
+- Šablona vypíše `<canvas data-adt-chart='{…}'>` (JSON explicitně přes `json_encode` - Latte před 3.1 by pole
+  v atributu vypsalo jako „Array“) s `plugins: ["fancyadminTheme"]`; prázdné `labels` nebo
   `datasets` ukážou `fcadmin.widgets.empty`.
 
 **Plugin `fancyadminTheme`** (`widgetsTheme.js`, registruje ho `widgets.js` přes `registerChartPlugins()`):

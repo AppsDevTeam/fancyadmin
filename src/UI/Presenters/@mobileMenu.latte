@@ -28,7 +28,7 @@
     {if $menuItem->getSubmenu()}
         {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
         <div id="submenu-{_$menuItem->getLabel()|webalize}-{$menuItemKey}" n:class="sub-menu, d-sm-none">
-            {foreach $subMenu->getSubMenuItems() as $subMenuItem}
+            {foreach $subMenu->getVisibleSubMenuItems($user, $presenter) as $subMenuItem}
                 {if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
                     <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
                 {else}

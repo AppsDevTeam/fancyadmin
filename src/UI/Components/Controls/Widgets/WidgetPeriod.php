@@ -17,6 +17,7 @@ enum WidgetPeriod: string
 	case LAST_MONTH = 'lastMonth';
 	case THIS_QUARTER = 'thisQuarter';
 	case THIS_YEAR = 'thisYear';
+	case LAST_12_MONTHS = 'last12Months';
 
 	/** Neznámá hodnota z URL nemá shodit stránku, jen se nepoužije. */
 	public static function fromUrl(?string $value, self $default): self
@@ -50,6 +51,8 @@ enum WidgetPeriod: string
 			self::LAST_MONTH => [$today->modify('first day of last month'), $today->modify('first day of this month')],
 			self::THIS_QUARTER => [self::quarterStart($today), $tomorrow],
 			self::THIS_YEAR => [$today->setDate((int) $today->format('Y'), 1, 1), $tomorrow],
+			// Tento měsíc a 11 celých měsíců před ním
+			self::LAST_12_MONTHS => [$today->modify('first day of this month')->modify('-11 months'), $tomorrow],
 		};
 	}
 
@@ -73,7 +76,7 @@ enum WidgetPeriod: string
 			self::THIS_MONTH => $shifted($from->modify('first day of last month')),
 			self::LAST_MONTH => [$from->modify('first day of last month'), $from],
 			self::THIS_QUARTER => $shifted($from->modify('-3 months')),
-			self::THIS_YEAR => $shifted($from->modify('-1 year')),
+			self::THIS_YEAR, self::LAST_12_MONTHS => $shifted($from->modify('-1 year')),
 		};
 	}
 

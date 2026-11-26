@@ -19,7 +19,12 @@ modal:
   close: Zavrieť
 
 widgets:
+  unavailable: Dáta zatiaľ nie sú k dispozícii.
+  alerts:
+    empty: Nič na riešenie.
+  detail: Zobraziť podrobnosti
   empty: Za zvolené obdobie nie sú žiadne údaje.
+  breadcrumbs: Navigačná cesta
   period:
     label: Obdobie
     submit: Zobraziť
@@ -31,6 +36,7 @@ widgets:
     lastMonth: Minulý mesiac
     thisQuarter: Tento štvrťrok
     thisYear: Tento rok
+    last12Months: Posledných 12 mesiacov
 
 layout:
   sideMenu:

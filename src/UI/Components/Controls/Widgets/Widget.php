@@ -22,6 +22,24 @@ abstract class Widget
 
 	private ?string $requestedPeriod = null;
 
+	/** @var (\Closure(): ?WidgetPeriod)|null období mřížky pro widget bez vlastního výběru */
+	private ?\Closure $periodFallback = null;
+
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $subtitle = null;
+
+	/** @var list<WidgetBadge>|(\Closure(?WidgetPeriod): list<WidgetBadge>) */
+	private array|\Closure $badges = [];
+
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $link = null;
+
+	private ?string $linkLabel = null;
+
+	private ?string $unavailable = null;
+
+	private bool $collapsible = false;
+
 	public function __construct(
 		private readonly string $name,
 		private ?string $title = null,
@@ -59,6 +77,93 @@ abstract class Widget
 	{
 		$this->description = $description;
 		return $this;
+	}
+
+	/** @param string|(\Closure(?WidgetPeriod): ?string)|null $subtitle šedý dovětek za nadpisem (období, stav k datu) */
+	public function setSubtitle(string|\Closure|null $subtitle): static
+	{
+		$this->subtitle = $subtitle;
+		return $this;
+	}
+
+	public function getSubtitle(): ?string
+	{
+		return $this->subtitle instanceof \Closure ? ($this->subtitle)($this->getPeriod()) : $this->subtitle;
+	}
+
+	/** @param list<WidgetBadge>|(\Closure(?WidgetPeriod): list<WidgetBadge>) $badges štítky (počet, změna, stav) */
+	public function setBadges(array|\Closure $badges): static
+	{
+		$this->badges = $badges;
+		return $this;
+	}
+
+	/** @return list<WidgetBadge> */
+	public function getBadges(): array
+	{
+		$badges = $this->badges instanceof \Closure ? ($this->badges)($this->getPeriod()) : $this->badges;
+		foreach ($badges as $_badge) {
+			if (!$_badge instanceof WidgetBadge) {
+				throw new \UnexpectedValueException("Štítky widgetu '{$this->name}' musí být " . WidgetBadge::class . '.');
+			}
+		}
+		return array_values($badges);
+	}
+
+	/**
+	 * Proklik na podrobnosti. Bez popisku je odkazem celý widget (šipka vpravo v hlavičce),
+	 * s popiskem je to odkaz v patičce widgetu („Všechna upozornění ›“). `Closure` dostane období widgetu,
+	 * proklik tak může zvolené období předat dál (stránka podrobností otevřená na stejném období).
+	 *
+	 * @param string|(\Closure(?WidgetPeriod): ?string)|null $link
+	 */
+	public function setLink(string|\Closure|null $link, ?string $label = null): static
+	{
+		$this->link = $link;
+		$this->linkLabel = $label;
+		return $this;
+	}
+
+	public function getLink(): ?string
+	{
+		return $this->link instanceof \Closure ? ($this->link)($this->getPeriod()) : $this->link;
+	}
+
+	public function getLinkLabel(): ?string
+	{
+		return $this->linkLabel;
+	}
+
+	/**
+	 * Widget, pro který zatím nejsou data: místo obsahu ukáže hlášku `fcadmin.widgets.unavailable`
+	 * a důvod; data widgetu se nevolají. Rozložení stránky tak drží místo i pro ukazatele, které teprve přibudou.
+	 */
+	public function setUnavailable(?string $reason): static
+	{
+		$this->unavailable = $reason;
+		return $this;
+	}
+
+	public function isUnavailable(): bool
+	{
+		return $this->unavailable !== null;
+	}
+
+	public function getUnavailableReason(): ?string
+	{
+		return $this->unavailable;
+	}
+
+	/** Sbalitelný widget: vidět je jen hlavička, obsah se rozbalí kliknutím (`<details>`). */
+	public function setCollapsible(bool $collapsible = true): static
+	{
+		$this->collapsible = $collapsible;
+		return $this;
+	}
+
+	public function isCollapsible(): bool
+	{
+		return $this->collapsible;
 	}
 
 	public function getSpan(): int
@@ -120,11 +225,14 @@ abstract class Widget
 		return $this->defaultPeriod;
 	}
 
-	/** Zvolené období, bez volby výchozí; neznámé nebo nenabízené znamená výchozí, widget bez období vrací null. */
+	/**
+	 * Zvolené období, bez volby výchozí; neznámé nebo nenabízené znamená výchozí. Widget bez vlastního výběru
+	 * dostane období mřížky (WidgetGridControl::setPeriods()), bez něj null.
+	 */
 	public function getPeriod(): ?WidgetPeriod
 	{
 		if ($this->defaultPeriod === null) {
-			return null;
+			return $this->periodFallback !== null ? ($this->periodFallback)() : null;
 		}
 		$period = WidgetPeriod::fromUrl($this->requestedPeriod, $this->defaultPeriod);
 		return in_array($period, $this->periodOptions, true) ? $period : $this->defaultPeriod;
@@ -137,6 +245,13 @@ abstract class Widget
 	public function selectPeriod(?string $value): static
 	{
 		$this->requestedPeriod = $value;
+		return $this;
+	}
+
+	/** @param (\Closure(): ?WidgetPeriod)|null $fallback období mřížky; nastavuje ho WidgetGridControl */
+	public function setPeriodFallback(?\Closure $fallback): static
+	{
+		$this->periodFallback = $fallback;
 		return $this;
 	}
 }

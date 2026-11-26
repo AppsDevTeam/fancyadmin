@@ -99,6 +99,28 @@ export function applyTheme(chart) {
 	return changed;
 }
 
+/**
+ * Pixely pásma zvýrazněných popisků osy x (`options.plugins.fancyadminTheme.highlight` = [od, do] včetně,
+ * indexy popisků): od poloviny mezery před prvním do poloviny mezery za posledním, oříznuto na plochu grafu.
+ */
+export function highlightBounds(chart, highlight) {
+	const scale = chart.scales?.x;
+	const area = chart.chartArea;
+	if (!Array.isArray(highlight) || highlight.length !== 2 || !scale || !area) {
+		return null;
+	}
+	const count = chart.data.labels?.length ?? 0;
+	const from = Math.max(0, Math.min(highlight[0], highlight[1]));
+	const to = Math.min(count - 1, Math.max(highlight[0], highlight[1]));
+	if (count === 0 || from > to) {
+		return null;
+	}
+	const half = count > 1 ? Math.abs(scale.getPixelForValue(1) - scale.getPixelForValue(0)) / 2 : (area.right - area.left) / 2;
+	const left = Math.max(area.left, scale.getPixelForValue(from) - half);
+	const right = Math.min(area.right, scale.getPixelForValue(to) + half);
+	return right > left ? { left, right, top: area.top, bottom: area.bottom } : null;
+}
+
 // Chart.js si volby os vyhodnotí ještě před beforeUpdate; když je plugin doplnil až tam (builtin při změně
 // atributu vymění celé volby), je potřeba druhý průchod, jinak by osy zůstaly v barvách Chart.js.
 const needsSecondPass = new WeakSet();
@@ -119,6 +141,18 @@ export const fancyadminTheme = {
 			needsSecondPass.delete(chart);
 			chart.update('none');
 		}
+	},
+	// Zvýrazněné období (WidgetChart highlight) pod datasety
+	beforeDatasetsDraw(chart, args, pluginOptions) {
+		const bounds = highlightBounds(chart, pluginOptions?.highlight);
+		if (!bounds) {
+			return;
+		}
+		const ctx = chart.ctx;
+		ctx.save();
+		ctx.fillStyle = withAlpha(cssVar('--primaryColor') || '#000000', 0.08);
+		ctx.fillRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+		ctx.restore();
 	},
 	afterDestroy(chart) {
 		charts.delete(chart);
