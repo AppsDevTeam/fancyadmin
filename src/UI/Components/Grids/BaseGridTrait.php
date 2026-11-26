@@ -9,6 +9,7 @@ use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\DoctrineForms\BaseFormInterface;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
+use ADT\FancyAdmin\DI\Injects\ContainerInject;
 use ADT\FancyAdmin\DI\Injects\GridFilterFormFactoryInject;
 use ADT\FancyAdmin\DI\Injects\GridFilterQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\QueryObjectDataSourceInject;
@@ -32,6 +33,7 @@ trait BaseGridTrait
 	use GridFilterQueryFactoryInject;
 	use QueryObjectDataSourceInject;
 	use GridFilterFormFactoryInject;
+	use ContainerInject;
 
 	public function __construct()
 	{
@@ -39,7 +41,7 @@ trait BaseGridTrait
 
 		// Stromový grid kreslíme vlastní šablonou (hlavička, sticky první sloupec a akce),
 		// ke které patří styly v _datagridTree.scss.
-		$this->monitor(Presenter::class, function () {
+		$this->monitor(Presenter::class, function (Presenter $presenter) {
 			if ($this->getGrid()->isTreeView()) {
 				$this->getGrid()->setTemplateFile(__DIR__ . '/DataGridTree.latte');
 			}
@@ -76,6 +78,17 @@ trait BaseGridTrait
 
 					$query->by('id', $ids ? array_values($ids) : [0]);
 				});
+			}
+
+			// Sestavy a nastavení sloupců (ColumnFiltersTrait), jen když je projekt zapnul v konfiguraci (datagrid)
+			if (method_exists($grid, 'setPresetStorage')) {
+				$key = $presenter->getName() . ':' . $grid->getFullName();
+				if ($storage = $this->_container->getByType(GridColumnSettingsStorage::class, false)) {
+					$grid->setColumnSettingsStorage($storage, $key);
+				}
+				if ($storage = $this->_container->getByType(GridPresetStorage::class, false)) {
+					$grid->setPresetStorage($storage, $key);
+				}
 			}
 		});
 	}

@@ -43,6 +43,8 @@ use ADT\FancyAdmin\Model\AiChat\Page\OpenPageTool;
 use ADT\FancyAdmin\Model\AiChat\AiChatTranslator;
 use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
+use ADT\FancyAdmin\Model\Grid\DoctrineGridColumnSettingsStorage;
+use ADT\FancyAdmin\Model\Grid\DoctrineGridPresetStorage;
 use ADT\FancyAdmin\Model\Tablet\DoctrineTabletSignRequests;
 use ADT\FancyAdmin\Model\Tablet\TabletService;
 use ADT\FancyAdmin\Model\Tablet\TabletSigning;
@@ -207,6 +209,13 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'vapidPrivateKey' => Expect::string()->default(''),
 				// kontakt na provozovatele pro push služby prohlížečů (mailto: nebo https:)
 				'subject' => Expect::string()->default(''),
+			]),
+			// Uložené sestavy a nastavení sloupců gridů (docs/datagrid-column-filters.md)
+			'datagrid' => Expect::structure([
+				// Entita uložených filtrů projektu (implements GridFilter, use GridFilterTrait) - zapíná sestavy
+				'presetEntity' => Expect::string()->nullable()->default(null),
+				// Entita nastavení sloupců (implements GridColumnSetting, use GridColumnSettingTrait) - bez ní je nastavení v session
+				'columnSettingEntity' => Expect::string()->nullable()->default(null),
 			]),
 			// Tablety pro vyplnění a podpis formulářů (docs/tablets.md)
 			'tablet' => Expect::structure([
@@ -447,6 +456,16 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'privateKey' => $this->config->webPush->vapidPrivateKey,
 				'subject' => $this->config->webPush->subject,
 			]);
+
+		if ($this->config->datagrid->presetEntity !== null) {
+			$builder->addDefinition($this->prefix('gridPresetStorage'))
+				->setFactory(DoctrineGridPresetStorage::class, ['entityClass' => $this->config->datagrid->presetEntity]);
+		}
+
+		if ($this->config->datagrid->columnSettingEntity !== null) {
+			$builder->addDefinition($this->prefix('gridColumnSettingsStorage'))
+				->setFactory(DoctrineGridColumnSettingsStorage::class, ['entityClass' => $this->config->datagrid->columnSettingEntity]);
+		}
 
 		// Potřebuje projektovou entitu Tablet a TabletQueryFactory, proto jen na požádání
 		if ($this->config->tablet->enabled) {
