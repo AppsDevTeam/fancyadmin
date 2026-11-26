@@ -178,7 +178,7 @@
 		{var $_groups = $widget->getColumnGroups()}
 		{var $_total = $widget->getTotal()}
 		<div class="table-responsive">
-			<table class="table fa-widgets-table mb-0">
+			<table n:class="table, fa-widgets-table, mb-0, $_groups ? fa-widgets-table-grouped, $widget->isCompact() ? fa-widgets-table-compact">
 				<thead>
 					{* Skupiny sloupců: sloupec bez skupiny zabere oba řádky hlavičky *}
 					<tr n:if="$_groups" class="fa-widgets-table-groups">

@@ -617,7 +617,12 @@
 	margin-left: .3em;
 	font-size: .75rem;
 	font-weight: 400;
+	line-height: 1.3;
 	color: var(--fa-text-muted);
+	// číslo zůstává na jednom řádku, delší poznámka („0 % vůči novým náborům · ztracená provize …“)
+	// se zalomí a nevyteče z úzkého sloupce
+	white-space: normal;
+	overflow-wrap: anywhere;
 }
 
 @include media-breakpoint-down(md) {
@@ -758,10 +763,12 @@
 
 // Skupiny sloupců (WidgetTableColumn(group:)), řádek Celkem (setTotal) a proklik řádku (setRowLink)
 .fa-widgets-table {
-	// barva hlavičky (projekt může mít hlavičku tabulek tmavou), linka pod skupinou z ní odvozená
+	// barva hlavičky (projekt může mít hlavičku tabulek tmavou), linka pod skupinou z ní odvozená - jako
+	// vnitřní stín: okraj by se při border-collapse míchal s pozadím tabulky (bílý pruh), ne s hlavičkou
 	.fa-widgets-table-group {
 		text-align: center;
-		border-bottom: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+		border-bottom: 0;
+		box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 30%, transparent);
 	}
 
 	.fa-widgets-table-groups th[rowspan] {
@@ -862,6 +869,48 @@
 .fa-widgets-page-subtitle {
 	font-size: .875rem;
 	color: var(--fa-text-muted);
+}
+
+// Tabulka se skupinami sloupců: hlavička má dva skutečné řádky - pravidla gridu (.table-responsive table)
+// přilepují druhý řádek s pevným odsazením (u gridu je to jen oddělovací linka) a první sloupec stahují
+// na 1 % šířky. Tady hlavička nelepí, číselné sloupce jsou široké podle obsahu a zbytek dostane název.
+.table-responsive table.fa-widgets-table-grouped {
+	// :nth-child(n) kvůli specificitě - pravidlo gridu je thead > tr:nth-child(2) a v balíčku je až za widgety
+	thead > tr:nth-child(n) {
+		position: static;
+	}
+
+	thead > tr > th:first-child,
+	tbody > tr > td:first-child {
+		width: auto;
+	}
+
+	th.text-end,
+	td.text-end {
+		width: 1%;
+	}
+
+	.fa-widgets-table-group + .fa-widgets-table-group {
+		box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 30%, transparent), inset 1px 0 0 color-mix(in srgb, currentColor 30%, transparent);
+	}
+
+	// spodní okraj hlavičky jen u druhého řádku - sloupec přes oba řádky (rowspan) končí s ním
+	.fa-widgets-table-groups > th {
+		border-bottom-width: 0;
+	}
+
+	.fa-widgets-table-groups > th[rowspan] {
+		border-bottom-width: 1px;
+	}
+}
+
+// Užší okraje buněk (TableWidget::setCompact) - tabulka v půlce šířky mřížky
+.table-responsive table.fa-widgets-table-compact {
+	th,
+	td {
+		padding-left: 12px;
+		padding-right: 12px;
+	}
 }
 
 // Výběr období v hlavičce stránky (renderPeriod): tónované tlačítko v primární barvě

@@ -22,6 +22,8 @@ final class TableWidget extends Widget
 	/** @var (\Closure(array<string, mixed>): ?string)|null */
 	private ?\Closure $rowLink = null;
 
+	private bool $compact = false;
+
 	/**
 	 * @param array<string, string|WidgetTableColumn> $columns klíč v řádku => popisek nebo sloupec
 	 * @param callable(?WidgetPeriod): iterable<array<string, mixed>> $rows
@@ -93,6 +95,18 @@ final class TableWidget extends Widget
 	public function getRowLink(array $row): ?string
 	{
 		return $this->rowLink ? ($this->rowLink)($row) : null;
+	}
+
+	/** Užší okraje buněk - tabulka v půlce šířky mřížky se vejde bez vodorovného posuvníku. */
+	public function setCompact(bool $compact = true): static
+	{
+		$this->compact = $compact;
+		return $this;
+	}
+
+	public function isCompact(): bool
+	{
+		return $this->compact;
 	}
 
 	/** @return list<array<string, mixed>> */
