@@ -2037,7 +2037,8 @@ iframe {
 		z-index: 1;
 		min-width: 200px;
 		max-height: 60vh;
-		margin: 0 0 0 4px;
+		// Bez mezery - přejezd myší z řádku na seznam nesmí opustit řádek, jinak seznam zmizí
+		margin: 0;
 		padding: 6px;
 		overflow-y: auto;
 		list-style: none;
@@ -2046,11 +2047,14 @@ iframe {
 		border-radius: var(--menu-wide-popover-radius, #{$border-radius});
 		box-shadow: var(--menu-wide-popover-shadow, 0 4px 4px 0 rgba(0, 0, 0, 0.15));
 
+		// Odkazy uvnitř položek uživatelského menu mají pointer-events: none (položka je odkazem
+		// sama) - volby seznamu jsou ale odkazy uvnitř položky Pobočka
 		.dropdown-item {
 			display: flex;
 			align-items: center;
 			gap: 8px;
 			white-space: nowrap;
+			pointer-events: auto;
 
 			> i {
 				font-size: 12px;
