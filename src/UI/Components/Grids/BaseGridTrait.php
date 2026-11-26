@@ -42,6 +42,16 @@ trait BaseGridTrait
 			if ($this->getGrid()->isTreeView()) {
 				$this->getGrid()->setTemplateFile(__DIR__ . '/DataGridTree.latte');
 			}
+
+			// Počet bez filtrů do „X z Y“ (ColumnFiltersTrait): stejný query objekt jako grid, jen bez filtrů gridu
+			if (method_exists($this->getGrid(), 'setUnfilteredCountCallback')) {
+				$this->getGrid()->setUnfilteredCountCallback(function (): int {
+					$query = $this->createQueryObject();
+					$this->initQueryObject($query);
+
+					return $query->count();
+				});
+			}
 		});
 	}
 

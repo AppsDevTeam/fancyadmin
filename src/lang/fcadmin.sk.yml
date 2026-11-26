@@ -14,6 +14,39 @@ accordion:
 
 datagrid:
   filters: Filtre
+  columnFilters:
+    count: '{0}%formatted% záznamov|{1}%formatted% záznam|[2,4]%formatted% záznamy|[5,+Inf[%formatted% záznamov'
+    of: z
+    more: Ďalšie filtre
+    activeFilters: Aktívne filtre
+    chipEdit: 'Upraviť filter %label%: %value%'
+    chipDefault: 'Predvolený filter %label%: %value% - upraviť'
+    chipRemove: 'Odobrať filter %label%'
+    default: predvolený
+    clearAll: Zrušiť filter
+    clear: Zrušiť filter
+    apply: Použiť
+    clearAllFilters: Zrušiť všetky filtre
+    emptyTitle: Žiadny záznam nezodpovedá filtrom
+    hiddenColumn: 'Stĺpec %column% je skrytý, filter na ňom ale platí.'
+    showColumn: Zobraziť stĺpec
+    filterValue: 'filter: %value%'
+    contains: Obsahuje
+    all: Všetko
+    yes: Áno
+    from: od
+    to: do
+    period: Obdobie
+    periodPlaceholder: od - do
+    presets: Rýchla voľba obdobia
+    preset:
+      today: Dnes
+      yesterday: Včera
+      last7: Posledných 7 dní
+      last30: Posledných 30 dní
+      thisMonth: Tento mesiac
+      lastMonth: Minulý mesiac
+      thisYear: Tento rok
 
 modal:
   close: Zavrieť
