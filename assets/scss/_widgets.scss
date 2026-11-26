@@ -55,7 +55,7 @@
 	flex: 1 1 auto;
 	background-color: var(--fa-surface);
 	border: 1px solid var(--fa-border);
-	border-radius: var(--bs-border-radius-lg);
+	border-radius: var(--fa-widgets-radius, var(--bs-border-radius-lg));
 
 	> .fa-widget-header {
 		padding: 16px 20px 0;
@@ -166,7 +166,7 @@
 	padding: 16px 20px;
 	background-color: var(--fa-surface);
 	border: 1px solid var(--fa-border);
-	border-radius: var(--bs-border-radius-lg);
+	border-radius: var(--fa-widgets-radius, var(--bs-border-radius-lg));
 }
 
 .fa-widgets-tile-value {
@@ -235,7 +235,7 @@
 	gap: 12px 24px;
 	margin-bottom: 20px;
 	padding: 18px 24px;
-	border-radius: var(--bs-border-radius-lg);
+	border-radius: var(--fa-widgets-radius, var(--bs-border-radius-lg));
 	background-color: var(--primaryColor);
 	color: #fff;
 
@@ -324,10 +324,14 @@
 	}
 }
 
-// Mřížka je kontext vrstvení: obrázek hlavičky (vrstva pod pásem) je nad pozadím stránky a pod widgety
+// Mřížka je kontext vrstvení: obrázek hlavičky (vrstva pod pásem) je nad pozadím stránky a pod widgety.
+// Vzhled jde projektu nastavit proměnnými (výchozí = vzhled administrace): --fa-widgets-radius (zaoblení
+// karet a pásu), --fa-widgets-max-width (nejširší obsah, na širokém monitoru uprostřed).
 .fa-widgets-board {
 	position: relative;
 	isolation: isolate;
+	max-width: var(--fa-widgets-max-width, none);
+	margin-inline: auto;
 }
 
 // Pás s obrázkem (setHeaderImage): zleva primární barva, vpravo obrázek; vrstva sahá 155 px pod pás a maska
@@ -356,15 +360,17 @@
 
 .fa-widgets-header-title {
 	margin: 0;
-	font-size: 1.25rem;
-	font-weight: 600;
+	font-size: .9375rem;
+	font-weight: 500;
+	letter-spacing: .01em;
 	color: inherit;
 }
 
 .fa-widgets-header-note {
-	margin-top: 2px;
-	font-size: .875rem;
-	opacity: .85;
+	margin-top: 4px;
+	font-size: .78125rem;
+	font-weight: 500;
+	opacity: .9;
 }
 
 .fa-widget-heading {
@@ -447,6 +453,27 @@
 	font-size: .8125rem;
 	font-weight: 400;
 	color: var(--fa-text-muted);
+}
+
+// Nové karty (kpi, figures, alerts, sbalitelné): období za nadpisem ve stejném stylu („NÁBOR NEMOVITOSTÍ · ŘÍJEN 2026“)
+.fa-widget-kpi,
+.fa-widget-figures,
+.fa-widget-alerts,
+.fa-widgets-collapsible {
+	.fa-widget-heading {
+		gap: 4px 6px;
+	}
+
+	.fa-widget-subtitle {
+		font-size: .75rem;
+		font-weight: 500;
+		letter-spacing: .06em;
+		text-transform: uppercase;
+
+		&::before {
+			content: '· ';
+		}
+	}
 }
 
 // KPI karta
@@ -769,6 +796,8 @@
 
 // Hlavička podstránky (setPage + renderPage): drobečky a období v jednom řádku, pod nimi nadpis a podtitul
 .fa-widgets-page-header {
+	max-width: var(--fa-widgets-max-width, none);
+	margin-inline: auto;
 	margin-bottom: 18px;
 }
 

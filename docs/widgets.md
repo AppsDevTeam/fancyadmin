@@ -162,6 +162,9 @@ a šedý podtitul (text nebo `Closure` s obdobím). Samotný výběr období bez
 vykreslená potom ho už nemá; bez `setHeader()` pak nemá ani pás hlavičky. Stejné jméno komponenty
 (`dashboard`) znamená stejný parametr období, odkaz z dashboardu ho tak může předat.
 
+Vzhled mřížky jde projektu nastavit CSS proměnnými (výchozí = vzhled administrace): `--fa-widgets-radius`
+(zaoblení karet a pásu) a `--fa-widgets-max-width` (nejširší obsah mřížky a hlavičky podstránky, uprostřed).
+
 ## Widgety
 
 | metoda | widget |
