@@ -371,14 +371,6 @@ body {
 		padding: 8px 8px 4px;
 	}
 
-	// Přepínač „Zobrazit hotové“ nad seznamem úkolů
-	.quickbar-todo-done-switch {
-		flex: none;
-		margin: 8px 18px 0;
-		font-size: 13px;
-		color: var(--quickbar-text);
-	}
-
 	&.quickbar-panel--chat,
 	&.quickbar-panel--ai {
 		height: min(520px, calc(100vh - 140px));

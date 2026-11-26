@@ -4,8 +4,7 @@
 // Zdroj dat (všechny metody vrací Promise, chybějící metoda = prázdný výsledek):
 //   search(query) → [{ label, items: [{ label, meta?, initials?, icon?, tone?, badge?: { label, class }, href?, panel? }] }]
 //   notifications: { list() → [{ id, icon, tone?, title, text, time, unread, href? }], read(id), readAll() }
-//   todos: { list({ withDone }) → [{ id, text, due?, done, href? }], add(text) → todo, setDone(id, done) }
-//            withDone = přepínač „Zobrazit hotové“ nad seznamem úkolů, zdroj vrátí i hotové úkoly
+//   todos: { list() → [{ id, text, due?, done, href? }], add(text) → todo, setDone(id, done) }
 //            href = detail úkolu po kliku na název, hotovo pak jen zaškrtávátko (bez href celý řádek)
 //   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials?, contact? }] (od nejnovější zprávy;
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
@@ -67,7 +66,6 @@ const AI_UNREAD_KEY = 'fancyadmin-quickbar-ai-unread';
 const OPEN_KEY = 'fancyadmin-quickbar-open';
 const COLUMN_WIDTH_KEY = 'fancyadmin-quickbar-column-width';
 const PINNED_KEY = 'fancyadmin-quickbar-pinned';
-const TODO_DONE_KEY = 'fancyadmin-quickbar-todo-done';
 const COLUMN_KEY_STEP = 16;
 // Posuvné části panelů - podle nich se ukazují linky pod hlavičkou a nad patičkou
 const PANEL_SCROLLERS = '.quickbar-panel-body, .quickbar-thread, .quickbar-channels, .quickbar-ai-recent, .ai-chat__messages';
@@ -126,7 +124,6 @@ const state = {
 	chatThreadNews: [],
 	// Připnutý sloupec se po kliku na odkaz v panelu nezavře
 	columnPinned: loadColumnPinned(),
-	todoShowDone: loadTodoShowDone(),
 	ai: { config: null, loading: null, historyUrl: null, share: null, view: 'chat', full: false, query: '', conversations: [], conversationId: null, element: null, waiting: new Set(), unread: loadAiUnread(), restore: null, startNew: false, dictatedAt: 0 },
 };
 
@@ -250,28 +247,6 @@ function loadColumnPinned() {
 	}
 }
 
-function loadTodoShowDone() {
-	try {
-		return localStorage.getItem(TODO_DONE_KEY) === '1';
-	} catch {
-		return false;
-	}
-}
-
-function toggleTodoShowDone() {
-	state.todoShowDone = !state.todoShowDone;
-	try {
-		state.todoShowDone ? localStorage.setItem(TODO_DONE_KEY, '1') : localStorage.removeItem(TODO_DONE_KEY);
-	} catch {
-		// Bez localStorage vydrží volba jen do konce stránky
-	}
-	loadTodos().then(render);
-}
-
-function loadTodos() {
-	return call('todos.list', { withDone: state.todoShowDone }).then((list) => { state.todos = list || []; });
-}
-
 function toggleColumnPin() {
 	state.columnPinned = !state.columnPinned;
 	try {
@@ -315,9 +290,6 @@ function render() {
 		button.classList.toggle('btn-primary', active);
 		button.classList.toggle('btn-glass', !active);
 		button.setAttribute('aria-expanded', active ? 'true' : 'false');
-	});
-	document.querySelectorAll('[data-quickbar-todo-done-toggle]').forEach((input) => {
-		input.checked = state.todoShowDone;
 	});
 	document.querySelectorAll('[data-quickbar-column-pin]').forEach((button) => {
 		button.classList.toggle('btn-primary', state.columnPinned);
@@ -487,7 +459,7 @@ function loadCounts() {
 	}
 	Promise.all([
 		call('notifications.list').then((list) => { state.notifications = list || []; }),
-		loadTodos(),
+		call('todos.list').then((list) => { state.todos = list || []; }),
 		call('chats.list').then((list) => { state.chats = list || []; }),
 		loadThreadsUnread(false),
 		loadRemindersCount(false),
@@ -3037,10 +3009,6 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('change', (e) => {
-	if (e.target.closest('[data-quickbar-todo-done-toggle]')) {
-		toggleTodoShowDone();
-		return;
-	}
 	const checkbox = e.target.closest('[data-quickbar-todo]');
 	if (checkbox) {
 		setTodoDone(checkbox.dataset.quickbarTodo, checkbox.checked);

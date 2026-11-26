@@ -955,10 +955,12 @@ class UserMenuFactory implements \ADT\FancyAdmin\Model\Menu\UserMenuFactory
 ```
 
 Pod položky menu (nad přepínač tmavého režimu) jde přidat výběr - `UserMenu::addSelect()`
-s `UserMenuSelect`. Vykreslí se jako select (Tom Select) v menu bočního panelu i v menu rychlé
-lišty na mobilu; změna otevře ajaxem odkaz vybrané volby, typicky signál, který hodnotu uloží
-a přesměruje (`userMenuSelect.js`, projekt s vlastním výběrem modulů JS ho importuje jako
-`@fancyadmin/js/userMenuSelect`). Popisek prochází překladačem, popisky voleb ne (názvy záznamů).
+s `UserMenuSelect`. V menu u uživatele (boční panel) je to řádek s popiskem a vybranou volbou,
+po najetí myší vedle vyjede seznam voleb (aktuální s fajfkou, na dotykovém zařízení ho otevře klik);
+volba je odkaz, typicky signál, který hodnotu uloží a přesměruje. V menu rychlé lišty na mobilu je
+to select, jehož změna otevře ajaxem odkaz vybrané volby (`userMenuSelect.js`, projekt s vlastním
+výběrem modulů JS ho importuje jako `@fancyadmin/js/userMenuSelect`). Popisek prochází překladačem,
+popisky voleb ne (názvy záznamů).
 Parametr signálu se nesmí jmenovat jako parametr routy (`id`), odkaz by vedl na jinou stránku.
 
 ```php
@@ -971,6 +973,9 @@ $userMenu->addSelect((new UserMenuSelect())
 	->setPrompt('- vyberte -')
 	->setLink('selectBranch!', 'selectedBranchId'));
 ```
+
+Krátký údaj u uživatele dole v menu (např. aktuální pobočka) nastaví `UserMenu::setButtonNote()` -
+v rozbaleném menu je pod jménem a rolí, ve sbaleném pod avatarem jako popisky položek menu.
 
 `SecurityUser::canSelectAccount()` říká, jestli uživatel vidí v layoutu výběr účtu: v multi-tenant
 projektu, když má víc účtů (včetně podúčtů) nebo smí do všech účtů (plná data, backoffice).
@@ -3349,9 +3354,7 @@ metoda se bere jako prázdný výsledek.
 **Notifikace** — položka z `notifications.list()` s `href` je odkaz: klik ji označí jako přečtenou
 (`read(id)`), naviguje (ajaxem) a lištu zavře; bez `href` ji klik jen přečte.
 
-**Úkoly** — přepínač nad seznamem („Zobrazit hotové“, volbu si pamatuje prohlížeč) volá
-`todos.list({ withDone: true })` a zdroj vrátí i hotové úkoly; odškrtnutím se hotový úkol vrátí mezi nehotové.
-Úkol z `todos.list()` s `href` má název jako odkaz na detail (naviguje a lištu zavře),
+**Úkoly** — úkol z `todos.list()` s `href` má název jako odkaz na detail (naviguje a lištu zavře),
 hotový ho označí jen zaškrtávátko (`setDone(id, done)`); bez `href` zaškrtne úkol klik kamkoli na řádek.
 
 **Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější

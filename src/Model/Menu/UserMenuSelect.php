@@ -92,6 +92,18 @@ class UserMenuSelect
 		return $this->selected === null || !array_key_exists($this->selected, $this->options) ? $this->prompt : null;
 	}
 
+	/** Popisek vybrané volby (řádek menu ho ukazuje vedle názvu výběru), bez výběru null */
+	public function getSelectedLabel(): ?string
+	{
+		foreach ($this->options as $value => $label) {
+			if ($this->isSelected($value)) {
+				return $label;
+			}
+		}
+
+		return null;
+	}
+
 	public function isSelected(int|string $value): bool
 	{
 		return $this->selected !== null && (string) $this->selected === (string) $value;

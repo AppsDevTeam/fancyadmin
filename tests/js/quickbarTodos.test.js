@@ -4,13 +4,11 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let setQuickbarSource;
 let setDone;
-let listOptions;
 
 function quickbarHtml() {
 	return `
 		<div class="quickbar-overlay" hidden></div>
 		<section class="quickbar-panel" data-quickbar-panel="todo" hidden>
-			<input type="checkbox" role="switch" data-quickbar-todo-done-toggle>
 			<div class="quickbar-panel-body" data-quickbar-list="todo" data-empty="Žádné úkoly."></div>
 			<form class="quickbar-panel-form" data-quickbar-form="todo"><input type="text"></form>
 		</section>
@@ -23,7 +21,6 @@ const todos = [
 	{ id: 1, text: 'Zavolat pacientovi', done: false, href: '/task?edit=1' },
 	{ id: 2, text: 'Objednat materiál', done: false },
 ];
-const doneTodo = { id: 3, text: 'Hotový úkol', done: true, href: '/task?edit=3' };
 
 const row = (id) => document.querySelector(`[data-quickbar-todo="${id}"]`).closest('.quickbar-todo');
 
@@ -45,12 +42,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
 	setDone = vi.fn();
-	listOptions = [];
-	const list = (options) => {
-		listOptions.push(options);
-		return [...todos, ...(options?.withDone ? [doneTodo] : [])].map((t) => ({ ...t }));
-	};
-	setQuickbarSource({ todos: { list, setDone } });
+	setQuickbarSource({ todos: { list: () => todos.map((t) => ({ ...t })), setDone } });
 	document.querySelector('[data-quickbar-open="todo"]').click();
 	await new Promise((resolve) => setTimeout(resolve));
 });
@@ -77,22 +69,5 @@ describe('úkoly', () => {
 		row(2).querySelector('.quickbar-item-label').click();
 
 		expect(setDone).toHaveBeenCalledWith(2, true);
-	});
-
-	it('přepínač nad seznamem ukáže i hotové úkoly a volbu si pamatuje', async () => {
-		const toggle = document.querySelector('[data-quickbar-todo-done-toggle]');
-		expect(document.querySelector('[data-quickbar-todo="3"]')).toBeNull();
-
-		toggle.click();
-		await new Promise((resolve) => setTimeout(resolve));
-
-		expect(listOptions.at(-1)).toEqual({ withDone: true });
-		expect(document.querySelector('[data-quickbar-todo="3"]').checked).toBe(true);
-		expect(toggle.checked).toBe(true);
-		expect(localStorage.getItem('fancyadmin-quickbar-todo-done')).toBe('1');
-
-		toggle.click();
-		await new Promise((resolve) => setTimeout(resolve));
-		expect(document.querySelector('[data-quickbar-todo="3"]')).toBeNull();
 	});
 });

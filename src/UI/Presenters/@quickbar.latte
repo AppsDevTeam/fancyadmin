@@ -97,11 +97,6 @@
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Notifications}
 				<div class="quickbar-panel-body" data-quickbar-list="notifications" data-empty="{_fcadmin.layout.quickbar.notifications.empty}"></div>
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Todo}
-				{* Hotové úkoly pod nehotovými - volbu si pamatuje prohlížeč (quickbar.js) *}
-				<div class="form-check form-switch quickbar-todo-done-switch">
-					<input type="checkbox" class="form-check-input" role="switch" id="quickbar-todo-done" data-quickbar-todo-done-toggle>
-					<label class="form-check-label" for="quickbar-todo-done">{_fcadmin.layout.quickbar.todo.showDone}</label>
-				</div>
 				<div class="quickbar-panel-body" data-quickbar-list="todo" data-empty="{_fcadmin.layout.quickbar.todo.empty}"></div>
 				<form class="quickbar-panel-form noajax" data-quickbar-form="todo">
 					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.todo.placeholder}" aria-label="{_fcadmin.layout.quickbar.todo.placeholder}">

@@ -12,7 +12,10 @@
             <span class="user-button-info">
                 <span class="user-button-name">{$identity->getFullName()}</span>
                 <span n:if="$roleNames" class="user-button-role">{$roleNames}</span>
+                <span n:if="$userMenu->getButtonNote()" class="user-button-note">{$userMenu->getButtonNote()}</span>
             </span>
+            {* Ve sbaleném menu pod avatarem, jako popisky položek menu *}
+            <span n:if="$userMenu->getButtonNote()" class="user-button-note user-button-note--collapsed">{$userMenu->getButtonNote()}</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end user-dropdown dropdown-menu-bottom">
             <li class="dropdown-item user-item-wrapper">
@@ -65,22 +68,26 @@
                     </div>
                 </a>
             {/foreach}
-            {* Výběry (UserMenuSelect) - změna otevře odkaz vybrané volby (userMenuSelect.js) *}
-            <li n:foreach="$userMenu->getSelects() as $select" class="dropdown-item user-menu-select" data-fancyadmin-user-menu-select>
+            {* Výběry (UserMenuSelect) - řádek s vybranou volbou, seznam voleb vyjede vedle po najetí
+               myší (na dotyk po kliknutí, userMenuSelect.js), volba je odkaz (signál uloží a přesměruje) *}
+            <li n:foreach="$userMenu->getSelects() as $select" class="dropdown-item user-menu-submenu" data-fancyadmin-user-menu-submenu tabindex="0">
                 <div>
                     <div>
                         <i class="fa-solid fa-{$select->getFaIcon()}"></i>
                     </div>
-                    <label class="user-menu-select-field">
+                    <div class="user-menu-submenu-text">
                         <span class="user-menu-select-label">{_$select->getLabel()}</span>
-                        <select class="form-select form-select-sm">
-                            <option n:if="$select->getPrompt() !== null" value="" selected>{_$select->getPrompt()}</option>
-                            <option n:foreach="$select->getOptions() as $value => $optionLabel" value="{$value}"
-                                data-url="{$presenter->link($select->getLink(), $select->getLinkArgsFor($value))}"
-                                n:attr="selected: $select->isSelected($value)">{$optionLabel}</option>
-                        </select>
-                    </label>
+                        <span class="user-menu-submenu-value">{if $select->getSelectedLabel() !== null}{$select->getSelectedLabel()}{elseif $select->getPrompt() !== null}{_$select->getPrompt()}{/if}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right user-menu-submenu-arrow"></i>
                 </div>
+                <ul class="user-menu-submenu-list">
+                    <li n:foreach="$select->getOptions() as $value => $optionLabel">
+                        <a href="{$presenter->link($select->getLink(), $select->getLinkArgsFor($value))}" n:class="dropdown-item, $select->isSelected($value) ? active">
+                            <i n:class="fa-solid, fa-check, !$select->isSelected($value) ? invisible"></i>{$optionLabel}
+                        </a>
+                    </li>
+                </ul>
             </li>
             {* Přepínač barevného režimu (themeToggle.js) - klik dropdown nezavírá,
                aby uživatel změnu hned viděl a mohl ji vrátit. *}

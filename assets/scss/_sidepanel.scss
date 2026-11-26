@@ -921,7 +921,8 @@ body.menu-wide .side-panel-wide .user-button-info {
 		white-space: nowrap;
 	}
 
-	.user-button-role {
+	.user-button-role,
+	.user-button-note {
 		font-size: 0.72rem;
 		color: var(--menu-wide-muted);
 		overflow: hidden;
@@ -944,6 +945,24 @@ body.menu-wide.menu-collapsed .side-panel-wide {
 		flex: 0 0 0;
 		width: 0;
 		overflow: hidden;
+	}
+
+	// Údaj u uživatele (pobočka) pod avatarem
+	.user-button:has(.user-button-note--collapsed) {
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.user-button-note--collapsed {
+		display: block;
+		max-width: 100%;
+		overflow: hidden;
+		font-size: 10px;
+		line-height: 1.2;
+		color: var(--menu-wide-muted);
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 }
 
@@ -980,11 +999,11 @@ body.menu-wide .user-dropdown {
 			color: var(--menu-wide-hover-text);
 		}
 
-		// Výběr (UserMenuSelect) není odkaz - řádek se nezvýrazňuje
-		&.user-menu-select:hover,
-		&.user-menu-select:active {
-			background-color: transparent;
-			color: var(--menu-wide-text);
+		// Řádek výběru (UserMenuSelect) zůstává zvýrazněný, dokud je seznam voleb otevřený
+		&.user-menu-submenu:focus-within,
+		&.user-menu-submenu.open {
+			background-color: var(--menu-wide-hover-bg);
+			color: var(--menu-wide-hover-text);
 		}
 	}
 
