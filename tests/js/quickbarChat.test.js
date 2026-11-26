@@ -20,7 +20,8 @@ function quickbarHtml() {
 		<section class="quickbar-panel quickbar-panel--chat" data-quickbar-panel="chat" hidden>
 			<div class="quickbar-chat-current" data-quickbar-chat-current data-back="Zpět" data-colleague="Kolega" data-group="Skupina"
 				data-channel="Kanál" data-private-channel="Soukromý kanál" data-thread="Vlákno" data-thread-back="Zpět do konverzace"
-				data-follow="Sledovat" data-unfollow="Přestat sledovat"></div>
+				data-follow="Sledovat" data-unfollow="Přestat sledovat"
+				data-members-one="%count% člen" data-members-few="%count% členové" data-members-many="%count% členů"></div>
 			<div class="quickbar-chat-list">
 				<input type="text" data-quickbar-chat-query>
 				<div data-quickbar-chat-tools data-new="Nový kanál" data-browse="Procházet kanály" hidden></div>
@@ -33,6 +34,7 @@ function quickbarHtml() {
 					data-threads="Vlákna" data-threads-empty="Zatím nesledujete žádné vlákno s odpověďmi."
 					data-reminders="Připomenout později" data-reminders-empty="Nemáte žádné připomínky." data-reminder-done="Hotovo" hidden></div>
 			</div>
+			<div class="quickbar-chat-members" id="quickbar-chat-members" data-quickbar-chat-members aria-label="Členové konverzace" data-you="(vy)" hidden></div>
 			<div data-quickbar-chat-pinned data-label="Připnuté (%count%)" hidden></div>
 			<div data-quickbar-chat-news data-one="Nové odpovědi ve vlákně" data-few="Nové odpovědi ve %count% vláknech"
 				data-many="Nové odpovědi v %count% vláknech" data-open="Zobrazit" hidden></div>
@@ -681,6 +683,71 @@ describe('kanály, vlákna, připnuté zprávy, připomenutí a přílohy', () =
 		await settle();
 
 		expect(calls).toContainEqual(['thread', 7, 1]);
+	});
+
+	describe('členové kanálu v hlavičce', () => {
+		const MEMBERS = [
+			{ id: 1, name: 'Eva Recepční', initials: 'ER' },
+			{ id: 2, name: 'Jan Novák', me: true },
+			{ id: 3, name: 'Petra Malá' },
+		];
+
+		beforeEach(() => {
+			const messagesOf = source.chats.messages;
+			source.chats.list = () => [
+				{ id: 7, name: 'Eva Recepční', unread: 0 },
+				{ id: 20, name: 'vedení', kind: 'channel', private: true, unread: 0 },
+			];
+			source.chats.messages = (chatId) => ({ ...messagesOf(chatId), members: MEMBERS });
+		});
+
+		async function openChat(id) {
+			await openChatPanel();
+			click(`[data-quickbar-chat="${id}"]`);
+			await settle();
+		}
+
+		it('kanál má v hlavičce počet členů a seznam je sbalený', async () => {
+			await openChat(20);
+
+			const toggle = $('[data-quickbar-members-toggle]');
+			expect(toggle.textContent).toContain('Soukromý kanál · 3 členové');
+			expect(toggle.getAttribute('aria-expanded')).toBe('false');
+			expect(toggle.getAttribute('aria-controls')).toBe('quickbar-chat-members');
+			expect($('[data-quickbar-chat-members]').hidden).toBe(true);
+		});
+
+		it('klik seznam rozbalí se jmény a (vy), další klik ho sbalí', async () => {
+			await openChat(20);
+			click('[data-quickbar-members-toggle]');
+
+			const $members = $('[data-quickbar-chat-members]');
+			expect($members.hidden).toBe(false);
+			expect($$('.quickbar-chat-member-name').map((el) => el.textContent)).toEqual(['Eva Recepční', 'Jan Novák', 'Petra Malá']);
+			expect($$('.quickbar-chat-member-me').map((el) => el.textContent)).toEqual(['(vy)']);
+			expect($('[data-quickbar-members-toggle]').getAttribute('aria-expanded')).toBe('true');
+
+			click('[data-quickbar-members-toggle]');
+			expect($members.hidden).toBe(true);
+			expect($('[data-quickbar-members-toggle]').getAttribute('aria-expanded')).toBe('false');
+		});
+
+		it('přímá konverzace počet členů nemá', async () => {
+			await openChat(7);
+
+			expect($('[data-quickbar-members-toggle]')).toBeNull();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-current-sub').textContent).toBe('Kolega');
+		});
+
+		it('vlákno odpovědí seznam schová', async () => {
+			await openChat(20);
+			click('[data-quickbar-members-toggle]');
+			expect($('[data-quickbar-chat-members]').hidden).toBe(false);
+
+			click('[data-quickbar-replies="1"]');
+			await settle();
+			expect($('[data-quickbar-chat-members]').hidden).toBe(true);
+		});
 	});
 });
 

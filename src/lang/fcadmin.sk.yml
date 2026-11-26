@@ -131,6 +131,11 @@ layout:
       channelCreate: Vytvoriť kanál
       channelsEmpty: Zatiaľ žiadne kanály.
       channelMembersCount: 'Členov: %count%'
+      membersOne: '%count% člen'
+      membersFew: '%count% členovia'
+      membersMany: '%count% členov'
+      membersList: Členovia konverzácie
+      memberYou: (vy)
       channelJoin: Pripojiť
       channelOpen: Otvoriť
       thread: Vlákno

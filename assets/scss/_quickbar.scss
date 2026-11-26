@@ -1188,7 +1188,72 @@ body {
 	color: var(--quickbar-muted);
 }
 
-.quickbar-panel--chat:not(.quickbar-panel--chat-thread) :is(.quickbar-thread, .quickbar-chat-form, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
+// „Kanál · 6 členů“ - klik rozbalí seznam členů pod hlavičkou
+.quickbar-chat-members-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	align-self: flex-start;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		color: var(--quickbar-text-strong);
+	}
+
+	&[aria-expanded="true"] .quickbar-chat-members-chevron {
+		transform: rotate(180deg);
+	}
+}
+
+.quickbar-chat-members-chevron {
+	font-size: 9px;
+	transition: transform .2s ease;
+}
+
+.quickbar-chat-members {
+	@include thin-scrollbar;
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	max-height: 220px;
+	overflow: auto;
+	padding: 6px;
+	border-bottom: 1px solid var(--quickbar-line);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.quickbar-chat-member {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	padding: 4px 8px;
+	font-size: 13px;
+	color: var(--quickbar-text);
+}
+
+.quickbar-chat-member-name {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.quickbar-chat-member-me {
+	flex: none;
+	color: var(--quickbar-muted);
+}
+
+.quickbar-panel--chat:not(.quickbar-panel--chat-thread) :is(.quickbar-thread, .quickbar-chat-form, .quickbar-chat-members, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
 	display: none;
 }
 
@@ -2111,7 +2176,7 @@ body {
 	}
 }
 
-.quickbar-panel--picking :is(.quickbar-thread, .quickbar-chat-topic, .quickbar-chat-selection, .quickbar-chat-form, .quickbar-chat-menu, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
+.quickbar-panel--picking :is(.quickbar-thread, .quickbar-chat-topic, .quickbar-chat-selection, .quickbar-chat-form, .quickbar-chat-menu, .quickbar-chat-members, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
 	display: none;
 }
 

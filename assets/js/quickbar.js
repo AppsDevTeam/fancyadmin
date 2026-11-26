@@ -26,6 +26,7 @@
 //            joinChannel(id) → chat, createChannel({ name, private, memberIds }) → chat - tlačítko Nový kanál,
 //            colleagues() → [{ id, name, initials? }] - výběr členů nového kanálu (memberIds = jejich id),
 //            messages(chatId) → { messages, topic?, pinned?: [{ id, text, author?, time? }] } - pruh Připnuté nad zprávami,
+//              members?: [{ id, name, initials?, me? }] - u kanálu a skupiny počet členů v hlavičce, klik rozbalí jejich seznam,
 //            zpráva navíc s author?, system?, pinned?, canPin?, replyCount?, replyAuthors?: [iniciály], lastReplyTime?,
 //              attachments?: [{ name, url, size? (bajty nebo text), image? }],
 //            thread(chatId, messageId) → { parent, replies } - vlákno odpovědí na zprávu,
@@ -106,6 +107,9 @@ const state = {
 	chatReplies: null,
 	chatPinned: [],
 	chatPinnedOpen: false,
+	// Členové otevřeného kanálu nebo skupiny (messages → members), seznam pod hlavičkou
+	chatMembers: [],
+	chatMembersOpen: false,
 	chatHighlight: null,
 	// Zpráva s otevřenou nabídkou pod třemi tečkami ({ id, view: 'menu' | 'remind' | 'custom' }) a krátké potvrzení u zprávy ({ id, text })
 	chatRemind: null,
@@ -706,6 +710,7 @@ function renderChat() {
 	renderChatTools();
 	renderChannels();
 	renderChatCurrent();
+	renderChatMembers();
 	renderChatPinned();
 	renderChatNews();
 	renderChatTopic();
@@ -1073,6 +1078,8 @@ function resetChatThreadState() {
 	state.chatReplies = null;
 	state.chatPinned = [];
 	state.chatPinnedOpen = false;
+	state.chatMembers = [];
+	state.chatMembersOpen = false;
 	state.chatThreadNews = [];
 	state.chatHighlight = null;
 	state.chatRemind = null;
@@ -1332,13 +1339,48 @@ function renderChatCurrent() {
 		group: $current.dataset.group,
 		channel: chat.private ? $current.dataset.privateChannel : $current.dataset.channel,
 	}[chat.kind] ?? $current.dataset.colleague;
+	// U kanálu a skupiny je pod názvem počet členů, klik rozbalí jejich seznam
+	const members = chatMembersShown(chat);
+	const subHtml = members.length
+		? `<button type="button" class="quickbar-chat-current-sub quickbar-chat-members-toggle" aria-expanded="${state.chatMembersOpen}" aria-controls="quickbar-chat-members" data-quickbar-members-toggle>`
+			+ `${esc(sub)} · ${esc(membersLabel($current, members.length))}<i class="fa-solid fa-chevron-down quickbar-chat-members-chevron" aria-hidden="true"></i></button>`
+		: `<span class="quickbar-chat-current-sub">${esc(sub)}</span>`;
 	setHtml($current, `
 		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.back)}" data-quickbar-chat-back><i class="fa-solid fa-arrow-left"></i></button>
 		${chatAvatar(chat, true)}
 		<span class="quickbar-chat-current-text">
 			<span class="quickbar-chat-current-name">${esc(chat.name)}${chat.private ? lockIcon : ''}</span>
-			<span class="quickbar-chat-current-sub">${esc(sub)}</span>
+			${subHtml}
 		</span>`);
+}
+
+function chatMembersShown(chat) {
+	return chat && (chat.kind === 'channel' || chat.kind === 'group') ? state.chatMembers : [];
+}
+
+function membersLabel($current, count) {
+	const form = count === 1 ? 'membersOne' : (count >= 2 && count <= 4 ? 'membersFew' : 'membersMany');
+	return ($current.dataset[form] ?? '').replace('%count%', count);
+}
+
+function renderChatMembers() {
+	const $members = document.querySelector('[data-quickbar-chat-members]');
+	if (!$members) {
+		return;
+	}
+	const members = state.chatView === 'thread' && !state.chatReplies && !state.chatSelecting && state.chatMembersOpen
+		? chatMembersShown(state.chats.find((c) => c.id === state.activeChat))
+		: [];
+	$members.hidden = !members.length;
+	if (!members.length) {
+		return;
+	}
+	setHtml($members, members.map((member) => `
+		<div class="quickbar-chat-member">
+			${chatAvatar({ name: member.name, initials: member.initials }, true)}
+			<span class="quickbar-chat-member-name">${esc(member.name)}</span>
+			${member.me ? `<span class="quickbar-chat-member-me">${esc($members.dataset.you ?? '')}</span>` : ''}
+		</div>`).join(''));
 }
 
 function loadChats() {
@@ -1362,6 +1404,7 @@ function loadMessages(id) {
 			state.messages = (Array.isArray(payload) ? payload : payload?.messages) || [];
 			state.chatTopic = Array.isArray(payload) ? null : (payload?.topic ?? null);
 			state.chatPinned = Array.isArray(payload) ? [] : (payload?.pinned ?? []);
+			state.chatMembers = Array.isArray(payload) ? [] : (payload?.members ?? []);
 			state.chatThreadNews = Array.isArray(payload) ? [] : (payload?.threadsWithNews ?? []);
 			render();
 		}
@@ -2941,6 +2984,10 @@ function chatClick(target) {
 		['[data-quickbar-remind-set]', () => remindCustom()],
 		['[data-quickbar-pinned-toggle]', () => {
 			state.chatPinnedOpen = !state.chatPinnedOpen;
+			render();
+		}],
+		['[data-quickbar-members-toggle]', () => {
+			state.chatMembersOpen = !state.chatMembersOpen;
 			render();
 		}],
 		['[data-quickbar-pinned-item]', (el) => highlightMessage(el.dataset.quickbarPinnedItem)],

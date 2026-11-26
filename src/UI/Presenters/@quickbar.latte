@@ -36,7 +36,8 @@
 					data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"
 					data-channel="{_fcadmin.layout.quickbar.chat.channel}" data-private-channel="{_fcadmin.layout.quickbar.chat.privateChannel}"
 					data-thread="{_fcadmin.layout.quickbar.chat.thread}" data-thread-back="{_fcadmin.layout.quickbar.chat.threadBack}"
-					data-follow="{_fcadmin.layout.quickbar.chat.follow}" data-unfollow="{_fcadmin.layout.quickbar.chat.unfollow}"></div>
+					data-follow="{_fcadmin.layout.quickbar.chat.follow}" data-unfollow="{_fcadmin.layout.quickbar.chat.unfollow}"
+					data-members-one="{_fcadmin.layout.quickbar.chat.membersOne}" data-members-few="{_fcadmin.layout.quickbar.chat.membersFew}" data-members-many="{_fcadmin.layout.quickbar.chat.membersMany}"></div>
 			</div>
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
@@ -128,6 +129,8 @@
 						data-threads="{_fcadmin.layout.quickbar.chat.threads}" data-threads-empty="{_fcadmin.layout.quickbar.chat.threadsEmpty}"
 						data-reminders="{_fcadmin.layout.quickbar.chat.reminders}" data-reminders-empty="{_fcadmin.layout.quickbar.chat.remindersEmpty}" data-reminder-done="{_fcadmin.layout.quickbar.chat.reminderDone}" hidden></div>
 				</div>
+				<div class="quickbar-chat-members" id="quickbar-chat-members" data-quickbar-chat-members aria-label="{_fcadmin.layout.quickbar.chat.membersList}"
+					data-you="{_fcadmin.layout.quickbar.chat.memberYou}" hidden></div>
 				<div class="quickbar-chat-pinned" data-quickbar-chat-pinned data-label="{_fcadmin.layout.quickbar.chat.pinned}" hidden></div>
 				<div class="quickbar-chat-news" data-quickbar-chat-news data-one="{_fcadmin.layout.quickbar.chat.threadNewsOne}" data-few="{_fcadmin.layout.quickbar.chat.threadNewsFew}"
 					data-many="{_fcadmin.layout.quickbar.chat.threadNewsMany}" data-open="{_fcadmin.layout.quickbar.chat.threadNewsOpen}" hidden></div>

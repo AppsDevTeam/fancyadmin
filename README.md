@@ -3394,6 +3394,9 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
   (`id` kanálu = `id` konverzace v `chats.list()`). Šipka zpět a Esc vrací do seznamu.
 - `chats.messages()` může vrátit i `pinned: [{ id, text, author?, time? }]` - sbalený pruh *Připnuté (n)* nad
   zprávami, rozbalená položka zprávu posune do středu a krátce zvýrazní.
+- `chats.messages()` může vrátit i `members: [{ id, name, initials?, me? }]` - u konverzace s `kind` `channel`
+  nebo `group` je v hlavičce pod názvem počet členů (*Kanál · 6 členů*), klik pod hlavičkou rozbalí jejich
+  seznam s avatary (`me` = za jménem *(vy)*). U přímé konverzace dvou lidí se nic neukazuje.
 - Zpráva může mít `author` (jméno nad bublinou cizí zprávy), `system: true` (šedý text uprostřed, bez akcí),
   `attachments: [{ name, url, size?, image? }]` (obrázek jako náhled, jinak soubor s velikostí - `size`
   v bajtech, nebo hotový text; obojí otevírá nová záložka) a `pinned` (špendlík u času).
