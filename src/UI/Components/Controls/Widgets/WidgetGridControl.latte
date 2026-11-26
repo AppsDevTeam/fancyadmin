@@ -16,7 +16,8 @@
 </div>
 <div class="fa-widgets fa-widgets-cols-{$widgetGrid->getColumns()}">
 	{foreach $widgetGrid->getWidgets() as $widget}
-		<section class="fa-widget fa-widget-{$widget->getType()} fa-widgets-span-{$widgetGrid->getSpan($widget)}" data-widget="{$widget->getName()}">
+		{* Panel (setPanel) je skrytý, dokud ho neotevře odkaz jiné karty (setToggle, widgets.js) *}
+		<section class="fa-widget fa-widget-{$widget->getType()} fa-widgets-span-{$widgetGrid->getSpan($widget)}" data-widget="{$widget->getName()}" n:attr="data-widget-panel: $widget->getPanelGroup(), hidden: $widget->getPanelGroup() !== null">
 			{control $widget->getName()}
 		</section>
 	{/foreach}

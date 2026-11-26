@@ -25,6 +25,8 @@ widgets:
   detail: Zobraziť podrobnosti
   empty: Za zvolené obdobie nie sú žiadne údaje.
   breadcrumbs: Navigačná cesta
+  panel:
+    close: Zavrieť zoznam
   period:
     label: Obdobie
     submit: Zobraziť

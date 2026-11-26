@@ -24,6 +24,9 @@ final class TableWidget extends Widget
 
 	private bool $compact = false;
 
+	/** @var (\Closure(array<string, mixed>): list<array<string, mixed>>)|null */
+	private ?\Closure $rowChildren = null;
+
 	/**
 	 * @param array<string, string|WidgetTableColumn> $columns klíč v řádku => popisek nebo sloupec
 	 * @param callable(?WidgetPeriod): iterable<array<string, mixed>> $rows
@@ -48,16 +51,16 @@ final class TableWidget extends Widget
 		return $this->columns;
 	}
 
-	/** @return list<array{label: ?string, span: int}> skupiny sloupců zleva; prázdné, když žádný sloupec skupinu nemá */
+	/** @return list<array{label: ?string, span: int, tone: string}> skupiny sloupců zleva; prázdné, když žádný sloupec skupinu nemá */
 	public function getColumnGroups(): array
 	{
 		$groups = [];
 		foreach ($this->columns as $column) {
 			$last = array_key_last($groups);
-			if ($last !== null && $column->group !== null && $groups[$last]['label'] === $column->group) {
+			if ($last !== null && $groups[$last]['label'] === $column->group) {
 				$groups[$last]['span']++;
 			} else {
-				$groups[] = ['label' => $column->group, 'span' => 1];
+				$groups[] = ['label' => $column->group, 'span' => 1, 'tone' => ($column->groupTone ?? WidgetTone::Primary)->value];
 			}
 		}
 		return array_filter($groups, fn(array $group) => $group['label'] !== null) ? $groups : [];
@@ -119,5 +122,26 @@ final class TableWidget extends Widget
 			}
 		}
 		return $this->resolvedRows;
+	}
+
+	/**
+	 * Vnořené řádky (seskupená tabulka - pobočka a pod ní její makléři): řádek s dětmi má šipku ▸ a po kliknutí
+	 * je ukáže pod sebou odsazené. Stejné sloupce jako řádek.
+	 *
+	 * @param (\Closure(array<string, mixed>): list<array<string, mixed>>)|null $children
+	 */
+	public function setRowChildren(?\Closure $children): static
+	{
+		$this->rowChildren = $children;
+		return $this;
+	}
+
+	/**
+	 * @param array<string, mixed> $row
+	 * @return list<array<string, mixed>>
+	 */
+	public function getRowChildren(array $row): array
+	{
+		return $this->rowChildren ? array_values(($this->rowChildren)($row)) : [];
 	}
 }

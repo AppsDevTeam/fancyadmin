@@ -40,6 +40,13 @@ abstract class Widget
 
 	private bool $collapsible = false;
 
+	/** @var array{target: string, open: string, close: string}|null */
+	private ?array $toggle = null;
+
+	private ?string $panelGroup = null;
+
+	private ?string $titleStyle = null;
+
 	public function __construct(
 		private readonly string $name,
 		private ?string $title = null,
@@ -253,5 +260,48 @@ abstract class Widget
 	{
 		$this->periodFallback = $fallback;
 		return $this;
+	}
+
+	/**
+	 * Odkaz dole v kartě, který otevře / zavře panel jiného widgetu (setPanel) - „Seznam nabídek ▾“ /
+	 * „Skrýt seznam ▴“. Karta s otevřeným panelem má zvýrazněný okraj.
+	 */
+	public function setToggle(string $target, string $openLabel, string $closeLabel): static
+	{
+		$this->toggle = ['target' => $target, 'open' => $openLabel, 'close' => $closeLabel];
+		return $this;
+	}
+
+	/** @return array{target: string, open: string, close: string}|null */
+	public function getToggle(): ?array
+	{
+		return $this->toggle;
+	}
+
+	/**
+	 * Widget je panel, který otevírá odkaz jiné karty (setToggle) - do té doby skrytý; ve skupině je otevřený
+	 * nejvýš jeden. V hlavičce panelu je „Zavřít seznam“.
+	 */
+	public function setPanel(string $group = 'default'): static
+	{
+		$this->panelGroup = $group;
+		return $this;
+	}
+
+	public function getPanelGroup(): ?string
+	{
+		return $this->panelGroup;
+	}
+
+	/** Styl nadpisu karty: `section` = jako nadpis sekce (modré verzálky), jinak výchozí nadpis widgetu. */
+	public function setTitleStyle(?string $style): static
+	{
+		$this->titleStyle = $style;
+		return $this;
+	}
+
+	public function getTitleStyle(): ?string
+	{
+		return $this->titleStyle;
 	}
 }

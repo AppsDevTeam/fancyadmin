@@ -179,22 +179,35 @@
 .fa-widgets-tone-neutral,
 .fa-widgets-tone-primary {
 	--fa-widgets-tone: var(--primaryColor);
+	--fa-widgets-tone-text: var(--fa-widgets-primary-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-primary-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
+
+// Tmavší text a světlé pozadí tónu (pás skupin tabulky). Projekt je může nastavit přesně proměnnými
+// --fa-widgets-{primary,success,warning,danger,info}-{text,bg}, jinak se odvodí z barvy tónu.
 
 .fa-widgets-tone-success {
 	--fa-widgets-tone: var(--bs-success);
+	--fa-widgets-tone-text: var(--fa-widgets-success-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-success-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-warning {
 	--fa-widgets-tone: var(--bs-warning);
+	--fa-widgets-tone-text: var(--fa-widgets-warning-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-warning-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-danger {
 	--fa-widgets-tone: var(--bs-danger);
+	--fa-widgets-tone-text: var(--fa-widgets-danger-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-danger-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-info {
 	--fa-widgets-tone: var(--bs-info);
+	--fa-widgets-tone-text: var(--fa-widgets-info-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-info-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-neutral .fa-widgets-icon {
@@ -765,23 +778,12 @@
 	}
 }
 
-// Skupiny sloupců (WidgetTableColumn(group:)), řádek Celkem (setTotal) a proklik řádku (setRowLink)
+// Skupiny sloupců (WidgetTableColumn(group:, groupTone:)), řádek Celkem (setTotal), proklik řádku (setRowLink)
+// a vnořené řádky (setRowChildren) - design 4.10
 .fa-widgets-table {
-	// barva hlavičky (projekt může mít hlavičku tabulek tmavou), linka pod skupinou z ní odvozená - jako
-	// vnitřní stín: okraj by se při border-collapse míchal s pozadím tabulky (bílý pruh), ne s hlavičkou
-	.fa-widgets-table-group {
-		text-align: center;
-		border-bottom: 0;
-		box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 30%, transparent);
-	}
-
-	.fa-widgets-table-groups th[rowspan] {
-		vertical-align: bottom;
-	}
-
 	.fa-widgets-table-total td {
-		font-weight: 600;
-		background-color: color-mix(in srgb, var(--primaryColor) 6%, var(--fa-surface));
+		font-weight: 500;
+		background-color: var(--fa-surface-hover, #F4F7FB);
 		border-top: 2px solid var(--fa-border);
 	}
 
@@ -796,6 +798,7 @@
 
 		.stretched-link {
 			color: inherit;
+			font-weight: 500;
 			text-decoration: none;
 		}
 
@@ -803,9 +806,419 @@
 			color: var(--primaryColor);
 		}
 	}
+
+	// šipka › u prokliknutelného řádku
+	.fa-widgets-table-arrow {
+		width: 18px;
+		padding-left: 0;
+		color: var(--primaryColor);
+		font-size: .75rem;
+		text-align: right;
+	}
+
+	// Seskupená tabulka: řádek se šipkou ▸/▾, vnořené řádky odsazené s tečkou
+	.fa-widgets-row-toggle {
+		margin: 0 8px 0 -4px;
+		padding: 0 4px;
+		border: 0;
+		background: none;
+		color: var(--fa-text-muted);
+		font-size: .6875rem;
+		cursor: pointer;
+
+		.fa-solid {
+			transition: transform .15s;
+		}
+
+		&[aria-expanded="true"] .fa-solid {
+			transform: rotate(90deg);
+		}
+	}
+
+	.fa-widgets-row-parent {
+		cursor: pointer;
+
+		> td:first-child {
+			font-weight: 500;
+		}
+
+		&:has(.fa-widgets-row-toggle[aria-expanded="true"]) > td {
+			background-color: var(--fa-surface-hover, #F4F7FB);
+		}
+	}
+
+	.fa-widgets-row-child > td {
+		background-color: color-mix(in srgb, var(--fa-surface-hover, #F4F7FB) 40%, var(--fa-surface, #fff));
+	}
+
+	.fa-widgets-row-child > td:first-child {
+		padding-left: 48px;
+	}
+
+	.fa-widgets-row-dot {
+		display: inline-block;
+		width: 7px;
+		height: 7px;
+		margin-right: 8px;
+		border-radius: 50%;
+		background-color: var(--fa-text-muted);
+		vertical-align: middle;
+	}
 }
 
-// Hlavička podstránky (setPage + renderPage): drobečky a období v jednom řádku, pod nimi nadpis a podtitul
+.table-responsive table.fa-widgets-table-grouped {
+	// :nth-child(n) kvůli specificitě - pravidlo gridu je thead > tr:nth-child(2) a v balíčku je až za widgety
+	thead > tr:nth-child(n) {
+		position: static;
+	}
+
+	thead > tr > th:first-child,
+	tbody > tr > td:first-child {
+		width: auto;
+	}
+
+	// volné místo si rozdělí sloupce (jako v návrhu), sloupec šipky je úzký
+	th.fa-widgets-table-arrow,
+	td.fa-widgets-table-arrow {
+		width: 1%;
+	}
+
+	// Pás skupin nad záhlavím: popisek vlevo v tmavší barvě skupiny na jejím světlém pozadí, skupiny na sebe
+	// navazují bez čar; sloupce před první skupinou do ní přecházejí, poslední skupina se ke konci rozplývá
+	.fa-widgets-table-groups > th:nth-child(n) {
+		padding: 7px 4px;
+		border: 0;
+		box-shadow: none;
+		background: transparent;
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: .07em;
+		text-align: left;
+		text-transform: uppercase;
+		white-space: nowrap;
+	}
+
+	.fa-widgets-table-groups > th.fa-widgets-table-group {
+		color: var(--fa-widgets-tone-text);
+		background: var(--fa-widgets-tone-bg);
+	}
+
+	.fa-widgets-table-groups > th.fa-widgets-table-group-last {
+		background: linear-gradient(to right, var(--fa-widgets-tone-bg) calc(100% - 90px), transparent);
+	}
+
+	.fa-widgets-table-groups > th.fa-widgets-table-band-lead {
+		background: linear-gradient(to right, transparent, var(--fa-widgets-tone-bg));
+	}
+
+	.fa-widgets-table-groups > th.fa-widgets-table-band-gap {
+		background: var(--fa-widgets-tone-bg);
+	}
+}
+
+// Zalamovací první sloupec (název nabídky) je pružný - pravidlo gridu stahuje první sloupec na 1 % šířky
+.table-responsive table.fa-widgets-table:has(td.fa-widgets-wrap:first-child) {
+	> thead > tr > th:first-child,
+	> tbody > tr > td:first-child {
+		width: auto;
+		min-width: 220px;
+	}
+}
+
+// Užší okraje buněk (TableWidget::setCompact) - tabulka v půlce šířky mřížky
+.table-responsive table.fa-widgets-table-compact {
+	th,
+	td {
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+}
+
+// Nadpis sekce nad kartami (addSection) - design 4.9
+.fa-widget-section {
+	margin: 6px 0 -8px;
+}
+
+.fa-widgets-section-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+
+	// odkaz vpravo na stejném řádku - dlouhý dovětek se raději zkrátí
+	@include media-breakpoint-up(md) {
+		flex-wrap: nowrap;
+
+		.fa-widgets-section-subtitle {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.fa-widgets-section-title,
+		.fa-widgets-section-link,
+		.fa-widgets-badge {
+			flex-shrink: 0;
+		}
+	}
+}
+
+.fa-widgets-section-title {
+	margin: 0;
+	font-size: .78125rem;
+	font-weight: 500;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--primaryColor);
+}
+
+.fa-widgets-section-subtitle {
+	font-size: .75rem;
+	letter-spacing: .02em;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-section-link {
+	margin-left: auto;
+	font-size: .8125rem;
+	color: var(--primaryColor);
+	text-decoration: none;
+
+	.fa-solid {
+		font-size: .625rem;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.fa-widgets-section-text {
+	margin: 6px 0 0;
+	font-size: .78125rem;
+	color: var(--fa-text-muted);
+
+	strong {
+		font-weight: 500;
+		color: var(--fa-text);
+	}
+}
+
+.fa-widget-title.fa-widget-title-section {
+	font-size: .78125rem;
+	font-weight: 500;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--primaryColor);
+}
+
+// Barevná linka nahoře na KPI kartě (KpiWidget::setAccent)
+.fa-widgets-card.fa-widgets-accent {
+	border-top: 3px solid var(--fa-widgets-tone);
+}
+
+// Řada údajů jako samostatné dlaždice (FiguresWidget::setCards) - widget sám kartu nemá
+.fa-widgets-figures.fa-widgets-figures-cards {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 12px;
+
+	> .fa-widgets-figure {
+		padding: 16px 18px 14px;
+		border: 1px solid var(--fa-border);
+		background-color: var(--fa-surface);
+	}
+
+	> .fa-widgets-figure + .fa-widgets-figure {
+		border-left: 1px solid var(--fa-border);
+	}
+
+	.fa-widgets-figure-label {
+		font-size: .6875rem;
+		font-weight: 500;
+		letter-spacing: .09em;
+		text-transform: uppercase;
+	}
+
+	.fa-widgets-figure-value {
+		font-size: 1.25rem;
+		white-space: normal;
+	}
+
+	.fa-widgets-figure-note {
+		display: block;
+		margin: 6px 0 0;
+	}
+}
+
+// Dlaždice detailu (KpiWidget::setDetail) - design 4.6
+.fa-widgets-kpi-detail .fa-widgets-kpi-value {
+	font-size: 1.5625rem;
+}
+
+// Pruh poměru s legendou (KpiWidget::setSplit) - design 4.7
+.fa-widgets-split {
+	margin-top: auto;
+	padding-top: 6px;
+}
+
+.fa-widgets-split-bar {
+	display: flex;
+	gap: 2px;
+	height: 6px;
+}
+
+.fa-widgets-split-segment {
+	min-width: 0;
+	background-color: var(--fa-widgets-tone);
+
+	&.fa-widgets-split-segment-light {
+		background-color: color-mix(in srgb, var(--fa-widgets-tone) 40%, var(--fa-surface, #fff));
+	}
+}
+
+.fa-widgets-split-legend {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 4px 12px;
+	margin-top: 8px;
+	font-size: .75rem;
+	color: var(--fa-text-muted);
+
+	strong {
+		font-weight: 500;
+		color: var(--fa-text);
+	}
+}
+
+.fa-widgets-split-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	margin-right: 6px;
+	border-radius: 50%;
+	background-color: var(--fa-widgets-tone);
+	vertical-align: baseline;
+
+	&.fa-widgets-split-segment-light {
+		background-color: color-mix(in srgb, var(--fa-widgets-tone) 40%, var(--fa-surface, #fff));
+	}
+}
+
+// řádková legenda (části s poznámkou / doplňkem): popisek a hodnota | poznámka | doplněk vpravo
+.fa-widgets-split-rows {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 0;
+
+	.fa-widgets-split-item {
+		display: contents;
+	}
+
+	.fa-widgets-split-label,
+	.fa-widgets-split-note,
+	.fa-widgets-split-extra {
+		padding: 4px 0;
+		border-bottom: 1px solid var(--fa-line, var(--fa-border));
+	}
+
+	.fa-widgets-split-note {
+		padding-left: 12px;
+		text-align: right;
+	}
+
+	.fa-widgets-split-extra {
+		padding-left: 12px;
+		text-align: right;
+		font-weight: 500;
+		color: var(--fa-widgets-tone);
+	}
+}
+
+// Odkaz, který otevře panel jiného widgetu (setToggle) - design 4.6 varianta s rozbalovacím seznamem
+.fa-widgets-toggle-foot {
+	margin: 0 20px;
+	padding: 9px 0 12px;
+	border-top: 1px solid var(--fa-line, var(--fa-border));
+}
+
+.fa-widgets-toggle {
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: .78125rem;
+	color: var(--primaryColor);
+	cursor: pointer;
+
+	.fa-solid {
+		font-size: .625rem;
+		transition: transform .15s;
+	}
+
+	&[aria-expanded="true"] .fa-solid {
+		transform: rotate(180deg);
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.fa-widgets-toggler.fa-widgets-toggler-open {
+	border-color: var(--primaryColor);
+}
+
+// Tabulka pod nadpisem sekce (bez vlastního nadpisu) a tabulka v panelu sahají k okrajům karty
+.fa-widget-table > .fa-widgets-card:not(:has(> .fa-widget-header)) > .fa-widgets-card-body,
+.fa-widget-table > .fa-widgets-panel > .fa-widgets-card-body {
+	padding: 0;
+
+	> .table-responsive {
+		border: 0;
+		box-shadow: none;
+	}
+
+	// prázdná tabulka: text odsazený jako nadpis karty, odděleny linkou jako řádky tabulky
+	> .fa-widgets-empty {
+		padding: 14px 20px 16px;
+		border-top: 1px solid var(--fa-border);
+	}
+}
+
+// Panel otevíraný odkazem jiné karty (setPanel) - design 4.11
+.fa-widgets-panel {
+	border-color: var(--primaryColor);
+
+	> .fa-widget-header {
+		padding: 14px 20px 10px;
+	}
+
+	> .fa-widget-header .fa-widget-title {
+		font-size: .78125rem;
+		font-weight: 500;
+		letter-spacing: 1px;
+		text-transform: uppercase;
+		color: var(--primaryColor);
+	}
+}
+
+.fa-widgets-panel-close {
+	order: 2;
+	margin-left: auto;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: .78125rem;
+	color: var(--primaryColor);
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
 // Lišta podstránky pod hlavičkou (přepínač režimu, záložky) - stejná šířka jako mřížka
 .fa-widgets-page-toolbar {
 	max-width: var(--fa-widgets-max-width, none);
@@ -873,48 +1286,6 @@
 .fa-widgets-page-subtitle {
 	font-size: .875rem;
 	color: var(--fa-text-muted);
-}
-
-// Tabulka se skupinami sloupců: hlavička má dva skutečné řádky - pravidla gridu (.table-responsive table)
-// přilepují druhý řádek s pevným odsazením (u gridu je to jen oddělovací linka) a první sloupec stahují
-// na 1 % šířky. Tady hlavička nelepí, číselné sloupce jsou široké podle obsahu a zbytek dostane název.
-.table-responsive table.fa-widgets-table-grouped {
-	// :nth-child(n) kvůli specificitě - pravidlo gridu je thead > tr:nth-child(2) a v balíčku je až za widgety
-	thead > tr:nth-child(n) {
-		position: static;
-	}
-
-	thead > tr > th:first-child,
-	tbody > tr > td:first-child {
-		width: auto;
-	}
-
-	th.text-end,
-	td.text-end {
-		width: 1%;
-	}
-
-	.fa-widgets-table-group + .fa-widgets-table-group {
-		box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 30%, transparent), inset 1px 0 0 color-mix(in srgb, currentColor 30%, transparent);
-	}
-
-	// spodní okraj hlavičky jen u druhého řádku - sloupec přes oba řádky (rowspan) končí s ním
-	.fa-widgets-table-groups > th {
-		border-bottom-width: 0;
-	}
-
-	.fa-widgets-table-groups > th[rowspan] {
-		border-bottom-width: 1px;
-	}
-}
-
-// Užší okraje buněk (TableWidget::setCompact) - tabulka v půlce šířky mřížky
-.table-responsive table.fa-widgets-table-compact {
-	th,
-	td {
-		padding-left: 12px;
-		padding-right: 12px;
-	}
 }
 
 // Výběr období v hlavičce stránky (renderPeriod): tónované tlačítko v primární barvě

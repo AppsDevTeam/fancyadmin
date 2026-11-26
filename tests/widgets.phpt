@@ -11,6 +11,7 @@ use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControlFactory;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetPeriod;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetSplit;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetTableColumn;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetTile;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetTone;
@@ -672,6 +673,25 @@ test('rada udaju: hodnota v barve tonu, jednotka, doplnek, bublina popisku a sti
 	Assert::contains('[fcadmin.widgets.empty]', $html);
 });
 
+test('volitelne: barevna linka KPI karty (setAccent) a rada udaju jako samostatne dlazdice (setCards); bez voleb beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpi('realized', 'Tržba', fn() => 976)->setTone(WidgetTone::Success)->setAccent();
+	$widgetGrid->addKpi('plainKpi', 'Bez linky', fn() => 1)->setTone(WidgetTone::Success);
+	$widgetGrid->addFigures('cards', 'Realizace', fn() => [new WidgetFigure('Počet realizací', 10, unit: 'ks', note: 'uzavřené smlouvy')])->setCards();
+	$widgetGrid->addFigures('plainFigures', 'V kartě', fn() => [new WidgetFigure('Nové nábory', 124)]);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 900);
+
+	Assert::contains('<div class="card fa-widgets-card fa-widgets-accent fa-widgets-tone-success">', $part('realized'));
+	Assert::notContains('fa-widgets-accent', $part('plainKpi'));
+	// dlaždice: každý údaj je karta, widget sám kartu ani nadpis nemá
+	Assert::contains('<div class="fa-widgets-figures fa-widgets-figures-cards"><div class="fa-widgets-figure card fa-widgets-card">', $part('cards'));
+	Assert::notContains('Realizace', $part('cards'));
+	Assert::contains('<div class="card fa-widgets-card"><div class="fa-widget-header">', $part('plainFigures'));
+	Assert::contains('<div class="fa-widgets-figures"><div class="fa-widgets-figure">', $part('plainFigures'));
+});
+
 test('upozorneni: zavaznost, poznamka, hodnota, proklik s vychozim popiskem a odkaz v paticce; prazdny seznam', function () {
 	$widgetGrid = widgetGrid();
 	$widgetGrid->addAlerts('alerts', 'Upozornění k řešení', fn() => [
@@ -819,9 +839,9 @@ test('tabulka: skupiny sloupcu, radek Celkem a proklik radku jsou volitelne', fu
 	$widgetGrid = widgetGrid();
 	$widgetGrid->addTable('breakdown', 'Rozpad', [
 		'name' => 'Pobočka',
-		'sales' => new WidgetTableColumn('Tržba', numeric: true, group: 'Realizované'),
-		'count' => new WidgetTableColumn('Ks', numeric: true, group: 'Realizované'),
-		'reserved' => new WidgetTableColumn('Provize', numeric: true, group: 'V rezervacích'),
+		'sales' => new WidgetTableColumn('Tržba', numeric: true, group: 'Realizované', groupTone: WidgetTone::Success),
+		'count' => new WidgetTableColumn('Ks', numeric: true, group: 'Realizované', groupTone: WidgetTone::Success),
+		'reserved' => new WidgetTableColumn('Provize', numeric: true, group: 'V rezervacích', groupTone: WidgetTone::Warning),
 	], fn() => [
 		['id' => 7, 'name' => 'Plzeň', 'sales' => 100, 'count' => 2, 'reserved' => 5],
 		['id' => null, 'name' => 'bez pobočky', 'sales' => 10, 'count' => 1, 'reserved' => 0],
@@ -832,10 +852,13 @@ test('tabulka: skupiny sloupcu, radek Celkem a proklik radku jsou volitelne', fu
 
 	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
 
-	// sloupec bez skupiny přes oba řádky hlavičky, sousední sloupce stejné skupiny pod jedním nadpisem
-	Assert::contains('<tr class="fa-widgets-table-groups"><th rowspan="2" scope="col">Pobočka</th><th colspan="2" class="fa-widgets-table-group" scope="colgroup">Realizované</th><th colspan="1" class="fa-widgets-table-group" scope="colgroup">V rezervacích</th></tr>', $html);
-	Assert::contains('<tr><th class="text-end" scope="col">Tržba</th><th class="text-end" scope="col">Ks</th><th class="text-end" scope="col">Provize</th></tr>', $html);
+	// pás skupin nad záhlavím (sousední sloupce stejné skupiny pod jedním nadpisem, sloupce před první skupinou
+	// pod jedním přechodem, poslední skupina sahá přes sloupec šipky),
+	// záhlaví je jeden plný řádek; prokliknutelné řádky mají vpravo šipku
+	Assert::contains('<tr class="fa-widgets-table-groups"><th colspan="1" class="fa-widgets-table-band fa-widgets-table-band-lead fa-widgets-tone-success" aria-hidden="true"></th><th colspan="2" class="fa-widgets-table-group fa-widgets-tone-success" scope="colgroup">Realizované</th><th colspan="2" class="fa-widgets-table-group fa-widgets-table-group-last fa-widgets-tone-warning" scope="colgroup">V rezervacích</th></tr>', $html);
+	Assert::contains('<tr><th scope="col">Pobočka</th><th class="text-end" scope="col">Tržba</th><th class="text-end" scope="col">Ks</th><th class="text-end" scope="col">Provize</th><th class="fa-widgets-table-arrow" aria-hidden="true"></th></tr>', $html);
 	Assert::contains('<tr class="fa-widgets-row-linked"><td><a href="/obrat?branch=7" class="stretched-link">Plzeň</a></td>', $html);
+	Assert::contains('<td class="fa-widgets-table-arrow"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></td>', $html);
 	Assert::contains('<tr><td>bez pobočky</td>', $html);
 	Assert::contains('<tfoot><tr class="fa-widgets-table-total"><td>Celkem</td><td class="text-end text-nowrap">110</td>', $html);
 	// tabulka bez voleb má hlavičku na jednom řádku a žádnou patičku
@@ -888,4 +911,39 @@ test('hlavicka podstranky: drobecky, obdobi v radku, nadpis a podtitul s obdobim
 	Assert::contains('<form class="fa-widgets-period fa-widgets-page-period"', $page);
 	Assert::contains('<h1 class="fa-widgets-page-title">Rezervace · pobočka Plzeň</h1><span class="fa-widgets-page-subtitle">období: thisYear</span>', $page);
 	Assert::notContains('data-widget-grid-period', $html);
+});
+
+test('tabulka: vnorene radky (pobocka a jeji makleri jsou skryte pod radkem se sipkou', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addTable('tree', 'Strom', ['name' => 'Pobočka', 'count' => new WidgetTableColumn('Počet', numeric: true)], fn() => [
+		['name' => 'Plzeň', 'count' => 2, 'children' => [['name' => 'Adam', 'count' => 1], ['name' => 'Bára', 'count' => 1]]],
+		['name' => 'Brno', 'count' => 0, 'children' => []],
+	])->setRowChildren(fn(array $row) => $row['children']);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+
+	Assert::contains('<tr class="fa-widgets-row-parent" data-widget-row="0"><td><button type="button" class="fa-widgets-row-toggle" aria-expanded="false" data-widget-row-toggle="0"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>Plzeň</td>', $html);
+	Assert::same(2, substr_count($html, '<tr class="fa-widgets-row-child" data-widget-row-child="0" hidden>'));
+	Assert::contains('<td><span class="fa-widgets-row-dot" aria-hidden="true"></span>Adam</td>', $html);
+	Assert::contains('<tr><td>Brno</td>', $html, 'řádek bez dětí nemá šipku');
+});
+
+test('sekce, dlazdice s pruhem a panel otevirany odkazem jine karty', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addSection('active', 'Aktivní nabídky')->setSubtitle('stav k 26. 11. 2026')->setText(Nette\Utils\Html::el()->setHtml('<strong>Poměr</strong> = zrušené ÷ nové'));
+	$widgetGrid->addKpi('total', 'Aktivní nabídky celkem', fn() => 1342)->setDetail()
+		->setSplit([new WidgetSplit('Prodej', 1046, '1 046'), new WidgetSplit('Pronájem', 296)])
+		->setToggle('list', 'Seznam nabídek', 'Skrýt seznam');
+	$widgetGrid->addTable('list', 'Nabídky starší 90 dní', ['a' => 'A'], fn() => [['a' => 'x']])->setPanel('aging');
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+
+	Assert::contains('<h2 class="fa-widgets-section-title">Aktivní nabídky</h2><span class="fa-widgets-section-subtitle">stav k 26. 11. 2026</span>', $html);
+	Assert::contains('<p class="fa-widgets-section-text"><strong>Poměr</strong> = zrušené ÷ nové</p>', $html);
+	Assert::contains('class="fa-widgets-kpi fa-widgets-kpi-detail"', $html);
+	Assert::contains('style="flex-grow: 779"', $html, 'podíl prodeje 1046 / 1342');
+	Assert::contains('Prodej <strong>1 046</strong> · 78&nbsp;%', $html);
+	Assert::contains('data-widget-toggle="list" aria-expanded="false" data-open-label="Seznam nabídek" data-close-label="Skrýt seznam"', $html);
+	Assert::contains('data-widget="list" data-widget-panel="aging" hidden>', $html);
+	Assert::contains('<button type="button" class="fa-widgets-panel-close" data-widget-toggle="list">[fcadmin.widgets.panel.close]</button>', $html);
 });
