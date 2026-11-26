@@ -227,16 +227,118 @@
 	background-color: var(--primaryColor);
 	color: #fff;
 
+	// Výběr období v pásu: bílý průhledný bez rámečku, bílý text, plný trojúhelník; otevřený bílý s textem
+	// v primární barvě
 	.fa-widgets-header-period .form-select {
-		background-color: rgba(255, 255, 255, .14);
-		border-color: rgba(255, 255, 255, .35);
+		width: auto;
+		padding: 6px 34px 6px 13px;
+		border: 0;
+		border-radius: 0;
+		background-color: rgba(255, 255, 255, .16);
+		background-size: 11px 6px;
+		background-position: right 13px center;
 		color: #fff;
-		--bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+		font-size: .78125rem;
+		font-weight: 500;
+		text-shadow: none;
+		box-shadow: none;
+		cursor: pointer;
+		--bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 6'%3e%3cpath fill='%23fff' fill-opacity='.7' d='M0 0h11L5.5 6z'/%3e%3c/svg%3e");
+
+		&:hover {
+			background-color: rgba(255, 255, 255, .28);
+		}
+
+		&:focus,
+		&.focus,
+		&.dropdown-active {
+			background-color: #fff;
+			color: var(--primaryColor);
+			--bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 6'%3e%3cpath fill='%23004B9C' fill-opacity='.7' d='M0 0h11L5.5 6z'/%3e%3c/svg%3e");
+		}
 
 		option {
 			color: var(--fa-text);
 			background-color: var(--fa-surface);
 		}
+	}
+}
+
+// Tom Select (portál ho dává na všechny selecty) přenese třídy selectu na obal .ts-wrapper; velikost, okraj
+// a šipku řídí jeho proměnné a ::after se specificitou :root body (_tomSelect.scss), proto stejný prefix
+:root body .fa-widgets-header-period .ts-wrapper {
+	--control-height: 29px;
+	--control-padding-x: 13px;
+	--ts-pr-caret: 19px;
+	border: 0;
+	border-radius: 0;
+	color: #fff;
+
+	&:hover:not(.focus, .disabled) {
+		border: 0;
+	}
+
+	&.focus,
+	&.dropdown-active {
+		border: 0;
+		background-color: #fff;
+		color: var(--primaryColor);
+	}
+
+	.ts-control,
+	.ts-control > .item,
+	.ts-control > input {
+		color: inherit;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	&.single::after {
+		width: 11px;
+		height: 6px;
+		margin-top: -3px;
+		color: currentColor;
+		opacity: .7;
+		-webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 6'%3e%3cpath d='M0 0h11L5.5 6z'/%3e%3c/svg%3e") no-repeat center / 11px 6px;
+		mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 6'%3e%3cpath d='M0 0h11L5.5 6z'/%3e%3c/svg%3e") no-repeat center / 11px 6px;
+	}
+
+	// Nabídka zarovnaná vpravo pod tlačítkem, aspoň 200 px - „Posledních 12 měsíců“ se nezalomí
+	.ts-dropdown {
+		left: auto;
+		right: 0;
+		min-width: 200px;
+		border-radius: 0;
+	}
+}
+
+// Mřížka je kontext vrstvení: obrázek hlavičky (vrstva pod pásem) je nad pozadím stránky a pod widgety
+.fa-widgets-board {
+	position: relative;
+	isolation: isolate;
+}
+
+// Pás s obrázkem (setHeaderImage): zleva primární barva, vpravo obrázek; vrstva sahá 155 px pod pás a maska
+// ji za první řadou widgetů rozpustí do pozadí stránky - widgety horní řady do pásu „zasahují“
+.fa-widgets-header-image {
+	position: relative;
+	min-height: 88px;
+	background-color: transparent;
+	text-shadow: 0 1px 8px rgba(0, 20, 50, .45);
+
+	&::before {
+		content: '';
+		position: absolute;
+		z-index: -1;
+		inset: 0 0 auto;
+		height: calc(100% + 155px);
+		border-radius: inherit;
+		background:
+			linear-gradient(90deg, var(--primaryColor) 0%, var(--primaryColor) 46%, color-mix(in srgb, var(--primaryColor) 75%, transparent) 60%, color-mix(in srgb, var(--primaryColor) 25%, transparent) 78%, transparent 100%),
+			var(--fa-widgets-header-image) right -20px / max(86%, 640px) auto no-repeat,
+			var(--primaryColor);
+		mask-image: linear-gradient(#000 0, #000 calc(100% - 135px), rgba(0, 0, 0, .85) calc(100% - 110px), rgba(0, 0, 0, .6) calc(100% - 85px), rgba(0, 0, 0, .35) calc(100% - 60px), rgba(0, 0, 0, .12) calc(100% - 32px), transparent calc(100% - 10px));
+		pointer-events: none;
 	}
 }
 
@@ -538,10 +640,19 @@
 }
 
 // Widget bez dat
+// Karta bez dat natažená na výšku souseda v řadě (Hodnocení poboček vedle Upozornění) nemá hlášku
+// nahoře a pod ní prázdnou plochu - hláška je uprostřed jako prázdný stav
+.fa-widgets-card-body:has(> .fa-widgets-unavailable) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .fa-widgets-unavailable {
 	display: flex;
 	align-items: flex-start;
 	gap: 10px;
+	max-width: 640px;
 	color: var(--fa-text-muted);
 	font-size: .875rem;
 

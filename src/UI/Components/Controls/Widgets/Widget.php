@@ -31,7 +31,8 @@ abstract class Widget
 	/** @var list<WidgetBadge>|(\Closure(?WidgetPeriod): list<WidgetBadge>) */
 	private array|\Closure $badges = [];
 
-	private ?string $link = null;
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $link = null;
 
 	private ?string $linkLabel = null;
 
@@ -111,9 +112,12 @@ abstract class Widget
 
 	/**
 	 * Proklik na podrobnosti. Bez popisku je odkazem celý widget (šipka vpravo v hlavičce),
-	 * s popiskem je to odkaz v patičce widgetu („Všechna upozornění ›“).
+	 * s popiskem je to odkaz v patičce widgetu („Všechna upozornění ›“). `Closure` dostane období widgetu,
+	 * proklik tak může zvolené období předat dál (stránka podrobností otevřená na stejném období).
+	 *
+	 * @param string|(\Closure(?WidgetPeriod): ?string)|null $link
 	 */
-	public function setLink(?string $link, ?string $label = null): static
+	public function setLink(string|\Closure|null $link, ?string $label = null): static
 	{
 		$this->link = $link;
 		$this->linkLabel = $label;
@@ -122,7 +126,7 @@ abstract class Widget
 
 	public function getLink(): ?string
 	{
-		return $this->link;
+		return $this->link instanceof \Closure ? ($this->link)($this->getPeriod()) : $this->link;
 	}
 
 	public function getLinkLabel(): ?string

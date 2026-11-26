@@ -36,6 +36,8 @@ class WidgetGridControl extends Control
 	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
 	private string|\Closure|null $headerText = null;
 
+	private ?string $headerImage = null;
+
 	public function setColumns(int $columns): static
 	{
 		if ($columns < 1 || $columns > self::MAX_COLUMNS) {
@@ -126,6 +128,21 @@ class WidgetGridControl extends Control
 	public function getHeaderText(): ?string
 	{
 		return $this->headerText instanceof \Closure ? ($this->headerText)($this->getPeriod()) : $this->headerText;
+	}
+
+	/**
+	 * Obrázek v pásu hlavičky (fotka, panorama): vpravo, zleva ho překryje primární barva a dolů pás
+	 * měkce přejde do pozadí stránky za první řadou widgetů.
+	 */
+	public function setHeaderImage(?string $url): static
+	{
+		$this->headerImage = $url;
+		return $this;
+	}
+
+	public function getHeaderImage(): ?string
+	{
+		return $this->headerImage;
 	}
 
 	public function hasHeader(): bool

@@ -135,15 +135,19 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
 - `setSubtitle()` - šedý dovětek za nadpisem (období, „stav k …“), text nebo `Closure` s obdobím.
 - `setBadges()` - štítky `WidgetBadge($text, WidgetTone, ?$title)` v hlavičce (u `kpi` pod hodnotou), pole nebo `Closure`.
 - `setLink($url, ?$label)` - bez popisku je odkazem celá karta (šipka vpravo v hlavičce), s popiskem odkaz
-  v patičce („Všechna upozornění ›“).
+  v patičce („Všechna upozornění ›“). Místo adresy jde předat `Closure` s obdobím widgetu - proklik pak
+  otevře podrobnosti na zvoleném období (`fn(?WidgetPeriod $period) => $this->link('Stats:', [...])`).
 - `setUnavailable($reason)` - widget, pro který zatím nejsou data: místo obsahu „Data zatím nejsou k dispozici“
-  a důvod, data widgetu se nevolají. Rozložení drží místo i pro ukazatele, které teprve přibudou.
+  a důvod, data widgetu se nevolají. Rozložení drží místo i pro ukazatele, které teprve přibudou; karta
+  natažená na výšku souseda v řadě má hlášku uprostřed.
 - `setCollapsible()` - sbalitelná karta (`<details>`): vidět je nadpis, obsah po kliknutí; sbalitelné widgety
   jedné mřížky jsou otevřené po jednom (atribut `name`) a rozbalený nenatahuje sousedy v řadě.
 
 ## Hlavička a společné období mřížky
 
-`setHeader($title, $text)` vykreslí nad widgety pás v primární barvě (pozdrav, datum). `setPeriods($default,
+`setHeader($title, $text)` vykreslí nad widgety pás v primární barvě (pozdrav, datum). `setHeaderImage($url)`
+do pásu dá obrázek (vpravo, zleva překrytý primární barvou), který dolů měkce přejde do pozadí stránky za
+první řadou widgetů. `setPeriods($default,
 $options)` na mřížce přidá do pásu výběr období, které dostanou všechny widgety **bez vlastního** výběru
 (`Widget::setPeriods()` má přednost). Stav je v URL (`dashboard-period`), výchozí do odkazů nejde. Změna
 selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se tím skoro všechny widgety.

@@ -732,11 +732,13 @@ test('obdobi mrizky: widgety bez vlastniho vyberu ho dostanou, vlastni vyber ma 
 	$presenter = pagePresenter('dashboard-period=thisYear&dashboard-own-period=today&x=1');
 	$widgetGrid = new WidgetGridControl();
 	$widgetGrid->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR, WidgetPeriod::LAST_12_MONTHS])
-		->setHeader('Dobrý den', fn(?WidgetPeriod $period) => 'období ' . $period?->value);
+		->setHeader('Dobrý den', fn(?WidgetPeriod $period) => 'období ' . $period?->value)
+		->setHeaderImage('/images/header.webp');
 	$widgetGrid->addKpi('shared', 'Společné', function (?WidgetPeriod $period) use (&$received) {
 		$received['shared'] = $period;
 		return 1;
-	})->setSubtitle(fn(?WidgetPeriod $period) => $period?->value);
+	})->setSubtitle(fn(?WidgetPeriod $period) => $period?->value)
+		->setLink(fn(?WidgetPeriod $period) => '/detail?period=' . $period?->value);
 	$widgetGrid->addKpi('own', 'Vlastní', function (?WidgetPeriod $period) use (&$received) {
 		$received['own'] = $period;
 		return 2;
@@ -747,9 +749,13 @@ test('obdobi mrizky: widgety bez vlastniho vyberu ho dostanou, vlastni vyber ma 
 
 	Assert::same(WidgetPeriod::THIS_YEAR, $received['shared']);
 	Assert::same(WidgetPeriod::TODAY, $received['own']);
+	Assert::contains('<div class="fa-widgets-header fa-widgets-header-image"', $html);
+	Assert::contains("--fa-widgets-header-image: url('/images/header.webp')", html_entity_decode($html, ENT_QUOTES | ENT_HTML5));
 	Assert::contains('<h1 class="fa-widgets-header-title">Dobrý den</h1>', $html);
 	Assert::contains('<div class="fa-widgets-header-note">období thisYear</div>', $html);
 	Assert::contains('<span class="fa-widget-subtitle">thisYear</span>', $html);
+	// odkaz jako Closure dostane období widgetu - proklik otevře podrobnosti na stejném období
+	Assert::contains('<a href="/detail?period=thisYear" class="stretched-link fa-widgets-link"', $html);
 	Assert::match('%A%<select name="dashboard-period" class="form-select form-select-sm" aria-label="[fcadmin.widgets.period.label]" data-widget-grid-period>%A%', $html);
 	Assert::contains('<option value="thisYear" selected>[fcadmin.widgets.period.thisYear]</option>', $html);
 	Assert::contains('<option value="last12Months">[fcadmin.widgets.period.last12Months]</option>', $html);

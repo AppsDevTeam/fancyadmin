@@ -2,7 +2,10 @@
 
 {* Hlavička mřížky: nadpis, text a společné období (setHeader(), setPeriods()). Změna období načte stránku
    znovu (widgets.js), bez JS odešle formulář tlačítko v <noscript>. *}
-<div n:if="$widgetGrid->hasHeader()" class="fa-widgets-header">
+{* Obrázek hlavičky je vrstva pod pásem i první řadou widgetů - kontext vrstvení drží .fa-widgets-board *}
+<div class="fa-widgets-board">
+<div n:if="$widgetGrid->hasHeader()" n:class="fa-widgets-header, $widgetGrid->getHeaderImage() !== null ? fa-widgets-header-image"
+	n:attr="style: $widgetGrid->getHeaderImage() !== null ? '--fa-widgets-header-image: url(\'' . $widgetGrid->getHeaderImage() . '\')'">
 	<div class="fa-widgets-header-text">
 		<h1 n:ifcontent class="fa-widgets-header-title">{$widgetGrid->getHeaderTitle()}</h1>
 		<div n:ifcontent class="fa-widgets-header-note">{$widgetGrid->getHeaderText()}</div>
@@ -21,4 +24,5 @@
 			{control $widget->getName()}
 		</section>
 	{/foreach}
+</div>
 </div>
