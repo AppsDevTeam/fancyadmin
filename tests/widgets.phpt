@@ -760,7 +760,8 @@ test('obdobi mrizky: widgety bez vlastniho vyberu ho dostanou, vlastni vyber ma 
 	$widgetGrid = new WidgetGridControl();
 	$widgetGrid->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR, WidgetPeriod::LAST_12_MONTHS])
 		->setHeader('Dobrý den', fn(?WidgetPeriod $period) => 'období ' . $period?->value)
-		->setHeaderImage('/images/header.webp');
+		->setHeaderImage('/images/header.webp')
+		->setHeaderFullWidth();
 	$widgetGrid->addKpi('shared', 'Společné', function (?WidgetPeriod $period) use (&$received) {
 		$received['shared'] = $period;
 		return 1;
@@ -776,7 +777,8 @@ test('obdobi mrizky: widgety bez vlastniho vyberu ho dostanou, vlastni vyber ma 
 
 	Assert::same(WidgetPeriod::THIS_YEAR, $received['shared']);
 	Assert::same(WidgetPeriod::TODAY, $received['own']);
-	Assert::contains('<div class="fa-widgets-header fa-widgets-header-image"', $html);
+	// pás přes celou šířku stránky je volba (setHeaderFullWidth), bez ní jen v šířce mřížky
+	Assert::contains('<div class="fa-widgets-header fa-widgets-header-image fa-widgets-header-full"', $html);
 	Assert::contains("--fa-widgets-header-image: url('/images/header.webp')", html_entity_decode($html, ENT_QUOTES | ENT_HTML5));
 	Assert::contains('<h1 class="fa-widgets-header-title">Dobrý den</h1>', $html);
 	Assert::contains('<div class="fa-widgets-header-note">období thisYear</div>', $html);

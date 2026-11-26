@@ -155,6 +155,23 @@ class WidgetGridControl extends Control
 		return $this->headerImage;
 	}
 
+	private bool $headerFullWidth = false;
+
+	/**
+	 * Pás hlavičky přes celou šířku stránky (k okrajům obsahové části, bez zaoblení), nadpis a období zůstávají
+	 * zarovnané se sloupcem widgetů. Bez volby je pás široký jako mřížka.
+	 */
+	public function setHeaderFullWidth(bool $fullWidth = true): static
+	{
+		$this->headerFullWidth = $fullWidth;
+		return $this;
+	}
+
+	public function isHeaderFullWidth(): bool
+	{
+		return $this->headerFullWidth;
+	}
+
 	public function hasHeader(): bool
 	{
 		return $this->headerTitle !== null || ($this->hasPeriods() && !$this->periodRendered);
