@@ -5,7 +5,7 @@
 //   search(query) → [{ label, items: [{ label, meta?, initials?, icon?, tone?, badge?: { label, class }, href?, panel? }] }]
 //   notifications: { list() → [{ id, icon, tone?, title, text, time, unread, href? }], read(id), readAll() }
 //   todos: { list({ withDone }) → [{ id, text, due?, done, href? }], add(text) → todo, setDone(id, done) }
-//            withDone = přepínač „Zobrazit hotové“ v hlavičce panelu, zdroj vrátí i hotové úkoly
+//            withDone = přepínač „Zobrazit hotové“ nad seznamem úkolů, zdroj vrátí i hotové úkoly
 //            href = detail úkolu po kliku na název, hotovo pak jen zaškrtávátko (bez href celý řádek)
 //   chats: { list() → [{ id, name, unread, preview?, time?, kind?: 'colleague'|'group', initials?, contact? }] (od nejnovější zprávy;
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
@@ -309,11 +309,8 @@ function render() {
 		button.classList.toggle('btn-glass', !active);
 		button.setAttribute('aria-expanded', active ? 'true' : 'false');
 	});
-	document.querySelectorAll('[data-quickbar-todo-done-toggle]').forEach((button) => {
-		button.classList.toggle('btn-primary', state.todoShowDone);
-		button.classList.toggle('btn-glass', !state.todoShowDone);
-		button.setAttribute('aria-pressed', state.todoShowDone ? 'true' : 'false');
-		button.title = state.todoShowDone ? button.dataset.hide : button.dataset.show;
+	document.querySelectorAll('[data-quickbar-todo-done-toggle]').forEach((input) => {
+		input.checked = state.todoShowDone;
 	});
 	document.querySelectorAll('[data-quickbar-column-pin]').forEach((button) => {
 		button.classList.toggle('btn-primary', state.columnPinned);
@@ -2854,10 +2851,6 @@ document.addEventListener('click', (e) => {
 		openAiConversation(conversation ? conversation.id : null);
 		return;
 	}
-	if (target.closest('[data-quickbar-todo-done-toggle]')) {
-		toggleTodoShowDone();
-		return;
-	}
 	if (target.closest('[data-quickbar-read-all]')) {
 		readAllNotifications();
 		return;
@@ -2985,6 +2978,10 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('change', (e) => {
+	if (e.target.closest('[data-quickbar-todo-done-toggle]')) {
+		toggleTodoShowDone();
+		return;
+	}
 	const checkbox = e.target.closest('[data-quickbar-todo]');
 	if (checkbox) {
 		setTodoDone(checkbox.dataset.quickbarTodo, checkbox.checked);

@@ -10,7 +10,7 @@ function quickbarHtml() {
 	return `
 		<div class="quickbar-overlay" hidden></div>
 		<section class="quickbar-panel" data-quickbar-panel="todo" hidden>
-			<button type="button" class="btn btn-icon btn-sm btn-glass" data-show="Zobrazit hotové" data-hide="Skrýt hotové" data-quickbar-todo-done-toggle></button>
+			<input type="checkbox" role="switch" data-quickbar-todo-done-toggle>
 			<div class="quickbar-panel-body" data-quickbar-list="todo" data-empty="Žádné úkoly."></div>
 			<form class="quickbar-panel-form" data-quickbar-form="todo"><input type="text"></form>
 		</section>
@@ -79,7 +79,7 @@ describe('úkoly', () => {
 		expect(setDone).toHaveBeenCalledWith(2, true);
 	});
 
-	it('přepínač v hlavičce ukáže i hotové úkoly a volbu si pamatuje', async () => {
+	it('přepínač nad seznamem ukáže i hotové úkoly a volbu si pamatuje', async () => {
 		const toggle = document.querySelector('[data-quickbar-todo-done-toggle]');
 		expect(document.querySelector('[data-quickbar-todo="3"]')).toBeNull();
 
@@ -88,8 +88,7 @@ describe('úkoly', () => {
 
 		expect(listOptions.at(-1)).toEqual({ withDone: true });
 		expect(document.querySelector('[data-quickbar-todo="3"]').checked).toBe(true);
-		expect(toggle.getAttribute('aria-pressed')).toBe('true');
-		expect(toggle.title).toBe('Skrýt hotové');
+		expect(toggle.checked).toBe(true);
 		expect(localStorage.getItem('fancyadmin-quickbar-todo-done')).toBe('1');
 
 		toggle.click();
