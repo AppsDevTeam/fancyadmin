@@ -169,6 +169,30 @@ test('přepínač jde jen na filtr s výchozí hodnotou', function () {
 	Assert::exception(fn() => columnFiltersGrid()->addDefaultFilterToggle('active', 'Jen aktivní'), LogicException::class);
 });
 
+test('nastavení sloupců: pořadí a šířka z úložiště, neznámé sloupce na konci', function () {
+	$storage = new class implements ADT\FancyAdmin\UI\Components\Grids\GridColumnSettingsStorage {
+		public array $saved = [];
+
+		public function load(string $grid): array
+		{
+			return ['order' => ['state', 'nope', 'name'], 'widths' => ['state' => 'wide', 'name' => 'giant']];
+		}
+
+		public function save(string $grid, array $settings): void
+		{
+			$this->saved[$grid] = $settings;
+		}
+	};
+	$grid = columnFiltersGrid();
+	$grid->setColumnSettingsStorage($storage, 'Admin:Order:grid');
+
+	Assert::same(['state', 'name', 'orderDate', 'isActive'], array_keys($grid->getColumns()));
+	Assert::same('wide', $grid->getColumnWidth('state'));
+	Assert::same('auto', $grid->getColumnWidth('name'), 'neznámá šířka je Auto');
+	Assert::contains('fa-filters-col-wide', (string) $grid->getColumns()['state']->getElementForRender('th', 'state'));
+	Assert::notContains('fa-filters-col', (string) $grid->getColumns()['name']->getElementForRender('td', 'name'));
+});
+
 test('filtr skrytého sloupce má panel v čipu', function () {
 	$grid = columnFiltersGrid();
 	$grid->setFilter(['name' => 'X', 'tags' => ['a']]);

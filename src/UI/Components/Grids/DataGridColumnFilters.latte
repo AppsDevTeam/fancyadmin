@@ -11,35 +11,58 @@
 {* Obsah lišty od projektu (hromadné akce, vlastní tlačítka) - přepíše ho šablona gridu projektu *}
 {define toolbar}{/define}
 
-{* Kopie ozubeného kola knihovny, to kreslí šablona knihovny mimo blok pod filtry (původní schová _datagrid.scss) *}
+{* Tlačítko Sloupce a dialog (viditelnost, pořadí, šířka). Nahrazuje ozubené kolo knihovny, to kreslí šablona
+   knihovny mimo blok pod filtry a _datagrid.scss ho schová. *}
 {define toolbar-settings}
-	<div n:if="$control->canHideColumns()" class="datagrid-toolbar-settings btn-group" data-fa-filters-phone-contents>
-		<button type="button" id="{$control->getFullName()}-settings" class="btn {$btnSecondaryClass} dropdown-toggle d-none d-sm-inline-flex" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{='ublaboo_datagrid.show_all_columns'|translate}">
-			<i class="{$iconPrefix}cog"></i>
-		</button>
-		<ul class="dropdown-menu dropdown-menu-end dropdown-menu--grid fa-filters-settings-menu">
-			<li n:foreach="$columnsVisibility as $v_key => $visibility">
-				{if $visibility['visible']}
-					<a n:href="hideColumn!, column => $v_key" class="ajax dropdown-item">
-						<i class="{$iconPrefix}check-square"></i>
-						{include #column-header, column => $visibility['column'], key => $v_key}
-					</a>
-				{else}
-					<a n:href="showColumn!, column => $v_key" class="ajax dropdown-item">
-						<i class="{$iconPrefix}square"></i>
-						{include #column-header, column => $visibility['column'], key => $v_key}
-					</a>
-				{/if}
-			</li>
-			<li role="separator" class="divider dropdown-divider"></li>
-			<li>
-				<a n:href="showAllColumns!" class="ajax dropdown-item"><i class="{$iconPrefix}eye"></i> {='ublaboo_datagrid.show_all_columns'|translate}</a>
-			</li>
-			<li n:if="$control->hasSomeColumnDefaultHide()">
-				<a n:href="showDefaultColumns!" class="ajax dropdown-item"><i class="{$iconPrefix}repeat"></i> {='ublaboo_datagrid.show_default_columns'|translate}</a>
-			</li>
-		</ul>
-	</div>
+	{if $control->canHideColumns()}
+		{var $_dialogId = $control->getFullName() . '-columns'}
+		<button type="button" class="btn btn-outline-secondary rounded-pill d-none d-sm-inline-flex align-items-center gap-1" data-part="columns"
+			data-bs-toggle="modal" data-bs-target="#{$_dialogId}"
+		><i class="fa-solid fa-table-columns" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.columns}</button>
+		<div class="modal fade" id="{$_dialogId}" tabindex="-1" aria-labelledby="{$_dialogId}-title" aria-hidden="true" data-part="columns-dialog"
+			data-fa-filters-columns-save="{link saveColumns!}"
+		>
+			<div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h2 class="modal-title h5" id="{$_dialogId}-title">{_fcadmin.datagrid.columnFilters.columns}</h2>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{_fcadmin.datagrid.columnFilters.close}"></button>
+					</div>
+					<div class="modal-body">
+						<ol class="fa-filters-columns">
+							{foreach $control->getOrderedColumns() as $_key => $_column}
+								{var $_title = $control->getColumnTitle($_key)}
+								{var $_visible = !$control->isColumnHiddenBySettings($_key)}
+								{var $_width = $control->getColumnWidth($_key)}
+								{var $_id = $_dialogId . '-' . $iterator->counter}
+								<li n:class="fa-filters-column, !$_visible ? is-hidden" data-fa-filters-column-key="{$_key}">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="{$_id}" n:attr="checked => $_visible" data-fa-filters-column-visible>
+										<label class="form-check-label" for="{$_id}">{$_title}</label>
+									</div>
+									<div class="btn-group btn-group-sm d-none d-sm-inline-flex" role="radiogroup" aria-label="{_fcadmin.datagrid.columnFilters.columnWidth, [column => $_title]}">
+										{foreach ['narrow', 'auto', 'wide'] as $_option}
+											<input type="radio" class="btn-check" name="{$_id}-width" id="{$_id}-{$_option}" value="{$_option}" autocomplete="off" n:attr="checked => $_width === $_option" data-fa-filters-column-width>
+											<label class="btn btn-outline-secondary" for="{$_id}-{$_option}">{_'fcadmin.datagrid.columnFilters.width.' . $_option}</label>
+										{/foreach}
+									</div>
+									<div class="d-flex gap-1">
+										<button type="button" class="fa-filters-icon-btn" data-fa-filters-column-move="-1" aria-label="{_fcadmin.datagrid.columnFilters.moveUp, [column => $_title]}"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+										<button type="button" class="fa-filters-icon-btn" data-fa-filters-column-move="1" aria-label="{_fcadmin.datagrid.columnFilters.moveDown, [column => $_title]}"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+									</div>
+								</li>
+							{/foreach}
+						</ol>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="fa-filters-link me-auto" data-fa-filters-columns-all>{_fcadmin.datagrid.columnFilters.showAll}</button>
+						<button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">{_fcadmin.datagrid.columnFilters.cancel}</button>
+						<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-filters-columns-apply>{_fcadmin.datagrid.columnFilters.apply}</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 {/define}
 
 {define outer-filters}
@@ -136,7 +159,7 @@
 			<div class="fa-filters-panel-head"><p class="fa-filters-panel-title">{_fcadmin.datagrid.columnFilters.moreActions}</p></div>
 			<ul class="list-unstyled m-0 pb-2">
 					<li n:if="$control->canHideColumns()">
-						<button type="button" class="dropdown-item fa-filters-more-item" data-fa-filters-show="{$control->getFullName()}-settings">
+						<button type="button" class="dropdown-item fa-filters-more-item" data-bs-toggle="modal" data-bs-target="#{$control->getFullName()}-columns">
 							<i class="fa-solid fa-table-columns fa-fw" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.editColumns}
 						</button>
 					</li>

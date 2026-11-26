@@ -2,7 +2,7 @@
 // pole se odesílají až tlačítkem Použít. Zavření panelu bez něj vrátí pole na hodnoty ze serveru, takže stav
 // filtrů se vždy vykreslí ze serveru a v prohlížeči žije jen otevřeno/zavřeno.
 
-import { Dropdown } from 'bootstrap';
+import { Dropdown, Modal } from 'bootstrap';
 import flatpickr from 'flatpickr';
 import naja from 'naja';
 
@@ -183,13 +183,24 @@ document.addEventListener('click', (e) => {
 		return;
 	}
 
-	// Položka nabídky ⋯ otevře nabídku tlačítka, které je na telefonu skryté
-	const show = e.target.closest('[data-fa-filters-show]');
-	if (show) {
-		const toggle = document.getElementById(show.dataset.faFiltersShow);
-		if (toggle) {
-			setTimeout(() => Dropdown.getOrCreateInstance(toggle).show());
-		}
+	const move = e.target.closest('[data-fa-filters-column-move]');
+	if (move) {
+		moveColumn(move);
+		return;
+	}
+
+	const showAll = e.target.closest('[data-fa-filters-columns-all]');
+	if (showAll) {
+		showAll.closest('.modal').querySelectorAll('[data-fa-filters-column-visible]').forEach((checkbox) => {
+			checkbox.checked = true;
+			checkbox.closest('[data-fa-filters-column-key]').classList.remove('is-hidden');
+		});
+		return;
+	}
+
+	const apply = e.target.closest('[data-fa-filters-columns-apply]');
+	if (apply) {
+		saveColumns(apply.closest('.modal'));
 		return;
 	}
 
@@ -230,6 +241,79 @@ const PHONE = window.matchMedia('(max-width: 575.98px)');
 
 // Na telefonu je panel spodní list přes celou obrazovku. V hlavičce tabulky by ho přerostly vrstvy lepivého
 // řádku hlavičky, proto se po dobu otevření přesune na konec formuláře gridu - pole zůstávají ve formuláři.
+// Dialog Sloupce: pořadí šipkami, viditelnost a šířka; uloží se až tlačítkem Použít
+function moveColumn(button) {
+	const item = button.closest('[data-fa-filters-column-key]');
+	const sibling = button.dataset.faFiltersColumnMove === '-1' ? item.previousElementSibling : item.nextElementSibling;
+	if (!sibling) {
+		return;
+	}
+	if (button.dataset.faFiltersColumnMove === '-1') {
+		sibling.before(item);
+	} else {
+		sibling.after(item);
+	}
+	markColumnEdges(item.parentElement);
+	button.focus();
+}
+
+function markColumnEdges(list) {
+	const items = Array.from(list.children);
+	items.forEach((item, index) => {
+		item.querySelector('[data-fa-filters-column-move="-1"]').disabled = index === 0;
+		item.querySelector('[data-fa-filters-column-move="1"]').disabled = index === items.length - 1;
+	});
+}
+
+function saveColumns(dialog) {
+	const columns = Array.from(dialog.querySelectorAll('[data-fa-filters-column-key]'), (item) => ({
+		key: item.dataset.faFiltersColumnKey,
+		visible: item.querySelector('[data-fa-filters-column-visible]').checked,
+		width: item.querySelector('[data-fa-filters-column-width]:checked')?.value ?? 'auto',
+	}));
+	dialog._faFiltersApplied = true;
+	Modal.getOrCreateInstance(dialog).hide();
+	naja.makeRequest('POST', dialog.dataset.faFiltersColumnsSave, { columns: JSON.stringify(columns) }, { history: false });
+}
+
+// Modal uvnitř gridu (pevně umístěný obsah stránky) by skončil pod zatmavením, po dobu otevření je v body.
+// Zavření bez Použít vrátí dialog do stavu ze serveru.
+document.addEventListener('show.bs.modal', (e) => {
+	const dialog = e.target;
+	if (!dialog.matches('[data-part="columns-dialog"]') || dialog.parentElement === document.body) {
+		return;
+	}
+	dialog._faFiltersHome = { parent: dialog.parentElement, next: dialog.nextSibling };
+	dialog._faFiltersList = dialog.querySelector('.fa-filters-columns').cloneNode(true);
+	dialog._faFiltersApplied = false;
+	document.body.append(dialog);
+	markColumnEdges(dialog.querySelector('.fa-filters-columns'));
+});
+
+document.addEventListener('hidden.bs.modal', (e) => {
+	const dialog = e.target;
+	if (!dialog.matches('[data-part="columns-dialog"]') || !dialog._faFiltersHome) {
+		return;
+	}
+	if (!dialog._faFiltersApplied) {
+		dialog.querySelector('.fa-filters-columns').replaceWith(dialog._faFiltersList);
+	}
+	const { parent, next } = dialog._faFiltersHome;
+	dialog._faFiltersHome = null;
+	if (parent.isConnected) {
+		parent.insertBefore(dialog, next);
+	} else {
+		dialog.remove();
+	}
+});
+
+document.addEventListener('change', (e) => {
+	const checkbox = e.target.closest('[data-fa-filters-column-visible]');
+	if (checkbox) {
+		checkbox.closest('[data-fa-filters-column-key]').classList.toggle('is-hidden', !checkbox.checked);
+	}
+});
+
 function liftToForm(menu) {
 	const form = menu.closest('form');
 	if (!PHONE.matches || !form || menu.parentElement === form) {
@@ -246,7 +330,7 @@ function returnHome(menu) {
 		home.parent.insertBefore(menu, home.next);
 		menu._faFiltersHome = null;
 	}
-	if (!document.querySelector('.fa-filters-panel.show, .fa-filters-settings-menu.show')) {
+	if (!document.querySelector('.fa-filters-panel.show')) {
 		document.body.classList.remove('fa-filters-sheet-open');
 	}
 }
@@ -261,14 +345,14 @@ document.addEventListener('show.bs.dropdown', (e) => {
 		panel._faFiltersValues = snapshot(panel);
 	}
 	const menu = menuOf(e.target);
-	if (menu?.matches('.fa-filters-panel, .fa-filters-settings-menu')) {
+	if (menu?.matches('.fa-filters-panel')) {
 		liftToForm(menu);
 	}
 });
 
 document.addEventListener('hidden.bs.dropdown', (e) => {
 	const menu = menuOf(e.target);
-	if (menu?.matches('.fa-filters-panel, .fa-filters-settings-menu')) {
+	if (menu?.matches('.fa-filters-panel')) {
 		returnHome(menu);
 	}
 });

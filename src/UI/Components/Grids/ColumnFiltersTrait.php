@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Components\Grids;
 
 use ADT\Datagrid\Filter\FilterCheckbox;
 use Closure;
+use Contributte\Datagrid\Column\Column;
 use Contributte\Datagrid\Filter\Filter;
 use Contributte\Datagrid\Filter\FilterDate;
 use Contributte\Datagrid\Filter\FilterDateRange;
@@ -36,6 +37,15 @@ trait ColumnFiltersTrait
 	 */
 	public const string DEFAULT_FILTER_ALL = 'all';
 
+	public const string COLUMN_WIDTH_NARROW = 'narrow';
+	public const string COLUMN_WIDTH_AUTO = 'auto';
+	public const string COLUMN_WIDTH_WIDE = 'wide';
+
+	/** Klíče skrytých sloupců knihovny, které trait drží v nastavení sloupců místo session. */
+	private const array HIDDEN_COLUMNS_KEYS = ['_grid_hidden_columns', '_grid_hidden_columns_manipulated'];
+
+	private const string COLUMN_SETTINGS_STATE_KEY = '_grid_column_settings';
+
 	/** Víc hodnot výběru čip vypíše jen do tohoto počtu, zbytek jako „+N“. */
 	private const int CHIP_LISTED_VALUES = 2;
 
@@ -48,6 +58,13 @@ trait ColumnFiltersTrait
 
 	/** Sloupec, který se objevil vypnutím přepínače - šablona jeho buňky krátce podbarví. */
 	private ?string $revealedColumn = null;
+
+	private ?GridColumnSettingsStorage $columnSettingsStorage = null;
+
+	private string $columnSettingsKey = '';
+
+	/** @var array<string, mixed>|null */
+	private ?array $columnSettings = null;
 
 	public function getOriginalTemplateFile(): string
 	{
@@ -189,7 +206,10 @@ trait ColumnFiltersTrait
 		$this->reloadTheWholeGrid();
 	}
 
-	/** Sloupec výchozího filtru s jinou než výchozí hodnotou je vidět i skrytý v nastavení sloupců. */
+	/**
+	 * Viditelné sloupce v pořadí z nastavení sloupců, s třídou šířky. Sloupec výchozího filtru s jinou než výchozí
+	 * hodnotou je vidět i skrytý v nastavení.
+	 */
 	public function getColumns(): array
 	{
 		$columns = parent::getColumns();
@@ -200,7 +220,190 @@ trait ColumnFiltersTrait
 			}
 		}
 
-		return array_intersect_key($this->columns, $columns);
+		$this->applyColumnWidths();
+
+		return array_intersect_key($this->getOrderedColumns(), $columns);
+	}
+
+	/**
+	 * Úložiště nastavení sloupců u uživatele; `$key` grid jednoznačně určí (presenter a komponenta).
+	 */
+	public function setColumnSettingsStorage(GridColumnSettingsStorage $storage, string $key): static
+	{
+		$this->columnSettingsStorage = $storage;
+		$this->columnSettingsKey = $key;
+		$this->columnSettings = null;
+
+		return $this;
+	}
+
+	/** @return array<string, mixed> */
+	public function getColumnSettings(): array
+	{
+		if ($this->columnSettings === null) {
+			$this->columnSettings = $this->columnSettingsStorage
+				? $this->columnSettingsStorage->load($this->columnSettingsKey)
+				: (array) ($this->getStateStorage()->loadState(self::COLUMN_SETTINGS_STATE_KEY) ?? []);
+		}
+
+		return $this->columnSettings;
+	}
+
+	/** @param array<string, mixed> $settings */
+	private function saveColumnSettings(array $settings): void
+	{
+		$this->columnSettings = $settings;
+		if ($this->columnSettingsStorage) {
+			$this->columnSettingsStorage->save($this->columnSettingsKey, $settings);
+		} else {
+			$this->getStateStorage()->saveState(self::COLUMN_SETTINGS_STATE_KEY, $settings);
+		}
+	}
+
+	/** Skryté sloupce knihovny patří do nastavení sloupců (u uživatele), ne do session. */
+	public function getStorageData(string $key, mixed $defaultValue = null): mixed
+	{
+		if (in_array($key, self::HIDDEN_COLUMNS_KEYS, true)) {
+			return $this->getColumnSettings()[$key] ?? $defaultValue;
+		}
+
+		return parent::getStorageData($key, $defaultValue);
+	}
+
+	public function saveStorageData(string $key, mixed $value): void
+	{
+		if (in_array($key, self::HIDDEN_COLUMNS_KEYS, true)) {
+			$this->saveColumnSettings([$key => $value] + $this->getColumnSettings());
+
+			return;
+		}
+
+		parent::saveStorageData($key, $value);
+	}
+
+	public function deleteStorageData(string $key): void
+	{
+		if (in_array($key, self::HIDDEN_COLUMNS_KEYS, true)) {
+			$settings = $this->getColumnSettings();
+			unset($settings[$key]);
+			$this->saveColumnSettings($settings);
+
+			return;
+		}
+
+		parent::deleteStorageData($key);
+	}
+
+	/**
+	 * Všechny sloupce v pořadí z nastavení; sloupce, které nastavení nezná (přibyly později), jdou na konec.
+	 *
+	 * @return array<string, Column>
+	 */
+	public function getOrderedColumns(): array
+	{
+		$order = array_values(array_filter((array) ($this->getColumnSettings()['order'] ?? []), fn($key): bool => is_string($key) && isset($this->columns[$key])));
+
+		return array_replace(array_fill_keys($order, null), $this->columns);
+	}
+
+	/** Název sloupce jako holý text (dialog Sloupce, popisky pro čtečku). */
+	public function getColumnTitle(string $key): string
+	{
+		$column = $this->columns[$key];
+		$name = $column->getName();
+
+		return $column->isTranslatableHeader() ? $this->getTranslator()->translate($name) : self::plainText($name);
+	}
+
+	public function getColumnWidth(string $key): string
+	{
+		$width = $this->getColumnSettings()['widths'][$key] ?? self::COLUMN_WIDTH_AUTO;
+
+		return in_array($width, [self::COLUMN_WIDTH_NARROW, self::COLUMN_WIDTH_WIDE], true) ? $width : self::COLUMN_WIDTH_AUTO;
+	}
+
+	/** Viditelnost podle nastavení sloupců (bez sloupců, které zobrazil výchozí filtr). */
+	public function isColumnHiddenBySettings(string $key): bool
+	{
+		return !isset(parent::getColumns()[$key]);
+	}
+
+	/**
+	 * Uložení dialogu Sloupce: POST `columns` = JSON seznam {key, visible, width} v novém pořadí.
+	 */
+	public function handleSaveColumns(): void
+	{
+		if (!$this->canHideColumns()) {
+			$this->getPresenter()->error();
+		}
+
+		$posted = json_decode((string) $this->getPresenter()->getRequest()->getPost('columns'), true);
+		if (!is_array($posted)) {
+			$this->getPresenter()->error(httpCode: 400);
+		}
+
+		$order = [];
+		$hidden = [];
+		$widths = [];
+		foreach ($posted as $item) {
+			$key = is_array($item) ? ($item['key'] ?? null) : null;
+			if (!is_string($key) || !isset($this->columns[$key]) || in_array($key, $order, true)) {
+				continue;
+			}
+
+			$order[] = $key;
+			if (empty($item['visible'])) {
+				$hidden[] = $key;
+			}
+			if (in_array($item['width'] ?? null, [self::COLUMN_WIDTH_NARROW, self::COLUMN_WIDTH_WIDE], true)) {
+				$widths[$key] = $item['width'];
+			}
+		}
+
+		$this->saveColumnSettings([
+			'order' => $order,
+			'widths' => $widths,
+			'_grid_hidden_columns' => $hidden,
+			'_grid_hidden_columns_manipulated' => true,
+		] + $this->getColumnSettings());
+
+		$this->reloadTheWholeGrid();
+	}
+
+	/**
+	 * Knihovna při prvním čtení skrytých sloupců doplní výchozí skryté (`setDefaultHide()`). Signál bez předchozího
+	 * čtení by uložil prázdný seznam a zobrazil i ostatní výchozí skryté sloupce.
+	 */
+	public function handleShowColumn(string $column): void
+	{
+		parent::getColumns();
+		parent::handleShowColumn($column);
+	}
+
+	public function handleHideColumn(string $column): void
+	{
+		parent::getColumns();
+		parent::handleHideColumn($column);
+	}
+
+	/** Třída šířky na buňkách hlavičky i těla; prototyp sloupce se mění, proto se stará třída nejdřív odebere. */
+	private function applyColumnWidths(): void
+	{
+		$classes = ['fa-filters-col-' . self::COLUMN_WIDTH_NARROW, 'fa-filters-col-' . self::COLUMN_WIDTH_WIDE];
+		foreach ($this->columns as $key => $column) {
+			$width = $this->getColumnWidth($key);
+			foreach (['th', 'td'] as $tag) {
+				$el = $column->getElementPrototype($tag);
+				$current = $el->getAttribute('class');
+				$current = is_array($current) ? $current : preg_split('~\s+~', (string) $current, -1, PREG_SPLIT_NO_EMPTY);
+				// Html drží třídy jako seznam i jako [třída => true]
+				$current = array_filter($current, static fn($class, $index): bool => !in_array(is_string($index) ? $index : $class, $classes, true), ARRAY_FILTER_USE_BOTH);
+				if ($width !== self::COLUMN_WIDTH_AUTO) {
+					$current['fa-filters-col-' . $width] = true;
+				}
+				$el->setAttribute('class', $current ?: null);
+			}
+		}
 	}
 
 	/**

@@ -37,6 +37,13 @@ $grid->setDefaultFilter(['active' => 1]);
 $grid->addDefaultFilterToggle('active', 'app.countryGrid.onlyActive'); // popisek podle výchozí hodnoty
 ```
 
+Nastavení sloupců (viditelnost, pořadí, šířka z dialogu Sloupce) se bez dalšího drží v session. U uživatele
+v databázi je projekt uloží přes `GridColumnSettingsStorage`:
+
+```php
+$grid->setColumnSettingsStorage($storage, $presenter->getName() . ':' . $grid->getFullName());
+```
+
 JS a styly:
 
 ```js
@@ -52,6 +59,7 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
 |---|---|
 | `src/UI/Components/Grids/ColumnFiltersTrait.php` | šablona, filtry do panelů, čipy, hodnoty čipů, počty, výchozí filtr |
 | `src/UI/Components/Grids/FilterChip.php` | jeden čip pruhu |
+| `src/UI/Components/Grids/GridColumnSettingsStorage.php` | úložiště nastavení sloupců u uživatele |
 | `src/UI/Components/Grids/DataGridColumnFilters.latte` | lišta, pruh, hlavička s panely, pole podle typu, prázdný výsledek |
 | `assets/js/columnFilters.js` | panely (Popper `fixed`), Použít, Zrušit filtr, vrácení hodnot při zavření, období, fokus |
 | `assets/scss/_datagridColumnFilters.scss` | vzhled, proměnné `--fa-filters-*` pro světlý i tmavý režim |
@@ -78,6 +86,12 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   nastavením sloupců (typicky `setDefaultHide()`); jiná hodnota sloupec zobrazí vždy a sloupec, který vypnutím
   přibyl, se krátce podbarví (`data-fa-filters-revealed`, `.fa-filters-col-new`). Panel sloupce ukazuje volby
   jako tlačítka s poznámkou „výchozí“ a místo Zrušit filtr má Vrátit výchozí.
+- **Sloupce:** tlačítko Sloupce (jen grid s `setColumnsHideable()`) nahrazuje ozubené kolo knihovny a otevře dialog
+  se zaškrtávátkem viditelnosti, šířkou Úzký / Auto / Široký (`fa-filters-col-narrow` / `-wide` na buňkách) a
+  šipkami pořadí. Uloží se až Použít (signál `saveColumns!`, POST `columns` = JSON). Skryté sloupce knihovny
+  (`_grid_hidden_columns`) trait čte a ukládá v tomtéž nastavení, takže `showColumn!` / `hideColumn!` fungují dál.
+  Sloupce, které nastavení nezná (přibyly později), jsou na konci. Dialog se po dobu otevření přesune do `body`
+  (obsah stránky je pevně umístěný, modal by skončil pod zatmavením) a zavření bez Použít ho vrátí.
 - **Telefon** (pod 576 px): lišta má řádky hledání + ⋯ / přepínač / hromadné akce, tlačítka lišty (nastavení
   sloupců, exporty) jsou v nabídce ⋯. Panely jsou spodní list přes celou šířku se ztmavením; po dobu otevření se
   přesunou na konec formuláře gridu, jinak by je přerostly vrstvy lepivé hlavičky tabulky.

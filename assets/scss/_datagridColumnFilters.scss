@@ -529,6 +529,65 @@
 	color: var(--fa-text);
 }
 
+// Ozubené kolo knihovny pod tabulkou nahrazuje tlačítko Sloupce v liště
+.datagrid form:has([data-part='columns']) > .datagrid-settings {
+	display: none !important;
+}
+
+// Dialog Sloupce [data-part="columns-dialog"]
+.fa-filters-columns {
+	display: flex;
+	flex-direction: column;
+	gap: .25rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fa-filters-column {
+	display: flex;
+	align-items: center;
+	gap: .625rem;
+	min-height: 3.125rem;
+	padding: .25rem .5rem .25rem .875rem;
+	border: 1px solid var(--fa-border);
+	border-radius: .875rem;
+	background: var(--fa-surface);
+}
+
+.fa-filters-column.is-hidden {
+	background: var(--fa-surface-hover);
+	color: var(--fa-text-muted);
+}
+
+.fa-filters-column .form-check {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+}
+
+.fa-filters-column .form-check-label {
+	font-weight: 600;
+}
+
+.fa-filters-column .fa-filters-icon-btn:disabled {
+	opacity: .35;
+	pointer-events: none;
+}
+
+// Šířka sloupce z dialogu Sloupce, na hlavičce i buňkách
+.fa-filters-col-narrow {
+	overflow: hidden;
+	width: 130px;
+	max-width: 130px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fa-filters-col-wide {
+	min-width: 340px;
+}
+
 // Telefon: tabulka se posouvá do strany, panely vyjíždějí zespodu, akce lišty jsou v nabídce ⋯
 @media (max-width: 575.98px) {
 	.fa-filters-search {
@@ -567,11 +626,6 @@
 		order: 3;
 	}
 
-	// Obal skrytého tlačítka nesmí v liště zabírat místo, jeho nabídka se otevře z ⋯
-	[data-fa-filters-phone-contents] {
-		display: contents;
-	}
-
 	.fa-filters-chips {
 		flex: 1 1 100%;
 		flex-wrap: nowrap !important;
@@ -584,8 +638,7 @@
 	}
 
 	// Popper nastavuje pozici inline, spodní panel ji přebíjí
-	.fa-filters-panel.show,
-	.fa-filters-settings-menu.show {
+	.fa-filters-panel.show {
 		position: fixed !important;
 		inset: auto 0 0 0 !important;
 		width: auto;
@@ -604,8 +657,7 @@
 		visibility: hidden;
 	}
 
-	.fa-filters-panel.show::before,
-	.fa-filters-settings-menu.show::before {
+	.fa-filters-panel.show::before {
 		content: "";
 		display: block;
 		width: 2.5rem;

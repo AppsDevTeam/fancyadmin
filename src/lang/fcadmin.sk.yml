@@ -26,6 +26,17 @@ datagrid:
     restoreDefault: Vrátiť predvolený
     moreActions: Ďalšie akcie
     editColumns: Upraviť stĺpce
+    columns: Stĺpce
+    columnWidth: 'Šírka stĺpca %column%'
+    width:
+      narrow: Úzky
+      auto: Auto
+      wide: Široký
+    moveUp: 'Posunúť %column% vyššie'
+    moveDown: 'Posunúť %column% nižšie'
+    showAll: Zobraziť všetko
+    cancel: Zrušiť
+    close: Zavrieť
     clear: Zrušiť filter
     apply: Použiť
     clearAllFilters: Zrušiť všetky filtre

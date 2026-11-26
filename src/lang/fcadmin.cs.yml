@@ -26,6 +26,17 @@ datagrid:
     restoreDefault: Vrátit výchozí
     moreActions: Další akce
     editColumns: Upravit sloupce
+    columns: Sloupce
+    columnWidth: 'Šířka sloupce %column%'
+    width:
+      narrow: Úzký
+      auto: Auto
+      wide: Široký
+    moveUp: 'Posunout %column% výš'
+    moveDown: 'Posunout %column% níž'
+    showAll: Zobrazit vše
+    cancel: Zrušit
+    close: Zavřít
     clear: Zrušit filtr
     apply: Použít
     clearAllFilters: Zrušit všechny filtry
