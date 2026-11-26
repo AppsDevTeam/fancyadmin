@@ -209,13 +209,12 @@ trait ColumnFiltersTrait
 		}
 
 		$filter = $this->filters[$key];
-		if (!$filter instanceof FilterSelect) {
-			throw new \LogicException("Přepínač umí jen výběrový filtr, '$key' jím není.");
+		if (!$filter instanceof \ADT\Datagrid\Filter\FilterSelect) {
+			throw new \LogicException("Přepínač umí jen výběrový filtr (addFilterSelect), '$key' jím není.");
 		}
 
 		$this->defaultFilterToggles[$key] = $label;
-		$all = [self::DEFAULT_FILTER_ALL => 'fcadmin.datagrid.columnFilters.all'];
-		(fn() => $this->options = $all + array_diff_key($this->options, ['' => true]))->call($filter);
+		$filter->setOptions([self::DEFAULT_FILTER_ALL => 'fcadmin.datagrid.columnFilters.all'] + array_diff_key($filter->getOptions(), ['' => true]));
 
 		return $this;
 	}

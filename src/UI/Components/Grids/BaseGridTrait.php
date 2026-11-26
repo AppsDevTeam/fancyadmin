@@ -3,6 +3,7 @@
 namespace ADT\FancyAdmin\UI\Components\Grids;
 
 use ADT\Datagrid\Component\BaseGridDependencies;
+use ADT\Datagrid\Filter\FilterText;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
@@ -69,7 +70,8 @@ trait BaseGridTrait
 							$condition($subQuery, $value);
 						} else {
 							// getCondition() knihovny čte hodnotu filtru, ta je nastavená jen u filtrů, které uživatel vyplnil
-							$subQuery->by((fn(): array => $this->columns)->call($filter), $value, QueryObjectByMode::CONTAINS);
+							assert($filter instanceof FilterText);
+							$subQuery->by($filter->getColumns(), $value, QueryObjectByMode::CONTAINS);
 						}
 						foreach ($subQuery->fetchField('id') as $id) {
 							$ids[$id] = $id;
