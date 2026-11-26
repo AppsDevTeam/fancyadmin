@@ -40,6 +40,14 @@ class WidgetGridControl extends Control
 
 	private bool $periodRendered = false;
 
+	private ?string $pageTitle = null;
+
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $pageSubtitle = null;
+
+	/** @var list<array{label: string, link: ?string}> */
+	private array $breadcrumbs = [];
+
 	public function setColumns(int $columns): static
 	{
 		if ($columns < 1 || $columns > self::MAX_COLUMNS) {
@@ -259,6 +267,49 @@ class WidgetGridControl extends Control
 		$this->periodRendered = true;
 		$this->template->widgetGrid = $this;
 		$this->template->setFile(__DIR__ . '/WidgetGridPeriod.latte');
+		$this->template->render();
+	}
+
+	/**
+	 * Hlavička podstránky dashboardu (`{control dashboard:page}`): drobečková navigace, ve stejném řádku
+	 * vpravo výběr období, pod ní nadpis a šedý podtitul. Poslední drobeček je aktuální stránka (bez odkazu).
+	 *
+	 * @param string|(\Closure(?WidgetPeriod): ?string)|null $subtitle podtitul (období, rozsah dat)
+	 * @param array<string, ?string> $breadcrumbs popisek => odkaz (null u aktuální stránky)
+	 */
+	public function setPage(string $title, string|\Closure|null $subtitle = null, array $breadcrumbs = []): static
+	{
+		$this->pageTitle = $title;
+		$this->pageSubtitle = $subtitle;
+		$this->breadcrumbs = [];
+		foreach ($breadcrumbs as $label => $link) {
+			$this->breadcrumbs[] = ['label' => (string) $label, 'link' => $link];
+		}
+		return $this;
+	}
+
+	public function getPageTitle(): ?string
+	{
+		return $this->pageTitle;
+	}
+
+	public function getPageSubtitle(): ?string
+	{
+		return $this->pageSubtitle instanceof \Closure ? ($this->pageSubtitle)($this->getPeriod()) : $this->pageSubtitle;
+	}
+
+	/** @return list<array{label: string, link: ?string}> */
+	public function getBreadcrumbs(): array
+	{
+		return $this->breadcrumbs;
+	}
+
+	/** Hlavička podstránky (setPage) včetně výběru období - mřížka vykreslená potom ho už nemá. */
+	public function renderPage(): void
+	{
+		$this->periodRendered = $this->hasPeriods();
+		$this->template->widgetGrid = $this;
+		$this->template->setFile(__DIR__ . '/WidgetGridPage.latte');
 		$this->template->render();
 	}
 

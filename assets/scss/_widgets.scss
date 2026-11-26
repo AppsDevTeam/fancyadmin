@@ -767,6 +767,67 @@
 	}
 }
 
+// Hlavička podstránky (setPage + renderPage): drobečky a období v jednom řádku, pod nimi nadpis a podtitul
+.fa-widgets-page-header {
+	margin-bottom: 18px;
+}
+
+.fa-widgets-page-top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	padding-top: 12px;
+}
+
+.fa-widgets-breadcrumbs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: .8125rem;
+	color: var(--fa-text-muted);
+
+	li + li::before {
+		content: '›';
+		margin-right: 8px;
+		color: var(--fa-text-muted);
+		opacity: .7;
+	}
+
+	a {
+		color: var(--primaryColor);
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+.fa-widgets-page-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 16px;
+	margin-top: 12px;
+}
+
+.fa-widgets-page-title {
+	margin: 0;
+	font-size: 1.6875rem;
+	font-weight: 600;
+}
+
+.fa-widgets-page-subtitle {
+	font-size: .875rem;
+	color: var(--fa-text-muted);
+}
+
 // Výběr období v hlavičce stránky (renderPeriod): tónované tlačítko v primární barvě
 :root body .fa-widgets-page-period .ts-wrapper,
 .fa-widgets-page-period .form-select {

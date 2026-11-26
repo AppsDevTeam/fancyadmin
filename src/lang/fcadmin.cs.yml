@@ -24,6 +24,7 @@ widgets:
     empty: Nic k řešení.
   detail: Zobrazit podrobnosti
   empty: Za zvolené období nejsou žádná data.
+  breadcrumbs: Drobečková navigace
   period:
     label: Období
     submit: Zobrazit

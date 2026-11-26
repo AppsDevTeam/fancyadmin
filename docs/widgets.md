@@ -154,7 +154,10 @@ $options)` na mřížce přidá do pásu výběr období, které dostanou všech
 (`Widget::setPeriods()` má přednost). Stav je v URL (`dashboard-period`), výchozí do odkazů nejde. Změna
 selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se tím skoro všechny widgety.
 
-Podstránka dashboardu (detail, na který se z karty proklikne) má výběr období v hlavičce stránky:
+Podstránka dashboardu (detail, na který se z karty proklikne) má hlavičku `setPage($title, $subtitle,
+$breadcrumbs)` + `{control dashboard:page}` (`renderPage()`): drobečková navigace (`['Dashboard' => odkaz, …,
+'Aktuální' => null]`, poslední položka bez odkazu), ve stejném řádku vpravo výběr období, pod ní nadpis
+a šedý podtitul (text nebo `Closure` s obdobím). Samotný výběr období bez hlavičky:
 `{control dashboard:period}` (`renderPeriod()`) ho vykreslí samostatně jako tónované tlačítko a mřížka
 vykreslená potom ho už nemá; bez `setHeader()` pak nemá ani pás hlavičky. Stejné jméno komponenty
 (`dashboard`) znamená stejný parametr období, odkaz z dashboardu ho tak může předat.

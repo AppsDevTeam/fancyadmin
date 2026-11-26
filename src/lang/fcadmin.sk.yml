@@ -24,6 +24,7 @@ widgets:
     empty: Nič na riešenie.
   detail: Zobraziť podrobnosti
   empty: Za zvolené obdobie nie sú žiadne údaje.
+  breadcrumbs: Navigačná cesta
   period:
     label: Obdobie
     submit: Zobraziť

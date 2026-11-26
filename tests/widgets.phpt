@@ -866,3 +866,26 @@ test('vyber obdobi jde vykreslit zvlast do hlavicky stranky, mrizka ho pak nema'
 	$other->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR]);
 	Assert::contains('<form class="fa-widgets-period fa-widgets-header-period"', renderWidgetGrid($other));
 });
+
+test('hlavicka podstranky: drobecky, obdobi v radku, nadpis a podtitul s obdobim', function () {
+	$presenter = pagePresenter('dashboard-period=thisYear');
+	$widgetGrid = new WidgetGridControl();
+	$widgetGrid->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR])
+		->setPage('Rezervace · pobočka Plzeň', fn(?WidgetPeriod $period) => 'období: ' . $period?->value, [
+			'Dashboard' => '/admin/',
+			'Rezervace' => '/admin/rezervace',
+			'Pobočka Plzeň' => null,
+		]);
+	$widgetGrid->addKpi('kpi', 'Obrat', fn() => 1);
+	$presenter->addComponent($widgetGrid, 'dashboard');
+
+	ob_start();
+	$widgetGrid->renderPage();
+	$page = preg_replace('~>\s+<~', '><', ob_get_clean());
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('<ol class="fa-widgets-breadcrumbs"><li><a href="/admin/">Dashboard</a></li><li><a href="/admin/rezervace">Rezervace</a></li><li aria-current="page">Pobočka Plzeň</li></ol>', $page);
+	Assert::contains('<form class="fa-widgets-period fa-widgets-page-period"', $page);
+	Assert::contains('<h1 class="fa-widgets-page-title">Rezervace · pobočka Plzeň</h1><span class="fa-widgets-page-subtitle">období: thisYear</span>', $page);
+	Assert::notContains('data-widget-grid-period', $html);
+});
