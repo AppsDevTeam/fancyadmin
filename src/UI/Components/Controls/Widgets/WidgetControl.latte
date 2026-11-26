@@ -41,7 +41,7 @@
 		</div>
 	{else}
 		{include block ('widget-' . $widget->getType())}
-		<div n:if="$widget->getLinkLabel() !== null && $widget->getLink() !== null" class="fa-widgets-footer">
+		<div n:if="$widget->getLinkLabel() !== null && $widget->getLink() !== null && $widget->getType() !== 'section'" class="fa-widgets-footer">
 			<a href="{$widget->getLink()}" class="fa-widgets-footer-link">{$widget->getLinkLabel()} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
 		</div>
 	{/if}
@@ -60,7 +60,7 @@
 		<div n:if="$_title !== null || $_badges" class="fa-widget-heading">
 			{* Popis je nápověda k widgetu, ne obsah - tooltip ho na dotyku neukáže, nesmí v něm být nic nepostradatelného.
 			   Karty kpi, figures a alerts ho mají na nadpisu (bez ikony, z klávesnice přes tabindex), ostatní na otazníku. *}
-			<h2 n:if="$_title !== null" class="fa-widget-title"{if $_hintOnTitle} tabindex="0" data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}"{/if}>{$_title}</h2>
+			<h2 n:if="$_title !== null" n:class="fa-widget-title, $widget->getTitleStyle() === 'section' ? fa-widget-title-section"{if $_hintOnTitle} tabindex="0" data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}"{/if}>{$_title}</h2>
 			<span n:ifcontent class="fa-widget-subtitle">{$widget->getSubtitle()}</span>
 			{include badges, badges: $_badges}
 		</div>
@@ -97,7 +97,7 @@
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\SectionWidget $widget}
 	<div class="fa-widgets-section">
 		<div class="fa-widgets-section-heading">
-			<h2 class="fa-widgets-section-title">{$widget->getTitle()}</h2>
+			<h2 class="fa-widgets-section-title">{$widget->getTitle()}{if $widget->getSuffix() !== null} · {$widget->getSuffix()}{/if}</h2>
 			<span n:ifcontent class="fa-widgets-section-subtitle">{$widget->getSubtitle()}</span>
 			{include badges, badges: $widget->getBadges()}
 			<a n:if="$widget->getLink() !== null" href="{$widget->getLink()}" class="fa-widgets-section-link">{$widget->getLinkLabel() ?? $widget->getTitle()} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>

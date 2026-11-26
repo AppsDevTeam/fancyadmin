@@ -908,6 +908,15 @@
 	}
 }
 
+// Zalamovací první sloupec (název nabídky) je pružný - pravidlo gridu stahuje první sloupec na 1 % šířky
+.table-responsive table.fa-widgets-table:has(td.fa-widgets-wrap:first-child) {
+	> thead > tr > th:first-child,
+	> tbody > tr > td:first-child {
+		width: auto;
+		min-width: 220px;
+	}
+}
+
 // Užší okraje buněk (TableWidget::setCompact) - tabulka v půlce šířky mřížky
 .table-responsive table.fa-widgets-table-compact {
 	th,
@@ -927,6 +936,24 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 4px 8px;
+
+	// odkaz vpravo na stejném řádku - dlouhý dovětek se raději zkrátí
+	@include media-breakpoint-up(md) {
+		flex-wrap: nowrap;
+
+		.fa-widgets-section-subtitle {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.fa-widgets-section-title,
+		.fa-widgets-section-link,
+		.fa-widgets-badge {
+			flex-shrink: 0;
+		}
+	}
 }
 
 .fa-widgets-section-title {
@@ -968,6 +995,14 @@
 		font-weight: 500;
 		color: var(--fa-text);
 	}
+}
+
+.fa-widget-title.fa-widget-title-section {
+	font-size: .78125rem;
+	font-weight: 500;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--primaryColor);
 }
 
 // Dlaždice detailu (KpiWidget::setDetail) - design 4.6
@@ -1088,9 +1123,24 @@
 	border-color: var(--primaryColor);
 }
 
+// Tabulka pod nadpisem sekce (bez vlastního nadpisu) a tabulka v panelu sahají k okrajům karty
+.fa-widget-table > .fa-widgets-card:not(:has(> .fa-widget-header)) > .fa-widgets-card-body,
+.fa-widget-table > .fa-widgets-panel > .fa-widgets-card-body {
+	padding: 0;
+
+	> .table-responsive {
+		border: 0;
+		box-shadow: none;
+	}
+}
+
 // Panel otevíraný odkazem jiné karty (setPanel) - design 4.11
 .fa-widgets-panel {
 	border-color: var(--primaryColor);
+
+	> .fa-widget-header {
+		padding: 14px 20px 10px;
+	}
 
 	> .fa-widget-header .fa-widget-title {
 		font-size: .78125rem;
@@ -1113,6 +1163,117 @@
 
 	&:hover {
 		text-decoration: underline;
+	}
+}
+
+// Lišta podstránky pod hlavičkou (přepínač režimu, záložky) - stejná šířka jako mřížka
+.fa-widgets-page-toolbar {
+	max-width: var(--fa-widgets-max-width, none);
+	margin-inline: auto;
+	margin-bottom: 16px;
+}
+
+.fa-widgets-page-header {
+	max-width: var(--fa-widgets-max-width, none);
+	margin-inline: auto;
+	margin-bottom: 18px;
+}
+
+.fa-widgets-page-top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	padding-top: 12px;
+}
+
+.fa-widgets-breadcrumbs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: .8125rem;
+	color: var(--fa-text-muted);
+
+	li + li::before {
+		content: '›';
+		margin-right: 8px;
+		color: var(--fa-text-muted);
+		opacity: .7;
+	}
+
+	a {
+		color: var(--primaryColor);
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+.fa-widgets-page-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 16px;
+	margin-top: 12px;
+}
+
+.fa-widgets-page-title {
+	margin: 0;
+	font-size: 1.6875rem;
+	font-weight: 600;
+}
+
+.fa-widgets-page-subtitle {
+	font-size: .875rem;
+	color: var(--fa-text-muted);
+}
+
+// Tabulka se skupinami sloupců: hlavička má dva skutečné řádky - pravidla gridu (.table-responsive table)
+// přilepují druhý řádek s pevným odsazením (u gridu je to jen oddělovací linka) a první sloupec stahují
+// na 1 % šířky. Tady hlavička nelepí, číselné sloupce jsou široké podle obsahu a zbytek dostane název.
+.table-responsive table.fa-widgets-table-grouped {
+	// :nth-child(n) kvůli specificitě - pravidlo gridu je thead > tr:nth-child(2) a v balíčku je až za widgety
+	thead > tr:nth-child(n) {
+		position: static;
+	}
+
+	thead > tr > th:first-child,
+	tbody > tr > td:first-child {
+		width: auto;
+	}
+
+	th.text-end,
+	td.text-end {
+		width: 1%;
+	}
+
+	.fa-widgets-table-group + .fa-widgets-table-group {
+		box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 30%, transparent), inset 1px 0 0 color-mix(in srgb, currentColor 30%, transparent);
+	}
+
+	// spodní okraj hlavičky jen u druhého řádku - sloupec přes oba řádky (rowspan) končí s ním
+	.fa-widgets-table-groups > th {
+		border-bottom-width: 0;
+	}
+
+	.fa-widgets-table-groups > th[rowspan] {
+		border-bottom-width: 1px;
+	}
+}
+
+// Užší okraje buněk (TableWidget::setCompact) - tabulka v půlce šířky mřížky
+.table-responsive table.fa-widgets-table-compact {
+	th,
+	td {
+		padding-left: 12px;
+		padding-right: 12px;
 	}
 }
 

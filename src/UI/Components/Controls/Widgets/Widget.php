@@ -45,6 +45,8 @@ abstract class Widget
 
 	private ?string $panelGroup = null;
 
+	private ?string $titleStyle = null;
+
 	public function __construct(
 		private readonly string $name,
 		private ?string $title = null,
@@ -289,5 +291,17 @@ abstract class Widget
 	public function getPanelGroup(): ?string
 	{
 		return $this->panelGroup;
+	}
+
+	/** Styl nadpisu karty: `section` = jako nadpis sekce (modré verzálky), jinak výchozí nadpis widgetu. */
+	public function setTitleStyle(?string $style): static
+	{
+		$this->titleStyle = $style;
+		return $this;
+	}
+
+	public function getTitleStyle(): ?string
+	{
+		return $this->titleStyle;
 	}
 }

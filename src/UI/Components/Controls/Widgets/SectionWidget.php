@@ -16,6 +16,21 @@ final class SectionWidget extends Widget
 	/** @var string|HtmlStringable|(\Closure(?WidgetPeriod): (string|HtmlStringable|null))|null */
 	private string|HtmlStringable|\Closure|null $text = null;
 
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $suffix = null;
+
+	/** Dovětek ve stylu nadpisu („NOVĚ ZADANÉ NABÍDKY · ŘÍJEN 2026“), text nebo Closure s obdobím. */
+	public function setSuffix(string|\Closure|null $suffix): static
+	{
+		$this->suffix = $suffix;
+		return $this;
+	}
+
+	public function getSuffix(): ?string
+	{
+		return $this->suffix instanceof \Closure ? ($this->suffix)($this->getPeriod()) : $this->suffix;
+	}
+
 	public function getType(): string
 	{
 		return 'section';
