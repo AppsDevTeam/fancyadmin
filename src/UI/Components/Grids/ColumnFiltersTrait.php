@@ -17,6 +17,7 @@ use Contributte\Datagrid\Filter\FilterText;
 use Contributte\Datagrid\Filter\OneColumnFilter;
 use DateTimeImmutable;
 use Nette\Application\Attributes\Persistent;
+use Nette\Utils\Validators;
 
 /**
  * Filtr v hlavičce sloupce (docs/datagrid-column-filters.md): klik na název sloupce otevře panel s polem filtru,
@@ -78,6 +79,11 @@ trait ColumnFiltersTrait
 
 	/** @var list<GridPreset>|null */
 	private ?array $presets = null;
+
+	/** @var (Closure(string $format, bool $visibleOnly, ?string $email): void)|null */
+	private ?Closure $exportHandler = null;
+
+	private ?string $exportEmail = null;
 
 	private string $columnSettingsKey = '';
 
@@ -457,6 +463,59 @@ trait ColumnFiltersTrait
 	{
 		parent::getColumns();
 		parent::handleHideColumn($column);
+	}
+
+	public const array EXPORT_FORMATS = ['xlsx', 'csv'];
+
+	/**
+	 * Panel Export místo tlačítek exportů knihovny: formát, jen zobrazené sloupce a volitelně odeslání na e-mail
+	 * (`$email` předvyplní pole). Data a soubor připraví vlastník gridu v `$handler`.
+	 *
+	 * @param Closure(string $format, bool $visibleOnly, ?string $email): void $handler
+	 */
+	public function setExportPanel(Closure $handler, ?string $email = null): static
+	{
+		$this->exportHandler = $handler;
+		$this->exportEmail = $email;
+
+		return $this;
+	}
+
+	public function hasExportPanel(): bool
+	{
+		return $this->exportHandler !== null;
+	}
+
+	public function getExportEmail(): ?string
+	{
+		return $this->exportEmail;
+	}
+
+	/**
+	 * Stažení (GET s parametry signálu) nebo odeslání na e-mail (POST `format`, `visible`, `email` přes AJAX).
+	 * Neplatnou adresu vrátí JS k poli (`faFiltersExportError`).
+	 */
+	public function handleExportGrid(string $format = 'xlsx', bool $visible = true): void
+	{
+		$presenter = $this->getPresenter();
+		if (!$this->exportHandler) {
+			$presenter->error();
+		}
+
+		$post = $presenter->getRequest()->getPost();
+		$format = (string) ($post['format'] ?? $format);
+		$visible = (bool) ($post['visible'] ?? $visible);
+		if (!in_array($format, self::EXPORT_FORMATS, true)) {
+			$presenter->error('', 400);
+		}
+
+		$email = isset($post['email']) ? trim((string) $post['email']) : null;
+		if ($email !== null && !Validators::isEmail($email)) {
+			$presenter->payload->faFiltersExportError = $this->getTranslator()->translate('fcadmin.datagrid.columnFilters.export.invalidEmail');
+			$presenter->sendPayload();
+		}
+
+		($this->exportHandler)($format, $visible, $email);
 	}
 
 	/** Uložené sestavy gridu u uživatele; `$key` grid jednoznačně určí (presenter a komponenta). */

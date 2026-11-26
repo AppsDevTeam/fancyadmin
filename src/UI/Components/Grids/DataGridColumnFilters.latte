@@ -112,7 +112,11 @@
 			{/foreach}
 			{include switchers}
 			{if $control->hasPresets()}{include preset-save}{/if}
-			<div n:if="$exports" class="d-none d-sm-flex">{include exports-area}</div>
+			{if $control->hasExportPanel()}
+				{include export-panel}
+			{else}
+				<div n:if="$exports" class="d-none d-sm-flex">{include exports-area}</div>
+			{/if}
 			{include toolbar-settings}
 			{include more-actions}
 		</div>
@@ -244,6 +248,52 @@
 	</div>
 {/define}
 
+{* Panel Export: formát, jen zobrazené sloupce, stažení nebo odeslání na e-mail. Pole nemají `name`, do formuláře
+   filtrů se neposílají. *}
+{define export-panel}
+	{var $_exportId = $control->getFullName() . '-export'}
+	<div class="dropdown">
+		<button type="button" class="btn btn-outline-secondary rounded-pill d-none d-sm-inline-flex align-items-center gap-1" id="{$_exportId}-toggle" data-part="export"
+			data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8" aria-expanded="false" aria-haspopup="dialog" aria-controls="{$_exportId}"
+		><i class="fa-solid fa-download" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.export.button}</button>
+		<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$_exportId}" role="dialog" aria-labelledby="{$_exportId}-title" data-part="export-panel" data-fa-filters-panel
+			data-fa-filters-export="{link exportGrid!}" data-param-format="{$control->getParameterId('format')}" data-param-visible="{$control->getParameterId('visible')}"
+		>
+			<div class="fa-filters-panel-head"><p class="fa-filters-panel-title" id="{$_exportId}-title">{_fcadmin.datagrid.columnFilters.export.title}</p></div>
+			<div class="fa-filters-panel-body">
+				<fieldset>
+					<legend class="fa-filters-field-label">{_fcadmin.datagrid.columnFilters.export.format}</legend>
+					<div class="btn-group w-100" role="radiogroup">
+						{foreach $control::EXPORT_FORMATS as $_format}
+							<input type="radio" class="btn-check" name="_exportFormat" id="{$_exportId}-{$_format}" value="{$_format}" autocomplete="off" n:attr="checked => $iterator->first" data-fa-filters-export-format>
+							<label class="btn btn-outline-secondary" for="{$_exportId}-{$_format}">{=strtoupper($_format)}</label>
+						{/foreach}
+					</div>
+				</fieldset>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" id="{$_exportId}-visible" checked data-fa-filters-export-visible>
+					<label class="form-check-label" for="{$_exportId}-visible">{_fcadmin.datagrid.columnFilters.export.visibleOnly}</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" id="{$_exportId}-mail" data-fa-filters-export-mail>
+					<label class="form-check-label" for="{$_exportId}-mail">{_fcadmin.datagrid.columnFilters.export.byEmail}</label>
+				</div>
+				<div hidden data-fa-filters-export-mail-field>
+					<label class="fa-filters-field-label" for="{$_exportId}-email">{_fcadmin.datagrid.columnFilters.export.email}</label>
+					<input class="form-control rounded-pill" id="{$_exportId}-email" type="email" value="{$control->getExportEmail()}" data-fa-filters-export-email>
+					<div class="invalid-feedback" data-fa-filters-export-error></div>
+				</div>
+			</div>
+			<div class="fa-filters-panel-foot">
+				<span></span>
+				<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-filters-export-submit
+					data-label-download="{_fcadmin.datagrid.columnFilters.export.download}" data-label-send="{_fcadmin.datagrid.columnFilters.export.send}"
+				>{_fcadmin.datagrid.columnFilters.export.download}</button>
+			</div>
+		</div>
+	</div>
+{/define}
+
 {* Panel Uložit sestavu v liště *}
 {define preset-save}
 	{var $_active = $control->getActivePreset()}
@@ -286,7 +336,7 @@
 
 {* Akce lišty na telefonu: tlačítka jsou tam skrytá, nabídka ⋯ je nabízí s textem *}
 {define more-actions}
-	{var $_moreItems = $control->canHideColumns() || $exports || $control->hasPresets()}
+	{var $_moreItems = $control->canHideColumns() || $exports || $control->hasPresets() || $control->hasExportPanel()}
 	<div n:if="$_moreItems" class="dropdown d-sm-none" data-part="more">
 		<button type="button" class="fa-filters-icon-btn" data-bs-toggle="dropdown" data-bs-offset="0,8"
 			aria-expanded="false" aria-haspopup="menu" aria-controls="{$control->getFullName()}-more-menu"
@@ -305,9 +355,16 @@
 							<i class="fa-solid fa-table-columns fa-fw" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.editColumns}
 						</button>
 					</li>
-					<li n:foreach="$exports as $_export">
-						{$_export->setClass('dropdown-item fa-filters-more-item noajax')->render()}
+					<li n:if="$control->hasExportPanel()">
+						<button type="button" class="dropdown-item fa-filters-more-item" data-fa-filters-show="{$control->getFullName()}-export-toggle">
+							<i class="fa-solid fa-download fa-fw" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.export.title}
+						</button>
 					</li>
+					{if !$control->hasExportPanel()}
+						<li n:foreach="$exports as $_export">
+							{$_export->setClass('dropdown-item fa-filters-more-item noajax')->render()}
+						</li>
+					{/if}
 			</ul>
 		</div>
 	</div>

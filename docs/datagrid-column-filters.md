@@ -108,6 +108,11 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   `updatePreset!` (POST `id`, `name`, `shared`), smazání `deletePreset!`. Pole sestav nemají `name`, do formuláře
   filtrů se neposílají. Kdo smí sestavu měnit, rozhoduje úložiště (`GridPreset::$editable`, jinak
   `GridPresetException` 403); neplatný název vrátí JS v `payload.faFiltersPresetError`.
+- **Export** (`setExportPanel($handler, $email)`): tlačítko a panel místo tlačítek exportů knihovny - formát
+  XLSX / CSV, „Jen sloupce zobrazené v tabulce“ (výchozí) a „Poslat na e-mail“ s předvyplněnou adresou. Stažení
+  otevře JS mimo AJAX na adrese signálu `exportGrid!` (parametry `format`, `visible`), odeslání jde AJAXem
+  (POST `format`, `visible`, `email`); neplatnou adresu vrátí `payload.faFiltersExportError`. Data a soubor
+  připraví `$handler` vlastníka gridu podle aktuálních filtrů a hledání.
 - **Sloupce:** tlačítko Sloupce (jen grid s `setColumnsHideable()`) nahrazuje ozubené kolo knihovny a otevře dialog
   se zaškrtávátkem viditelnosti, šířkou Úzký / Auto / Široký (`fa-filters-col-narrow` / `-wide` na buňkách) a
   šipkami pořadí. Uloží se až Použít (signál `saveColumns!`, POST `columns` = JSON). Skryté sloupce knihovny

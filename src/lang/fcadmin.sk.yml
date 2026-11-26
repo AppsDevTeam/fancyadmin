@@ -54,6 +54,19 @@ datagrid:
     period: Obdobie
     periodPlaceholder: od - do
     presetsLabel: Rýchla voľba obdobia
+    export:
+      button: Export
+      title: Export
+      format: Formát
+      visibleOnly: Len stĺpce zobrazené v tabuľke
+      byEmail: Poslať na e-mail
+      email: E-mail
+      download: Stiahnuť
+      send: Odoslať
+      invalidEmail: Zadajte platný e-mail.
+      sent: 'Export odíde na %email%.'
+      subject: 'Export: %name%'
+      body: 'V prílohe je export „%name%“ (%count% záznamov) podľa filtrov v administrácii.'
     presets:
       title: Uložené zostavy
       mine: Moje zostavy

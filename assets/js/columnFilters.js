@@ -209,6 +209,12 @@ document.addEventListener('click', (e) => {
 		return;
 	}
 
+	const exportSubmit = e.target.closest('[data-fa-filters-export-submit]');
+	if (exportSubmit) {
+		runExport(exportSubmit.closest('[data-fa-filters-export]'));
+		return;
+	}
+
 	const overwrite = e.target.closest('[data-fa-filters-preset-overwrite]');
 	if (overwrite) {
 		const panel = overwrite.closest('[data-fa-filters-preset-save-form]');
@@ -287,6 +293,49 @@ function sendPreset(form, data) {
 		}
 	});
 }
+
+// Export: stažení jde mimo AJAX na adresu signálu, odeslání na e-mail AJAXem (soubor se připraví a e-mail zařadí do fronty)
+function runExport(panel) {
+	const format = panel.querySelector('[data-fa-filters-export-format]:checked')?.value ?? 'xlsx';
+	const visible = panel.querySelector('[data-fa-filters-export-visible]').checked ? '1' : '0';
+	const toggle = document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`);
+
+	if (!panel.querySelector('[data-fa-filters-export-mail]').checked) {
+		const url = new URL(panel.dataset.faFiltersExport, window.location.href);
+		url.searchParams.set(panel.dataset.paramFormat, format);
+		url.searchParams.set(panel.dataset.paramVisible, visible);
+		window.location.href = url.toString();
+		Dropdown.getOrCreateInstance(toggle).hide();
+		return;
+	}
+
+	const email = panel.querySelector('[data-fa-filters-export-email]');
+	const error = panel.querySelector('[data-fa-filters-export-error]');
+	email.classList.remove('is-invalid');
+	naja.makeRequest('POST', panel.dataset.faFiltersExport, { format, visible, email: email.value }, { history: false }).then((payload) => {
+		if (payload?.faFiltersExportError) {
+			email.classList.add('is-invalid');
+			error.textContent = payload.faFiltersExportError;
+			email.focus();
+		} else {
+			Dropdown.getOrCreateInstance(toggle).hide();
+		}
+	});
+}
+
+document.addEventListener('change', (e) => {
+	const mail = e.target.closest('[data-fa-filters-export-mail]');
+	if (!mail) {
+		return;
+	}
+	const panel = mail.closest('[data-fa-filters-export]');
+	panel.querySelector('[data-fa-filters-export-mail-field]').hidden = !mail.checked;
+	const submit = panel.querySelector('[data-fa-filters-export-submit]');
+	submit.textContent = mail.checked ? submit.dataset.labelSend : submit.dataset.labelDownload;
+	if (mail.checked) {
+		panel.querySelector('[data-fa-filters-export-email]').focus();
+	}
+});
 
 // Smazání sestavy se potvrzuje dřív, než odkaz převezme Naja
 document.addEventListener('click', (e) => {
@@ -489,6 +538,11 @@ document.addEventListener('hide.bs.dropdown', (e) => {
 // Enter v textovém poli panelu = Použít (formulář gridu má víc tlačítek, výchozí by bylo jiné)
 document.addEventListener('keydown', (e) => {
 	if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') {
+		return;
+	}
+	if (e.target.matches('[data-fa-filters-export-email]')) {
+		e.preventDefault();
+		runExport(e.target.closest('[data-fa-filters-export]'));
 		return;
 	}
 	if (e.target.matches('[data-fa-filters-preset-name]')) {
