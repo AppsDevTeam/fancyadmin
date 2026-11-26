@@ -179,22 +179,35 @@
 .fa-widgets-tone-neutral,
 .fa-widgets-tone-primary {
 	--fa-widgets-tone: var(--primaryColor);
+	--fa-widgets-tone-text: var(--fa-widgets-primary-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-primary-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
+
+// Tmavší text a světlé pozadí tónu (pás skupin tabulky). Projekt je může nastavit přesně proměnnými
+// --fa-widgets-{primary,success,warning,danger,info}-{text,bg}, jinak se odvodí z barvy tónu.
 
 .fa-widgets-tone-success {
 	--fa-widgets-tone: var(--bs-success);
+	--fa-widgets-tone-text: var(--fa-widgets-success-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-success-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-warning {
 	--fa-widgets-tone: var(--bs-warning);
+	--fa-widgets-tone-text: var(--fa-widgets-warning-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-warning-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-danger {
 	--fa-widgets-tone: var(--bs-danger);
+	--fa-widgets-tone-text: var(--fa-widgets-danger-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-danger-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-info {
 	--fa-widgets-tone: var(--bs-info);
+	--fa-widgets-tone-text: var(--fa-widgets-info-text, color-mix(in srgb, var(--fa-widgets-tone) 85%, #000));
+	--fa-widgets-tone-bg: var(--fa-widgets-info-bg, color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff)));
 }
 
 .fa-widgets-tone-neutral .fa-widgets-icon {
@@ -853,12 +866,7 @@
 	}
 }
 
-// Pás skupin nad záhlavím: pozadí v barvě skupiny (kraje se rozplývají), text v barvě skupiny.
-// Barvy odvozené z tónu, projekt je může upřesnit proměnnými --fa-widgets-band-bg / --fa-widgets-band-text.
 .table-responsive table.fa-widgets-table-grouped {
-	--fa-widgets-band-bg: color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff));
-	--fa-widgets-band-text: color-mix(in srgb, var(--fa-widgets-tone) 85%, #000);
-
 	// :nth-child(n) kvůli specificitě - pravidlo gridu je thead > tr:nth-child(2) a v balíčku je až za widgety
 	thead > tr:nth-child(n) {
 		position: static;
@@ -869,42 +877,43 @@
 		width: auto;
 	}
 
-	th.text-end,
-	td.text-end {
+	// volné místo si rozdělí sloupce (jako v návrhu), sloupec šipky je úzký
+	th.fa-widgets-table-arrow,
+	td.fa-widgets-table-arrow {
 		width: 1%;
 	}
 
-	.fa-widgets-table-groups > th {
+	// Pás skupin nad záhlavím: popisek vlevo v tmavší barvě skupiny na jejím světlém pozadí, skupiny na sebe
+	// navazují bez čar; sloupce před první skupinou do ní přecházejí, poslední skupina se ke konci rozplývá
+	.fa-widgets-table-groups > th:nth-child(n) {
 		padding: 7px 4px;
 		border: 0;
+		box-shadow: none;
 		background: transparent;
 		font-size: 11px;
 		font-weight: 500;
+		line-height: 16px;
 		letter-spacing: .07em;
+		text-align: left;
 		text-transform: uppercase;
+		white-space: nowrap;
 	}
 
 	.fa-widgets-table-groups > th.fa-widgets-table-group {
-		--fa-widgets-band-bg: color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff));
-		--fa-widgets-band-text: color-mix(in srgb, var(--fa-widgets-tone) 85%, #000);
-		text-align: left;
-		color: var(--fa-widgets-band-text);
-		background: var(--fa-widgets-band-bg);
+		color: var(--fa-widgets-tone-text);
+		background: var(--fa-widgets-tone-bg);
+	}
+
+	.fa-widgets-table-groups > th.fa-widgets-table-group-last {
+		background: linear-gradient(to right, var(--fa-widgets-tone-bg) calc(100% - 90px), transparent);
 	}
 
 	.fa-widgets-table-groups > th.fa-widgets-table-band-lead {
-		--fa-widgets-band-bg: color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff));
-		background: linear-gradient(to right, transparent, var(--fa-widgets-band-bg));
-	}
-
-	.fa-widgets-table-groups > th.fa-widgets-table-band-trail {
-		--fa-widgets-band-bg: color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff));
-		background: linear-gradient(to right, var(--fa-widgets-band-bg), transparent);
+		background: linear-gradient(to right, transparent, var(--fa-widgets-tone-bg));
 	}
 
 	.fa-widgets-table-groups > th.fa-widgets-table-band-gap {
-		--fa-widgets-band-bg: color-mix(in srgb, var(--fa-widgets-tone) 10%, var(--fa-surface, #fff));
-		background: var(--fa-widgets-band-bg);
+		background: var(--fa-widgets-tone-bg);
 	}
 }
 
@@ -1003,6 +1012,44 @@
 	letter-spacing: 1px;
 	text-transform: uppercase;
 	color: var(--primaryColor);
+}
+
+// Barevná linka nahoře na KPI kartě (KpiWidget::setAccent)
+.fa-widgets-card.fa-widgets-accent {
+	border-top: 3px solid var(--fa-widgets-tone);
+}
+
+// Řada údajů jako samostatné dlaždice (FiguresWidget::setCards) - widget sám kartu nemá
+.fa-widgets-figures.fa-widgets-figures-cards {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 12px;
+
+	> .fa-widgets-figure {
+		padding: 16px 18px 14px;
+		border: 1px solid var(--fa-border);
+		background-color: var(--fa-surface);
+	}
+
+	> .fa-widgets-figure + .fa-widgets-figure {
+		border-left: 1px solid var(--fa-border);
+	}
+
+	.fa-widgets-figure-label {
+		font-size: .6875rem;
+		font-weight: 500;
+		letter-spacing: .09em;
+		text-transform: uppercase;
+	}
+
+	.fa-widgets-figure-value {
+		font-size: 1.25rem;
+		white-space: normal;
+	}
+
+	.fa-widgets-figure-note {
+		display: block;
+		margin: 6px 0 0;
+	}
 }
 
 // Dlaždice detailu (KpiWidget::setDetail) - design 4.6
@@ -1132,6 +1179,12 @@
 		border: 0;
 		box-shadow: none;
 	}
+
+	// prázdná tabulka: text odsazený jako nadpis karty, odděleny linkou jako řádky tabulky
+	> .fa-widgets-empty {
+		padding: 14px 20px 16px;
+		border-top: 1px solid var(--fa-border);
+	}
 }
 
 // Panel otevíraný odkazem jiné karty (setPanel) - design 4.11
@@ -1233,48 +1286,6 @@
 .fa-widgets-page-subtitle {
 	font-size: .875rem;
 	color: var(--fa-text-muted);
-}
-
-// Tabulka se skupinami sloupců: hlavička má dva skutečné řádky - pravidla gridu (.table-responsive table)
-// přilepují druhý řádek s pevným odsazením (u gridu je to jen oddělovací linka) a první sloupec stahují
-// na 1 % šířky. Tady hlavička nelepí, číselné sloupce jsou široké podle obsahu a zbytek dostane název.
-.table-responsive table.fa-widgets-table-grouped {
-	// :nth-child(n) kvůli specificitě - pravidlo gridu je thead > tr:nth-child(2) a v balíčku je až za widgety
-	thead > tr:nth-child(n) {
-		position: static;
-	}
-
-	thead > tr > th:first-child,
-	tbody > tr > td:first-child {
-		width: auto;
-	}
-
-	th.text-end,
-	td.text-end {
-		width: 1%;
-	}
-
-	.fa-widgets-table-group + .fa-widgets-table-group {
-		box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 30%, transparent), inset 1px 0 0 color-mix(in srgb, currentColor 30%, transparent);
-	}
-
-	// spodní okraj hlavičky jen u druhého řádku - sloupec přes oba řádky (rowspan) končí s ním
-	.fa-widgets-table-groups > th {
-		border-bottom-width: 0;
-	}
-
-	.fa-widgets-table-groups > th[rowspan] {
-		border-bottom-width: 1px;
-	}
-}
-
-// Užší okraje buněk (TableWidget::setCompact) - tabulka v půlce šířky mřížky
-.table-responsive table.fa-widgets-table-compact {
-	th,
-	td {
-		padding-left: 12px;
-		padding-right: 12px;
-	}
 }
 
 // Výběr období v hlavičce stránky (renderPeriod): tónované tlačítko v primární barvě

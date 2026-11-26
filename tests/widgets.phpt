@@ -673,6 +673,25 @@ test('rada udaju: hodnota v barve tonu, jednotka, doplnek, bublina popisku a sti
 	Assert::contains('[fcadmin.widgets.empty]', $html);
 });
 
+test('volitelne: barevna linka KPI karty (setAccent) a rada udaju jako samostatne dlazdice (setCards); bez voleb beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpi('realized', 'Tržba', fn() => 976)->setTone(WidgetTone::Success)->setAccent();
+	$widgetGrid->addKpi('plainKpi', 'Bez linky', fn() => 1)->setTone(WidgetTone::Success);
+	$widgetGrid->addFigures('cards', 'Realizace', fn() => [new WidgetFigure('Počet realizací', 10, unit: 'ks', note: 'uzavřené smlouvy')])->setCards();
+	$widgetGrid->addFigures('plainFigures', 'V kartě', fn() => [new WidgetFigure('Nové nábory', 124)]);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 900);
+
+	Assert::contains('<div class="card fa-widgets-card fa-widgets-accent fa-widgets-tone-success">', $part('realized'));
+	Assert::notContains('fa-widgets-accent', $part('plainKpi'));
+	// dlaždice: každý údaj je karta, widget sám kartu ani nadpis nemá
+	Assert::contains('<div class="fa-widgets-figures fa-widgets-figures-cards"><div class="fa-widgets-figure card fa-widgets-card">', $part('cards'));
+	Assert::notContains('Realizace', $part('cards'));
+	Assert::contains('<div class="card fa-widgets-card"><div class="fa-widget-header">', $part('plainFigures'));
+	Assert::contains('<div class="fa-widgets-figures"><div class="fa-widgets-figure">', $part('plainFigures'));
+});
+
 test('upozorneni: zavaznost, poznamka, hodnota, proklik s vychozim popiskem a odkaz v paticce; prazdny seznam', function () {
 	$widgetGrid = widgetGrid();
 	$widgetGrid->addAlerts('alerts', 'Upozornění k řešení', fn() => [
@@ -833,9 +852,10 @@ test('tabulka: skupiny sloupcu, radek Celkem a proklik radku jsou volitelne', fu
 
 	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
 
-	// pás skupin nad záhlavím (sousední sloupce stejné skupiny pod jedním nadpisem, kraje se rozplývají),
+	// pás skupin nad záhlavím (sousední sloupce stejné skupiny pod jedním nadpisem, sloupce před první skupinou
+	// pod jedním přechodem, poslední skupina sahá přes sloupec šipky),
 	// záhlaví je jeden plný řádek; prokliknutelné řádky mají vpravo šipku
-	Assert::contains('<tr class="fa-widgets-table-groups"><th colspan="1" class="fa-widgets-table-band fa-widgets-table-band-lead fa-widgets-tone-success" aria-hidden="true"></th><th colspan="2" class="fa-widgets-table-group fa-widgets-tone-success" scope="colgroup">Realizované</th><th colspan="1" class="fa-widgets-table-group fa-widgets-tone-warning" scope="colgroup">V rezervacích</th><th class="fa-widgets-table-band fa-widgets-table-band-trail fa-widgets-tone-warning" aria-hidden="true"></th></tr>', $html);
+	Assert::contains('<tr class="fa-widgets-table-groups"><th colspan="1" class="fa-widgets-table-band fa-widgets-table-band-lead fa-widgets-tone-success" aria-hidden="true"></th><th colspan="2" class="fa-widgets-table-group fa-widgets-tone-success" scope="colgroup">Realizované</th><th colspan="2" class="fa-widgets-table-group fa-widgets-table-group-last fa-widgets-tone-warning" scope="colgroup">V rezervacích</th></tr>', $html);
 	Assert::contains('<tr><th scope="col">Pobočka</th><th class="text-end" scope="col">Tržba</th><th class="text-end" scope="col">Ks</th><th class="text-end" scope="col">Provize</th><th class="fa-widgets-table-arrow" aria-hidden="true"></th></tr>', $html);
 	Assert::contains('<tr class="fa-widgets-row-linked"><td><a href="/obrat?branch=7" class="stretched-link">Plzeň</a></td>', $html);
 	Assert::contains('<td class="fa-widgets-table-arrow"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></td>', $html);

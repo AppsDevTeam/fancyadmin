@@ -57,7 +57,7 @@ final class TableWidget extends Widget
 		$groups = [];
 		foreach ($this->columns as $column) {
 			$last = array_key_last($groups);
-			if ($last !== null && $column->group !== null && $groups[$last]['label'] === $column->group) {
+			if ($last !== null && $groups[$last]['label'] === $column->group) {
 				$groups[$last]['span']++;
 			} else {
 				$groups[] = ['label' => $column->group, 'span' => 1, 'tone' => ($column->groupTone ?? WidgetTone::Primary)->value];

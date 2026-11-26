@@ -4,9 +4,12 @@
 
 {* Dlaždice jsou samy kartami, ostatní widgety jsou v kartě. Sbalitelný widget je <details> - hlavička je
    <summary>, otevřít i zavřít jde i klávesnicí; každý se otevírá a zavírá zvlášť. *}
-{var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section'}
+{* Řada údajů jako samostatné dlaždice (FiguresWidget::setCards) nemá společnou kartu ani nadpis *}
+{var $_figureCards = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget && $widget->isCards() && !$widget->isUnavailable()}
+{var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section' && !$_figureCards}
+{var $_accent = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget && $widget->isAccent() ? 'fa-widgets-accent fa-widgets-tone-' . $widget->getTone()->value : null}
 {var $_link = $widget->getLink() !== null && $widget->getLinkLabel() === null && $widget->getType() !== 'stat' && !$widget->isCollapsible() ? $widget->getLink() : null}
-<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked, $widget->getPanelGroup() !== null ? fa-widgets-panel, $widget->getToggle() ? fa-widgets-toggler" n:attr="data-widget-toggler: $widget->getToggle() ? $widget->getToggle()['target']">
+<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $_accent, $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked, $widget->getPanelGroup() !== null ? fa-widgets-panel, $widget->getToggle() ? fa-widgets-toggler" n:attr="data-widget-toggler: $widget->getToggle() ? $widget->getToggle()['target']">
 	{if $widget->isCollapsible()}
 		<summary class="fa-widget-header fa-widgets-collapsible-summary">
 			<span class="fa-widget-heading">
@@ -15,7 +18,7 @@
 			</span>
 			<i class="fa-solid fa-chevron-down fa-widgets-collapsible-chevron" aria-hidden="true"></i>
 		</summary>
-	{elseif $widget->getType() !== 'section'}
+	{elseif $widget->getType() !== 'section' && !$_figureCards}
 		{include header}
 	{/if}
 	<div n:class="$_card ? 'card-body fa-widgets-card-body'" n:snippet="body">
@@ -163,8 +166,8 @@
 {define widget-figures}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget $widget}
 	{if $widget->getFigures()}
-		<div class="fa-widgets-figures">
-			<div n:foreach="$widget->getFigures() as $_figure" class="fa-widgets-figure">
+		<div n:class="fa-widgets-figures, $widget->isCards() ? fa-widgets-figures-cards">
+			<div n:foreach="$widget->getFigures() as $_figure" n:class="fa-widgets-figure, $widget->isCards() ? 'card fa-widgets-card'">
 				<div class="fa-widgets-figure-label" n:attr="title: $_figure->title">{$_figure->label}</div>
 				<div class="fa-widgets-figure-value fa-widgets-value-tone-{$_figure->tone->value}">
 					{$format::value($_figure->value ?? '–')}<span n:if="$_figure->unit !== null" class="fa-widgets-unit">{$_figure->unit}</span>
@@ -220,21 +223,25 @@
 		<div class="table-responsive">
 			<table n:class="table, fa-widgets-table, mb-0, $_groups ? fa-widgets-table-grouped, $widget->isCompact() ? fa-widgets-table-compact">
 				<thead>
-					{* Pás skupin sloupců nad záhlavím v barvě skupiny; před první a za poslední skupinou se rozplývá *}
+					{* Pás skupin sloupců nad záhlavím v barvě skupiny: sloupce před první skupinou do ní přecházejí, poslední
+					   skupina sahá až k okraji tabulky (i přes sloupec šipky) a ke konci se rozplývá *}
 					<tr n:if="$_groups" class="fa-widgets-table-groups">
 						{var $_named = array_values(array_filter($_groups, fn($group) => $group['label'] !== null))}
+						{var $_cells = array_values($_groups)}
+						{var $_lastNamed = max(array_keys(array_filter($_cells, fn($group) => $group['label'] !== null)))}
+						{php $_cells[$_lastNamed]['span'] += array_sum(array_column(array_slice($_cells, $_lastNamed + 1), 'span')) + ($_linked ? 1 : 0)}
+						{php $_cells = array_slice($_cells, 0, $_lastNamed + 1)}
 						{var $_seen = 0}
-						{foreach $_groups as $_group}
+						{foreach $_cells as $_group}
 							{if $_group['label'] === null}
-								{var $_edge = $_seen === 0 ? 'lead' : ($_seen === count($_named) ? 'trail' : 'gap')}
+								{var $_edge = $_seen === 0 ? 'lead' : 'gap'}
 								{var $_tone = $_seen === 0 ? $_named[0]['tone'] : $_named[$_seen - 1]['tone']}
 								<th colspan="{$_group['span']}" class="fa-widgets-table-band fa-widgets-table-band-{$_edge} fa-widgets-tone-{$_tone}" aria-hidden="true"></th>
 							{else}
 								{php $_seen++}
-								<th colspan="{$_group['span']}" class="fa-widgets-table-group fa-widgets-tone-{$_group['tone']}" scope="colgroup">{$_group['label']}</th>
+								<th colspan="{$_group['span']}" n:class="fa-widgets-table-group, $iterator->last ? fa-widgets-table-group-last, 'fa-widgets-tone-' . $_group['tone']" scope="colgroup">{$_group['label']}</th>
 							{/if}
 						{/foreach}
-						<th n:if="$_linked" class="fa-widgets-table-band fa-widgets-table-band-trail fa-widgets-tone-{$_named[count($_named) - 1]['tone']}" aria-hidden="true"></th>
 					</tr>
 					<tr>
 						<th n:foreach="$widget->getColumns() as $column" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>

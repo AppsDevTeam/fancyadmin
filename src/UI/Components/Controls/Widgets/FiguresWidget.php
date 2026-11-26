@@ -41,4 +41,21 @@ final class FiguresWidget extends Widget
 		}
 		return $this->resolvedFigures;
 	}
+
+	private bool $cards = false;
+
+	/**
+	 * Údaje jako samostatné dlaždice vedle sebe (bez společné karty) - malý popisek verzálkami, hodnota, pod ní
+	 * poznámka (design 4.6, řada dlaždic na podstránce Obrat). Bez volby jedna karta s údaji oddělenými linkou.
+	 */
+	public function setCards(bool $cards = true): static
+	{
+		$this->cards = $cards;
+		return $this;
+	}
+
+	public function isCards(): bool
+	{
+		return $this->cards;
+	}
 }

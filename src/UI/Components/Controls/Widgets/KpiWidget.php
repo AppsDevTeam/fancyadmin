@@ -193,4 +193,18 @@ final class KpiWidget extends Widget
 	{
 		return $this->detail;
 	}
+
+	private bool $accent = false;
+
+	/** Barevná linka nahoře na kartě v tónu karty (souhrn na podstránce: tržba zeleně, rezervace oranžově…). */
+	public function setAccent(bool $accent = true): static
+	{
+		$this->accent = $accent;
+		return $this;
+	}
+
+	public function isAccent(): bool
+	{
+		return $this->accent;
+	}
 }
