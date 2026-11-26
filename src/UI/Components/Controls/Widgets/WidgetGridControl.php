@@ -38,6 +38,8 @@ class WidgetGridControl extends Control
 
 	private ?string $headerImage = null;
 
+	private bool $periodRendered = false;
+
 	public function setColumns(int $columns): static
 	{
 		if ($columns < 1 || $columns > self::MAX_COLUMNS) {
@@ -147,7 +149,7 @@ class WidgetGridControl extends Control
 
 	public function hasHeader(): bool
 	{
-		return $this->headerTitle !== null || $this->hasPeriods();
+		return $this->headerTitle !== null || ($this->hasPeriods() && !$this->periodRendered);
 	}
 
 	/** @param callable(?WidgetPeriod): (int|float|string) $value */
@@ -246,5 +248,22 @@ class WidgetGridControl extends Control
 		$this->template->widgetGrid = $this;
 		$this->template->setFile(__DIR__ . '/WidgetGridControl.latte');
 		$this->template->render();
+	}
+
+	/**
+	 * Jen výběr období (`{control dashboard:period}`) - do hlavičky stránky podstránky dashboardu. Mřížka
+	 * vykreslená potom ho už nemá; bez nadpisu (setHeader) pak nemá ani pás hlavičky.
+	 */
+	public function renderPeriod(): void
+	{
+		$this->periodRendered = true;
+		$this->template->widgetGrid = $this;
+		$this->template->setFile(__DIR__ . '/WidgetGridPeriod.latte');
+		$this->template->render();
+	}
+
+	public function isPeriodRendered(): bool
+	{
+		return $this->periodRendered;
 	}
 }

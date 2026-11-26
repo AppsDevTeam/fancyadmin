@@ -10,13 +10,9 @@
 		<h1 n:ifcontent class="fa-widgets-header-title">{$widgetGrid->getHeaderTitle()}</h1>
 		<div n:ifcontent class="fa-widgets-header-note">{$widgetGrid->getHeaderText()}</div>
 	</div>
-	<form n:if="$widgetGrid->hasPeriods()" class="fa-widgets-period fa-widgets-header-period" method="get" action="{$presenter->getHttpRequest()->getUrl()->getPath()}">
-		<input n:foreach="ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl::queryFields($presenter->getHttpRequest()->getUrl()->getQuery(), $widgetGrid->getPeriodParameterName()) as $_name => $_value" type="hidden" name="{$_name}" value="{$_value}">
-		<select name="{$widgetGrid->getPeriodParameterName()}" class="form-select form-select-sm" aria-label="{_fcadmin.widgets.period.label}" data-widget-grid-period>
-			<option n:foreach="$widgetGrid->getPeriodOptions() as $_period" value="{$_period->value}" n:attr="selected: $_period === $widgetGrid->getPeriod()">{_$_period->getTranslationKey()}</option>
-		</select>
-		<noscript><button type="submit" class="btn btn-sm btn-light">{_fcadmin.widgets.period.submit}</button></noscript>
-	</form>
+	{if $widgetGrid->hasPeriods() && !$widgetGrid->isPeriodRendered()}
+		{include 'WidgetGridPeriod.latte', class: 'fa-widgets-header-period'}
+	{/if}
 </div>
 <div class="fa-widgets fa-widgets-cols-{$widgetGrid->getColumns()}">
 	{foreach $widgetGrid->getWidgets() as $widget}

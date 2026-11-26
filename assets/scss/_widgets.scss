@@ -729,6 +729,69 @@
 	}
 }
 
+// Skupiny sloupců (WidgetTableColumn(group:)), řádek Celkem (setTotal) a proklik řádku (setRowLink)
+.fa-widgets-table {
+	// barva hlavičky (projekt může mít hlavičku tabulek tmavou), linka pod skupinou z ní odvozená
+	.fa-widgets-table-group {
+		text-align: center;
+		border-bottom: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+	}
+
+	.fa-widgets-table-groups th[rowspan] {
+		vertical-align: bottom;
+	}
+
+	.fa-widgets-table-total td {
+		font-weight: 600;
+		background-color: color-mix(in srgb, var(--primaryColor) 6%, var(--fa-surface));
+		border-top: 2px solid var(--fa-border);
+	}
+
+	.fa-widgets-row-linked {
+		position: relative;
+		transform: scale(1);
+		cursor: pointer;
+
+		&:hover > td {
+			background-color: var(--fa-surface-hover);
+		}
+
+		.stretched-link {
+			color: inherit;
+			text-decoration: none;
+		}
+
+		.stretched-link:hover {
+			color: var(--primaryColor);
+		}
+	}
+}
+
+// Výběr období v hlavičce stránky (renderPeriod): tónované tlačítko v primární barvě
+:root body .fa-widgets-page-period .ts-wrapper,
+.fa-widgets-page-period .form-select {
+	--control-height: 29px;
+	--control-padding-x: 13px;
+	width: auto;
+	border: 0;
+	border-radius: 0;
+	background-color: color-mix(in srgb, var(--primaryColor) 8%, transparent);
+	color: var(--primaryColor);
+	font-weight: 500;
+
+	&:hover:not(.focus) {
+		border: 0;
+		background-color: color-mix(in srgb, var(--primaryColor) 14%, transparent);
+	}
+
+	.ts-control,
+	.ts-control > .item,
+	.ts-control > input {
+		color: inherit;
+		font: inherit;
+	}
+}
+
 // Sloupec s WidgetTableColumn(wrap: true) se zalamuje, ostatní zůstávají na jednom řádku
 .fa-widgets-table td.fa-widgets-wrap {
 	white-space: normal;

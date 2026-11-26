@@ -154,6 +154,11 @@ $options)` na mřížce přidá do pásu výběr období, které dostanou všech
 (`Widget::setPeriods()` má přednost). Stav je v URL (`dashboard-period`), výchozí do odkazů nejde. Změna
 selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se tím skoro všechny widgety.
 
+Podstránka dashboardu (detail, na který se z karty proklikne) má výběr období v hlavičce stránky:
+`{control dashboard:period}` (`renderPeriod()`) ho vykreslí samostatně jako tónované tlačítko a mřížka
+vykreslená potom ho už nemá; bez `setHeader()` pak nemá ani pás hlavičky. Stejné jméno komponenty
+(`dashboard`) znamená stejný parametr období, odkaz z dashboardu ho tak může předat.
+
 ## Widgety
 
 | metoda | widget |
@@ -164,7 +169,7 @@ selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se
 | `addFigures($name, $title, fn() => WidgetFigure[])` | řada údajů v jedné kartě oddělených linkou; `WidgetFigure`: label, value, unit, note (šedý doplněk), tone, title (bublina popisku), badges |
 | `addAlerts($name, $title, fn() => WidgetAlert[])` | upozornění k řešení: text, tón (`Warning` / `Danger` - ikona a podbarvení), poznámka, hodnota, odkaz s popiskem (výchozí `fcadmin.widgets.detail`); prázdné `fcadmin.widgets.alerts.empty` |
 | `addTiles($name, fn() => WidgetTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `WidgetTile`: label, value, note, icon, link, tone |
-| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava; `wrap: true` zalomí dlouhý text, jinak je řádek jako v gridu na jednom řádku), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty` |
+| `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava; `wrap: true` zalomí dlouhý text, jinak je řádek jako v gridu na jednom řádku), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty`. Volitelně `WidgetTableColumn(group: '…')` (nadpis skupiny nad sousedními sloupci), `setTotal(řádek|fn)` (řádek Celkem v patičce) a `setRowLink(fn(array $row): ?string)` (proklik řádku - odkazem je první buňka a celý řádek) |
 | `addChart($name, $title, fn() => WidgetChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
 | `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$widgetGrid`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
 

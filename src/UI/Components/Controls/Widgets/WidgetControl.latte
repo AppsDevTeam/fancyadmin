@@ -173,22 +173,49 @@
 {/define}
 
 {define widget-table}
+	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\TableWidget $widget}
 	{if $widget->getRows()}
+		{var $_groups = $widget->getColumnGroups()}
+		{var $_total = $widget->getTotal()}
 		<div class="table-responsive">
 			<table class="table fa-widgets-table mb-0">
 				<thead>
+					{* Skupiny sloupců: sloupec bez skupiny zabere oba řádky hlavičky *}
+					<tr n:if="$_groups" class="fa-widgets-table-groups">
+						{var $_index = 0}
+						{foreach $_groups as $_group}
+							{if $_group['label'] === null}
+								{var $_column = array_values($widget->getColumns())[$_index]}
+								<th rowspan="2" n:class="$_column->numeric ? 'text-end'" scope="col">{$_column->label}</th>
+							{else}
+								<th colspan="{$_group['span']}" class="fa-widgets-table-group" scope="colgroup">{$_group['label']}</th>
+							{/if}
+							{php $_index += $_group['span']}
+						{/foreach}
+					</tr>
 					<tr>
-						<th n:foreach="$widget->getColumns() as $column" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>
+						<th n:foreach="$widget->getColumns() as $column" n:if="!$_groups || $column->group !== null" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr n:foreach="$widget->getRows() as $row">
+					{foreach $widget->getRows() as $row}
+						{var $_rowLink = $widget->getRowLink($row)}
+						<tr n:class="$_rowLink !== null ? fa-widgets-row-linked">
+							{foreach $widget->getColumns() as $key => $column}
+								{var $_value = $row[$key] ?? null}
+								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst() && $_rowLink !== null}<a href="{$_rowLink}" class="stretched-link">{/if}{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}{if $iterator->isFirst() && $_rowLink !== null}</a>{/if}</td>
+							{/foreach}
+						</tr>
+					{/foreach}
+				</tbody>
+				<tfoot n:if="$_total !== null">
+					<tr class="fa-widgets-table-total">
 						{foreach $widget->getColumns() as $key => $column}
-							{var $_value = $row[$key] ?? null}
-							<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</td>
+							{var $_value = $_total[$key] ?? null}
+							<td n:class="$column->numeric ? 'text-end text-nowrap'">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</td>
 						{/foreach}
 					</tr>
-				</tbody>
+				</tfoot>
 			</table>
 		</div>
 	{else}

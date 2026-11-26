@@ -814,3 +814,55 @@ test('graf se zvyraznenym pasmem: volba pluginu, spatne zadani vyhodi vyjimku', 
 	Assert::exception(fn() => new WidgetChart('line', ['a'], [['data' => [1]]], highlight: [1]), InvalidArgumentException::class);
 });
 
+
+test('tabulka: skupiny sloupcu, radek Celkem a proklik radku jsou volitelne', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addTable('breakdown', 'Rozpad', [
+		'name' => 'Pobočka',
+		'sales' => new WidgetTableColumn('Tržba', numeric: true, group: 'Realizované'),
+		'count' => new WidgetTableColumn('Ks', numeric: true, group: 'Realizované'),
+		'reserved' => new WidgetTableColumn('Provize', numeric: true, group: 'V rezervacích'),
+	], fn() => [
+		['id' => 7, 'name' => 'Plzeň', 'sales' => 100, 'count' => 2, 'reserved' => 5],
+		['id' => null, 'name' => 'bez pobočky', 'sales' => 10, 'count' => 1, 'reserved' => 0],
+	])
+		->setTotal(fn() => ['name' => 'Celkem', 'sales' => 110, 'count' => 3, 'reserved' => 5])
+		->setRowLink(fn(array $row) => $row['id'] !== null ? '/obrat?branch=' . $row['id'] : null);
+	$widgetGrid->addTable('plain', 'Prostá', ['a' => 'A'], fn() => [['a' => 'x']]);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+
+	// sloupec bez skupiny přes oba řádky hlavičky, sousední sloupce stejné skupiny pod jedním nadpisem
+	Assert::contains('<tr class="fa-widgets-table-groups"><th rowspan="2" scope="col">Pobočka</th><th colspan="2" class="fa-widgets-table-group" scope="colgroup">Realizované</th><th colspan="1" class="fa-widgets-table-group" scope="colgroup">V rezervacích</th></tr>', $html);
+	Assert::contains('<tr><th class="text-end" scope="col">Tržba</th><th class="text-end" scope="col">Ks</th><th class="text-end" scope="col">Provize</th></tr>', $html);
+	Assert::contains('<tr class="fa-widgets-row-linked"><td><a href="/obrat?branch=7" class="stretched-link">Plzeň</a></td>', $html);
+	Assert::contains('<tr><td>bez pobočky</td>', $html);
+	Assert::contains('<tfoot><tr class="fa-widgets-table-total"><td>Celkem</td><td class="text-end text-nowrap">110</td>', $html);
+	// tabulka bez voleb má hlavičku na jednom řádku a žádnou patičku
+	$plain = substr($html, strpos($html, 'data-widget="plain"'));
+	Assert::contains('<thead><tr><th scope="col">A</th></tr></thead>', $plain);
+	Assert::notContains('<tfoot', $plain);
+});
+
+test('vyber obdobi jde vykreslit zvlast do hlavicky stranky, mrizka ho pak nema', function () {
+	$presenter = pagePresenter('dashboard-period=thisYear');
+	$widgetGrid = new WidgetGridControl();
+	$widgetGrid->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR]);
+	$widgetGrid->addKpi('kpi', 'Obrat', fn() => 1);
+	$presenter->addComponent($widgetGrid, 'dashboard');
+
+	ob_start();
+	$widgetGrid->renderPeriod();
+	$period = ob_get_clean();
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('<form class="fa-widgets-period fa-widgets-page-period"', $period);
+	Assert::contains('<option value="thisYear" selected>', $period);
+	Assert::notContains('data-widget-grid-period', $html);
+	Assert::notContains('fa-widgets-header', $html);
+
+	// bez renderPeriod() je výběr v pásu hlavičky jako dřív
+	$other = widgetGrid(pagePresenter(''));
+	$other->setPeriods(WidgetPeriod::THIS_MONTH, [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_YEAR]);
+	Assert::contains('<form class="fa-widgets-period fa-widgets-header-period"', renderWidgetGrid($other));
+});
