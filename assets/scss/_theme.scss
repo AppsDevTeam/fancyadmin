@@ -1997,6 +1997,11 @@ iframe {
 	color: var(--fa-text-muted);
 }
 
+// Seznam voleb vyjíždí vedle menu - .dropdown-menu by ho ořízl (overflow: hidden kvůli zaobleným rohům)
+.user-dropdown:has(.user-menu-submenu) {
+	overflow: visible;
+}
+
 .user-dropdown .user-menu-submenu {
 	position: relative;
 	cursor: pointer;
