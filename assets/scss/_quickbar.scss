@@ -1002,7 +1002,8 @@ body {
 	}
 }
 
-.quickbar-chat-lock {
+.quickbar-chat-lock,
+.quickbar-chat-muted {
 	margin-left: 6px;
 	font-size: 10px;
 	color: var(--quickbar-faint);

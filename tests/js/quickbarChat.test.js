@@ -1,5 +1,5 @@
 // Chat v rychlé liště - téma konverzace, nabídka plusu, výběr zpráv, výběr položky s hledáním,
-// kanály, vlákna, připnuté zprávy, připomenutí a přílohy
+// kanály, vlákna, připnuté zprávy, připomenutí, přílohy a ztlumení
 // (assets/js/quickbar.js, README sekce 29). Co zdroj neumí, lišta neukáže.
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,13 +21,13 @@ function quickbarHtml() {
 			<div class="quickbar-chat-current" data-quickbar-chat-current data-back="Zpět" data-colleague="Kolega" data-group="Skupina"
 				data-channel="Kanál" data-private-channel="Soukromý kanál" data-thread="Vlákno" data-thread-back="Zpět do konverzace"
 				data-follow="Sledovat" data-unfollow="Přestat sledovat"
-				data-members-one="%count% člen" data-members-few="%count% členové" data-members-many="%count% členů"></div>
+				data-members-one="%count% člen" data-members-few="%count% členové" data-members-many="%count% členů" data-muted="Ztlumeno"></div>
 			<div class="quickbar-chat-list">
 				<input type="text" data-quickbar-chat-query>
 				<div data-quickbar-chat-tools data-new="Nový kanál" data-browse="Procházet kanály" hidden></div>
 				<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="Nic" data-no-results="Nic pro %query%"
 					data-threads="Vlákna" data-threads-hint="Odpovědi ve vláknech, která sledujete"
-					data-reminders="Připomenout později" data-reminders-hint="Zprávy, ke kterým se máte vrátit"></div>
+					data-reminders="Připomenout později" data-reminders-hint="Zprávy, ke kterým se máte vrátit" data-muted="Ztlumeno"></div>
 				<div data-quickbar-channels data-new="Nový kanál" data-browse="Procházet kanály" data-back="Zpět" data-name="Název" data-private="Soukromý"
 					data-members="Členové" data-members-search="Hledat kolegu" data-create="Vytvořit kanál" data-colleagues-empty="Nikdo" data-empty="Žádné kanály"
 					data-members-count="Členů: %count%" data-join="Připojit" data-open="Otevřít"
@@ -747,6 +747,64 @@ describe('kanály, vlákna, připnuté zprávy, připomenutí a přílohy', () =
 			click('[data-quickbar-replies="1"]');
 			await settle();
 			expect($('[data-quickbar-chat-members]').hidden).toBe(true);
+		});
+	});
+
+	describe('ztlumená konverzace', () => {
+		let muted;
+
+		beforeEach(() => {
+			muted = true;
+			const messagesOf = source.chats.messages;
+			source.chats.list = () => [
+				{ id: 7, name: 'Eva Recepční', unread: 2 },
+				{ id: 20, name: 'recepce', kind: 'channel', unread: 3, muted: true },
+			];
+			source.chats.messages = (chatId) => ({ ...messagesOf(chatId), muted: chatId === 20 && muted });
+			source.chats.menu = () => [{ id: 'mute', label: muted ? 'Zrušit ztlumení' : 'Ztlumit' }];
+			source.chats.menuAction = () => {
+				muted = !muted;
+			};
+		});
+
+		it('v seznamu má zvonek a nepřečtené šedě', async () => {
+			await openChatPanel();
+
+			const $muted = $('[data-quickbar-chat="20"]');
+			expect($muted.querySelector('.quickbar-chat-name .quickbar-chat-muted')).not.toBeNull();
+			expect($muted.querySelector('.quickbar-chat-name .visually-hidden').textContent).toBe(' Ztlumeno');
+			expect($muted.querySelector('.badge').classList.contains('bg-secondary')).toBe(true);
+
+			const $other = $('[data-quickbar-chat="7"]');
+			expect($other.querySelector('.quickbar-chat-muted')).toBeNull();
+			expect($other.querySelector('.badge').classList.contains('bg-danger')).toBe(true);
+		});
+
+		it('hlavička ukáže zvonek a změnu z nabídky hned', async () => {
+			await openChatPanel();
+			click('[data-quickbar-chat="20"]');
+			await settle();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-current-name .quickbar-chat-muted')).not.toBeNull();
+
+			click('[data-quickbar-chat-plus]');
+			await settle();
+			click('[data-quickbar-chat-menu-item="mute"]');
+			await settle();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-muted')).toBeNull();
+
+			click('[data-quickbar-chat-plus]');
+			await settle();
+			click('[data-quickbar-chat-menu-item="mute"]');
+			await settle();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-muted')).not.toBeNull();
+		});
+
+		it('přímá konverzace bez muted zvonek nemá', async () => {
+			await openChatPanel();
+			click('[data-quickbar-chat="7"]');
+			await settle();
+
+			expect($('[data-quickbar-chat-current] .quickbar-chat-muted')).toBeNull();
 		});
 	});
 });

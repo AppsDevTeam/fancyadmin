@@ -136,6 +136,7 @@ layout:
       membersMany: '%count% členů'
       membersList: Členové konverzace
       memberYou: (vy)
+      muted: Ztlumeno
       channelJoin: Připojit
       channelOpen: Otevřít
       thread: Vlákno

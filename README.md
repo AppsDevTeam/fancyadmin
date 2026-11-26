@@ -3397,6 +3397,9 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
 - `chats.messages()` může vrátit i `members: [{ id, name, initials?, me? }]` - u konverzace s `kind` `channel`
   nebo `group` je v hlavičce pod názvem počet členů (*Kanál · 6 členů*), klik pod hlavičkou rozbalí jejich
   seznam s avatary (`me` = za jménem *(vy)*). U přímé konverzace dvou lidí se nic neukazuje.
+- Konverzace z `chats.list()` s `muted: true` je ztlumená: za názvem má přeškrtnutý zvonek (v seznamu i v hlavičce)
+  a počet nepřečtených šedě místo červeně. `chats.messages()` může vrátit `muted` (boolean), který přepíše
+  položku seznamu, takže hlavička změnu ukáže hned. Ztlumit a zrušit ztlumení dává zdroj do `chats.menu()`.
 - Zpráva může mít `author` (jméno nad bublinou cizí zprávy), `system: true` (šedý text uprostřed, bez akcí),
   `attachments: [{ name, url, size?, image? }]` (obrázek jako náhled, jinak soubor s velikostí - `size`
   v bajtech, nebo hotový text; obojí otevírá nová záložka) a `pinned` (špendlík u času).

@@ -22,6 +22,9 @@
 //            Akce si můžou nechat vybrat položku přes pickInQuickbar().
 //            Kanály, vlákna, připnuté zprávy, připomenutí a přílohy (volitelné, bez metody lišta prvek neukáže):
 //            list() položka může mít kind: 'channel' (avatar „#“) a private: true (zámek),
+//            list() položka i messages(chatId) → { …, muted?: boolean } - ztlumená konverzace: přeškrtnutý zvonek
+//              v seznamu i v hlavičce, nepřečtené šedě; muted ze zpráv přepíše položku seznamu (ztlumení z nabídky
+//              plusu je v hlavičce vidět hned), ovládání si zdroj dá do menu(chatId),
 //            browseChannels() → [{ id, name, private, members, joined }] - tlačítko Procházet kanály (id = id konverzace),
 //            joinChannel(id) → chat, createChannel({ name, private, memberIds }) → chat - tlačítko Nový kanál,
 //            colleagues() → [{ id, name, initials? }] - výběr členů nového kanálu (memberIds = jejich id),
@@ -1286,12 +1289,12 @@ function renderChatList($list) {
 			${chatAvatar(c)}
 			<span class="quickbar-chat-text">
 				<span class="quickbar-chat-line">
-					<span class="quickbar-chat-name">${esc(c.name)}${c.private ? lockIcon : ''}</span>
+					<span class="quickbar-chat-name">${esc(c.name)}${c.private ? lockIcon : ''}${c.muted ? mutedIcon($list) : ''}</span>
 					${c.time ? `<span class="quickbar-chat-time">${esc(c.time)}</span>` : ''}
 				</span>
 				<span class="quickbar-chat-line">
 					<span class="quickbar-chat-preview">${esc(c.preview ?? '')}</span>
-					${c.unread ? `<span class="badge bg-danger">${esc(c.unread)}</span>` : ''}
+					${c.unread ? `<span class="badge ${c.muted ? 'bg-secondary' : 'bg-danger'}">${esc(c.unread)}</span>` : ''}
 				</span>
 			</span>
 		</button>`).join(''));
@@ -1308,6 +1311,11 @@ function setHtml($el, html) {
 }
 
 const lockIcon = '<i class="fa-solid fa-lock quickbar-chat-lock" aria-hidden="true"></i>';
+
+// Přeškrtnutý zvonek ztlumené konverzace, čtečce „Ztlumeno“ z data-muted kontejneru
+function mutedIcon($el) {
+	return `<i class="fa-regular fa-bell-slash quickbar-chat-muted" aria-hidden="true"></i><span class="visually-hidden"> ${esc($el.dataset.muted)}</span>`;
+}
 
 function chatAvatar(chat, small = false) {
 	const kind = { group: 'quickbar-chat-avatar--group', channel: 'quickbar-chat-avatar--channel' }[chat.kind] ?? '';
@@ -1349,7 +1357,7 @@ function renderChatCurrent() {
 		<button type="button" class="btn btn-icon btn-sm btn-ghost" title="${esc($current.dataset.back)}" data-quickbar-chat-back><i class="fa-solid fa-arrow-left"></i></button>
 		${chatAvatar(chat, true)}
 		<span class="quickbar-chat-current-text">
-			<span class="quickbar-chat-current-name">${esc(chat.name)}${chat.private ? lockIcon : ''}</span>
+			<span class="quickbar-chat-current-name">${esc(chat.name)}${chat.private ? lockIcon : ''}${chat.muted ? mutedIcon($current) : ''}</span>
 			${subHtml}
 		</span>`);
 }
@@ -1406,6 +1414,10 @@ function loadMessages(id) {
 			state.chatPinned = Array.isArray(payload) ? [] : (payload?.pinned ?? []);
 			state.chatMembers = Array.isArray(payload) ? [] : (payload?.members ?? []);
 			state.chatThreadNews = Array.isArray(payload) ? [] : (payload?.threadsWithNews ?? []);
+			const chat = state.chats.find((c) => c.id === id);
+			if (chat && typeof payload?.muted === 'boolean') {
+				chat.muted = payload.muted;
+			}
 			render();
 		}
 	});
