@@ -66,17 +66,20 @@
 {/define}
 
 {define outer-filters}
-	<div n:snippet="columnFilters">
-	{* Snippet je samostatný blok, proměnné mimo něj by při překreslení neviděl *}
-	{var $_panelFilters = $control->getPanelFilters($switcherValues, $periodFilters)}
-	{var $_chips = $control->getFilterChips($_panelFilters)}
-	{var $_withoutColumn = $control->getFiltersWithoutColumn($_panelFilters)}
 	{var $_form = $control['filter']}
-
-	<div class="fa-filters-bar d-flex flex-wrap align-items-center gap-2" data-part="bar" n:attr="data-fa-filters-revealed => $control->getRevealedColumn()">
+	<div class="fa-filters-bar d-flex flex-wrap align-items-center gap-2" data-part="bar">
+		{* Hledání je mimo snippet: překreslení po hledání by uživateli vzalo rozepsaný text i fokus *}
+		{if $control->hasFulltext()}
+			{include fulltext-search, input => $_form['filter'][$control::FULLTEXT_FILTER]}
+		{/if}
 		{ifset $filters['search']}
 			{include filter-search, filter => $filters['search'], input => $_form['filter'][$filters['search']->getKey()]}
 		{/ifset}
+		<div n:snippet="columnFilters" class="fa-filters-contents" n:attr="data-fa-filters-revealed => $control->getRevealedColumn()">
+		{* Snippet je samostatný blok, proměnné mimo něj by při překreslení neviděl *}
+		{var $_panelFilters = $control->getPanelFilters($switcherValues, $periodFilters)}
+		{var $_withoutColumn = $control->getFiltersWithoutColumn($_panelFilters)}
+		{var $_form = $control['filter']}
 		{foreach $control->getDefaultFilterToggles() as $_key => $_toggleLabel}
 			{var $_on = $control->isDefaultFilterValue($_key)}
 			{var $_toggleId = $control->getFullName() . '-default-' . $_key}
@@ -112,8 +115,13 @@
 			{include toolbar-settings}
 			{include more-actions}
 		</div>
+		</div>
 	</div>
 
+	<div n:snippet="columnFiltersActive">
+	{var $_panelFilters = $control->getPanelFilters($switcherValues, $periodFilters)}
+	{var $_chips = $control->getFilterChips($_panelFilters)}
+	{var $_form = $control['filter']}
 	<div n:if="$_chips" class="fa-filters-active mt-2" data-part="active">
 		<span class="fa-filters-count" role="status" aria-live="polite" data-part="count">
 			{include filter-count, count => $control->getFilteredCount(count($rows)), total => $control->getUnfilteredCount()}
@@ -144,6 +152,18 @@
 		</ul>
 		<a n:href="resetFilter!" class="ajax fa-filters-link" data-part="clear-all">{_fcadmin.datagrid.columnFilters.clearAll}</a>
 	</div>
+	</div>
+{/define}
+
+{* Hledání ve viditelných sloupcích (ColumnFiltersTrait::addFilterFulltext) *}
+{define fulltext-search}
+	<div class="fa-filters-search" data-part="search">
+		<i class="fa-solid fa-magnifying-glass fa-filters-search-icon" aria-hidden="true"></i>
+		{input $input, class => 'form-control', type => search, autocomplete => off,
+			placeholder => ('fcadmin.datagrid.columnFilters.searchPlaceholder'|translate),
+			aria-label => ('fcadmin.datagrid.columnFilters.searchPlaceholder'|translate),
+			data-fa-filters-fulltext => $control::FULLTEXT_MIN_LENGTH,
+			data-autosubmit => null, data-autosubmit-change => null}
 	</div>
 {/define}
 

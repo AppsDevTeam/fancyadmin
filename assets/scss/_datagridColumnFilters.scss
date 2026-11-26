@@ -441,6 +441,11 @@
 	font-weight: 600;
 }
 
+// Snippet uvnitř lišty, jeho obsah jsou přímo položky lišty
+.fa-filters-contents {
+	display: contents;
+}
+
 // Hromadné akce v liště - projekt je dodá blokem toolbar, bez nich obal nezabírá místo
 .fa-filters-bulk:not(:has(> *)) {
 	display: none;

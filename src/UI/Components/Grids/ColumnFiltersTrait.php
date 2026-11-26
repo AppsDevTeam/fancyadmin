@@ -28,8 +28,14 @@ trait ColumnFiltersTrait
 {
 	public const string COLUMN_FILTERS_TEMPLATE = __DIR__ . '/DataGridColumnFilters.latte';
 
-	/** Klíče, které vykresluje lišta knihovny (hledání, přepínač aktivity, pokročilé hledání), ne panel. */
-	private const array OUTSIDE_PANEL_FILTERS = ['search', 'isActive', 'advancedSearch'];
+	/** Hledání ve viditelných sloupcích (pole v liště). */
+	public const string FULLTEXT_FILTER = 'fulltext';
+
+	/** Kratší dotaz by vrátil skoro všechno. */
+	public const int FULLTEXT_MIN_LENGTH = 2;
+
+	/** Klíče, které vykresluje lišta (hledání, přepínač aktivity, pokročilé hledání), ne panel. */
+	private const array OUTSIDE_PANEL_FILTERS = ['search', 'isActive', 'advancedSearch', self::FULLTEXT_FILTER];
 
 	/**
 	 * Hodnota „Vše“ výchozího filtru s přepínačem. Prázdná hodnota by z URL zmizela a grid (stav nese jen URL)
@@ -112,6 +118,61 @@ trait ColumnFiltersTrait
 	public function getCountTranslation(): string
 	{
 		return $this->countTranslation;
+	}
+
+	/**
+	 * Hledání ve viditelných sloupcích: textové filtry sloupců, které jsou vidět, spojené přes NEBO. Jak hledat
+	 * jeden filtr a jak výsledky spojit, ví jen vlastník gridu (query objekt), proto `$callback(mixed $query,
+	 * string $value, list<FilterText> $filters)`.
+	 */
+	public function addFilterFulltext(Closure $callback): FilterText
+	{
+		$filter = $this->addFilterText(self::FULLTEXT_FILTER, 'fcadmin.datagrid.columnFilters.search');
+		$filter->setCondition(function (mixed $query, mixed $value) use ($callback): void {
+			$value = trim((string) $value);
+			if (mb_strlen($value) >= self::FULLTEXT_MIN_LENGTH) {
+				$callback($query, $value, $this->getFulltextFilters());
+			}
+		});
+
+		return $filter;
+	}
+
+	/** Hledání dává smysl gridu s textovým filtrem, který ještě nemá hledání svoje ani knihovny. */
+	public function canAddFulltext(): bool
+	{
+		if ($this->hasFulltext() || isset($this->filters['search'])) {
+			return false;
+		}
+
+		return array_filter($this->filters, static fn(Filter $filter): bool => $filter instanceof FilterText) !== [];
+	}
+
+	public function hasFulltext(): bool
+	{
+		return isset($this->filters[self::FULLTEXT_FILTER]);
+	}
+
+	/**
+	 * Textové filtry viditelných sloupců, ve kterých hledá pole v liště.
+	 *
+	 * @return list<FilterText>
+	 */
+	public function getFulltextFilters(): array
+	{
+		$filters = [];
+		foreach ($this->filters as $key => $filter) {
+			if ($key === self::FULLTEXT_FILTER || !$filter instanceof FilterText) {
+				continue;
+			}
+
+			$column = $this->getFilterColumn($filter);
+			if ($column !== null && $this->isColumnVisible($column)) {
+				$filters[] = $filter;
+			}
+		}
+
+		return $filters;
 	}
 
 	/**
@@ -617,6 +678,9 @@ trait ColumnFiltersTrait
 		}
 
 		foreach ($this->filter as $key => $value) {
+			if ($key === self::FULLTEXT_FILTER) {
+				continue;
+			}
 			if (self::isFilled($value) && !$this->isDefaultFilterValue((string) $key) && !$this->isDefaultFilterAll((string) $key)) {
 				return true;
 			}
@@ -641,7 +705,7 @@ trait ColumnFiltersTrait
 	 */
 	public function reload(array $snippets = []): void
 	{
-		parent::reload([...$snippets, 'columnFilters', 'table']);
+		parent::reload([...$snippets, 'columnFilters', 'columnFiltersActive', 'table']);
 	}
 
 	/** Křížek u čipu výchozího filtru, který uživatel změnil, vrací výchozí hodnotu - knihovna by filtr vyprázdnila. */

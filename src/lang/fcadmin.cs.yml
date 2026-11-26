@@ -23,6 +23,8 @@ datagrid:
     chipRemove: 'Odebrat filtr %label%'
     default: výchozí
     clearAll: Zrušit filtry
+    search: Hledat
+    searchPlaceholder: Hledat ve viditelných sloupcích
     restoreDefault: Vrátit výchozí
     moreActions: Další akce
     editColumns: Upravit sloupce

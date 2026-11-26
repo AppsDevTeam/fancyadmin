@@ -5,6 +5,7 @@ namespace ADT\FancyAdmin\UI\Components\Grids;
 use ADT\Datagrid\Component\BaseGridDependencies;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
+use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\DoctrineForms\BaseFormInterface;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
@@ -50,6 +51,30 @@ trait BaseGridTrait
 					$this->initQueryObject($query);
 
 					return $query->count();
+				});
+			}
+
+			// Hledání ve viditelných sloupcích (ColumnFiltersTrait): každý textový filtr se pustí na vlastní query objekt
+			// a grid se omezí na sjednocení nalezených ID - filtry s vlastní podmínkou jinak přes NEBO spojit nejde.
+			$grid = $this->getGrid();
+			if (method_exists($grid, 'canAddFulltext') && $grid->canAddFulltext()) {
+				$grid->addFilterFulltext(function (QueryObjectInterface $query, string $value, array $filters): void {
+					$ids = [];
+					foreach ($filters as $filter) {
+						$subQuery = $this->createQueryObject();
+						$this->initQueryObject($subQuery);
+						if ($condition = $filter->getConditionCallback()) {
+							$condition($subQuery, $value);
+						} else {
+							// getCondition() knihovny čte hodnotu filtru, ta je nastavená jen u filtrů, které uživatel vyplnil
+							$subQuery->by((fn(): array => $this->columns)->call($filter), $value, QueryObjectByMode::CONTAINS);
+						}
+						foreach ($subQuery->fetchField('id') as $id) {
+							$ids[$id] = $id;
+						}
+					}
+
+					$query->by('id', $ids ? array_values($ids) : [0]);
 				});
 			}
 		});

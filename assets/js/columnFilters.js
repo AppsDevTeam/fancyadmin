@@ -221,6 +221,35 @@ function gridName(el) {
 	return el.closest('[data-datagrid-name]')?.dataset.datagridName ?? null;
 }
 
+// Hledání ve viditelných sloupcích: 400 ms po posledním znaku a aspoň 2 znaky, smazání a Enter hned
+const FULLTEXT_DELAY = 400;
+
+function submitFulltext(input) {
+	clearTimeout(input._faFiltersTimer);
+	const value = input.value.trim();
+	if (value === input._faFiltersSent) {
+		return;
+	}
+	input._faFiltersSent = value;
+	pendingFocus = { id: input.id };
+	input.closest('form').requestSubmit();
+}
+
+document.addEventListener('input', (e) => {
+	const input = e.target.closest('[data-fa-filters-fulltext]');
+	if (!input) {
+		return;
+	}
+	input._faFiltersSent ??= input.defaultValue.trim();
+	clearTimeout(input._faFiltersTimer);
+	const value = input.value.trim();
+	if (value === '') {
+		submitFulltext(input);
+	} else if (value.length >= Number(input.dataset.faFiltersFulltext)) {
+		input._faFiltersTimer = setTimeout(() => submitFulltext(input), FULLTEXT_DELAY);
+	}
+});
+
 // Přepínač výchozího filtru se odešle hned, signálem bez formuláře (pole filtru je v panelu sloupce)
 document.addEventListener('change', (e) => {
 	const toggle = e.target.closest('[data-fa-filters-default-toggle]');
@@ -384,6 +413,12 @@ document.addEventListener('hide.bs.dropdown', (e) => {
 // Enter v textovém poli panelu = Použít (formulář gridu má víc tlačítek, výchozí by bylo jiné)
 document.addEventListener('keydown', (e) => {
 	if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') {
+		return;
+	}
+	if (e.target.matches('[data-fa-filters-fulltext]')) {
+		e.preventDefault();
+		e.target._faFiltersSent ??= e.target.defaultValue.trim();
+		submitFulltext(e.target);
 		return;
 	}
 	const panel = e.target.closest(PANEL);

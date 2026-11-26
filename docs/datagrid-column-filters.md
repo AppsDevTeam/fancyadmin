@@ -86,6 +86,13 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   nastavením sloupců (typicky `setDefaultHide()`); jiná hodnota sloupec zobrazí vždy a sloupec, který vypnutím
   přibyl, se krátce podbarví (`data-fa-filters-revealed`, `.fa-filters-col-new`). Panel sloupce ukazuje volby
   jako tlačítka s poznámkou „výchozí“ a místo Zrušit filtr má Vrátit výchozí.
+- **Hledání ve viditelných sloupcích** (`addFilterFulltext()`, filtr `fulltext`): pole na začátku lišty, mimo
+  překreslovaný snippet (rozepsaný text i fokus zůstanou). Odešle se 400 ms po posledním znaku od 2 znaků,
+  smazání a Enter hned. Hledá přes NEBO ve všech textových filtrech sloupců, které jsou vidět. `BaseGridTrait`
+  ho přidá každému gridu s textovým filtrem (bez vlastního `search`): každý filtr pustí na nový query objekt
+  gridu (`createQueryObject()` + `initQueryObject()`, vlastní podmínka filtru, jinak `by(sloupce, CONTAINS)`),
+  sjednotí nalezená ID a grid omezí `by('id', $ids)` - filtry s vlastní podmínkou přes NEBO jinak spojit nejde.
+  Hledání není aktivní filtr: nemá čip ani počet.
 - **Sloupce:** tlačítko Sloupce (jen grid s `setColumnsHideable()`) nahrazuje ozubené kolo knihovny a otevře dialog
   se zaškrtávátkem viditelnosti, šířkou Úzký / Auto / Široký (`fa-filters-col-narrow` / `-wide` na buňkách) a
   šipkami pořadí. Uloží se až Použít (signál `saveColumns!`, POST `columns` = JSON). Skryté sloupce knihovny
