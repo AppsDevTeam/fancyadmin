@@ -375,6 +375,26 @@
 	}
 }
 
+// Pás přes celou šířku stránky (setHeaderFullWidth): sahá přes odsazení obsahové části (.container-main)
+// k jejím okrajům a nahoru k jejímu kraji, nadpis a období zůstávají zarovnané se sloupcem widgetů.
+// Šířku obsahu bere z rodiče mřížky (container query); jiné odsazení stránky nastaví projekt proměnnými
+// --fa-widgets-page-padding-x / --fa-widgets-page-padding-top.
+:has(> .fa-widgets-board > .fa-widgets-header-full) {
+	container-type: inline-size;
+}
+
+.fa-widgets-header.fa-widgets-header-full {
+	--fa-widgets-header-bleed: calc((100cqw - 100%) / 2 + var(--fa-widgets-page-padding-x, 25px));
+	margin-top: calc(-1 * var(--fa-widgets-page-padding-top, 15px));
+	margin-inline: calc(-1 * var(--fa-widgets-header-bleed));
+	padding-inline: var(--fa-widgets-header-bleed);
+	border-radius: 0;
+
+	@include media-breakpoint-down(sm) {
+		--fa-widgets-header-bleed: calc((100cqw - 100%) / 2 + var(--fa-widgets-page-padding-x, 15px));
+	}
+}
+
 .fa-widgets-header-title {
 	margin: 0;
 	font-size: .9375rem;
