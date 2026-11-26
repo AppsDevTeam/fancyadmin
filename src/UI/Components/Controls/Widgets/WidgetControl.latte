@@ -4,9 +4,9 @@
 
 {* Dlaždice jsou samy kartami, ostatní widgety jsou v kartě. Sbalitelný widget je <details> - hlavička je
    <summary>, otevřít i zavřít jde i klávesnicí; každý se otevírá a zavírá zvlášť. *}
-{var $_card = $widget->getType() !== 'tiles' || $widget->isUnavailable()}
+{var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section'}
 {var $_link = $widget->getLink() !== null && $widget->getLinkLabel() === null && $widget->getType() !== 'stat' && !$widget->isCollapsible() ? $widget->getLink() : null}
-<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked">
+<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked, $widget->getPanelGroup() !== null ? fa-widgets-panel, $widget->getToggle() ? fa-widgets-toggler" n:attr="data-widget-toggler: $widget->getToggle() ? $widget->getToggle()['target']">
 	{if $widget->isCollapsible()}
 		<summary class="fa-widget-header fa-widgets-collapsible-summary">
 			<span class="fa-widget-heading">
@@ -15,11 +15,17 @@
 			</span>
 			<i class="fa-solid fa-chevron-down fa-widgets-collapsible-chevron" aria-hidden="true"></i>
 		</summary>
-	{else}
+	{elseif $widget->getType() !== 'section'}
 		{include header}
 	{/if}
 	<div n:class="$_card ? 'card-body fa-widgets-card-body'" n:snippet="body">
 		{include content}
+	</div>
+	{* Odkaz, který otevře / zavře panel jiného widgetu (setToggle) - „Seznam nabídek ▾“ *}
+	<div n:if="$widget->getToggle()" class="fa-widgets-toggle-foot">
+		<button type="button" class="fa-widgets-toggle" data-widget-toggle="{$widget->getToggle()['target']}" aria-expanded="false" data-open-label="{$widget->getToggle()['open']}" data-close-label="{$widget->getToggle()['close']}">
+			<span class="fa-widgets-toggle-label">{$widget->getToggle()['open']}</span> <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+		</button>
 	</div>
 	<a n:if="$_link" href="{$_link}" class="stretched-link fa-widgets-link" aria-label="{$widget->getTitle() ?? $widget->getName()}"></a>
 </div>
@@ -63,6 +69,7 @@
 			<i class="fa-regular fa-circle-question" aria-hidden="true"></i>
 		</button>
 		<i n:if="$_link" class="fa-solid fa-chevron-right fa-widgets-link-arrow" aria-hidden="true"></i>
+		<button n:if="$widget->getPanelGroup() !== null" type="button" class="fa-widgets-panel-close" data-widget-toggle="{$widget->getName()}">{_fcadmin.widgets.panel.close}</button>
 		<form n:if="$widget->hasPeriods()" class="fa-widgets-period" method="get" action="{$control->getPeriodFormAction()}">
 			<input n:foreach="$control->getPeriodFormFields() as $_name => $_value" type="hidden" name="{$_name}" value="{$_value}">
 			<select name="{$control->getPeriodParameterName()}" class="form-select form-select-sm" aria-label="{_fcadmin.widgets.period.label}"
@@ -86,6 +93,37 @@
 	</div>
 {/define}
 
+{define widget-section}
+	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\SectionWidget $widget}
+	<div class="fa-widgets-section">
+		<div class="fa-widgets-section-heading">
+			<h2 class="fa-widgets-section-title">{$widget->getTitle()}</h2>
+			<span n:ifcontent class="fa-widgets-section-subtitle">{$widget->getSubtitle()}</span>
+			{include badges, badges: $widget->getBadges()}
+			<a n:if="$widget->getLink() !== null" href="{$widget->getLink()}" class="fa-widgets-section-link">{$widget->getLinkLabel() ?? $widget->getTitle()} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+		</div>
+		{var $_text = $widget->getText()}
+		<p n:if="$_text !== null" class="fa-widgets-section-text">{if $_text instanceof Nette\HtmlStringable}{$_text}{else}{$_text}{/if}</p>
+	</div>
+{/define}
+
+{define widget-split}
+	{var $_split = $widget->getSplit()}
+	<div n:if="$_split" class="fa-widgets-split">
+		<div class="fa-widgets-split-bar" role="presentation">
+			<span n:foreach="$_split as $_i => $_part" class="fa-widgets-split-segment fa-widgets-tone-{$_part['split']->tone->value}{if $_i > 0} fa-widgets-split-segment-light{/if}" style="flex-grow: {round($_part['share'] * 1000)}"></span>
+		</div>
+		{var $_rows = (bool) array_filter($_split, fn($part) => $part['split']->note !== null || $part['split']->extra !== null)}
+		<div n:class="fa-widgets-split-legend, $_rows ? fa-widgets-split-rows">
+			<div n:foreach="$_split as $_i => $_part" class="fa-widgets-split-item fa-widgets-tone-{$_part['split']->tone->value}">
+				<span class="fa-widgets-split-label"><span n:class="fa-widgets-split-dot, $_i > 0 ? fa-widgets-split-segment-light" aria-hidden="true"></span>{$_part['split']->label} <strong>{$_part['split']->display ?? $format::value($_part['split']->value)}</strong>{if !$_rows} · {round($_part['share'] * 100)}&nbsp;%{/if}</span>
+				<span n:if="$_rows" class="fa-widgets-split-note">{$_part['split']->note}</span>
+				<span n:if="$_rows" class="fa-widgets-split-extra">{$_part['split']->extra}</span>
+			</div>
+		</div>
+	</div>
+{/define}
+
 {define widget-kpi}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget $widget}
 	{if $widget->hasParts()}
@@ -103,7 +141,7 @@
 		</div>
 	{else}
 		{var $_sparkline = $widget->getSparkline()}
-		<div class="fa-widgets-kpi">
+		<div n:class="fa-widgets-kpi, $widget->isDetail() ? fa-widgets-kpi-detail">
 			<div class="fa-widgets-kpi-main">
 				<div class="fa-widgets-kpi-value fa-widgets-value-tone-{$widget->getTone()->value}">
 					{$format::value($widget->getValue() ?? '–')}<span n:if="$widget->getUnit() !== null" class="fa-widgets-unit">{$widget->getUnit()}</span>
@@ -117,6 +155,7 @@
 				{include badges, badges: $widget->getBadges()}
 				<span n:if="$widget->getNote() !== null" class="fa-widgets-kpi-note">{$widget->getNote()}</span>
 			</div>
+			{include widget-split}
 		</div>
 	{/if}
 {/define}
@@ -177,34 +216,49 @@
 	{if $widget->getRows()}
 		{var $_groups = $widget->getColumnGroups()}
 		{var $_total = $widget->getTotal()}
+		{var $_linked = (bool) array_filter($widget->getRows(), fn($row) => $widget->getRowLink($row) !== null)}
 		<div class="table-responsive">
 			<table n:class="table, fa-widgets-table, mb-0, $_groups ? fa-widgets-table-grouped, $widget->isCompact() ? fa-widgets-table-compact">
 				<thead>
-					{* Skupiny sloupců: sloupec bez skupiny zabere oba řádky hlavičky *}
+					{* Pás skupin sloupců nad záhlavím v barvě skupiny; před první a za poslední skupinou se rozplývá *}
 					<tr n:if="$_groups" class="fa-widgets-table-groups">
-						{var $_index = 0}
+						{var $_named = array_values(array_filter($_groups, fn($group) => $group['label'] !== null))}
+						{var $_seen = 0}
 						{foreach $_groups as $_group}
 							{if $_group['label'] === null}
-								{var $_column = array_values($widget->getColumns())[$_index]}
-								<th rowspan="2" n:class="$_column->numeric ? 'text-end'" scope="col">{$_column->label}</th>
+								{var $_edge = $_seen === 0 ? 'lead' : ($_seen === count($_named) ? 'trail' : 'gap')}
+								{var $_tone = $_seen === 0 ? $_named[0]['tone'] : $_named[$_seen - 1]['tone']}
+								<th colspan="{$_group['span']}" class="fa-widgets-table-band fa-widgets-table-band-{$_edge} fa-widgets-tone-{$_tone}" aria-hidden="true"></th>
 							{else}
-								<th colspan="{$_group['span']}" class="fa-widgets-table-group" scope="colgroup">{$_group['label']}</th>
+								{php $_seen++}
+								<th colspan="{$_group['span']}" class="fa-widgets-table-group fa-widgets-tone-{$_group['tone']}" scope="colgroup">{$_group['label']}</th>
 							{/if}
-							{php $_index += $_group['span']}
 						{/foreach}
+						<th n:if="$_linked" class="fa-widgets-table-band fa-widgets-table-band-trail fa-widgets-tone-{$_named[count($_named) - 1]['tone']}" aria-hidden="true"></th>
 					</tr>
 					<tr>
-						<th n:foreach="$widget->getColumns() as $column" n:if="!$_groups || $column->group !== null" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>
+						<th n:foreach="$widget->getColumns() as $column" n:class="$column->numeric ? 'text-end'" scope="col">{$column->label}</th>
+						<th n:if="$_linked" class="fa-widgets-table-arrow" aria-hidden="true"></th>
 					</tr>
 				</thead>
 				<tbody>
-					{foreach $widget->getRows() as $row}
+					{foreach $widget->getRows() as $_rowIndex => $row}
 						{var $_rowLink = $widget->getRowLink($row)}
-						<tr n:class="$_rowLink !== null ? fa-widgets-row-linked">
+						{var $_children = $widget->getRowChildren($row)}
+						<tr n:class="$_rowLink !== null ? fa-widgets-row-linked, $_children ? fa-widgets-row-parent" n:attr="data-widget-row: $_children ? $_rowIndex">
 							{foreach $widget->getColumns() as $key => $column}
 								{var $_value = $row[$key] ?? null}
-								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst() && $_rowLink !== null}<a href="{$_rowLink}" class="stretched-link">{/if}{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}{if $iterator->isFirst() && $_rowLink !== null}</a>{/if}</td>
+								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst() && $_children}<button type="button" class="fa-widgets-row-toggle" aria-expanded="false" data-widget-row-toggle="{$_rowIndex}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>{/if}{if $iterator->isFirst() && $_rowLink !== null}<a href="{$_rowLink}" class="stretched-link">{/if}{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}{if $iterator->isFirst() && $_rowLink !== null}</a>{/if}</td>
 							{/foreach}
+							<td n:if="$_linked" class="fa-widgets-table-arrow">{if $_rowLink !== null}<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>{/if}</td>
+						</tr>
+						<tr n:foreach="$_children as $_child" class="fa-widgets-row-child" data-widget-row-child="{$_rowIndex}" hidden>
+							{var $_childLink = $widget->getRowLink($_child)}
+							{foreach $widget->getColumns() as $key => $column}
+								{var $_value = $_child[$key] ?? null}
+								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst()}<span class="fa-widgets-row-dot" aria-hidden="true"></span>{/if}{if $iterator->isFirst() && $_childLink !== null}<a href="{$_childLink}">{/if}{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}{if $iterator->isFirst() && $_childLink !== null}</a>{/if}</td>
+							{/foreach}
+							<td n:if="$_linked" class="fa-widgets-table-arrow"></td>
 						</tr>
 					{/foreach}
 				</tbody>
@@ -214,6 +268,7 @@
 							{var $_value = $_total[$key] ?? null}
 							<td n:class="$column->numeric ? 'text-end text-nowrap'">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</td>
 						{/foreach}
+						<td n:if="$_linked"></td>
 					</tr>
 				</tfoot>
 			</table>

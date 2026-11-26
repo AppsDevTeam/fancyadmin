@@ -36,6 +36,11 @@ final class KpiWidget extends Widget
 
 	private WidgetTone $tone = WidgetTone::Neutral;
 
+	/** @var list<WidgetSplit>|(\Closure(?WidgetPeriod): list<WidgetSplit>) */
+	private array|\Closure $split = [];
+
+	private bool $detail = false;
+
 	/**
 	 * @param (callable(?WidgetPeriod): (int|float|string|null))|null $value
 	 * @param (callable(?WidgetPeriod): iterable<WidgetFigure>)|null $parts
@@ -156,5 +161,36 @@ final class KpiWidget extends Widget
 	public function getTone(): WidgetTone
 	{
 		return $this->tone;
+	}
+
+	/**
+	 * Pruh poměru pod hodnotou s legendou (prodej / pronájem, exkluzivní / neexkluzivní).
+	 *
+	 * @param list<WidgetSplit>|(\Closure(?WidgetPeriod): list<WidgetSplit>) $split
+	 */
+	public function setSplit(array|\Closure $split): static
+	{
+		$this->split = $split;
+		return $this;
+	}
+
+	/** @return list<array{split: WidgetSplit, share: float}> části s podílem na součtu (0–1) */
+	public function getSplit(): array
+	{
+		$split = $this->split instanceof \Closure ? ($this->split)($this->getPeriod()) : $this->split;
+		$total = array_sum(array_map(fn(WidgetSplit $part) => max(0, $part->value), $split));
+		return array_map(fn(WidgetSplit $part) => ['split' => $part, 'share' => $total > 0 ? max(0, $part->value) / $total : 0.0], array_values($split));
+	}
+
+	/** Dlaždice detailu (podstránky): menší hodnota, popisek a pruh pod ní - na dashboardu velká KPI karta. */
+	public function setDetail(bool $detail = true): static
+	{
+		$this->detail = $detail;
+		return $this;
+	}
+
+	public function isDetail(): bool
+	{
+		return $this->detail;
 	}
 }

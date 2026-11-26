@@ -25,6 +25,8 @@ widgets:
   detail: Zobrazit podrobnosti
   empty: Za zvolené období nejsou žádná data.
   breadcrumbs: Drobečková navigace
+  panel:
+    close: Zavřít seznam
   period:
     label: Období
     submit: Zobrazit

@@ -7,7 +7,8 @@ namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
 /**
  * Sloupec widgetu `table`; číselný se formátuje a zarovná doprava i s hlavičkou. `wrap` zalomí dlouhý text
  * (tabulka má jinak jako gridy `white-space: nowrap` a dlouhý text by ji roztáhl do šířky). `group` je nadpis
- * skupiny nad sloupcem - sousední sloupce se stejnou skupinou mají jeden společný („Realizované · tržba“).
+ * skupiny nad sloupcem - sousední sloupce se stejnou skupinou mají jeden společný („Realizované · tržba“)
+ * v pásu nad záhlavím, `groupTone` jeho barva (zelená tržba, oranžová rezervace, červená zrušené…).
  */
 final class WidgetTableColumn
 {
@@ -16,6 +17,7 @@ final class WidgetTableColumn
 		public readonly bool $numeric = false,
 		public readonly bool $wrap = false,
 		public readonly ?string $group = null,
+		public readonly ?WidgetTone $groupTone = null,
 	) {
 	}
 }

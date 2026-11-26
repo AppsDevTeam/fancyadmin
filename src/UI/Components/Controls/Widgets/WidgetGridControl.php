@@ -160,6 +160,12 @@ class WidgetGridControl extends Control
 		return $this->headerTitle !== null || ($this->hasPeriods() && !$this->periodRendered);
 	}
 
+	/** Nadpis sekce nad kartami (SectionWidget) přes celou šířku mřížky. */
+	public function addSection(string $name, string $title): SectionWidget
+	{
+		return $this->addWidget(new SectionWidget($name, $title))->setSpan(self::MAX_COLUMNS);
+	}
+
 	/** @param callable(?WidgetPeriod): (int|float|string) $value */
 	public function addStat(string $name, string $title, callable $value): StatWidget
 	{
