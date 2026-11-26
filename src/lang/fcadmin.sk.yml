@@ -20,10 +20,12 @@ datagrid:
     more: Ďalšie filtre
     activeFilters: Aktívne filtre
     chipEdit: 'Upraviť filter %label%: %value%'
-    chipDefault: 'Predvolený filter %label%: %value% - upraviť'
     chipRemove: 'Odobrať filter %label%'
     default: predvolený
-    clearAll: Zrušiť filter
+    clearAll: Zrušiť filtre
+    restoreDefault: Vrátiť predvolený
+    moreActions: Ďalšie akcie
+    editColumns: Upraviť stĺpce
     clear: Zrušiť filter
     apply: Použiť
     clearAllFilters: Zrušiť všetky filtre

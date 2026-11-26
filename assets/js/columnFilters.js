@@ -4,14 +4,18 @@
 
 import { Dropdown } from 'bootstrap';
 import flatpickr from 'flatpickr';
+import naja from 'naja';
 
 import { onContentLoaded } from './naja';
 
-const TOGGLE = '[data-part="toggle"], [data-part="more"], .fa-filters-chip.dropdown > .fa-filters-chip-edit';
+const TOGGLE = '[data-part="toggle"], [data-part="more-filters"], .fa-filters-chip.dropdown > .fa-filters-chip-edit';
 const PANEL = '[data-fa-filters-panel]';
 
 // panel, jehož Použít právě odeslal formulář - po překreslení se fokus vrátí na jeho hlavičku
 let submittedFrom = null;
+
+// kam vrátit fokus po překreslení gridu jinou akcí než Použít (přepínač, odebraný čip, Zrušit filtry)
+let pendingFocus = null;
 
 let calendarLocale = {};
 
@@ -21,7 +25,8 @@ export function configureColumnFilters({ locale } = {}) {
 }
 
 function panelOf(toggle) {
-	return toggle.parentElement.querySelector(':scope > ' + PANEL);
+	const menu = Dropdown.getInstance(toggle)?._menu;
+	return menu?.matches(PANEL) ? menu : toggle.parentElement.querySelector(':scope > ' + PANEL);
 }
 
 function fields(panel) {
@@ -59,7 +64,8 @@ function restore(panel, values) {
 function clear(panel) {
 	fields(panel).forEach((el) => {
 		if (el.type === 'radio') {
-			el.checked = el.value === '';
+			const defaultValue = el.closest('[data-fa-filters-default-value]')?.dataset.faFiltersDefaultValue;
+			el.checked = el.value === (defaultValue ?? '');
 		} else if (el.type === 'checkbox') {
 			el.checked = false;
 		} else if (el.tomselect) {
@@ -174,6 +180,42 @@ document.addEventListener('click', (e) => {
 		if (toggle) {
 			setTimeout(() => Dropdown.getOrCreateInstance(toggle).show());
 		}
+		return;
+	}
+
+	// Položka nabídky ⋯ otevře nabídku tlačítka, které je na telefonu skryté
+	const show = e.target.closest('[data-fa-filters-show]');
+	if (show) {
+		const toggle = document.getElementById(show.dataset.faFiltersShow);
+		if (toggle) {
+			setTimeout(() => Dropdown.getOrCreateInstance(toggle).show());
+		}
+		return;
+	}
+
+	const remove = e.target.closest('[data-part="chip-remove"]');
+	if (remove) {
+		const chips = Array.from(remove.closest('.fa-filters-chips').children);
+		pendingFocus = { grid: gridName(remove), chip: chips.indexOf(remove.closest('[data-part="chip"]')) };
+		return;
+	}
+
+	const clearAll = e.target.closest('[data-part="clear-all"], [data-part="reset"]');
+	if (clearAll) {
+		pendingFocus = { grid: gridName(clearAll), bar: true };
+	}
+});
+
+function gridName(el) {
+	return el.closest('[data-datagrid-name]')?.dataset.datagridName ?? null;
+}
+
+// Přepínač výchozího filtru se odešle hned, signálem bez formuláře (pole filtru je v panelu sloupce)
+document.addEventListener('change', (e) => {
+	const toggle = e.target.closest('[data-fa-filters-default-toggle]');
+	if (toggle) {
+		pendingFocus = { id: toggle.id };
+		naja.makeRequest('GET', toggle.dataset.faFiltersDefaultToggle, null, { history: false });
 	}
 });
 
@@ -184,10 +226,50 @@ document.addEventListener('submit', (e) => {
 	}
 });
 
+const PHONE = window.matchMedia('(max-width: 575.98px)');
+
+// Na telefonu je panel spodní list přes celou obrazovku. V hlavičce tabulky by ho přerostly vrstvy lepivého
+// řádku hlavičky, proto se po dobu otevření přesune na konec formuláře gridu - pole zůstávají ve formuláři.
+function liftToForm(menu) {
+	const form = menu.closest('form');
+	if (!PHONE.matches || !form || menu.parentElement === form) {
+		return;
+	}
+	menu._faFiltersHome = { parent: menu.parentElement, next: menu.nextSibling };
+	form.append(menu);
+	document.body.classList.add('fa-filters-sheet-open');
+}
+
+function returnHome(menu) {
+	const home = menu._faFiltersHome;
+	if (home) {
+		home.parent.insertBefore(menu, home.next);
+		menu._faFiltersHome = null;
+	}
+	if (!document.querySelector('.fa-filters-panel.show, .fa-filters-settings-menu.show')) {
+		document.body.classList.remove('fa-filters-sheet-open');
+	}
+}
+
+function menuOf(toggle) {
+	return Dropdown.getInstance(toggle)?._menu ?? toggle.parentElement.querySelector(':scope > .dropdown-menu');
+}
+
 document.addEventListener('show.bs.dropdown', (e) => {
 	const panel = e.target.matches(TOGGLE) ? panelOf(e.target) : null;
 	if (panel) {
 		panel._faFiltersValues = snapshot(panel);
+	}
+	const menu = menuOf(e.target);
+	if (menu?.matches('.fa-filters-panel, .fa-filters-settings-menu')) {
+		liftToForm(menu);
+	}
+});
+
+document.addEventListener('hidden.bs.dropdown', (e) => {
+	const menu = menuOf(e.target);
+	if (menu?.matches('.fa-filters-panel, .fa-filters-settings-menu')) {
+		returnHome(menu);
 	}
 });
 
@@ -237,6 +319,22 @@ export function initColumnFilters($el) {
 		});
 	});
 
+	const revealed = $el[0].querySelector('[data-fa-filters-revealed]');
+	if (revealed) {
+		const table = revealed.closest('.datagrid')?.querySelector('table');
+		table?.querySelectorAll(`.col-${CSS.escape(revealed.dataset.faFiltersRevealed)}`).forEach((cell) => cell.classList.add('fa-filters-col-new'));
+	}
+
+	if (pendingFocus) {
+		const target = pendingFocus;
+		setTimeout(() => {
+			if (pendingFocus === target) {
+				pendingFocus = null;
+			}
+			focusAfterRedraw(target);
+		});
+	}
+
 	// Snippety gridu se překreslují postupně, hlavička je hotová až po posledním
 	if (submittedFrom) {
 		const id = submittedFrom;
@@ -248,6 +346,27 @@ export function initColumnFilters($el) {
 			}
 		});
 	}
+}
+
+// Po odebrání čipu fokus na další čip, bez něj na Zrušit filtry; když zmizí celý pruh (nebo po Zrušit filtry), do lišty
+function focusAfterRedraw(target) {
+	if (target.id) {
+		document.getElementById(target.id)?.focus();
+		return;
+	}
+
+	const grid = document.querySelector(`[data-datagrid-name="${CSS.escape(target.grid ?? '')}"]`) ?? document;
+	if (target.chip !== undefined) {
+		const chips = grid.querySelectorAll('.fa-filters-chips > [data-part="chip"] > .fa-filters-chip-edit');
+		const next = chips[Math.min(target.chip, chips.length - 1)] ?? grid.querySelector('[data-part="clear-all"]');
+		if (next) {
+			next.focus();
+			return;
+		}
+	}
+
+	const bar = grid.querySelector('[data-part="bar"]');
+	bar?.querySelector('input:not([type="hidden"]), select, button, a[href]')?.focus();
 }
 
 onContentLoaded(initColumnFilters);

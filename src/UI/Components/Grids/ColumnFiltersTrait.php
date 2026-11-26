@@ -20,7 +20,8 @@ use DateTimeImmutable;
  * Filtr v hlavičce sloupce (docs/datagrid-column-filters.md): klik na název sloupce otevře panel s polem filtru,
  * pod lištou je pruh aktivních filtrů s počtem a čipy. Patří do potomka ADT\Datagrid\Component\DataGrid místo
  * CollapsibleFiltersTrait. Filtr se odešle až tlačítkem Použít (šablona polím bere atributy autosubmitu knihovny), výchozí
- * filtr gridu se za aktivní nepočítá.
+ * filtr gridu ve výchozí hodnotě se za aktivní nepočítá a čip nemá. Výchozí filtr ovládaný přepínačem v liště
+ * přidá addDefaultFilterToggle().
  */
 trait ColumnFiltersTrait
 {
@@ -29,12 +30,24 @@ trait ColumnFiltersTrait
 	/** Klíče, které vykresluje lišta knihovny (hledání, přepínač aktivity, pokročilé hledání), ne panel. */
 	private const array OUTSIDE_PANEL_FILTERS = ['search', 'isActive', 'advancedSearch'];
 
+	/**
+	 * Hodnota „Vše“ výchozího filtru s přepínačem. Prázdná hodnota by z URL zmizela a grid (stav nese jen URL)
+	 * by při dalším načtení použil zase výchozí filtr.
+	 */
+	public const string DEFAULT_FILTER_ALL = 'all';
+
 	/** Víc hodnot výběru čip vypíše jen do tohoto počtu, zbytek jako „+N“. */
 	private const int CHIP_LISTED_VALUES = 2;
 
 	private ?Closure $unfilteredCountCallback = null;
 
 	private string $countTranslation = 'fcadmin.datagrid.columnFilters.count';
+
+	/** @var array<string, string> klíč výchozího filtru => popisek přepínače */
+	private array $defaultFilterToggles = [];
+
+	/** Sloupec, který se objevil vypnutím přepínače - šablona jeho buňky krátce podbarví. */
+	private ?string $revealedColumn = null;
 
 	public function getOriginalTemplateFile(): string
 	{
@@ -82,6 +95,112 @@ trait ColumnFiltersTrait
 	public function getCountTranslation(): string
 	{
 		return $this->countTranslation;
+	}
+
+	/**
+	 * Výchozí filtr (setDefaultFilter) jako přepínač v liště, pojmenovaný podle výchozí hodnoty („Jen aktivní“).
+	 * Vypnutí nastaví „Vše“ (DEFAULT_FILTER_ALL), zapnutí vrátí výchozí. Dokud platí výchozí hodnota, řídí se
+	 * viditelnost sloupce filtru nastavením sloupců; jiná hodnota sloupec zobrazí vždy. Volá se po setDefaultFilter().
+	 */
+	public function addDefaultFilterToggle(string $key, string $label): static
+	{
+		if (!array_key_exists($key, $this->defaultFilter)) {
+			throw new \LogicException("Filtr '$key' nemá výchozí hodnotu, přepínač by neměl co zapnout.");
+		}
+
+		$filter = $this->filters[$key];
+		if (!$filter instanceof FilterSelect) {
+			throw new \LogicException("Přepínač umí jen výběrový filtr, '$key' jím není.");
+		}
+
+		$this->defaultFilterToggles[$key] = $label;
+		$all = [self::DEFAULT_FILTER_ALL => 'fcadmin.datagrid.columnFilters.all'];
+		(fn() => $this->options = $all + array_diff_key($this->options, ['' => true]))->call($filter);
+
+		return $this;
+	}
+
+	/** @return array<string, string> klíč filtru => popisek přepínače */
+	public function getDefaultFilterToggles(): array
+	{
+		return $this->defaultFilterToggles;
+	}
+
+	public function isDefaultFilterAll(string $key): bool
+	{
+		return isset($this->defaultFilterToggles[$key]) && ($this->filter[$key] ?? null) === self::DEFAULT_FILTER_ALL;
+	}
+
+	/** „Vše“ výchozího filtru knihovně předá jako žádnou hodnotu, dotaz se pak podle filtru neomezí. */
+	public function assembleFilters(): array
+	{
+		$all = array_filter(array_keys($this->defaultFilterToggles), $this->isDefaultFilterAll(...));
+		foreach ($all as $key) {
+			$this->filter[$key] = null;
+		}
+
+		try {
+			return parent::assembleFilters();
+		} finally {
+			foreach ($all as $key) {
+				$this->filter[$key] = self::DEFAULT_FILTER_ALL;
+			}
+		}
+	}
+
+	public function getDefaultFilterValue(string $key): mixed
+	{
+		return $this->defaultFilter[$key] ?? null;
+	}
+
+	public function isDefaultFilterToggle(string $key): bool
+	{
+		return isset($this->defaultFilterToggles[$key]);
+	}
+
+	public function getRevealedColumn(): ?string
+	{
+		return $this->revealedColumn;
+	}
+
+	public function handleToggleDefaultFilter(string $key, bool $on = false): void
+	{
+		if (!isset($this->defaultFilterToggles[$key])) {
+			$this->getPresenter()->error();
+		}
+
+		$filter = $this->filters[$key];
+		$column = $this->getFilterColumn($filter);
+		$hiddenBySettings = $column !== null && !isset(parent::getColumns()[$column]);
+
+		$value = $on ? $this->defaultFilter[$key] : self::DEFAULT_FILTER_ALL;
+		$this->filter[$key] = $value;
+		$storedFilters = $this->getStorageData('_grid_filters', []);
+		$storedFilters[$key] = $value;
+		$this->saveStorageData('_grid_filters', $storedFilters);
+		$this->saveStorageData('_grid_has_filtered', 1);
+		$this->deleteStorageData('_grid_page');
+		$this->page = 1;
+
+		if (!$on && $hiddenBySettings) {
+			$this->revealedColumn = $column;
+		}
+
+		$this->reloadTheWholeGrid();
+	}
+
+	/** Sloupec výchozího filtru s jinou než výchozí hodnotou je vidět i skrytý v nastavení sloupců. */
+	public function getColumns(): array
+	{
+		$columns = parent::getColumns();
+		foreach (array_keys($this->defaultFilterToggles) as $key) {
+			$column = isset($this->filters[$key]) ? $this->getFilterColumn($this->filters[$key]) : null;
+			if ($column !== null && !isset($columns[$column]) && !$this->isDefaultFilterValue($key)) {
+				$columns[$column] = $this->columns[$column];
+			}
+		}
+
+		return array_intersect_key($this->columns, $columns);
 	}
 
 	/**
@@ -140,8 +259,8 @@ trait ColumnFiltersTrait
 	}
 
 	/**
-	 * Čipy filtrů s hodnotou v pořadí sloupců gridu, filtry bez sloupce na konci. Výchozí hodnota výchozího
-	 * filtru je čip bez křížku.
+	 * Čipy filtrů s hodnotou v pořadí sloupců gridu, filtry bez sloupce na konci. Výchozí filtr ve výchozí
+	 * hodnotě čip nemá.
 	 *
 	 * @param array<string, Filter> $panelFilters
 	 * @return list<FilterChip>
@@ -151,7 +270,7 @@ trait ColumnFiltersTrait
 		$order = array_flip(array_keys($this->columns));
 		$chips = [];
 		foreach ($panelFilters as $key => $filter) {
-			if (!$this->hasFilterValue($key)) {
+			if (!$this->hasFilterValue($key) || $this->isDefaultFilterValue($key) || $this->isDefaultFilterAll($key)) {
 				continue;
 			}
 
@@ -165,7 +284,6 @@ trait ColumnFiltersTrait
 				$key,
 				$this->getFilterLabel($filter),
 				$value,
-				$this->isDefaultFilterValue($key),
 				$column,
 				$column !== null && $this->isColumnVisible($column),
 			);
@@ -209,10 +327,11 @@ trait ColumnFiltersTrait
 			&& self::normalize($this->filter[$key] ?? null) == self::normalize($this->defaultFilter[$key]);
 	}
 
-	/** Typ pole v panelu: text, select, multiselect, bool (výběr Ano/Ne), date, daterange, range, checkbox. */
+	/** Typ pole v panelu: default (přepínač v liště), text, select, multiselect, bool (výběr Ano/Ne), date, daterange, range, checkbox. */
 	public function getFilterFieldType(Filter $filter): string
 	{
 		return match (true) {
+			$filter instanceof FilterSelect && $this->isDefaultFilterToggle($filter->getKey()) => 'default',
 			$filter instanceof FilterMultiSelect => 'multiselect',
 			$filter instanceof FilterSelect => $this->isBoolSelect($filter) ? 'bool' : 'select',
 			$filter instanceof FilterDateRange => 'daterange',
@@ -284,14 +403,23 @@ trait ColumnFiltersTrait
 		return is_scalar($value) ? (string) $value : null;
 	}
 
-	/** Výchozí filtr se za aktivní nepočítá - grid s ním je výchozí stav, ne vyfiltrovaný. */
+	/**
+	 * Aktivní je filtr s hodnotou, která není výchozí - výchozí filtr ve výchozí hodnotě je výchozí stav gridu.
+	 * Na rozdíl od knihovny počítá i hodnotu „0“ (Aktivní: Ne).
+	 */
 	public function isFilterActive(?string $filter = null): bool
 	{
-		if ($filter === null && $this->isFilterDefault()) {
-			return false;
+		if ($filter !== null) {
+			return parent::isFilterActive($filter);
 		}
 
-		return parent::isFilterActive($filter);
+		foreach ($this->filter as $key => $value) {
+			if (self::isFilled($value) && !$this->isDefaultFilterValue((string) $key) && !$this->isDefaultFilterAll((string) $key)) {
+				return true;
+			}
+		}
+
+		return $this->forceFilterActive;
 	}
 
 	/** Na rozdíl od knihovny přehlíží prázdné hodnoty, které formulář filtru posílá i nevyplněné. */

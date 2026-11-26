@@ -126,19 +126,47 @@ test('období přes dva roky a jen začátek', function () {
 	Assert::same('fcadmin.datagrid.columnFilters.from 1. 10. 2026', $grid->formatFilterValue($filter, ['from' => '2026-10-01', 'to' => '']));
 });
 
-test('výchozí filtr je čip bez křížku, změněný běžný čip', function () {
+test('výchozí filtr ve výchozí hodnotě čip nemá a aktivní není, změněný je běžný čip', function () {
 	$grid = columnFiltersGrid();
 	$grid->setDefaultFilter(['state' => 'done']);
 
 	$grid->setFilter(['state' => 'done']);
-	[$chip] = $grid->getFilterChips($grid->getPanelFilters([], []));
-	Assert::true($chip->default);
+	Assert::same([], $grid->getFilterChips($grid->getPanelFilters([], [])));
 	Assert::false($grid->isFilterActive());
 
 	$grid->setFilter(['state' => 'gate']);
-	[$chip] = $grid->getFilterChips($grid->getPanelFilters([], []));
-	Assert::false($chip->default);
+	Assert::same(['state' => 'Brána'], chipValues($grid->getFilterChips($grid->getPanelFilters([], []))));
 	Assert::true($grid->isFilterActive());
+});
+
+test('hodnota 0 je aktivní filtr', function () {
+	$grid = columnFiltersGrid();
+	$grid->setFilter(['active' => '0']);
+
+	Assert::true($grid->isFilterActive());
+	Assert::same(['active' => 'Ne'], chipValues($grid->getFilterChips($grid->getPanelFilters([], []))));
+});
+
+test('přepínač výchozího filtru: pole typu default, Vše bez čipu', function () {
+	$grid = columnFiltersGrid();
+	$grid->setDefaultFilter(['active' => 1]);
+	$grid->addDefaultFilterToggle('active', 'Jen aktivní');
+	$filter = $grid->getPanelFilters([], [])['active'];
+
+	Assert::same('default', $grid->getFilterFieldType($filter));
+	Assert::same(['active' => 'Jen aktivní'], $grid->getDefaultFilterToggles());
+	Assert::same(1, $grid->getDefaultFilterValue('active'));
+
+	Assert::same(['all', 1, 0], array_keys($filter->getOptions()), 'volba Vše je první, prázdná zmizí');
+
+	$grid->setFilter(['active' => ColumnFiltersGrid::DEFAULT_FILTER_ALL]);
+	Assert::true($grid->isDefaultFilterAll('active'));
+	Assert::same([], $grid->getFilterChips($grid->getPanelFilters([], [])));
+	Assert::false($grid->isFilterActive());
+});
+
+test('přepínač jde jen na filtr s výchozí hodnotou', function () {
+	Assert::exception(fn() => columnFiltersGrid()->addDefaultFilterToggle('active', 'Jen aktivní'), LogicException::class);
 });
 
 test('filtr skrytého sloupce má panel v čipu', function () {

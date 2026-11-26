@@ -20,10 +20,12 @@ datagrid:
     more: Další filtry
     activeFilters: Aktivní filtry
     chipEdit: 'Upravit filtr %label%: %value%'
-    chipDefault: 'Výchozí filtr %label%: %value% - upravit'
     chipRemove: 'Odebrat filtr %label%'
     default: výchozí
-    clearAll: Zrušit filtr
+    clearAll: Zrušit filtry
+    restoreDefault: Vrátit výchozí
+    moreActions: Další akce
+    editColumns: Upravit sloupce
     clear: Zrušit filtr
     apply: Použít
     clearAllFilters: Zrušit všechny filtry

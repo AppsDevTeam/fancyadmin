@@ -11,7 +11,6 @@ final class FilterChip
 		public readonly string $key,
 		public readonly string $label,
 		public readonly string $value,
-		public readonly bool $default,
 		public readonly ?string $column,
 		public readonly bool $columnVisible,
 	) {
