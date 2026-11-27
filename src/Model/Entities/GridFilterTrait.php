@@ -7,7 +7,6 @@ namespace ADT\FancyAdmin\Model\Entities;
 use ADT\DoctrineAnonymization\AnonymizationType;
 use ADT\DoctrineAnonymization\Attributes\Anonymize;
 use ADT\DoctrineAnonymization\Attributes\Description;
-use ADT\FancyAdmin\Model\Entities\Enums\GridFilterType;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedAt;
 use ADT\FancyAdmin\Model\Entities\Traits\CreatedByNullable;
 use Doctrine\ORM\Mapping as ORM;
@@ -24,9 +23,6 @@ use Doctrine\ORM\Mapping\JoinColumn;
  * ({@see \ADT\FancyAdmin\UI\Presenters\AuthPresenterTrait::startup()}), takze filtr
  * ulozeny nad backoffice gridem k zadnemu uctu nepatri a je spolecny pro vsechny
  * backoffice uzivatele.
- *
- * Sestava z listy filtru (typ Preset) patri autorovi (createdBy); sdilenou vidi cely tym. Pokrocile
- * filtry jsou sdilene vzdy, query objekt je bez byType() vraci jako jediny druh.
  */
 trait GridFilterTrait
 {
@@ -43,16 +39,6 @@ trait GridFilterTrait
 	#[Anonymize(AnonymizationType::FREE_TEXT)]
 	#[Description('JSON of the saved filter values; may contain searched names or e-mails.')]
 	protected array $value = [];
-
-	#[ORM\Column(type: 'string', length: 20, nullable: false, enumType: GridFilterType::class, options: ['default' => GridFilterType::Advanced->value])]
-	protected GridFilterType $type = GridFilterType::Advanced;
-
-	#[ORM\Column(nullable: false, options: ['default' => true])]
-	protected bool $shared = true;
-
-	/** @var array<string, mixed>|null nastaveni sloupcu sestavy, pokrocily filtr ho nema */
-	#[Column(type: "json", nullable: true)]
-	protected ?array $columns = null;
 
 	#[ORM\ManyToOne(targetEntity: 'Account')]
 	#[JoinColumn(nullable: true)]
@@ -99,39 +85,6 @@ trait GridFilterTrait
 	public function setAccount(?Account $account): self
 	{
 		$this->account = $account;
-		return $this;
-	}
-
-	public function getType(): GridFilterType
-	{
-		return $this->type;
-	}
-
-	public function setType(GridFilterType $type): static
-	{
-		$this->type = $type;
-		return $this;
-	}
-
-	public function isShared(): bool
-	{
-		return $this->shared;
-	}
-
-	public function setShared(bool $shared): static
-	{
-		$this->shared = $shared;
-		return $this;
-	}
-
-	public function getColumns(): ?array
-	{
-		return $this->columns;
-	}
-
-	public function setColumns(?array $columns): static
-	{
-		$this->columns = $columns;
 		return $this;
 	}
 }

@@ -28,7 +28,7 @@
 }
 
 // Hromadné akce [data-part="bulk-bar"]: plovoucí lišta po výběru řádků, na místě rychlé lišty (ta se zatím schová)
-.datagrid table > tbody > tr.table-active > td {
+.datagrid:has([data-part='bulk-bar']) table > tbody > tr.table-active > td {
 	background-color: var(--fa-filters-accent-soft);
 }
 

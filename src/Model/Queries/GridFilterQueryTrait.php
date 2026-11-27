@@ -7,14 +7,19 @@ namespace ADT\FancyAdmin\Model\Queries;
 use ADT\FancyAdmin\Model\Entities\Enums\GridFilterType;
 use Doctrine\ORM\QueryBuilder;
 
-/** Bez byType() vrací jen pokročilé filtry - datagrid-components o sestavách neví a vypsal by je mezi ně. */
+/**
+ * Bez byType() vrací jen pokročilé filtry - datagrid-components o sestavách neví a vypsal by je mezi ně. Entita bez
+ * GridFilterPresetTrait sloupec type nemá, tam se nefiltruje.
+ */
 trait GridFilterQueryTrait
 {
 	public function init(): void
 	{
 		parent::init();
 
-		$this->byType(GridFilterType::Advanced);
+		if ($this->em?->getClassMetadata($this->getEntityClass())->hasField('type')) {
+			$this->byType(GridFilterType::Advanced);
+		}
 	}
 
 	public function byGrid(string $grid): static

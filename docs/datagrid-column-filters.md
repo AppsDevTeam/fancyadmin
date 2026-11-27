@@ -46,7 +46,7 @@ Nastavení sloupců (viditelnost, pořadí, šířka z dialogu Sloupce) se bez d
 ```neon
 fancyadmin:
 	datagrid:
-		presetEntity: App\Model\Entities\GridFilter              # implements GridFilter, use GridFilterTrait
+		presetEntity: App\Model\Entities\GridFilter              # implements GridFilter, use GridFilterTrait + GridFilterPresetTrait
 		columnSettingEntity: App\Model\Entities\GridColumnSetting # implements GridColumnSetting, use GridColumnSettingTrait
 ```
 
@@ -60,9 +60,11 @@ fancyadmin:
   `#[ORM\UniqueConstraint(columns: ['grid', 'type', 'created_by_id', 'name'])]`.
 - **Nastavení sloupců** je jeden řádek na identitu a grid (`GridColumnSettingTrait`, unikátní `identity` + `grid`,
   identita se smaže i s nastavením).
-- **Přechod existujícího projektu**: `GridFilterTrait` přidal sloupce `type` (výchozí `advanced`), `shared` (výchozí
-  1 - dosavadní pokročilé filtry jsou společné) a `columns`; vygenerujte migraci. Query objekt uložených filtrů
-  může přepisy `byGrid()` / `byName()` kvůli návratovému typu smazat, trait už vrací `static`.
+- **Přechod existujícího projektu**: bez sestav se nic nemění - `GridFilterTrait` je stejný a `GridFilterQueryTrait`
+  filtruje podle typu, jen když ho entita má. Kdo sestavy zapne, přidá entitě `GridFilterPresetTrait` (sloupce
+  `type` s výchozím `advanced`, `shared` s výchozím 1 - dosavadní pokročilé filtry jsou společné - a `columns`)
+  a vygeneruje migraci. Query objekt uložených filtrů může přepisy `byGrid()` / `byName()` kvůli návratovému typu
+  smazat, trait už vrací `static`.
 - Jiné úložiště (třeba API) jde nastavit ručně přes `setColumnSettingsStorage()` / `setPresetStorage()`
   (`GridColumnSettingsStorage`, `GridPresetStorage`).
 
@@ -84,7 +86,7 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
 | `src/UI/Components/Grids/GridColumnSettingsStorage.php` | úložiště nastavení sloupců u uživatele |
 | `src/UI/Components/Grids/GridPresetStorage.php`, `GridPreset.php`, `GridPresetException.php` | uložené sestavy |
 | `src/Model/Grid/DoctrineGridPresetStorage.php`, `DoctrineGridColumnSettingsStorage.php` | úložiště v entitách projektu (konfigurace `datagrid`) |
-| `src/Model/Entities/GridFilterTrait.php`, `GridColumnSettingTrait.php`, `Enums/GridFilterType.php` | entity sestav a nastavení sloupců |
+| `src/Model/Entities/GridFilterPresetTrait.php`, `GridColumnSettingTrait.php`, `Enums/GridFilterType.php` | entity sestav a nastavení sloupců |
 | `src/UI/Components/Grids/DataGridColumnFilters.latte` | lišta, pruh, hlavička s panely, pole podle typu, prázdný výsledek |
 | `assets/js/columnFilters.js` | panely (Popper `fixed`), Použít, Zrušit filtr, vrácení hodnot při zavření, období, fokus |
 | `assets/scss/_datagridColumnFilters.scss` | vzhled, proměnné `--fa-filters-*` pro světlý i tmavý režim |
