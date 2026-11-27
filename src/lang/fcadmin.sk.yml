@@ -22,6 +22,8 @@ widgets:
   unavailable: Dáta zatiaľ nie sú k dispozícii.
   alerts:
     empty: Nič na riešenie.
+    more: 'Zobraziť všetkých %count%'
+    less: Zobraziť menej
   detail: Zobraziť podrobnosti
   empty: Za zvolené obdobie nie sú žiadne údaje.
   breadcrumbs: Navigačná cesta

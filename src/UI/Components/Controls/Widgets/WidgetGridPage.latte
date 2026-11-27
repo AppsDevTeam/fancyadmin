@@ -15,5 +15,6 @@
 	<div n:if="$widgetGrid->getPageTitle() !== null" class="fa-widgets-page-heading">
 		<h1 class="fa-widgets-page-title">{$widgetGrid->getPageTitle()}</h1>
 		<span n:ifcontent class="fa-widgets-page-subtitle">{$widgetGrid->getPageSubtitle()}</span>
+		<span n:foreach="$widgetGrid->getPageBadges() as $_badge" class="fa-widgets-badge fa-widgets-tone-{$_badge->tone->value} fa-widgets-page-badge" n:attr="title: $_badge->title">{$_badge->text}</span>
 	</div>
 </div>
