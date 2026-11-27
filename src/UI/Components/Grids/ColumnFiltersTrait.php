@@ -20,6 +20,8 @@ use Nette\Application\Attributes\Persistent;
 use Nette\Application\UI\Form;
 use Nette\Forms\Container;
 use Nette\Forms\Controls\BaseControl;
+use Nette\Forms\Controls\SelectBox;
+use Nette\Forms\Controls\SubmitButton;
 use Nette\Utils\Json;
 use Nette\Utils\Validators;
 use Traversable;
@@ -473,6 +475,71 @@ trait ColumnFiltersTrait
 	{
 		parent::getColumns();
 		parent::handleHideColumn($column);
+	}
+
+	/** Ikona akce v liště hromadných akcí: `->addGroupAction('Smazat')->setAttribute(self::GROUP_ACTION_ICON, 'trash')`. */
+	public const string GROUP_ACTION_ICON = 'data-fa-icon';
+
+	/** Tlačítek v liště hromadných akcí na desktopu, další akce jsou v nabídce Další. */
+	public const int BULK_VISIBLE_ACTIONS = 3;
+
+	private string $bulkLabel = 'fcadmin.datagrid.bulk.selected.';
+
+	/** Počet vybraných v liště hromadných akcí („2 vybrané objednávky“): překlady `{prefix}.one/few/many` s `%count%`. */
+	public function setBulkLabel(string $prefix): static
+	{
+		$this->bulkLabel = rtrim($prefix, '.') . '.';
+
+		return $this;
+	}
+
+	public function getBulkLabel(): string
+	{
+		return $this->bulkLabel;
+	}
+
+	/**
+	 * Hromadné akce pro lištu v pořadí přidání. `select` vybere akci v poli knihovny a odešle, `input` má doplňující
+	 * pole (výběr, text) a otevře se v okně, `button` je samostatné tlačítko knihovny (addGroupButtonAction()).
+	 *
+	 * @return list<array{id: string, title: string, icon: ?string, type: 'select'|'input'|'button'}>
+	 */
+	public function getBulkActions(): array
+	{
+		if (!$this->hasGroupActions()) {
+			return [];
+		}
+
+		$container = $this['filter']['group_action'];
+		$titles = [];
+		$select = $container->getComponent('group_action', false);
+		if ($select instanceof SelectBox) {
+			$titles = $select->getItems();
+		}
+		foreach ($container->getComponents() as $name => $component) {
+			if ($component instanceof SubmitButton && is_numeric($name)) {
+				$titles[(int) $name] = (string) $component->getCaption();
+			}
+		}
+		ksort($titles);
+
+		$actions = [];
+		foreach ($titles as $id => $title) {
+			$id = (string) $id;
+			$control = $container->getComponent($id, false);
+			$actions[] = [
+				'id' => $id,
+				'title' => (string) $title,
+				'icon' => $this->getGroupActionCollection()->getGroupAction((string) $title)->getAttributes()[self::GROUP_ACTION_ICON] ?? null,
+				'type' => match (true) {
+					$control instanceof SubmitButton => 'button',
+					$control !== null => 'input',
+					default => 'select',
+				},
+			];
+		}
+
+		return $actions;
 	}
 
 	public const array EXPORT_FORMATS = ['xlsx', 'csv'];

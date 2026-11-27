@@ -19,6 +19,16 @@ datagrid:
     filterTo: 'Filtrovat podle sloupce %column% - do'
     perPage: Počet položek na stránku
   filters: Filtry
+  bulk:
+    label: Hromadné akce
+    clear: Zrušit výběr
+    more: Další
+    actions: Akce
+    execute: Provést
+    selected:
+      one: '%count% vybraná položka'
+      few: '%count% vybrané položky'
+      many: '%count% vybraných položek'
   columnFilters:
     count: '{0}%formatted% záznamů|{1}%formatted% záznam|[2,4]%formatted% záznamy|[5,+Inf[%formatted% záznamů'
     of: z

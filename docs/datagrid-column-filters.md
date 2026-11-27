@@ -19,8 +19,9 @@ class AppDataGrid extends DataGrid
 }
 ```
 
-Šablona projektu dál dědí z `{extends $originalTemplate}` a obsah lišty (hromadné akce, vlastní tlačítka) přidá
-blokem `toolbar`, stejně jako u `CollapsibleFiltersTrait`.
+Šablona projektu dál dědí z `{extends $originalTemplate}` a vlastní tlačítka lišty přidá blokem `toolbar`, stejně
+jako u `CollapsibleFiltersTrait`. Hromadné akce (`addGroupAction()` a spol.) do lišty nepatří, kreslí je trait
+v plovoucí liště (níže).
 
 Počet bez filtrů grid nezná, dodá ho vlastník gridu (typicky nový query objekt bez filtrů), a projekt může
 přejmenovat „záznamy“:
@@ -137,7 +138,17 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   (`_grid_hidden_columns`) trait čte a ukládá v tomtéž nastavení, takže `showColumn!` / `hideColumn!` fungují dál.
   Sloupce, které nastavení nezná (přibyly později), jsou na konci. Dialog se po dobu otevření přesune do `body`
   (obsah stránky je pevně umístěný, modal by skončil pod zatmavením) a zavření bez Použít ho vrátí.
-- **Telefon** (pod 576 px): lišta má řádky hledání + ⋯ / přepínač / hromadné akce, tlačítka lišty (nastavení
+- **Hromadné akce** (`datagridBulk.js`): select knihovny s Provést nahradila plovoucí lišta dole uprostřed, která se
+  ukáže po zaškrtnutí řádku - zrušení výběru, počet („2 vybrané objednávky“, překlady `{prefix}one/few/many`,
+  `setBulkLabel('admin.orderGrid.bulk')`) a akce jako tlačítka s ikonou (`->setAttribute(self::GROUP_ACTION_ICON,
+  'print')`). Na desktopu nejvýš `BULK_VISIBLE_ACTIONS` tlačítek, další v nabídce Další, na telefonu jen nabídka Akce
+  (spodní list). Na stránce s rychlou lištou se ukáže na jejím místě a lišta se do zrušení výběru schová
+  (`body.fa-bulk-active`). Tlačítko jen nastaví skrytý výběr akce knihovny a odešle formulář gridu, akce s doplňujícím
+  polem (`addGroupSelectAction` s volbami, text) ho ukáže v okně; pole je formuláři přiřazené atributem `form`, okno se
+  po dobu otevření přesune do `body`. Výběr přežije načtení dalších řádků (nekonečné stránkování), jiné překreslení
+  gridu a provedená akce ho zruší. Esc v liště výběr zruší a vrátí fokus na naposledy zaškrtnutý řádek.
+- **Mezery:** lišta, pruh filtrů a tabulka jsou od sebe 5 px (`form:has(> .fa-filters-bar)`).
+- **Telefon** (pod 576 px): lišta má řádky hledání + ⋯ / přepínač, tlačítka lišty (nastavení
   sloupců, exporty) jsou v nabídce ⋯. Panely jsou spodní list přes celou šířku se ztmavením; po dobu otevření se
   přesunou na konec formuláře gridu, jinak by je přerostly vrstvy lepivé hlavičky tabulky.
 - **Fokus po překreslení:** po Použít na hlavičku, po přepínači na přepínač, po odebrání čipu na další čip

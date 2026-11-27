@@ -15,6 +15,7 @@
 	--fa-filters-search-height: 2.75rem;
 	--fa-filters-chip-height: 1.875rem;
 	--fa-filters-scrim: rgb(16 19 24 / 42%);
+	--fa-filters-bulkbar-shadow: 0 12px 32px rgb(0 0 0 / 28%);
 }
 
 :root[data-bs-theme='dark'] {
@@ -23,11 +24,137 @@
 	--fa-filters-accent-text: color-mix(in srgb, var(--primaryColor) 50%, #fff);
 	--fa-filters-shadow: 0 14px 36px rgb(0 0 0 / 60%);
 	--fa-filters-scrim: rgb(0 0 0 / 60%);
+	--fa-filters-bulkbar-shadow: 0 12px 32px rgb(0 0 0 / 70%);
+}
+
+// Hromadné akce [data-part="bulk-bar"]: plovoucí lišta po výběru řádků, na místě rychlé lišty (ta se zatím schová)
+.datagrid table > tbody > tr.table-active > td {
+	background-color: var(--fa-filters-accent-soft);
+}
+
+.fa-filters-bulkbar {
+	position: fixed;
+	bottom: var(--quickbar-bottom, 1.25rem);
+	left: 50%;
+	// Pod zatmavením okna (1050), nad přilepenou hlavičkou tabulky
+	z-index: 1045;
+	display: flex;
+	align-items: center;
+	gap: .375rem;
+	width: max-content;
+	max-width: calc(100% - 2rem);
+	padding: .375rem;
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-text);
+	color: var(--fa-surface);
+	box-shadow: var(--fa-filters-bulkbar-shadow);
+	transform: translateX(-50%);
+	animation: fa-filters-bulk-in .16s ease-out;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+@keyframes fa-filters-bulk-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 1rem);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fa-filters-bulkbar {
+		animation: none;
+	}
+}
+
+.fa-bulk-active .quickbar,
+.fa-bulk-active .quickbar-overlay,
+.fa-filters-sheet-open .fa-filters-bulkbar {
+	visibility: hidden;
+}
+
+// Zprávy nad lištou a konec stránky (Načíst další) nad ní, jinak je překryje
+.fa-bulk-active .flash-stack {
+	bottom: calc(var(--quickbar-bottom, 1.25rem) + 4.25rem);
+}
+
+.fa-bulk-active .container-main {
+	padding-bottom: 5.5rem;
+}
+
+.fa-filters-bulkbar-count {
+	padding-right: .5rem;
+	font-size: .9375rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.fa-filters-bulkbar-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+	min-height: 2.5rem;
+	padding: 0 1rem;
+	border: 1px solid color-mix(in srgb, var(--fa-surface) 30%, transparent);
+	border-radius: var(--bs-border-radius-pill);
+	background: none;
+	color: inherit;
+	font-size: .875rem;
+	font-weight: 500;
+	white-space: nowrap;
+
+	&.is-icon {
+		justify-content: center;
+		width: 2.5rem;
+		padding: 0;
+		border: 0;
+	}
+
+	&:hover,
+	&[aria-expanded='true'] {
+		background: color-mix(in srgb, var(--fa-surface) 14%, transparent);
+		color: inherit;
+	}
+
+	&:focus-visible {
+		outline: 0;
+		box-shadow: 0 0 0 .1875rem color-mix(in srgb, var(--fa-surface) 55%, transparent);
+	}
+}
+
+@media (max-width: 575.98px) {
+	.fa-filters-bulkbar {
+		right: .75rem;
+		bottom: .75rem;
+		left: .75rem;
+		width: auto;
+		max-width: none;
+		transform: none;
+		animation-name: fa-filters-bulk-in-phone;
+	}
+
+	@keyframes fa-filters-bulk-in-phone {
+		from {
+			opacity: 0;
+			transform: translateY(1rem);
+		}
+	}
 }
 
 // Lišta nad gridem [data-part="bar"]
 .fa-filters-bar {
 	row-gap: .625rem;
+}
+
+// Lišta, pruh filtrů a tabulka těsně pod sebou; prázdný snippet pruhu by jinak přidal další mezeru
+form:has(> .fa-filters-bar) {
+	gap: 5px;
+
+	> [id$='-columnFiltersActive']:not(:has(*)) {
+		display: none;
+	}
 }
 
 .fa-filters-count {

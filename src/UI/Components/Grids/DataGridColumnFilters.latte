@@ -111,7 +111,7 @@
 	{var $_panelFilters = $control->getPanelFilters($switcherValues, $periodFilters)}
 	{var $_chips = $control->getFilterChips($_panelFilters)}
 	{var $_form = $control['filter']}
-	<div n:if="$_chips" class="fa-filters-active mt-2" data-part="active">
+	<div n:if="$_chips" class="fa-filters-active" data-part="active">
 		<span class="fa-filters-count" role="status" aria-live="polite" data-part="count">
 			{include filter-count, count => $control->getFilteredCount(count($rows)), total => $control->getUnfilteredCount()}
 		</span>
@@ -141,6 +141,88 @@
 		</ul>
 		<a n:href="resetFilter!" class="ajax fa-filters-link" data-part="clear-all">{_fcadmin.datagrid.columnFilters.clearAll}</a>
 	</div>
+	</div>
+
+	{if $hasGroupActions}{include bulk-bar}{/if}
+{/define}
+
+{* Plovoucí lišta hromadných akcí (datagridBulk.js) - ukáže se po výběru řádků místo rychlé lišty. Pole knihovny
+   (výběr akce, Provést) jsou v ní skrytá, tlačítka je jen nastaví a formulář odešlou. Je mimo snippety, výběr se
+   drží v JS. *}
+{define bulk-bar}
+	{var $_group = $control['filter']['group_action']}
+	{var $_actions = $control->getBulkActions()}
+	{var $_visible = count($_actions) > $control::BULK_VISIBLE_ACTIONS + 1 ? array_slice($_actions, 0, $control::BULK_VISIBLE_ACTIONS) : $_actions}
+	{var $_rest = array_slice($_actions, count($_visible))}
+	{var $_formId = $control['filter']->getElementPrototype()->id}
+	{var $_label = $control->getBulkLabel()}
+	<div class="fa-filters-bulkbar" role="region" aria-label="{_fcadmin.datagrid.bulk.label}" data-part="bulk-bar"
+		data-fa-bulk="{$control->getFullName()}"
+		data-count-one="{_$_label . 'one'}" data-count-few="{_$_label . 'few'}" data-count-many="{_$_label . 'many'}"
+		hidden
+	>
+		<button type="button" class="fa-filters-bulkbar-btn is-icon" aria-label="{_fcadmin.datagrid.bulk.clear}" title="{_fcadmin.datagrid.bulk.clear}" data-part="bulk-clear"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+		<span class="fa-filters-bulkbar-count" role="status" aria-live="polite" data-part="bulk-count"></span>
+		<div class="d-none d-sm-flex gap-1 ms-auto">
+			{foreach $_visible as $_action}
+				<button type="button" class="fa-filters-bulkbar-btn" data-part="bulk-action" data-fa-bulk-grid="{$control->getFullName()}" data-fa-bulk-action="{$_action['id']}" data-fa-bulk-type="{$_action['type']}">
+					<i n:if="$_action['icon']" class="fa-solid fa-{$_action['icon']}" aria-hidden="true"></i> {_$_action['title']}
+				</button>
+			{/foreach}
+			<div n:if="$_rest" class="dropup">
+				<button type="button" class="fa-filters-bulkbar-btn" data-bs-toggle="dropdown" data-bs-offset="0,8" data-bs-popper-config='{"strategy":"fixed"}'
+					aria-expanded="false" aria-haspopup="menu" aria-controls="{$control->getFullName()}-bulk-more"
+				>{_fcadmin.datagrid.bulk.more} <i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+				{include bulk-menu, id => $control->getFullName() . '-bulk-more', actions => $_rest}
+			</div>
+		</div>
+		<div class="dropup d-sm-none ms-auto">
+			<button type="button" class="fa-filters-bulkbar-btn" data-bs-toggle="dropdown" data-bs-offset="0,8" data-bs-popper-config='{"strategy":"fixed"}'
+				aria-expanded="false" aria-haspopup="menu" aria-controls="{$control->getFullName()}-bulk-menu" data-part="bulk-menu-toggle"
+			>{_fcadmin.datagrid.bulk.actions} <i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+			{include bulk-menu, id => $control->getFullName() . '-bulk-menu', actions => $_actions}
+		</div>
+		<div hidden data-part="bulk-controls">
+			{foreach $_group->getControls() as $_control}
+				{continueIf !$_control instanceof Nette\Forms\Controls\SubmitButton && $_control->getName() !== 'group_action'}
+				{input $_control}
+			{/foreach}
+		</div>
+		{foreach $_actions as $_action}
+			{continueIf $_action['type'] !== 'input'}
+			{var $_dialogId = $control->getFullName() . '-bulk-dialog-' . $_action['id']}
+			<div class="modal fade" id="{$_dialogId}" tabindex="-1" aria-labelledby="{$_dialogId}-title" aria-hidden="true" data-part="bulk-dialog" data-fa-bulk-grid="{$control->getFullName()}" data-fa-bulk-action="{$_action['id']}">
+				<div class="modal-dialog modal-dialog-centered modal-dialog-narrow">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h2 class="modal-title h5" id="{$_dialogId}-title">{_$_action['title']}</h2>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{_fcadmin.datagrid.columnFilters.close}"></button>
+						</div>
+						<div class="modal-body">
+							<p class="text-body-secondary mb-2" data-part="bulk-count"></p>
+							{input $_group[$_action['id']], form => $_formId}
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">{_fcadmin.datagrid.columnFilters.cancel}</button>
+							<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-bulk-submit="{$_action['id']}" data-fa-bulk-grid="{$control->getFullName()}">{_fcadmin.datagrid.bulk.execute}</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		{/foreach}
+	</div>
+{/define}
+
+{define bulk-menu}
+	<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$id}" data-part="bulk-menu">
+		<div class="fa-filters-panel-head"><p class="fa-filters-panel-title" data-part="bulk-count"></p></div>
+		<ul class="list-unstyled m-0 pb-2">
+			<li n:foreach="$actions as $_action">
+				<button type="button" class="dropdown-item fa-filters-more-item" data-part="bulk-action" data-fa-bulk-grid="{$control->getFullName()}" data-fa-bulk-action="{$_action['id']}" data-fa-bulk-type="{$_action['type']}">
+					<i class="fa-solid fa-{$_action['icon'] ?? 'angle-right'} fa-fw" aria-hidden="true"></i> {_$_action['title']}
+				</button>
+			</li>
+		</ul>
 	</div>
 {/define}
 
