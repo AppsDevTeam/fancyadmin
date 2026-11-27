@@ -62,7 +62,8 @@
 	{var $_title = $widget->getType() !== 'stat' || $widget->isUnavailable() ? $widget->getTitle() : null}
 	{var $_badges = $widget->isUnavailable() || $widget->getType() === 'kpi' ? [] : $widget->getBadges()}
 	{var $_hintOnTitle = $_title !== null && $widget->getDescription() && in_array($widget->getType(), ['kpi', 'figures', 'alerts', 'funnel', 'callout'], true)}
-	<div n:if="$_title !== null || $widget->hasPeriods() || $_badges || $widget->getSwitches()" class="fa-widget-header">
+	{var $_aside = $widget->isUnavailable() ? null : $widget->getAside()}
+	<div n:if="$_title !== null || $widget->hasPeriods() || $_badges || $widget->getSwitches() || $_aside !== null" class="fa-widget-header">
 		<div n:if="$_title !== null || $_badges" class="fa-widget-heading">
 			{* Popis je nápověda k widgetu, ne obsah - tooltip ho na dotyku neukáže, nesmí v něm být nic nepostradatelného.
 			   Karty kpi, figures a alerts ho mají na nadpisu (bez ikony, z klávesnice přes tabindex), ostatní na otazníku. *}
@@ -70,6 +71,7 @@
 			<span n:ifcontent class="fa-widget-subtitle">{$widget->getSubtitle()}</span>
 			{include badges, badges: $_badges}
 		</div>
+		<span n:if="$_aside !== null" class="fa-widget-aside">{$_aside}</span>
 		<button n:if="$widget->getDescription() && !$_hintOnTitle" type="button" class="btn btn-icon btn-sm fa-widget-hint"
 			data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}" aria-label="{$widget->getDescription()}">
 			<i class="fa-regular fa-circle-question" aria-hidden="true"></i>

@@ -135,6 +135,7 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
   stejné jméno být smí).
 
 - `setSubtitle()` - šedý dovětek za nadpisem (období, „stav k …“), text nebo `Closure` s obdobím.
+- `setAside()` - šedý doplněk vpravo v hlavičce karty („91 % z realizovaných provizí“), text nebo `Closure` s obdobím.
 - `setBadges()` - štítky `WidgetBadge($text, WidgetTone, ?$title)` v hlavičce (u `kpi` pod hodnotou), pole nebo `Closure`.
 - `setLink($url, ?$label)` - bez popisku je odkazem celá karta (šipka vpravo v hlavičce), s popiskem odkaz
   v patičce („Všechna upozornění ›“). Místo adresy jde předat `Closure` s obdobím widgetu - proklik pak

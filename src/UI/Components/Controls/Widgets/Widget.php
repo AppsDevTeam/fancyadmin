@@ -47,6 +47,9 @@ abstract class Widget
 
 	private ?string $titleStyle = null;
 
+	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
+	private string|\Closure|null $aside = null;
+
 	/** @var array<string, array{options: array<string, string>, default: string}> */
 	private array $switches = [];
 
@@ -297,6 +300,21 @@ abstract class Widget
 	public function getPanelGroup(): ?string
 	{
 		return $this->panelGroup;
+	}
+
+	/**
+	 * Šedý doplněk vpravo v hlavičce karty (např. „91 % z realizovaných provizí“) - na rozdíl od podtitulu
+	 * není za nadpisem ve stylu nadpisu. Text nebo Closure s obdobím.
+	 */
+	public function setAside(string|\Closure|null $aside): static
+	{
+		$this->aside = $aside;
+		return $this;
+	}
+
+	public function getAside(): ?string
+	{
+		return $this->aside instanceof \Closure ? ($this->aside)($this->getPeriod()) : $this->aside;
 	}
 
 	/** Styl nadpisu karty: `section` = jako nadpis sekce (modré verzálky), jinak výchozí nadpis widgetu. */

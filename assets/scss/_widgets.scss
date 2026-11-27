@@ -1680,3 +1680,11 @@
 	white-space: nowrap;
 	color: var(--fa-text-muted);
 }
+
+// Šedý doplněk vpravo v hlavičce karty (Widget::setAside)
+.fa-widget-aside {
+	margin-left: auto;
+	font-size: .75rem;
+	color: var(--fa-text-muted);
+	white-space: nowrap;
+}

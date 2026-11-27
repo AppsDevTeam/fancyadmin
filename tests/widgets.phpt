@@ -1158,3 +1158,17 @@ test('upozorneni jako karty: bez spolecne karty, stitky za textem, tlacitko a do
 	Assert::contains('<span class="fa-widgets-alert-badges"><span class="fa-widgets-badge fa-widgets-tone-danger">5 krit.</span><span class="fa-widgets-badge fa-widgets-tone-warning">17 sled.</span></span>', $part('branches'));
 	Assert::exception(fn() => new WidgetAlert('x', badges: ['text']), InvalidArgumentException::class);
 });
+
+test('sedy doplnek vpravo v hlavicce: text nebo Closure s obdobim, bez volby nic', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpi('sale', 'Prodej celkem', fn() => 1)->setAside(fn(?WidgetPeriod $period) => '91 % z realizovaných provizí');
+	$widgetGrid->addKpi('plain', 'Bez doplňku', fn() => 1);
+	$widgetGrid->addKpi('off', 'Bez dat', fn() => 1)->setAside('skryto')->setUnavailable('Nejsou data.');
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 600);
+
+	Assert::contains('<h2 class="fa-widget-title">Prodej celkem</h2></div><span class="fa-widget-aside">91 % z realizovaných provizí</span>', $part('sale'));
+	Assert::notContains('fa-widget-aside', $part('plain'));
+	Assert::notContains('skryto', $part('off'));
+});
