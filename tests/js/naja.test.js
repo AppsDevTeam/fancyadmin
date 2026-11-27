@@ -148,3 +148,29 @@ describe('z kódu', () => {
 		expect(window.location.pathname).toBe('/connector');
 	});
 });
+
+describe('jiný layout', () => {
+	it('požadavek nese layout stránky, ze které odešel', async () => {
+		document.body.dataset.fancyadminLayout = 'plain';
+		const done = waitForRequests();
+		click('#link');
+		await done;
+		delete document.body.dataset.fancyadminLayout;
+
+		expect(requests[0].headers.get('X-Fancyadmin-Layout')).toBe('plain');
+	});
+
+	it('přesměrování s forceRedirect načte celou stránku', async () => {
+		responses['/connector/save'] = { redirect: '/connector/detail', forceRedirect: true };
+		const assigned = [];
+		const adapter = naja.redirectHandler.locationAdapter;
+		naja.redirectHandler.locationAdapter = { assign: (url) => assigned.push(url) };
+		const done = waitForRequests();
+		document.getElementById('post').requestSubmit(document.getElementById('save'));
+		await done;
+		naja.redirectHandler.locationAdapter = adapter;
+
+		expect(requests).toHaveLength(1);
+		expect(assigned).toEqual(['/connector/detail']);
+	});
+});

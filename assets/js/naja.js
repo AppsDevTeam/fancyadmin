@@ -73,7 +73,12 @@ naja.uiHandler.addEventListener('interaction', (e) => {
 });
 
 naja.addEventListener('before', (e) => {
-	const { method, options } = e.detail;
+	const { method, options, request } = e.detail;
+
+	// Server podle něj pozná přechod na stránku s jiným layoutem (BasePresenterTrait::beforeRender)
+	if (document.body.dataset.fancyadminLayout) {
+		request.headers.set('X-Fancyadmin-Layout', document.body.dataset.fancyadminLayout);
+	}
 
 	if (options.history === undefined && (!options.element || method.toUpperCase() !== 'GET')) {
 		options.history = false;
@@ -94,6 +99,12 @@ naja.addEventListener('before', (e) => {
 naja.historyHandler.addEventListener('buildState', (e) => {
 	const { state } = e.detail;
 	state.href = cleanUrl(state.href) ?? state.href;
+});
+
+naja.addEventListener('payload', (e) => {
+	if (e.detail.payload?.forceRedirect) {
+		e.detail.options.forceRedirect = true;
+	}
 });
 
 naja.redirectHandler.addEventListener('redirect', (e) => {

@@ -1060,6 +1060,13 @@ Obsluha, která zavolá `preventDefault()`, má přednost - odkaz ani formulář
 POST a požadavek z kódu adresu nemění, kromě přesměrování. Adresa, která se bez signálu (`do`, `_sec`)
 rovná současné, nový záznam historie nepřidá. Návrat zpět načte stránku znovu ajaxem (bez cache snippetů).
 
+**Jiný layout:** každý požadavek nese hlavičku `X-Fancyadmin-Layout` z `body[data-fancyadmin-layout]`
+(`primary` = stránka aplikace s menu a rychlou lištou, `plain` = přihlášení a další stránky bez nich).
+Když ajax dojde na stránku s jiným layoutem (přihlášení → aplikace, vypršelé přihlášení → přihlášení),
+`BasePresenterTrait::beforeRender()` místo snippetů pošle přesměrování na tutéž adresu s `forceRedirect`
+a stránka se načte celá - rychlá lišta, push a další části mimo snippet `body` by jinak zůstaly podle
+předchozí stránky (po přihlášení chyběla lišta). `forceRedirect: true` v payloadu umí naja.js obecně.
+
 ```js
 import naja from 'naja';
 import { ajax, onBeforeSnippetUpdate, onContentLoaded } from '@fancyadmin/js/naja';

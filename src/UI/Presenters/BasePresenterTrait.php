@@ -47,6 +47,15 @@ trait BasePresenterTrait
 	protected function beforeRender(): void
 	{
 		parent::beforeRender();
+
+		// Ajaxový přechod mezi přihlášením a aplikací překreslí jen snippety, rychlá lišta, push
+		// a další části mimo snippet body by zůstaly podle předchozí stránky - načte se celá
+		$layout = $this->getHttpRequest()->getHeader('X-Fancyadmin-Layout');
+		if ($this->isAjax() && $layout !== null && $layout !== ($this->primaryTemplate ? 'primary' : 'plain')) {
+			$this->payload->forceRedirect = true;
+			$this->redirectUrl((string) $this->getHttpRequest()->getUrl());
+		}
+
 		$this->getTemplate()->user = $this->getPortalUser();
 		$this->getTemplate()->originalTemplate = __DIR__ . '/@layout.latte';
 		$this->getTemplate()->primaryTemplate = $this->primaryTemplate;
