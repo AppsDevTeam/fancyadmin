@@ -3452,6 +3452,9 @@ V liště 46 px vysoké je šest ikonových tlačítek 52 × 36 px bez rámečk�
 pod 400 px je lišta přes celou šířku a tlačítka se dělí rovným dílem. Hledání lištu roztáhne na pole, okna jsou 16 px
 od krajů, AI na celou plochu na mobilu není.
 
+**Místo pod lištou** - `.container-main` má dole rezervu, aby lišta nepřekryla konec stránky; flash zprávy jsou nad lištou,
+vodorovná lišta gridu (`.table-bottom-scroll`) pod ní u spodní hrany okna. Sticky `bottom` se měří od rezervy, proto ji odečítá.
+
 **Linky panelů** pod hlavičkou a nad patičkou se ukážou, jen když je obsah posunutý pod hlavičku
 nebo pod patičkou ještě pokračuje (třídy `quickbar-panel--scrolled` / `--more`, jako boční panel).
 

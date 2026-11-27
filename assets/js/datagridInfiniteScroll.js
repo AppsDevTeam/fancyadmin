@@ -201,6 +201,8 @@ function buildStickyThead(grid) {
 
 	const cloneTable = document.createElement('table');
 	cloneTable.className = parts.table.className;
+	// Stíny přilepených sloupců jsou proměnné v inline stylu tabulky (tableActionsShadow.js)
+	cloneTable.style.cssText = parts.table.style.cssText;
 	cloneTable.appendChild(clone);
 
 	const inner = document.createElement('div');

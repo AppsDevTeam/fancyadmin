@@ -44,9 +44,11 @@ body {
 
 // Lišta jen s Menu (.quickbar--menu-only) je vidět jen na mobilu, rezervy pod ní tedy taky
 @mixin quickbar-reserve($bar) {
+	$reserve: calc(var(--quickbar-bottom) + var(--quickbar-height) + 16px);
+
 	// Rezerva, aby lišta nepřekryla konec stránky („Načíst další"); konec obsahu 16 px nad lištou
 	body:has(#{$bar}) .container-main {
-		padding-bottom: calc(var(--quickbar-bottom) + var(--quickbar-height) + 16px);
+		padding-bottom: $reserve;
 	}
 
 	// Flash zprávy nad lištou, jinak je překryje
@@ -54,9 +56,9 @@ body {
 		bottom: var(--quickbar-panel-bottom);
 	}
 
-	// Vodorovný scroll gridu pod lištu, ne za ni: 9 px vysoký a 5 px mezera
+	// Vodorovný scroll gridu pod lištu, ne za ni: 9 px vysoký a 5 px mezera; sticky měří od rezervy, proto ji odečítá
 	body:has(#{$bar}) .table-bottom-scroll {
-		bottom: calc(var(--quickbar-bottom) - 14px);
+		bottom: calc(var(--quickbar-bottom) - 14px - #{$reserve});
 	}
 }
 
