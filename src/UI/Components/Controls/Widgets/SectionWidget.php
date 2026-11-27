@@ -11,6 +11,7 @@ use Nette\HtmlStringable;
  * vpravo odkaz (setLink s popiskem) a pod nadpisem volitelná vysvětlivka (setText, Html se neescapuje).
  * Zabírá celou šířku mřížky. Hlavní sekce (setMajor) má větší nadpis podtržený primární barvou a šedý dovětek
  * vedle („VÝKONNOST realizované provize a provize v rezervacích“) - člení dlouhou stránku na bloky.
+ * Nadpis v barvě tónu (setTone) - např. oranžové „OTEVŘENÉ REZERVACE · ZATÍM NENÍ TRŽBA“; bez tónu primární barva.
  */
 final class SectionWidget extends Widget
 {
@@ -21,6 +22,8 @@ final class SectionWidget extends Widget
 	private string|\Closure|null $suffix = null;
 
 	private bool $major = false;
+
+	private ?WidgetTone $tone = null;
 
 	/** Dovětek ve stylu nadpisu („NOVĚ ZADANÉ NABÍDKY · ŘÍJEN 2026“), text nebo Closure s obdobím. */
 	public function setSuffix(string|\Closure|null $suffix): static
@@ -44,6 +47,18 @@ final class SectionWidget extends Widget
 	public function isMajor(): bool
 	{
 		return $this->major;
+	}
+
+	/** Nadpis v barvě tónu (tmavší text tónu, --fa-widgets-{tone}-text); null = primární barva. */
+	public function setTone(?WidgetTone $tone): static
+	{
+		$this->tone = $tone;
+		return $this;
+	}
+
+	public function getTone(): ?WidgetTone
+	{
+		return $this->tone;
 	}
 
 	public function getType(): string

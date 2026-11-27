@@ -38,6 +38,8 @@ abstract class Widget
 
 	private ?string $unavailable = null;
 
+	private ?string $emptyText = null;
+
 	private bool $collapsible = false;
 
 	/** @var array{target: string, open: string, close: string}|null */
@@ -168,6 +170,18 @@ abstract class Widget
 	public function getUnavailableReason(): ?string
 	{
 		return $this->unavailable;
+	}
+
+	/** Text widgetu bez dat místo výchozího „Za zvolené období nejsou žádná data.“ (např. stav k dnešku). */
+	public function setEmptyText(?string $text): static
+	{
+		$this->emptyText = $text;
+		return $this;
+	}
+
+	public function getEmptyText(): ?string
+	{
+		return $this->emptyText;
 	}
 
 	/** Sbalitelný widget: vidět je jen hlavička, obsah se rozbalí kliknutím (`<details>`). */

@@ -1104,6 +1104,22 @@ test('zvyraznena karta: podbarveni tonem, sdeleni, text a polozky s odkazem; nul
 	Assert::contains('[fcadmin.widgets.empty]', $html);
 });
 
+test('nadpis sekce v barve tonu a vlastni text prazdneho widgetu; bez voleb beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addSection('toned', 'Otevřené rezervace')->setTone(WidgetTone::Warning);
+	$widgetGrid->addSection('plain', 'Nedávno realizované');
+	$widgetGrid->addTable('own', 'Vlastní', ['a' => 'A'], fn() => [])->setEmptyText('Makléř nemá žádnou otevřenou rezervaci.');
+	$widgetGrid->addTable('default', 'Výchozí', ['a' => 'A'], fn() => []);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 700);
+
+	Assert::contains('<div class="fa-widgets-section fa-widgets-section-toned fa-widgets-tone-warning">', $part('toned'));
+	Assert::contains('<div class="fa-widgets-section">', $part('plain'));
+	Assert::contains('<p class="fa-widgets-empty">Makléř nemá žádnou otevřenou rezervaci.</p>', $part('own'));
+	Assert::contains('<p class="fa-widgets-empty">[fcadmin.widgets.empty]</p>', $part('default'));
+});
+
 test('hlavni sekce, sablona bez karty a udaj s proklikem; bez voleb beze zmeny', function () {
 	$file = tempnam(sys_get_temp_dir(), 'dashboard') . '.latte';
 	file_put_contents($file, '<p class="custom">{$label}</p>');

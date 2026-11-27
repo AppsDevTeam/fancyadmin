@@ -1072,6 +1072,11 @@
 	color: var(--primaryColor);
 }
 
+// Nadpis sekce v barvě tónu (SectionWidget::setTone)
+.fa-widgets-section-toned .fa-widgets-section-title {
+	color: var(--fa-widgets-tone-text);
+}
+
 .fa-widgets-section-subtitle {
 	font-size: .75rem;
 	letter-spacing: .02em;
