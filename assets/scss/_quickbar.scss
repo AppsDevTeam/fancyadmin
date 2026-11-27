@@ -1246,6 +1246,61 @@ body {
 	color: var(--quickbar-muted);
 }
 
+// Správa členů (zdroj s canManageMembers): řádek Přidat člena, křížek u člena a potvrzení odebrání
+.quickbar-chat-member-add {
+	width: 100%;
+	border: 0;
+	border-radius: var(--quickbar-item-radius);
+	background: transparent;
+	font-family: inherit;
+	text-align: left;
+	color: var(--quickbar-primary);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background: var(--quickbar-hover);
+	}
+}
+
+.quickbar-chat-member-add-icon {
+	background: var(--quickbar-tint);
+	color: var(--quickbar-primary);
+	font-size: 12px;
+}
+
+.quickbar-chat-member-remove {
+	margin-left: auto;
+	color: var(--quickbar-muted);
+	opacity: 0;
+
+	// Na dotyku hover není - křížek je vidět vždy
+	@media (hover: none) {
+		opacity: 1;
+	}
+
+	.quickbar-chat-member:hover &,
+	&:focus-visible {
+		opacity: 1;
+	}
+
+	&:hover {
+		color: var(--quickbar-danger);
+	}
+}
+
+.quickbar-chat-member-confirm {
+	display: flex;
+	flex: none;
+	gap: 4px;
+	margin-left: auto;
+}
+
+.quickbar-chat-member--confirm {
+	border-radius: var(--quickbar-item-radius);
+	background: color-mix(in srgb, var(--quickbar-danger) 8%, transparent);
+}
+
 .quickbar-panel--chat:not(.quickbar-panel--chat-thread) :is(.quickbar-thread, .quickbar-chat-form, .quickbar-chat-members, .quickbar-chat-pinned, .quickbar-chat-news, .quickbar-chat-files) {
 	display: none;
 }

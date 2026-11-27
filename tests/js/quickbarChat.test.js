@@ -34,7 +34,8 @@ function quickbarHtml() {
 					data-threads="Vlákna" data-threads-empty="Zatím nesledujete žádné vlákno s odpověďmi."
 					data-reminders="Připomenout později" data-reminders-empty="Nemáte žádné připomínky." data-reminder-done="Hotovo" hidden></div>
 			</div>
-			<div class="quickbar-chat-members" id="quickbar-chat-members" data-quickbar-chat-members aria-label="Členové konverzace" data-you="(vy)" hidden></div>
+			<div class="quickbar-chat-members" id="quickbar-chat-members" data-quickbar-chat-members aria-label="Členové konverzace" data-you="(vy)"
+				data-add="Přidat člena" data-remove="Odebrat z konverzace" data-remove-confirm="Odebrat" data-remove-cancel="Zrušit" hidden></div>
 			<div data-quickbar-chat-pinned data-label="Připnuté (%count%)" hidden></div>
 			<div data-quickbar-chat-news data-one="Nové odpovědi ve vlákně" data-few="Nové odpovědi ve %count% vláknech"
 				data-many="Nové odpovědi v %count% vláknech" data-open="Zobrazit" hidden></div>
@@ -747,6 +748,82 @@ describe('kanály, vlákna, připnuté zprávy, připomenutí a přílohy', () =
 			click('[data-quickbar-replies="1"]');
 			await settle();
 			expect($('[data-quickbar-chat-members]').hidden).toBe(true);
+		});
+
+		it('bez canManageMembers seznam nenabízí přidání ani odebrání', async () => {
+			source.chats.addMembers = () => calls.push(['addMembers']);
+			source.chats.removeMember = () => calls.push(['removeMember']);
+			await openChat(20);
+			click('[data-quickbar-members-toggle]');
+
+			expect($('[data-quickbar-member-add]')).toBeNull();
+			expect($$('[data-quickbar-member-remove]')).toHaveLength(0);
+		});
+
+		describe('správa členů', () => {
+			let members;
+
+			beforeEach(() => {
+				members = [...MEMBERS];
+				const messagesOf = source.chats.messages;
+				source.chats.messages = (chatId) => ({ ...messagesOf(chatId), members, canManageMembers: true });
+				source.chats.addMembers = (chatId) => {
+					calls.push(['addMembers', chatId]);
+					members = [...members, { id: 4, name: 'Karel Nový' }];
+				};
+				source.chats.removeMember = (chatId, memberId) => {
+					calls.push(['removeMember', chatId, memberId]);
+					members = members.filter((m) => m.id !== memberId);
+				};
+			});
+
+			it('Přidat člena zavolá zdroj a seznam načte znovu', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+				expect($('[data-quickbar-member-add]').textContent).toContain('Přidat člena');
+
+				click('[data-quickbar-member-add]');
+				await settle();
+
+				expect(calls).toContainEqual(['addMembers', 20]);
+				expect($$('.quickbar-chat-member-name').map((el) => el.textContent)).toContain('Karel Nový');
+				expect($('[data-quickbar-members-toggle]').textContent).toContain('4 členové');
+			});
+
+			it('křížek je u ostatních členů, ne u sebe', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+
+				expect($$('[data-quickbar-member-remove]').map((el) => el.dataset.quickbarMemberRemove)).toEqual(['1', '3']);
+				expect($('[data-quickbar-member-remove="3"]').getAttribute('aria-label')).toBe('Odebrat z konverzace: Petra Malá');
+			});
+
+			it('odebrání se nejdřív zeptá, Zrušit nic neodebere', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+				click('[data-quickbar-member-remove="3"]');
+
+				const confirm = $('[data-quickbar-member-remove-confirm="3"]');
+				expect(confirm.textContent).toBe('Odebrat');
+				expect(document.activeElement).toBe(confirm);
+				expect($('[data-quickbar-member-remove="3"]')).toBeNull();
+
+				click('[data-quickbar-member-remove-cancel="3"]');
+				expect(calls.filter((c) => c[0] === 'removeMember')).toHaveLength(0);
+				expect(document.activeElement).toBe($('[data-quickbar-member-remove="3"]'));
+			});
+
+			it('potvrzené odebrání pošle id ve stejném typu a člen zmizí', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+				click('[data-quickbar-member-remove="3"]');
+				click('[data-quickbar-member-remove-confirm="3"]');
+				await settle();
+
+				expect(calls).toContainEqual(['removeMember', 20, 3]);
+				expect($$('.quickbar-chat-member-name').map((el) => el.textContent)).toEqual(['Eva Recepční', 'Jan Novák']);
+				expect($('[data-quickbar-members-toggle]').textContent).toContain('2 členové');
+			});
 		});
 	});
 

@@ -3400,6 +3400,12 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
 - `chats.messages()` může vrátit i `members: [{ id, name, initials?, me? }]` - u konverzace s `kind` `channel`
   nebo `group` je v hlavičce pod názvem počet členů (*Kanál · 6 členů*), klik pod hlavičkou rozbalí jejich
   seznam s avatary (`me` = za jménem *(vy)*). U přímé konverzace dvou lidí se nic neukazuje.
+- Správa členů: `chats.messages()` vrátí `canManageMembers: true` a zdroj má `addMembers(chatId)`
+  a `removeMember(chatId, memberId)`. V rozbaleném seznamu je pak nahoře *Přidat člena* (výběr kolegů si zdroj
+  udělá sám, např. přes `pickInQuickbar()`) a u ostatních členů (ne u `me`) křížek *Odebrat z konverzace*,
+  který se nejdřív zeptá (*Odebrat* / *Zrušit*). `memberId` dostane zdroj ve stejném typu, v jakém ho poslal.
+  Po akci (i po chybě, hlášku dává zdroj) lišta načte zprávy znovu. Kdo smí členy měnit, rozhoduje zdroj
+  (a server), bez `canManageMembers` je seznam jen pro čtení.
 - Konverzace z `chats.list()` s `muted: true` je ztlumená: za názvem má přeškrtnutý zvonek (v seznamu i v hlavičce)
   a počet nepřečtených šedě místo červeně. `chats.messages()` může vrátit `muted` (boolean), který přepíše
   položku seznamu, takže hlavička změnu ukáže hned. Ztlumit a zrušit ztlumení dává zdroj do `chats.menu()`.
