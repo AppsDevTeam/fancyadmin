@@ -48,7 +48,7 @@
 		</div>
 	{else}
 		{include block ('widget-' . $widget->getType())}
-		<div n:if="$widget->getLinkLabel() !== null && $widget->getLink() !== null && $widget->getType() !== 'section'" class="fa-widgets-footer">
+		<div n:if="$widget->getLinkLabel() !== null && $widget->getLink() !== null && $widget->getType() !== 'section' && !$widget->isLinkInHeader()" class="fa-widgets-footer">
 			<a href="{$widget->getLink()}" class="fa-widgets-footer-link">{$widget->getLinkLabel()} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
 		</div>
 	{/if}
@@ -64,15 +64,16 @@
 	{var $_badges = $widget->isUnavailable() || $widget->getType() === 'kpi' ? [] : $widget->getBadges()}
 	{var $_hintOnTitle = $_title !== null && $widget->getDescription() && in_array($widget->getType(), ['kpi', 'figures', 'alerts', 'funnel', 'callout'], true)}
 	{var $_aside = $widget->isUnavailable() ? null : $widget->getAside()}
-	<div n:if="$_title !== null || $widget->hasPeriods() || $_badges || $widget->getSwitches() || $_aside !== null" class="fa-widget-header">
+	<div n:if="$_title !== null || $widget->hasPeriods() || $_badges || $widget->getSwitches() || $_aside !== null || $widget->isLinkInHeader()" class="fa-widget-header">
 		<div n:if="$_title !== null || $_badges" class="fa-widget-heading">
 			{* Popis je nápověda k widgetu, ne obsah - tooltip ho na dotyku neukáže, nesmí v něm být nic nepostradatelného.
 			   Karty kpi, figures a alerts ho mají na nadpisu (bez ikony, z klávesnice přes tabindex), ostatní na otazníku. *}
-			<h2 n:if="$_title !== null" n:class="fa-widget-title, $widget->getTitleStyle() === 'section' ? fa-widget-title-section"{if $_hintOnTitle} tabindex="0" data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}"{/if}>{$_title}</h2>
+			<h2 n:if="$_title !== null" n:class="fa-widget-title, $widget->getTitleStyle() === 'section' ? fa-widget-title-section, $widget->getTitleStyle() === 'caps' ? fa-widget-title-caps"{if $_hintOnTitle} tabindex="0" data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}"{/if}>{$_title}</h2>
 			<span n:ifcontent class="fa-widget-subtitle">{$widget->getSubtitle()}</span>
 			{include badges, badges: $_badges}
 		</div>
 		<span n:if="$_aside !== null" class="fa-widget-aside">{$_aside}</span>
+		<a n:if="$widget->isLinkInHeader() && $widget->getLink() !== null" href="{$widget->getLink()}" class="fa-widget-header-link">{$widget->getLinkLabel()} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
 		<button n:if="$widget->getDescription() && !$_hintOnTitle" type="button" class="btn btn-icon btn-sm fa-widget-hint"
 			data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}" aria-label="{$widget->getDescription()}">
 			<i class="fa-regular fa-circle-question" aria-hidden="true"></i>
@@ -129,12 +130,14 @@
 
 {define widget-split}
 	{var $_split = $widget->getSplit()}
-	<div n:if="$_split" class="fa-widgets-split">
+	{var $_solid = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget && $widget->isSplitSolid()}
+	<div n:if="$_split" n:class="fa-widgets-split, $_solid ? fa-widgets-split-solid">
 		<div class="fa-widgets-split-bar" role="presentation">
-			<span n:foreach="$_split as $_i => $_part" class="fa-widgets-split-segment fa-widgets-tone-{$_part['split']->tone->value}{if $_i > 0} fa-widgets-split-segment-light{/if}" style="flex-grow: {round($_part['share'] * 1000)}"></span>
+			<span n:foreach="$_split as $_i => $_part" class="fa-widgets-split-segment fa-widgets-tone-{$_part['split']->tone->value}{if $_i > 0 && !$_solid} fa-widgets-split-segment-light{/if}" style="flex-grow: {round($_part['share'] * 1000)}"></span>
 		</div>
 		{var $_rows = (bool) array_filter($_split, fn($part) => $part['split']->note !== null || $part['split']->extra !== null)}
-		<div n:class="fa-widgets-split-legend, $_rows ? fa-widgets-split-rows">
+		<div n:if="$_solid" class="fa-widgets-split-labels">{foreach $_split as $_part}{if !$iterator->first} · {/if}{$_part['split']->label}{/foreach}</div>
+		<div n:if="!$_solid" n:class="fa-widgets-split-legend, $_rows ? fa-widgets-split-rows">
 			<div n:foreach="$_split as $_i => $_part" class="fa-widgets-split-item fa-widgets-tone-{$_part['split']->tone->value}">
 				<span class="fa-widgets-split-label"><span n:class="fa-widgets-split-dot, $_i > 0 ? fa-widgets-split-segment-light" aria-hidden="true"></span>{$_part['split']->label} <strong>{$_part['split']->display ?? $format::value($_part['split']->value)}</strong>{if !$_rows} · {round($_part['share'] * 100)}&nbsp;%{/if}</span>
 				<span n:if="$_rows" class="fa-widgets-split-note">{$_part['split']->note}</span>
@@ -163,7 +166,14 @@
 		{var $_sparkline = $widget->getSparkline()}
 		<div n:class="fa-widgets-kpi, $widget->isDetail() ? fa-widgets-kpi-detail">
 			<div class="fa-widgets-kpi-main">
-				<div class="fa-widgets-kpi-value fa-widgets-value-tone-{$widget->getTone()->value}">
+				{var $_values = $widget->getValues()}
+				<div n:if="$_values" class="fa-widgets-kpi-values">
+					{foreach $_values as $_value}
+						<span n:if="!$iterator->first" class="fa-widgets-kpi-values-separator" aria-hidden="true">/</span>
+						<span class="fa-widgets-kpi-values-item" n:attr="title: $_value->title"><span class="fa-widgets-kpi-values-number fa-widgets-value-tone-{$_value->tone->value}">{$format::value($_value->value ?? '–')}</span><span n:if="$_value->unit !== null" class="fa-widgets-unit">{$_value->unit}</span></span>
+					{/foreach}
+				</div>
+				<div n:if="!$_values" class="fa-widgets-kpi-value fa-widgets-value-tone-{$widget->getTone()->value}">
 					{$format::value($widget->getValue() ?? '–')}<span n:if="$widget->getUnit() !== null" class="fa-widgets-unit">{$widget->getUnit()}</span>
 				</div>
 				<svg n:if="$_sparkline" class="fa-widgets-sparkline fa-widgets-tone-{$widget->getTone()->value}" viewBox="0 0 72 28" width="72" height="28" aria-hidden="true">
@@ -191,6 +201,11 @@
 					<span n:if="$_figure->note !== null" class="fa-widgets-figure-note">{$_figure->note}</span>
 				</div>
 				<div n:if="$_figure->badges" class="fa-widgets-kpi-foot">{include badges, badges: $_figure->badges}</div>
+				<div n:if="$_figure->switch" class="btn-group btn-group-sm fa-widgets-figure-switch" role="group" aria-label="{$_figure->label}">
+					{foreach $_figure->switch as $_label => $_url}
+						{if $_url === null}<span class="btn" aria-current="true">{$_label}</span>{else}<a href="{$_url}" class="btn">{$_label}</a>{/if}
+					{/foreach}
+				</div>
 				<a n:if="$_figure->link !== null" href="{$_figure->link}" class="stretched-link" aria-label="{$_figure->label}"></a>
 			</div>
 		</div>
@@ -210,7 +225,7 @@
 		{var $_compact = $widget->isCompact()}
 		{var $_limit = $widget->getLimit()}
 		{var $_more = $_limit !== null && count($widget->getAlerts()) > $_limit}
-		<ul n:class="fa-widgets-alerts, $_compact ? fa-widgets-alerts-compact">
+		<ul n:class="fa-widgets-alerts, $_compact ? fa-widgets-alerts-compact, $widget->hasInlineNotes() ? fa-widgets-alerts-inline">
 			<li n:foreach="$widget->getAlerts() as $_i => $_alert" n:class="fa-widgets-alert, 'fa-widgets-tone-' . $_alert->tone->value, $_more && $_i >= $_limit ? fa-widgets-alert-extra, $_compact && $_alert->link !== null ? fa-widgets-alert-linked" n:attr="hidden: $_more && $_i >= $_limit">
 				{if $_compact}
 					<span n:if="$widget->hasDots()" class="fa-widgets-alert-dot" aria-hidden="true"></span>
@@ -218,12 +233,20 @@
 					<i n:class="'fa-solid', $_alert->tone->value === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation', fa-widgets-alert-icon" aria-hidden="true"></i>
 				{/if}
 				<div class="fa-widgets-alert-body">
-					{if $_compact && $_alert->link !== null}
+					{if $widget->hasInlineNotes()}
+						{if $_alert->link !== null}
+							<a href="{$_alert->link}" class="fa-widgets-alert-text stretched-link" n:attr="title: $_alert->linkLabel">{$_alert->text}</a>
+						{else}
+							<span class="fa-widgets-alert-text">{$_alert->text}</span>
+						{/if}
+						<span n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</span>
+					{elseif $_compact && $_alert->link !== null}
 						<a href="{$_alert->link}" class="fa-widgets-alert-text stretched-link" n:attr="title: $_alert->linkLabel">{$_alert->text}</a>
+						<div n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</div>
 					{else}
 						<div class="fa-widgets-alert-text">{$_alert->text}</div>
+						<div n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</div>
 					{/if}
-					<div n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</div>
 				</div>
 				<span n:if="$_alert->badges" class="fa-widgets-alert-badges">{include badges, badges: $_alert->badges}</span>
 				<span n:if="$_alert->value !== null" class="fa-widgets-alert-value">{$format::value($_alert->value)}</span>
@@ -364,7 +387,7 @@
 		{var $_total = $widget->getTotal()}
 		{var $_linked = (bool) array_filter($widget->getRows(), fn($row) => $widget->getRowLink($row) !== null)}
 		<div class="table-responsive">
-			<table n:class="table, fa-widgets-table, mb-0, $_groups ? fa-widgets-table-grouped, $widget->isCompact() ? fa-widgets-table-compact">
+			<table n:class="table, fa-widgets-table, mb-0, $_groups ? fa-widgets-table-grouped, $widget->isCompact() ? fa-widgets-table-compact, $widget->isStriped() ? fa-widgets-table-striped">
 				<thead>
 					{* Pás skupin sloupců nad záhlavím v barvě skupiny: sloupce před první skupinou do ní přecházejí, poslední
 					   skupina sahá až k okraji tabulky (i přes sloupec šipky) a ke konci se rozplývá *}

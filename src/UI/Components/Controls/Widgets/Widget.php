@@ -34,7 +34,10 @@ abstract class Widget
 	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
 	private string|\Closure|null $link = null;
 
-	private ?string $linkLabel = null;
+	/** @var string|(\Closure(?WidgetPeriod): string)|null */
+	private string|\Closure|null $linkLabel = null;
+
+	private bool $linkInHeader = false;
 
 	private ?string $unavailable = null;
 
@@ -135,11 +138,19 @@ abstract class Widget
 	 *
 	 * @param string|(\Closure(?WidgetPeriod): ?string)|null $link
 	 */
-	public function setLink(string|\Closure|null $link, ?string $label = null): static
+	/** @param string|(\Closure(?WidgetPeriod): string)|null $label popisek odkazu, text nebo Closure s obdobím („Všechna (17)“) */
+	public function setLink(string|\Closure|null $link, string|\Closure|null $label = null, bool $header = false): static
 	{
 		$this->link = $link;
 		$this->linkLabel = $label;
+		$this->linkInHeader = $header && $label !== null;
 		return $this;
+	}
+
+	/** Odkaz s popiskem vpravo v hlavičce („Všechna (17) ›“) místo patičky - `setLink($url, $label, header: true)`. */
+	public function isLinkInHeader(): bool
+	{
+		return $this->linkInHeader;
 	}
 
 	public function getLink(): ?string
@@ -149,7 +160,7 @@ abstract class Widget
 
 	public function getLinkLabel(): ?string
 	{
-		return $this->linkLabel;
+		return $this->linkLabel instanceof \Closure ? ($this->linkLabel)($this->getPeriod()) : $this->linkLabel;
 	}
 
 	/**
@@ -331,7 +342,7 @@ abstract class Widget
 		return $this->aside instanceof \Closure ? ($this->aside)($this->getPeriod()) : $this->aside;
 	}
 
-	/** Styl nadpisu karty: `section` = jako nadpis sekce (modré verzálky), jinak výchozí nadpis widgetu. */
+	/** Styl nadpisu karty: `section` = jako nadpis sekce (modré verzálky), `caps` = malé šedé verzálky jako u KPI karet, jinak výchozí nadpis widgetu. */
 	public function setTitleStyle(?string $style): static
 	{
 		$this->titleStyle = $style;

@@ -8,10 +8,16 @@ namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
  * Jeden údaj řady widgetu `figures` (KPI karty `kpi` s částmi): popisek, hodnota, jednotka za hodnotou,
  * šedý doplněk („z aktivních“) a štítky. Tón barví hodnotu (Neutral = běžný text).
  */
-/** `link` = proklik údaje: šipka u popisku a odkazem je celý údaj (u dlaždic setCards celá dlaždice). */
+/**
+ * `link` = proklik údaje: šipka u popisku a odkazem je celý údaj (u dlaždic setCards celá dlaždice).
+ * `switch` = přepínač pod hodnotou (popisek => adresa, aktivní volba má adresu null), např. „30d / 60d / 90d“.
+ */
 final class WidgetFigure
 {
-	/** @param list<WidgetBadge> $badges */
+	/**
+	 * @param list<WidgetBadge> $badges
+	 * @param array<string, ?string> $switch
+	 */
 	public function __construct(
 		public readonly string $label,
 		public readonly int|float|string|null $value,
@@ -21,6 +27,7 @@ final class WidgetFigure
 		public readonly ?string $title = null,
 		public readonly array $badges = [],
 		public readonly ?string $link = null,
+		public readonly array $switch = [],
 	) {
 		foreach ($badges as $_badge) {
 			if (!$_badge instanceof WidgetBadge) {
