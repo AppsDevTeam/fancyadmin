@@ -174,6 +174,12 @@ a šedý podtitul (text nebo `Closure` s obdobím). Za podtitulem mohou být št
 vykreslená potom ho už nemá; bez `setHeader()` pak nemá ani pás hlavičky. Stejné jméno komponenty
 (`dashboard`) znamená stejný parametr období, odkaz z dashboardu ho tak může předat.
 
+`setPeriodRemembered($key = 'default', ?WidgetPeriodStorage $storage = null)` - mřížka si zvolené období
+pamatuje (výchozí úložiště je relace uživatele, `SessionWidgetPeriodStorage`): období z adresy se uloží, stránka
+bez období v adrese (příchod z menu, drobečků, odkazu bez období) použije uložené a dá ho i do odkazů. Mřížky se
+stejným klíčem na různých stránkách sdílí jedno období (přehled a jeho podstránky). Období v adrese má přednost;
+uložené, které stránka nenabízí, se nepoužije. Bez relace (testy) volba nic nedělá.
+
 Vzhled mřížky jde projektu nastavit CSS proměnnými (výchozí = vzhled administrace): `--fa-widgets-radius`
 (zaoblení karet a pásu) a `--fa-widgets-max-width` (nejširší obsah mřížky a hlavičky podstránky, uprostřed).
 
