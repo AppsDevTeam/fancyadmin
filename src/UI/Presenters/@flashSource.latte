@@ -1,0 +1,2 @@
+{* Položky pro flashes.js - snippet flashes v layoutu i sendPayload() (BasePresenterTrait) *}
+<div n:foreach="$flashes as $flash" class="flash-source-item" data-type={$flash->type} data-close-duration={$flash->closeDuration}>{$flash->message|noescape}</div>

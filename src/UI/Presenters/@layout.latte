@@ -231,7 +231,7 @@
 
 	{* Jen data pro flashes.js, ten z nich udělá zprávy v .flash-stack *}
 	<div n:snippet="flashes" class="flash-source" hidden>
-		<div n:foreach="$flashes as $flash" class="flash-source-item" data-type={$flash->type} data-close-duration={$flash->closeDuration}>{$flash->message|noescape}</div>
+		{include '@flashSource.latte'}
 	</div>
 </div>
 {* Rychlá lišta mimo snippet body - ajaxový přechod na jinou stránku ji nepřekreslí, takže
