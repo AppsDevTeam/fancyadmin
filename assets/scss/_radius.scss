@@ -19,4 +19,58 @@ $border-radius-pill: 50rem; // stavy a navigace: badge, chip, záložky, stránk
 @mixin radius-root-vars {
 	--bs-border-radius-xxs: #{$border-radius-xxs};
 	--bs-border-radius-xs: #{$border-radius-xs};
+	// Odvozené stupně musí vzniknout na :root vedle škály, jinak by je režim zaoblení nepřepočítal
+	--control-radius-sm: var(--bs-border-radius-sm);
+	--control-radius-md: var(--bs-border-radius);
+	--control-radius-xl: var(--bs-border-radius-lg);
+	// Jedno zaoblení všech plovoucích vrstev (dropdowny, Tom Select, kalendář, popovery)
+	--overlay-radius: var(--bs-border-radius);
+	// Kulaté ikonové tlačítko; avatary a tečky mají 50 % napevno
+	--round-button-radius: 50%;
+}
+
+// Režimy fancyadmin.radius (data-radius na <html>); výchozí je škála výše. Kolečka mají 50 % a režim je nemění.
+@mixin radius-modes {
+	:root[data-radius="square"] {
+		--bs-border-radius-xxs: 2px;
+		--bs-border-radius-xs: 2px;
+		--bs-border-radius-sm: 2px;
+		--bs-border-radius: 2px;
+		--bs-border-radius-lg: 2px;
+		--bs-border-radius-xl: 2px;
+		--bs-border-radius-xxl: 2px;
+		--bs-border-radius-pill: 2px;
+		--round-button-radius: var(--bs-border-radius);
+	}
+
+	// Pilulka jen pro ovládací prvky, plochy by si v rozích uřízly obsah
+	:root[data-radius="round"] {
+		--bs-border-radius-xxs: 6px;
+		--bs-border-radius-xs: 12px;
+		--bs-border-radius-sm: 16px;
+		--bs-border-radius: 20px;
+		--bs-border-radius-lg: 24px;
+		--bs-border-radius-xl: 32px;
+		--bs-border-radius-xxl: 40px;
+		--control-radius-sm: var(--bs-border-radius-pill);
+		--control-radius-md: var(--bs-border-radius-pill);
+		--control-radius-xl: var(--bs-border-radius-pill);
+
+		// Pole, které roste do více řádků, by si v pilulce uřízlo obsah v rozích
+		textarea.form-control,
+		.ts-wrapper.multi {
+			--control-radius: var(--bs-border-radius);
+		}
+	}
+}
+
+// Bootstrap tyhle prvky kompiluje ze Sassu na pevnou hodnotu; vložit až za Bootstrap
+@mixin radius-bootstrap-fixes {
+	.btn-close {
+		border-radius: var(--bs-border-radius);
+	}
+
+	kbd {
+		border-radius: var(--bs-border-radius-sm);
+	}
 }

@@ -399,7 +399,8 @@ $toggleKnob: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' v
       width: 40px;
       height: 22px;
       margin: 0 10px 0 0;
-      border-radius: var(--bs-border-radius-pill);
+      // Pilulka v každém režimu zaoblení, jezdec je kolečko
+      border-radius: 50rem;
       background-color: $color-light-gray;
       background-image: $toggleKnob;
       background-size: 16px 16px;
@@ -605,7 +606,7 @@ $sidePanelStackedOffset: 48px;
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--bs-border-radius-pill);
+  border-radius: 50%;
   background: var(--fa-tint-primary, color-mix(in srgb, var(--primaryColor) 10%, var(--fa-surface)));
   color: var(--primaryColor);
   font-size: 14px;

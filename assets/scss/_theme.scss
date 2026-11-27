@@ -1680,7 +1680,7 @@ iframe {
 						transform: translate(-50%, -50%) scale(0);
 						width: 40px;
 						height: 40px;
-						border-radius: 50%;
+						border-radius: var(--round-button-radius);
 						background-color: var(--secondaryColorDarker);
 						transition: transform 0.3s ease;
 						z-index: 0;
@@ -2044,7 +2044,7 @@ iframe {
 		list-style: none;
 		background-color: var(--menu-wide-popover-bg, #{$tertiary});
 		border: 1px solid var(--menu-wide-popover-border, transparent);
-		border-radius: var(--menu-wide-popover-radius, #{$border-radius});
+		border-radius: var(--menu-wide-popover-radius, var(--bs-border-radius));
 		box-shadow: var(--menu-wide-popover-shadow, 0 4px 4px 0 rgba(0, 0, 0, 0.15));
 
 		// Odkazy uvnitř položek uživatelského menu mají pointer-events: none (položka je odkazem

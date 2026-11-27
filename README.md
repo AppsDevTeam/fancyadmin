@@ -1337,6 +1337,7 @@ fancyadmin:
 	fullDataAclResource: App\Model\Entities\Enums\AclResourceNameEnum::FULL_DATA
 	locksDir: %locksDir%
 	emailBackgroundColor: '#fff'
+	radius: default # square | default | round, viz docs/radius.md
 	colors:
 		backgroundColor: '#f1f7f7'
 		dashboardAccentColor: '#9ad0f5'

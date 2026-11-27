@@ -1,4 +1,5 @@
 import 'summernote/dist/summernote-bs5.css';
+import '../scss/_summernote.scss';
 import 'summernote/dist/summernote-bs5';
 import 'summernote/dist/lang/summernote-cs-CZ';
 import './summernote-cleaner'

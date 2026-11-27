@@ -7,11 +7,12 @@
 	}
 }
 
-// Jedno zaoblení všech plovoucích vrstev (dropdowny, Tom Select, kalendář, popovery)
 :root {
 	@include radius.radius-root-vars;
-	--overlay-radius: var(--bs-border-radius);
 }
+
+@include radius.radius-modes;
+@include radius.radius-bootstrap-fixes;
 
 
 /* ====================

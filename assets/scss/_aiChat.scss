@@ -39,6 +39,58 @@
 	--ai-chat-success: var(--fa-success);
 	--ai-chat-sunken-bg: var(--fa-surface-hover);
 
+	// Widget má zaoblení natvrdo, napojujeme ho na škálu (docs/radius.md); ve výchozím režimu dosavadní hodnoty
+	&:not(.ai-chat--single) {
+		border-radius: var(--bs-border-radius-xxs);
+	}
+
+	.ai-chat__context-bar,
+	.ai-chat__context-fill {
+		border-radius: calc(var(--bs-border-radius-xxs) / 2);
+	}
+
+	.ai-chat__bubble,
+	.ai-chat__subagent,
+	.ai-chat__file,
+	.ai-chat__option-select,
+	.ai-chat__rating-comment {
+		border-radius: var(--bs-border-radius-sm);
+	}
+
+	.ai-chat__bubble--user {
+		border-bottom-right-radius: var(--bs-border-radius-xxs);
+	}
+
+	.ai-chat__bubble--ai {
+		border-bottom-left-radius: var(--bs-border-radius-xxs);
+	}
+
+	.ai-chat__sent-text,
+	.ai-chat__bubble--error,
+	.ai-chat__chart-wrapper,
+	.ai-chat__subagent-card {
+		border-radius: var(--bs-border-radius-xs);
+	}
+
+	.ai-chat__bubble--ai pre,
+	.ai-chat__table-export,
+	.ai-chat__navigate {
+		border-radius: calc(var(--bs-border-radius-xs) - 2px);
+	}
+
+	.ai-chat__bubble--ai code {
+		border-radius: calc(var(--bs-border-radius-xxs) - 1px);
+	}
+
+	.ai-chat__input-wrapper {
+		border-radius: var(--bs-border-radius-xl);
+	}
+
+	.ai-chat__send-btn,
+	.ai-chat__rating-btn {
+		border-radius: var(--round-button-radius);
+	}
+
 	// Widget má text bublin napevno tmavý, v tmavém režimu by zmizel
 	.ai-chat__bubble--user,
 	.ai-chat__bubble--ai,

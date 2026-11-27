@@ -9,6 +9,8 @@ use Nette\Security\Resource;
 
 class FancyAdmin
 {
+	public const array RADIUS_MODES = ['square', 'default', 'round'];
+
 	public function __construct(
 		protected string $project,
 		protected string $projectName,
@@ -42,6 +44,7 @@ class FancyAdmin
 		protected ?string $appIconsDir = null,
 		protected bool $multiTenant = true,
 		protected bool $aiEnabled = false,
+		protected string $radius = 'default',
 	) {}
 
 	/**
@@ -247,6 +250,11 @@ class FancyAdmin
 	{
 		$this->faviconFileNameSvg = $faviconFileNameSvg;
 		return $this;
+	}
+
+	public function getRadius(): string
+	{
+		return $this->radius;
 	}
 
 	public function getColors(): array

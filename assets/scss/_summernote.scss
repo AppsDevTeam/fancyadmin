@@ -1,0 +1,22 @@
+// Summernote má zaoblení natvrdo, napojujeme ho na škálu (docs/radius.md); :root kvůli pořadí CSS, knihovna může přijít až za ním
+:root {
+	// Editor je .card, lišta a spodní pruh mají podklad a bez vnitřního zaoblení karty by z rohů vyčuhovaly
+	.note-editor.note-frame > .note-toolbar {
+		border-top-left-radius: var(--bs-card-inner-border-radius);
+		border-top-right-radius: var(--bs-card-inner-border-radius);
+	}
+
+	.note-editor.note-frame .note-statusbar,
+	.note-editor.note-airframe .note-statusbar {
+		border-bottom-left-radius: var(--bs-card-inner-border-radius);
+		border-bottom-right-radius: var(--bs-card-inner-border-radius);
+	}
+
+	.note-color-reset,
+	.note-popover .popover-content .note-color .note-dropdown-menu .note-palette .note-color-select,
+	.note-editor .note-toolbar .note-color .note-dropdown-menu .note-palette .note-color-reset,
+	.note-editor .note-toolbar .note-color .note-dropdown-menu .note-palette .note-color-select,
+	.note-handle .note-control-selection .note-control-selection-info {
+		border-radius: calc(var(--bs-border-radius-xxs) + 1px);
+	}
+}

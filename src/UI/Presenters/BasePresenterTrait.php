@@ -60,6 +60,7 @@ trait BasePresenterTrait
 		$this->getTemplate()->hmr = $this->_fancyAdmin->getHmr();
 		$this->getTemplate()->projectName = $this->_fancyAdmin->getProjectName();
 		$this->getTemplate()->project = $this->_fancyAdmin->getProject();
+		$this->getTemplate()->radius = $this->_fancyAdmin->getRadius();
 		$this->getTemplate()->colors = $this->_fancyAdmin->getColors();
 		$this->getTemplate()->darkColors = $this->_fancyAdmin->getDarkColors();
 		$this->getTemplate()->quickbarItems = $this->primaryTemplate ? $this->getQuickbarItems() : [];

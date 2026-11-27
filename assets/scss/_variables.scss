@@ -35,19 +35,19 @@ $padding-input: 15px;
  * -------------------- */
 
 $control-height-sm: 32px;
-$control-radius-sm: $border-radius-sm;
+$control-radius-sm: var(--control-radius-sm);
 $control-padding-x-sm: 12px;
 $control-font-sm: 14px;
 
 $control-height: 40px;
-$control-radius: $border-radius;
+$control-radius: var(--control-radius-md);
 $control-padding-x: 16px;
 $control-font: 16px;
 
 // xl odpovídá rozměrům, které měly prvky dřív jako jediné (49px/20px); výška
 // je srovnaná na 48px, ať nevypadává z mřížky — rozdíl není okem postřehnutelný.
 $control-height-xl: 48px;
-$control-radius-xl: $border-radius-lg;
+$control-radius-xl: var(--control-radius-xl);
 $control-padding-x-xl: 20px;
 $control-font-xl: 16px;
 
@@ -99,6 +99,7 @@ $input-color-focus: var(--fa-input-focus);
   $border-radius-pill: $border-radius-pill !default,
   $card-border-radius: var(--bs-border-radius-lg) !default,
   $badge-border-radius: var(--bs-border-radius-pill) !default,
+  $form-check-input-border-radius: var(--bs-border-radius-xxs) !default,
   $btn-padding-y: 15px !default,
   $btn-padding-x: 25px !default,
   $component-active-bg: var(--primaryColor) !default,

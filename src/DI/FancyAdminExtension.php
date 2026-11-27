@@ -336,6 +336,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 					'module' => Expect::string()->nullable()->default(null),
 				]),
 			]),
+			// Režim zaoblení celého rozhraní, layout ho vypíše jako data-radius na <html> (_radius.scss)
+			'radius' => Expect::anyOf(...FancyAdmin::RADIUS_MODES)->default('default'),
 			'colors' => Expect::structure([
 				'backgroundColor' => Expect::string()->required(),
 				'dashboardAccentColor' => Expect::string()->required(),
@@ -417,6 +419,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				'aiEnabled' => $this->config->ai->enabled,
 				'jsComponentsConfig' => $this->config->jsComponentsConfig,
 				'context' => $this->config->context,
+				'radius' => $this->config->radius,
 				'colors' => (array) $this->config->colors,
 				'darkColors' => array_filter((array) $this->config->darkColors, fn(?string $color) => $color !== null),
 				'keycloakEnabled' => $this->config->keycloakEnabled,

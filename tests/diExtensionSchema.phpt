@@ -73,6 +73,15 @@ test('vychozi hodnoty konfigurace', function () {
 	Assert::null($config->faviconFileNamePng);
 	Assert::null($config->faviconFileNameSvg);
 	Assert::true($config->multiTenant);
+	Assert::same('default', $config->radius);
+});
+
+
+test('rezim zaobleni prijme jen znamou hodnotu', function () {
+	foreach (['square', 'default', 'round'] as $radius) {
+		Assert::same($radius, process(['radius' => $radius])->radius);
+	}
+	Assert::exception(fn() => process(['radius' => 'pill']), ValidationException::class);
 });
 
 

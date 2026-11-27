@@ -28,8 +28,30 @@
 	/* zaoblení ze škály fancyadminu: ovládací prvek 14 px, modal 18 px */
 	--tablet-control-radius: 14px;
 	--tablet-modal-radius: 18px;
+	--tablet-item-radius: 12px;
+	--tablet-thumb-radius: 4px;
+	--tablet-pad-radius: 14px;
 	--tablet-shadow: 0 2px 12px rgba(0, 0, 0, .08);
 	--signature-pen-color: #14213d;
+}
+
+/* režim zaoblení projektu (fancyadmin.radius), stejné hodnoty jako _radius.scss */
+:root[data-radius="square"] {
+	--tablet-radius: 2px;
+	--tablet-control-radius: 2px;
+	--tablet-modal-radius: 2px;
+	--tablet-item-radius: 2px;
+	--tablet-thumb-radius: 2px;
+	--tablet-pad-radius: 2px;
+}
+
+:root[data-radius="round"] {
+	--tablet-radius: 20px;
+	--tablet-control-radius: 50rem;
+	--tablet-modal-radius: 24px;
+	--tablet-item-radius: 16px;
+	--tablet-thumb-radius: 6px;
+	--tablet-pad-radius: 20px;
 }
 
 *,
@@ -345,7 +367,7 @@ body {
 	padding: 12px 16px;
 	color: var(--tablet-danger);
 	background: #fdecea;
-	border-radius: 10px;
+	border-radius: calc(var(--tablet-item-radius) - 2px);
 }
 
 .tablet-sign-back {
@@ -389,7 +411,7 @@ body {
 	cursor: pointer;
 	background: transparent;
 	border: 2px solid transparent;
-	border-radius: 12px;
+	border-radius: var(--tablet-item-radius);
 	-webkit-appearance: none;
 	appearance: none;
 }
@@ -410,7 +432,7 @@ body {
 	color: var(--tablet-muted);
 	background: #fff;
 	border: 1px solid var(--tablet-border);
-	border-radius: 4px;
+	border-radius: var(--tablet-thumb-radius);
 }
 
 .tablet-sign-thumb canvas {
@@ -684,7 +706,7 @@ body {
 .tablet-sign-zoom .tablet-btn {
 	width: 44px;
 	min-height: 44px;
-	border-radius: 12px;
+	border-radius: var(--tablet-item-radius);
 }
 
 .tablet-sign-zoom .tablet-btn:hover {
@@ -827,7 +849,7 @@ body {
 	overflow: hidden;
 	background: var(--tablet-soft);
 	border: 1px solid var(--tablet-border);
-	border-radius: var(--tablet-control-radius);
+	border-radius: var(--tablet-pad-radius);
 }
 
 .tablet-sign-canvas,

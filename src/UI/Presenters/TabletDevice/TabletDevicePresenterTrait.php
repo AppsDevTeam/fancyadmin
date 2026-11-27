@@ -124,6 +124,12 @@ trait TabletDevicePresenterTrait
 		return 'cs';
 	}
 
+	/** Režim zaoblení stránek tabletu, obvykle fancyadmin.radius projektu (FancyAdmin::getRadius()) */
+	protected function getTabletRadius(): string
+	{
+		return 'default';
+	}
+
 	/** Překlad textu, který se nevypisuje v šabloně (formulář podpisu, název aplikace) */
 	protected function translateTabletText(string $message): string
 	{
@@ -412,6 +418,7 @@ trait TabletDevicePresenterTrait
 		$this->template->tabletPrivacyPolicyUrl = $this->getTabletPrivacyPolicyUrl();
 		$this->template->tabletAppName = $this->getTabletAppName();
 		$this->template->tabletLang = $this->getTabletLang();
+		$this->template->tabletRadius = $this->getTabletRadius();
 		$this->template->tabletAppleIconUrl = $icons[0]['src'] ?? null;
 	}
 
