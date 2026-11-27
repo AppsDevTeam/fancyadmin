@@ -6,10 +6,12 @@
    <summary>, otevřít i zavřít jde i klávesnicí; každý se otevírá a zavírá zvlášť. *}
 {* Řada údajů jako samostatné dlaždice (FiguresWidget::setCards) nemá společnou kartu ani nadpis *}
 {var $_figureCards = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget && $widget->isCards() && !$widget->isUnavailable()}
-{var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section' && !$_figureCards}
+{var $_plain = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\TemplateWidget && $widget->isPlain()}
+{var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section' && !$_figureCards && !$_plain}
 {var $_accent = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget && $widget->isAccent() ? 'fa-widgets-accent fa-widgets-tone-' . $widget->getTone()->value : null}
+{var $_callout = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\CalloutWidget ? 'fa-widgets-callout fa-widgets-tone-' . $widget->getTone()->value : null}
 {var $_link = $widget->getLink() !== null && $widget->getLinkLabel() === null && $widget->getType() !== 'stat' && !$widget->isCollapsible() ? $widget->getLink() : null}
-<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $_accent, $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked, $widget->getPanelGroup() !== null ? fa-widgets-panel, $widget->getToggle() ? fa-widgets-toggler" n:attr="data-widget-toggler: $widget->getToggle() ? $widget->getToggle()['target']">
+<div n:tag="$widget->isCollapsible() ? details" n:class="$_card ? 'card fa-widgets-card', $_accent, $_callout, $widget->isCollapsible() ? fa-widgets-collapsible, $_link ? fa-widgets-linked, $widget->getPanelGroup() !== null ? fa-widgets-panel, $widget->getToggle() ? fa-widgets-toggler" n:attr="data-widget-toggler: $widget->getToggle() ? $widget->getToggle()['target']">
 	{if $widget->isCollapsible()}
 		<summary class="fa-widget-header fa-widgets-collapsible-summary">
 			<span class="fa-widget-heading">
@@ -18,7 +20,7 @@
 			</span>
 			<i class="fa-solid fa-chevron-down fa-widgets-collapsible-chevron" aria-hidden="true"></i>
 		</summary>
-	{elseif $widget->getType() !== 'section' && !$_figureCards}
+	{elseif $widget->getType() !== 'section' && !$_figureCards && !$_plain}
 		{include header}
 	{/if}
 	<div n:class="$_card ? 'card-body fa-widgets-card-body'" n:snippet="body">
@@ -58,7 +60,7 @@
 	{* Stat má nadpis v těle; KPI má štítky pod hodnotou, ne v hlavičce *}
 	{var $_title = $widget->getType() !== 'stat' || $widget->isUnavailable() ? $widget->getTitle() : null}
 	{var $_badges = $widget->isUnavailable() || $widget->getType() === 'kpi' ? [] : $widget->getBadges()}
-	{var $_hintOnTitle = $_title !== null && $widget->getDescription() && in_array($widget->getType(), ['kpi', 'figures', 'alerts'], true)}
+	{var $_hintOnTitle = $_title !== null && $widget->getDescription() && in_array($widget->getType(), ['kpi', 'figures', 'alerts', 'funnel', 'callout'], true)}
 	<div n:if="$_title !== null || $widget->hasPeriods() || $_badges || $widget->getSwitches()" class="fa-widget-header">
 		<div n:if="$_title !== null || $_badges" class="fa-widget-heading">
 			{* Popis je nápověda k widgetu, ne obsah - tooltip ho na dotyku neukáže, nesmí v něm být nic nepostradatelného.
@@ -109,7 +111,7 @@
 
 {define widget-section}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\SectionWidget $widget}
-	<div class="fa-widgets-section">
+	<div n:class="fa-widgets-section, $widget->isMajor() ? fa-widgets-section-major">
 		<div class="fa-widgets-section-heading">
 			<h2 class="fa-widgets-section-title">{$widget->getTitle()}{if $widget->getSuffix() !== null} · {$widget->getSuffix()}{/if}</h2>
 			<span n:ifcontent class="fa-widgets-section-subtitle">{$widget->getSubtitle()}</span>
@@ -178,13 +180,14 @@
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget $widget}
 	{if $widget->getFigures()}
 		<div n:class="fa-widgets-figures, $widget->isCards() ? fa-widgets-figures-cards">
-			<div n:foreach="$widget->getFigures() as $_figure" n:class="fa-widgets-figure, $widget->isCards() ? 'card fa-widgets-card'">
-				<div class="fa-widgets-figure-label" n:attr="title: $_figure->title">{$_figure->label}</div>
+			<div n:foreach="$widget->getFigures() as $_figure" n:class="fa-widgets-figure, $widget->isCards() ? 'card fa-widgets-card', $_figure->link !== null ? fa-widgets-figure-linked">
+				<div class="fa-widgets-figure-label" n:attr="title: $_figure->title">{$_figure->label}<i n:if="$_figure->link !== null" class="fa-solid fa-chevron-right fa-widgets-link-arrow" aria-hidden="true"></i></div>
 				<div class="fa-widgets-figure-value fa-widgets-value-tone-{$_figure->tone->value}">
 					{$format::value($_figure->value ?? '–')}<span n:if="$_figure->unit !== null" class="fa-widgets-unit">{$_figure->unit}</span>
 					<span n:if="$_figure->note !== null" class="fa-widgets-figure-note">{$_figure->note}</span>
 				</div>
 				<div n:if="$_figure->badges" class="fa-widgets-kpi-foot">{include badges, badges: $_figure->badges}</div>
+				<a n:if="$_figure->link !== null" href="{$_figure->link}" class="stretched-link" aria-label="{$_figure->label}"></a>
 			</div>
 		</div>
 	{else}
@@ -223,6 +226,47 @@
 		<button n:if="$_more" type="button" class="fa-widgets-more" data-widget-more aria-expanded="false" data-open-label="{_fcadmin.widgets.alerts.more, ['count' => count($widget->getAlerts())]}" data-close-label="{_fcadmin.widgets.alerts.less}">{_fcadmin.widgets.alerts.more, ['count' => count($widget->getAlerts())]}</button>
 	{else}
 		<p class="fa-widgets-empty">{_fcadmin.widgets.alerts.empty}</p>
+	{/if}
+{/define}
+
+{define widget-funnel}
+	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\FunnelWidget $widget}
+	{if $widget->getSteps()}
+		{* Krok s přechodem z předchozího: šipka s procentem a poznámkou, pak rámeček kroku *}
+		<ol class="fa-widgets-funnel">
+			<li n:foreach="$widget->getSteps() as $_i => $_step" class="fa-widgets-funnel-item">
+				<span n:if="$_i > 0" class="fa-widgets-funnel-arrow fa-widgets-tone-{$_step->tone->value}">
+					<span class="fa-widgets-funnel-conversion">{$_step->conversion ?? '–'}</span>
+					<svg viewBox="0 0 40 8" width="40" height="8" aria-hidden="true"><path d="M0 4h37M33 1l4 3-4 3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+					<span n:if="$_step->note !== null" class="fa-widgets-funnel-note">{$_step->note}</span>
+				</span>
+				<span class="fa-widgets-funnel-step">
+					<span class="fa-widgets-funnel-label">{$_step->label}</span>
+					<span class="fa-widgets-funnel-value">{$format::value($_step->value ?? '–')}</span>
+				</span>
+			</li>
+		</ol>
+	{else}
+		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+	{/if}
+{/define}
+
+{define widget-callout}
+	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\CalloutWidget $widget}
+	{var $_content = $widget->getCallout()}
+	{if $_content}
+		<div class="fa-widgets-callout-headline">{$_content->headline}</div>
+		<p n:if="$_content->text !== null" class="fa-widgets-callout-text">{$_content->text}</p>
+		<div n:if="$_content->items && $_content->itemsTitle !== null" class="fa-widgets-callout-items-title">{$_content->itemsTitle}</div>
+		<ul n:if="$_content->items" class="fa-widgets-callout-items">
+			<li n:foreach="$_content->items as $_item" n:class="fa-widgets-callout-item, 'fa-widgets-tone-' . $_item->tone->value, $_item->link !== null ? fa-widgets-callout-item-linked">
+				{if $_item->link !== null}<a href="{$_item->link}" class="fa-widgets-callout-item-text stretched-link" n:attr="title: $_item->linkLabel">{$_item->text}</a>{else}<span class="fa-widgets-callout-item-text">{$_item->text}</span>{/if}
+				<span n:if="$_item->value !== null" class="fa-widgets-callout-item-value">{$format::value($_item->value)}</span>
+				<i n:if="$_item->link !== null" class="fa-solid fa-chevron-right fa-widgets-alert-arrow" aria-hidden="true"></i>
+			</li>
+		</ul>
+	{else}
+		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
 	{/if}
 {/define}
 
