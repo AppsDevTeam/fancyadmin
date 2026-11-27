@@ -1684,6 +1684,16 @@ iframe {
 	background-color: #FF42421F;
 }
 
+// Bootstrap dela ikone validace misto pravym paddingem, ten ale prebiji spolecny padding inputu
+// (`:not(.form-group-filter) .form-control` vyse). Text pak vede az pod ikonu a u ciselneho pole
+// ikonu zakryji sipky - ty sedi u praveho okraje obsahu. Ikona proto sedi od kraje jako sipka
+// selectu a obsah konci pred ni. Textarea ma ikonu vpravo nahore (Bootstrap).
+.was-validated :not(.form-group-filter) .form-control:not(textarea):invalid,
+:not(.form-group-filter) .form-control:not(textarea).is-invalid {
+	padding-right: calc(2 * #{$padding-input} + 0.75em + 0.375rem);
+	background-position: right $padding-input center;
+}
+
 select.is-invalid + .select2 {
 	.select2-selection__rendered {
 		border-color: var(--bs-form-invalid-border-color);
