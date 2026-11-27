@@ -48,15 +48,24 @@ final class FiguresWidget extends Widget
 	 * Údaje jako samostatné dlaždice vedle sebe (bez společné karty) - malý popisek verzálkami, hodnota, pod ní
 	 * poznámka (design 4.6, řada dlaždic na podstránce Obrat). Bez volby jedna karta s údaji oddělenými linkou.
 	 */
-	public function setCards(bool $cards = true): static
+	public function setCards(bool $cards = true, bool $valueFirst = false): static
 	{
 		$this->cards = $cards;
+		$this->valueFirst = $cards && $valueFirst;
 		return $this;
 	}
 
 	public function isCards(): bool
 	{
 		return $this->cards;
+	}
+
+	private bool $valueFirst = false;
+
+	/** Dlaždice počítadel (`setCards(valueFirst: true)`): nahoře hodnota v barvě tónu, pod ní popisek malým písmem (bez verzálek). */
+	public function isValueFirst(): bool
+	{
+		return $this->valueFirst;
 	}
 
 	private bool $list = false;

@@ -62,7 +62,7 @@
 	{* Stat má nadpis v těle; KPI má štítky pod hodnotou, ne v hlavičce *}
 	{var $_title = $widget->getType() !== 'stat' || $widget->isUnavailable() ? $widget->getTitle() : null}
 	{var $_badges = $widget->isUnavailable() || $widget->getType() === 'kpi' ? [] : $widget->getBadges()}
-	{var $_hintOnTitle = $_title !== null && $widget->getDescription() && in_array($widget->getType(), ['kpi', 'figures', 'alerts', 'funnel', 'callout'], true)}
+	{var $_hintOnTitle = $_title !== null && $widget->getDescription() && in_array($widget->getType(), ['kpi', 'figures', 'alerts', 'funnel', 'callout', 'checklist'], true)}
 	{var $_aside = $widget->isUnavailable() ? null : $widget->getAside()}
 	<div n:if="$_title !== null || $widget->hasPeriods() || $_badges || $widget->getSwitches() || $_aside !== null || $widget->isLinkInHeader()" class="fa-widget-header">
 		<div n:if="$_title !== null || $_badges" class="fa-widget-heading">
@@ -202,6 +202,13 @@
 		</ul>
 	{elseif $widget->getFigures()}
 		<div n:class="fa-widgets-figures, $widget->isCards() ? fa-widgets-figures-cards">
+			{if $widget->isValueFirst()}
+			<div n:foreach="$widget->getFigures() as $_figure" n:class="fa-widgets-figure, fa-widgets-figure-counter, 'card fa-widgets-card', $_figure->link !== null ? fa-widgets-figure-linked" n:attr="title: $_figure->title">
+				<div class="fa-widgets-figure-value fa-widgets-value-tone-{$_figure->tone->value}">{$format::value($_figure->value ?? '–')}<span n:if="$_figure->unit !== null" class="fa-widgets-unit">{$_figure->unit}</span></div>
+				<div class="fa-widgets-figure-counter-label">{$_figure->label}</div>
+				<a n:if="$_figure->link !== null" href="{$_figure->link}" class="stretched-link" aria-label="{$_figure->label}"></a>
+			</div>
+			{else}
 			<div n:foreach="$widget->getFigures() as $_figure" n:class="fa-widgets-figure, $widget->isCards() ? 'card fa-widgets-card', $_figure->link !== null ? fa-widgets-figure-linked">
 				<div class="fa-widgets-figure-label" n:attr="title: $_figure->title">{$_figure->label}<i n:if="$_figure->link !== null" class="fa-solid fa-chevron-right fa-widgets-link-arrow" aria-hidden="true"></i></div>
 				<div class="fa-widgets-figure-value fa-widgets-value-tone-{$_figure->tone->value}">
@@ -216,6 +223,7 @@
 				</div>
 				<a n:if="$_figure->link !== null" href="{$_figure->link}" class="stretched-link" aria-label="{$_figure->label}"></a>
 			</div>
+			{/if}
 		</div>
 	{else}
 		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
@@ -231,6 +239,8 @@
 			{include alert-cards}
 		{elseif $widget->isAgenda()}
 			{include alert-agenda}
+		{elseif $widget->isTasks()}
+			{include alert-tasks}
 		{else}
 		{var $_compact = $widget->isCompact()}
 		{var $_limit = $widget->getLimit()}
@@ -380,6 +390,46 @@
 			<a n:if="$_alert->link !== null" href="{$_alert->link}" n:class="btn, btn-sm, in_array($_alert->tone->value, ['warning', 'danger'], true) ? btn-primary : fa-widgets-alert-action">{if $_alert->linkLabel !== null}{$_alert->linkLabel}{else}{_fcadmin.widgets.detail}{/if}</a>
 		</li>
 	</ul>
+{/define}
+
+{* Seznam úkolů s akcemi (AlertsWidget::setTasks): ikona podle tónu, text, poznámka, tlačítko *}
+{define alert-tasks}
+	{var $_limit = $widget->getLimit()}
+	{var $_more = $_limit !== null && count($widget->getAlerts()) > $_limit}
+	<ul class="fa-widgets-tasks">
+		<li n:foreach="$widget->getAlerts() as $_i => $_alert" n:class="fa-widgets-task, 'fa-widgets-tone-' . $_alert->tone->value, $_more && $_i >= $_limit ? fa-widgets-alert-extra" n:attr="hidden: $_more && $_i >= $_limit">
+			<i n:class="'fa-solid', fa-widgets-task-icon, match ($_alert->tone->value) { 'danger' => 'fa-circle-xmark', 'warning' => 'fa-circle-exclamation', 'success' => 'fa-circle-check', default => 'fa-circle-minus' }" aria-hidden="true"></i>
+			<span class="fa-widgets-task-body"><span class="fa-widgets-alert-text">{$_alert->text}</span> <span n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</span></span>
+			<span n:if="$_alert->value !== null" class="fa-widgets-alert-value">{$format::value($_alert->value)}</span>
+			<a n:if="$_alert->link !== null" href="{$_alert->link}" class="btn btn-sm fa-widgets-alert-action">{if $_alert->linkLabel !== null}{$_alert->linkLabel}{else}{_fcadmin.widgets.detail}{/if}</a>
+		</li>
+	</ul>
+	<button n:if="$_more" type="button" class="fa-widgets-more" data-widget-more aria-expanded="false" data-open-label="{_fcadmin.widgets.alerts.more, ['count' => count($widget->getAlerts())]}" data-close-label="{_fcadmin.widgets.alerts.less}">{_fcadmin.widgets.alerts.more, ['count' => count($widget->getAlerts())]}</button>
+{/define}
+
+{* Kompletace (ChecklistWidget): název, body jako štítky ✓ / ✗, pruh splnění *}
+{define widget-checklist}
+	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\ChecklistWidget $widget}
+	{if $widget->getItems()}
+		{var $_limit = $widget->getLimit()}
+		{var $_more = $_limit !== null && count($widget->getItems()) > $_limit}
+		<ul class="fa-widgets-checklists">
+			<li n:foreach="$widget->getItems() as $_i => $_item" n:class="fa-widgets-checklist, $_more && $_i >= $_limit ? fa-widgets-alert-extra" n:attr="hidden: $_more && $_i >= $_limit">
+				<div class="fa-widgets-checklist-title">{if $_item->link !== null}<a href="{$_item->link}">{$_item->title}</a>{else}{$_item->title}{/if}</div>
+				<div class="fa-widgets-checklist-items">
+					<span n:foreach="$_item->items as $_label => $_done" n:class="fa-widgets-badge, 'fa-widgets-tone-' . ($_done === null ? 'neutral' : ($_done ? 'success' : 'danger'))">{if $_done === true}✓ {elseif $_done === false}✗ {/if}{$_label}</span>
+				</div>
+				{var $_ratio = $_item->getRatio()}
+				<div n:if="$_ratio !== null" class="fa-widgets-checklist-progress">
+					<div class="fa-widgets-checklist-text">{_fcadmin.widgets.checklist.progress} · <strong>{round($_ratio * 100)}&nbsp;%</strong>{if $_item->getMissing()} – {_fcadmin.widgets.checklist.missing} {$_item->getMissingText()}{/if}</div>
+					<div n:class="fa-widgets-checklist-bar, $_ratio >= 1 ? fa-widgets-tone-success : fa-widgets-tone-warning"><span style="width: {(int) round($_ratio * 100)}%"></span></div>
+				</div>
+			</li>
+		</ul>
+		<button n:if="$_more" type="button" class="fa-widgets-more" data-widget-more aria-expanded="false" data-open-label="{_fcadmin.widgets.alerts.more, ['count' => count($widget->getItems())]}" data-close-label="{_fcadmin.widgets.alerts.less}">{_fcadmin.widgets.alerts.more, ['count' => count($widget->getItems())]}</button>
+	{else}
+		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
+	{/if}
 {/define}
 
 {define alert-cards}

@@ -7,6 +7,7 @@ use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetAlert;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetBadge;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetCallout;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetChart;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetChecklist;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetFigure;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetFunnelStep;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl;
@@ -1174,6 +1175,42 @@ test('agenda, trychtyr jako pruhy s pruhem ztraty a udaje jako seznam; bez voleb
 	Assert::contains('<ol class="fa-widgets-funnel">', $part('steps'));
 	Assert::contains('<span class="fa-widgets-figure-list-value fa-widgets-value-tone-success">186 000 Kč</span>', $part('money'));
 	Assert::contains('<div class="fa-widgets-figures">', $part('row'));
+});
+
+test('dlazdice pocitadel, ukoly s akcemi a kompletace; bez voleb beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addFigures('counters', 'Provoz', fn() => [new WidgetFigure('chybějící dokumenty', 6, tone: WidgetTone::Danger, title: 'bez PENB')])->setCards(valueFirst: true);
+	$widgetGrid->addFigures('cards', 'Karty', fn() => [new WidgetFigure('Obrat', 5)])->setCards();
+	$widgetGrid->addAlerts('tasks', 'Potřebuje pozornost', fn() => [
+		new WidgetAlert('Chybí PENB – RD Beroun', WidgetTone::Danger, note: 'Novák', link: '/e/1', linkLabel: 'Doplnit'),
+		new WidgetAlert('Archivovat dokumenty', WidgetTone::Neutral),
+		new WidgetAlert('AML – byt Kolín', WidgetTone::Success),
+	])->setTasks()->setLimit(2);
+	$widgetGrid->addChecklist('completion', 'Kompletace', fn() => [
+		new WidgetChecklist('RD Beroun', ['Smlouva' => true, 'PENB' => false, 'Foto' => false, 'AML' => null], '/e/1'),
+		new WidgetChecklist('Byt Kolín', ['Smlouva' => true]),
+	]);
+	$widgetGrid->addChecklist('emptyChecklist', 'Prázdná', fn() => [])->setEmptyText('Vše kompletní.');
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = function (string $name) use ($html): string {
+		$start = strpos($html, 'data-widget="' . $name . '"');
+		$next = strpos($html, 'data-widget="', $start + 1);
+		return substr($html, $start, $next === false ? null : $next - $start);
+	};
+
+	Assert::contains('<div class="fa-widgets-figure fa-widgets-figure-counter card fa-widgets-card" title="bez PENB"><div class="fa-widgets-figure-value fa-widgets-value-tone-danger">6</div><div class="fa-widgets-figure-counter-label">chybějící dokumenty</div></div>', $part('counters'));
+	Assert::notContains('fa-widgets-figure-counter', $part('cards'));
+	Assert::contains('<li class="fa-widgets-task fa-widgets-tone-danger"><i class="fa-solid fa-widgets-task-icon fa-circle-xmark" aria-hidden="true"></i><span class="fa-widgets-task-body"><span class="fa-widgets-alert-text">Chybí PENB – RD Beroun</span><span class="fa-widgets-alert-note">Novák</span></span><a href="/e/1" class="btn btn-sm fa-widgets-alert-action">Doplnit</a></li>', $part('tasks'));
+	Assert::contains('fa-circle-minus', $part('tasks'));
+	Assert::contains('<li class="fa-widgets-task fa-widgets-tone-success fa-widgets-alert-extra" hidden>', $part('tasks'));
+	Assert::contains('data-widget-more', $part('tasks'));
+	Assert::contains('<div class="fa-widgets-checklist-title"><a href="/e/1">RD Beroun</a></div>', $part('completion'));
+	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-success">✓ Smlouva</span><span class="fa-widgets-badge fa-widgets-tone-danger">✗ PENB</span>', $part('completion'));
+	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-neutral">AML</span>', $part('completion'));
+	Assert::contains('<strong>33&nbsp;%</strong> – [fcadmin.widgets.checklist.missing] PENB, foto</div><div class="fa-widgets-checklist-bar fa-widgets-tone-warning"><span style="width: 33%"></span>', $part('completion'));
+	Assert::contains('<div class="fa-widgets-checklist-bar fa-widgets-tone-success"><span style="width: 100%"></span>', $part('completion'));
+	Assert::contains('<p class="fa-widgets-empty">Vše kompletní.</p>', $part('emptyChecklist'));
 });
 
 test('nadpis sekce v barve tonu a vlastni text prazdneho widgetu; bez voleb beze zmeny', function () {

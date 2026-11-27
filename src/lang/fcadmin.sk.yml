@@ -128,6 +128,9 @@ modal:
 
 widgets:
   unavailable: Dáta zatiaľ nie sú k dispozícii.
+  checklist:
+    progress: Kompletácia
+    missing: chýba
   alerts:
     empty: Nič na riešenie.
     more: 'Zobraziť všetkých %count%'
