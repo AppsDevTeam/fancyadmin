@@ -196,6 +196,41 @@ final class KpiWidget extends Widget
 
 	private bool $accent = false;
 
+	/** @var list<WidgetFigure>|(\Closure(?WidgetPeriod): list<WidgetFigure>) */
+	private array|\Closure $values = [];
+
+	private bool $splitSolid = false;
+
+	/**
+	 * Řada hodnot místo jedné („17 makléřů / 14 aktivních / 9 produktivních / 4 rizikoví“): hodnota v barvě tónu
+	 * údaje a za ní jednotka (`unit`), oddělené lomítkem. Popisek údaje je jen bublina (`title`).
+	 *
+	 * @param list<WidgetFigure>|(\Closure(?WidgetPeriod): list<WidgetFigure>) $values
+	 */
+	public function setValues(array|\Closure $values): static
+	{
+		$this->values = $values;
+		return $this;
+	}
+
+	/** @return list<WidgetFigure> */
+	public function getValues(): array
+	{
+		return array_values($this->values instanceof \Closure ? ($this->values)($this->getPeriod()) : $this->values);
+	}
+
+	/** Pruh poměru plnými barvami tónů a legenda jen z popisků šedě za sebou (bez počtů a podílů). */
+	public function setSplitSolid(bool $solid = true): static
+	{
+		$this->splitSolid = $solid;
+		return $this;
+	}
+
+	public function isSplitSolid(): bool
+	{
+		return $this->splitSolid;
+	}
+
 	/** Barevná linka nahoře na kartě v tónu karty (souhrn na podstránce: tržba zeleně, rezervace oranžově…). */
 	public function setAccent(bool $accent = true): static
 	{

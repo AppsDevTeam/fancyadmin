@@ -455,6 +455,7 @@
 }
 
 .fa-widgets-footer-link,
+.fa-widget-header-link,
 .fa-widgets-alert-link {
 	position: relative;
 	z-index: 2;
@@ -533,7 +534,8 @@
 .fa-widget-alerts .fa-widget-title,
 .fa-widget-funnel .fa-widget-title,
 .fa-widget-callout .fa-widget-title,
-.fa-widgets-collapsible .fa-widget-title {
+.fa-widgets-collapsible .fa-widget-title,
+.fa-widget-title.fa-widget-title-caps {
 	font-size: .75rem;
 	font-weight: 600;
 	letter-spacing: .06em;
@@ -1901,5 +1903,103 @@
 	&:focus-visible {
 		border-color: var(--primaryColor);
 		color: var(--primaryColor);
+	}
+}
+
+// Odkaz s popiskem vpravo v hlavičce (Widget::setLink(header: true))
+.fa-widget-header-link {
+	margin-left: auto;
+	color: var(--primaryColor);
+}
+
+// Řada hodnot místo jedné (KpiWidget::setValues): „17 makléřů / 14 aktivních / …“
+.fa-widgets-kpi-values {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	font-variant-numeric: tabular-nums;
+}
+
+.fa-widgets-kpi-values-number {
+	font-size: 1.5rem;
+	font-weight: 500;
+	line-height: 1.1;
+}
+
+.fa-widgets-kpi-values-separator {
+	color: var(--fa-line, var(--fa-border));
+	font-size: 1.25rem;
+}
+
+// karta s řadou hodnot má obsah svisle uprostřed
+.fa-widgets-kpi:has(.fa-widgets-kpi-values) {
+	justify-content: center;
+}
+
+// Pruh poměru plnými barvami a legenda jen z popisků (KpiWidget::setSplitSolid)
+.fa-widgets-split-solid {
+	margin-top: 0;
+	padding-top: 12px;
+}
+
+.fa-widgets-split-labels {
+	margin-top: 8px;
+	font-size: .75rem;
+	color: var(--fa-text-muted);
+}
+
+// Kompaktní upozornění s poznámkou na řádku (AlertsWidget::setCompact(inlineNotes: true))
+.fa-widgets-alerts-inline {
+	.fa-widgets-alert-body {
+		min-width: 0;
+	}
+
+	.fa-widgets-alert-text {
+		display: inline;
+		font-weight: 500;
+	}
+
+	.fa-widgets-alert-note {
+		display: inline;
+		margin-left: 4px;
+		font-size: .75rem;
+		color: var(--fa-text-muted);
+	}
+}
+
+// Střídavé řádky tabulky (TableWidget::setStriped)
+.fa-widgets-table-striped > tbody > tr:nth-child(even) > td {
+	background-color: var(--fa-surface-hover);
+}
+
+// Přepínač pod hodnotou údaje (WidgetFigure::$switch): „30d / 60d / 90d“
+.fa-widgets-figure-switch {
+	position: relative;
+	z-index: 2;
+	align-self: stretch;
+	margin-top: 8px;
+
+	display: flex;
+	padding: 2px;
+	background-color: var(--fa-surface-hover);
+
+	.btn {
+		flex: 1;
+		padding: 1px 10px;
+		border: 0;
+		font-size: .6875rem;
+		color: var(--fa-text-muted);
+		background: transparent;
+
+		&:hover {
+			color: var(--primaryColor);
+		}
+	}
+
+	.btn[aria-current] {
+		color: var(--primaryColor);
+		background-color: var(--fa-surface, #fff);
+		box-shadow: 0 1px 2px rgba(16, 40, 72, .12);
 	}
 }

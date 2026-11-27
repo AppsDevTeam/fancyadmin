@@ -22,6 +22,8 @@ final class AlertsWidget extends Widget
 
 	private bool $dots = true;
 
+	private bool $inlineNotes = false;
+
 	private bool $cards = false;
 
 	private ?int $limit = null;
@@ -42,11 +44,18 @@ final class AlertsWidget extends Widget
 	 * Kompaktní seznam: místo ikony a podbarvení řádku barevná tečka, položky ve dvou sloupcích oddělené linkou,
 	 * hodnota vpravo v barvě tónu. Odkaz položky je celý řádek (bez popisku „Zobrazit podrobnosti“).
 	 */
-	public function setCompact(bool $compact = true, bool $dots = true): static
+	public function setCompact(bool $compact = true, bool $dots = true, bool $inlineNotes = false): static
 	{
 		$this->compact = $compact;
 		$this->dots = $dots;
+		$this->inlineNotes = $inlineNotes;
 		return $this;
+	}
+
+	/** Kompaktní seznam s poznámkou šedě za textem na stejném řádku (`setCompact(inlineNotes: true)`). */
+	public function hasInlineNotes(): bool
+	{
+		return $this->compact && $this->inlineNotes;
 	}
 
 	/** Kompaktní seznam bez teček (např. přehled podle typu s počtem vpravo). */

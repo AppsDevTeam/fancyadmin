@@ -112,6 +112,20 @@ final class TableWidget extends Widget
 		return $this->compact;
 	}
 
+	private bool $striped = false;
+
+	/** Střídavě podbarvené řádky. */
+	public function setStriped(bool $striped = true): static
+	{
+		$this->striped = $striped;
+		return $this;
+	}
+
+	public function isStriped(): bool
+	{
+		return $this->striped;
+	}
+
 	/** @return list<array<string, mixed>> */
 	public function getRows(): array
 	{

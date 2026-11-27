@@ -1104,6 +1104,45 @@ test('zvyraznena karta: podbarveni tonem, sdeleni, text a polozky s odkazem; nul
 	Assert::contains('[fcadmin.widgets.empty]', $html);
 });
 
+test('rada hodnot KPI, plny pruh, poznamky na radku, odkaz v hlavicce, pruhovana tabulka a prepinac udaje; bez voleb beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addKpi('team', 'Produktivita', fn() => 17)
+		->setValues(fn() => [new WidgetFigure('Makléři', 17, unit: 'makléřů'), new WidgetFigure('Rizikoví', 4, unit: 'rizikoví', tone: WidgetTone::Danger)])
+		->setSplit([new WidgetSplit('produktivní', 9, tone: WidgetTone::Success), new WidgetSplit('rizikoví', 4, tone: WidgetTone::Danger)])
+		->setSplitSolid();
+	$widgetGrid->addKpi('plain', 'Obrat', fn() => 5)->setSplit([new WidgetSplit('prodej', 3), new WidgetSplit('pronájem', 2)]);
+	$widgetGrid->addAlerts('alerts', 'Upozornění', fn() => [new WidgetAlert('Jan: 148 dní', WidgetTone::Danger, note: 'Plzeň', link: '/a')])
+		->setCompact(inlineNotes: true)
+		->setLink('/alerts', fn() => 'Všechna (1)', header: true);
+	$widgetGrid->addAlerts('footer', 'Patička', fn() => [new WidgetAlert('Text', WidgetTone::Warning, note: 'Pozn.')])->setCompact()->setLink('/all', 'Všechna');
+	$widgetGrid->addTable('striped', 'Výkon týmu', ['a' => 'A'], fn() => [['a' => 'x']])->setStriped()->setTitleStyle('caps');
+	$widgetGrid->addFigures('cards', 'Karty', fn() => [new WidgetFigure('Rozpracované', 5, switch: ['30d' => null, '60d' => '/?pipeline=60'])])->setCards();
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = function (string $name) use ($html): string {
+		$start = strpos($html, 'data-widget="' . $name . '"');
+		$next = strpos($html, 'data-widget="', $start + 1);
+		return substr($html, $start, $next === false ? null : $next - $start);
+	};
+
+	Assert::contains('<div class="fa-widgets-kpi-values"><span class="fa-widgets-kpi-values-item"><span class="fa-widgets-kpi-values-number fa-widgets-value-tone-neutral">17</span><span class="fa-widgets-unit">makléřů</span></span>', $part('team'));
+	Assert::contains('<span class="fa-widgets-kpi-values-separator" aria-hidden="true">/</span>', $part('team'));
+	Assert::contains('fa-widgets-kpi-values-number fa-widgets-value-tone-danger">4</span><span class="fa-widgets-unit">rizikoví</span>', $part('team'));
+	Assert::notContains('fa-widgets-split-segment-light', $part('team'));
+	Assert::contains('<div class="fa-widgets-split-labels">produktivní · rizikoví</div>', $part('team'));
+	Assert::contains('fa-widgets-split-segment-light', $part('plain'));
+	Assert::contains('fa-widgets-split-legend', $part('plain'));
+	Assert::contains('<ul class="fa-widgets-alerts fa-widgets-alerts-compact fa-widgets-alerts-inline">', $part('alerts'));
+	Assert::contains('<span class="fa-widgets-alert-note">Plzeň</span>', $part('alerts'));
+	Assert::contains('<a href="/alerts" class="fa-widget-header-link">Všechna (1) <i', $part('alerts'));
+	Assert::notContains('fa-widgets-footer', $part('alerts'));
+	Assert::contains('<div class="fa-widgets-alert-note">Pozn.</div>', $part('footer'));
+	Assert::contains('class="fa-widgets-footer-link">Všechna <i', $part('footer'));
+	Assert::contains('fa-widgets-table-striped', $part('striped'));
+	Assert::contains('class="fa-widget-title fa-widget-title-caps">Výkon týmu</h2>', $part('striped'));
+	Assert::contains('<span class="btn" aria-current="true">30d</span><a href="/?pipeline=60" class="btn">60d</a>', $part('cards'));
+});
+
 test('nadpis sekce v barve tonu a vlastni text prazdneho widgetu; bez voleb beze zmeny', function () {
 	$widgetGrid = widgetGrid();
 	$widgetGrid->addSection('toned', 'Otevřené rezervace')->setTone(WidgetTone::Warning);
