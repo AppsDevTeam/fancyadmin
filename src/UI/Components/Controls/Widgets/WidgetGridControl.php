@@ -231,6 +231,18 @@ class WidgetGridControl extends Control
 		return $this->addWidget(new AlertsWidget($name, $title, $alerts));
 	}
 
+	/** @param callable(?WidgetPeriod): iterable<WidgetFunnelStep> $steps */
+	public function addFunnel(string $name, string $title, callable $steps): FunnelWidget
+	{
+		return $this->addWidget(new FunnelWidget($name, $title, $steps));
+	}
+
+	/** @param callable(?WidgetPeriod): ?WidgetCallout $callout */
+	public function addCallout(string $name, string $title, callable $callout): CalloutWidget
+	{
+		return $this->addWidget(new CalloutWidget($name, $title, $callout));
+	}
+
 	/** @param callable(?WidgetPeriod): WidgetChart $chart */
 	public function addChart(string $name, string $title, callable $chart): ChartWidget
 	{

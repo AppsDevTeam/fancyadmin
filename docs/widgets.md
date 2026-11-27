@@ -142,6 +142,9 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
 - `setUnavailable($reason)` - widget, pro který zatím nejsou data: místo obsahu „Data zatím nejsou k dispozici“
   a důvod, data widgetu se nevolají. Rozložení drží místo i pro ukazatele, které teprve přibudou; karta
   natažená na výšku souseda v řadě má hlášku uprostřed.
+- `addSection($name, $title)` - nadpis sekce bez karty přes celou šířku; `setSuffix()` dovětek ve stylu nadpisu,
+  `setText()` vysvětlivka, `setMajor()` = hlavní sekce dlouhé stránky (větší nadpis podtržený primární barvou,
+  `setSubtitle()` šedě vedle).
 - `setCollapsible()` - sbalitelná karta (`<details>`): vidět je nadpis, obsah po kliknutí; sbalitelné widgety
   se otevírají a zavírají každý zvlášť a rozbalený nenatahuje sousedy v řadě.
 - `addSwitch($name, [hodnota => popisek], ?$default)` - přepínač v hlavičce (skupina tlačítek vpravo, např.
@@ -180,12 +183,14 @@ Vzhled mřížky jde projektu nastavit CSS proměnnými (výchozí = vzhled admi
 | `addStat($name, $title, fn() => int\|float\|string)` | velké číslo; `setNote()` (text nebo callable), `setIcon()`, `setLink()` (celá karta je odkaz), `setTone()` |
 | `addKpi($name, $title, fn() => int\|float\|string\|null)` | KPI karta: hodnota, `setUnit()` (text nebo `Closure` - jednotka podle velikosti čísla), `setSparkline(fn() => list<number\|null>)` (křivka 72 × 28 v SVG), `setBadges()` pod hodnotou, `setNote()`, `setTone()` (barva hodnoty a křivky), `setSplit([WidgetSplit…])` (pruh poměru s legendou; s `note` / `extra` řádková legenda, `extra` v barvě tónu nebo `extraTone`); `null` = „–“ |
 | `addKpiParts($name, $title, fn() => WidgetFigure[])` | dělená KPI karta - části vedle sebe oddělené linkou (popisek, hodnota, jednotka, štítky, poznámka) |
-| `addFigures($name, $title, fn() => WidgetFigure[])` | řada údajů v jedné kartě oddělených linkou; `WidgetFigure`: label, value, unit, note (šedý doplněk), tone, title (bublina popisku), badges |
+| `addFigures($name, $title, fn() => WidgetFigure[])` | řada údajů v jedné kartě oddělených linkou; `WidgetFigure`: label, value, unit, note (šedý doplněk), tone, title (bublina popisku), badges, link (proklik: šipka u popisku, odkazem je celý údaj); `setCards()` = každý údaj samostatná dlaždice |
+| `addFunnel($name, $title, fn() => WidgetFunnelStep[])` | trychtýř: kroky v rámečcích za sebou (zalomí se), před krokem šipka s přechodem z předchozího (`conversion`, barva `tone`, pod ní `note` - např. cíl) |
+| `addCallout($name, $title, fn() => ?WidgetCallout)` | zvýrazněná karta s jedním sdělením („Kde je problém“): podbarvená tónem (`setTone()`, výchozí `Warning`), `headline`, `text` a pod nadpisem `itemsTitle` položky `WidgetAlert` (text, hodnota v barvě tónu, odkaz = řádek se šipkou); `null` = prázdná data |
 | `addAlerts($name, $title, fn() => WidgetAlert[])` | upozornění k řešení: text, tón (`Warning` / `Danger` - ikona a podbarvení), poznámka, hodnota, odkaz s popiskem (výchozí `fcadmin.widgets.detail`); prázdné `fcadmin.widgets.alerts.empty`. `setCompact()` = kompaktní seznam ve sloupcích (tečka v barvě tónu místo ikony, bez podbarvení, odkazem je celý řádek se šipkou, popisek odkazu jen jako `title`), `setLimit(n)` = vidět prvních n, zbytek pod „Zobrazit všech N“ (`fcadmin.widgets.alerts.more` / `.less`) |
 | `addTiles($name, fn() => WidgetTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `WidgetTile`: label, value, note, icon, link, tone |
 | `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava; `wrap: true` zalomí dlouhý text, jinak je řádek jako v gridu na jednom řádku), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty`. Volitelně `WidgetTableColumn(group: '…')` (nadpis skupiny nad sousedními sloupci), `setTotal(řádek|fn)` (řádek Celkem v patičce) a `setRowLink(fn(array $row): ?string)` (proklik řádku - odkazem je první buňka a celý řádek) |
 | `addChart($name, $title, fn() => WidgetChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |
-| `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$widgetGrid`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` |
+| `addTemplate($name, ?$title, $file, array\|Closure $parameters)` | vlastní šablona v kartě; dostane `$presenter`, `$widgetGrid`, `$widget`, `$period` a parametry. Komponentu presenteru vykreslí `{control $presenter['exportForm']}` | `setPlain()` = bez karty a hlavičky (např. přepínač mezi bloky stránky).
 
 Poznámka statu a parametry šablony mohou být text / pole, nebo `Closure` (ne obecné `callable` - text `'date'` by byl funkce).
 

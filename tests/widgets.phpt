@@ -5,8 +5,10 @@ declare(strict_types=1);
 use ADT\FancyAdmin\DI\FancyAdminExtension;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetAlert;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetBadge;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetCallout;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetChart;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetFigure;
+use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetFunnelStep;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl;
 use ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControlFactory;
@@ -1060,4 +1062,73 @@ test('stitky hlavicky podstranky a doplnek rozdeleni ve vlastnim tonu', function
 	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-warning fa-widgets-page-badge" title="Provize nejsou tržbou">zatím není tržba</span>', $page);
 	Assert::contains('<span class="fa-widgets-split-extra"><span class="fa-widgets-value-tone-warning">14 mil. Kč</span></span>', $html);
 	Assert::contains('<span class="fa-widgets-split-extra">8 mil. Kč</span>', $html);
+});
+
+test('trychtyr: kroky v ramecku, sipka s prechodem a poznamkou pred krokem; spatny navrat vyjimkou', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addFunnel('funnel', 'Obchodní trychtýř', fn() => [
+		new WidgetFunnelStep('Leady', 1554),
+		new WidgetFunnelStep('Schůzky', 387, '25 %', WidgetTone::Warning, 'cíl 28 %'),
+	]);
+	$widgetGrid->addFunnel('empty', 'Prázdný', fn() => []);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+
+	Assert::contains('<ol class="fa-widgets-funnel"><li class="fa-widgets-funnel-item"><span class="fa-widgets-funnel-step"><span class="fa-widgets-funnel-label">Leady</span><span class="fa-widgets-funnel-value">1' . "\u{a0}" . '554</span>', $html);
+	Assert::contains('<span class="fa-widgets-funnel-arrow fa-widgets-tone-warning"><span class="fa-widgets-funnel-conversion">25 %</span>', $html);
+	Assert::contains('<span class="fa-widgets-funnel-note">cíl 28 %</span>', $html);
+	Assert::same(1, substr_count($html, 'fa-widgets-funnel-arrow'));
+	Assert::contains('[fcadmin.widgets.empty]', $html);
+
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addFunnel('bad', 'Špatný', fn() => ['krok']);
+	Assert::exception(fn() => renderWidgetGrid($widgetGrid), UnexpectedValueException::class, "%a%'bad'%a%");
+});
+
+test('zvyraznena karta: podbarveni tonem, sdeleni, text a polozky s odkazem; null je prazdna', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addCallout('problem', 'Kde je problém', fn() => new WidgetCallout('Nabírá dost, ale málo rezervuje', 'Nejslabší přechod: nábory → rezervace.', [
+		new WidgetAlert('Brno', WidgetTone::Danger, value: '42 %', link: '/admin/branch/1'),
+		new WidgetAlert('Plzeň', value: '45 %'),
+	], 'Nejvíce se to týká poboček'));
+	$widgetGrid->addCallout('none', 'Nic', fn() => null)->setTone(WidgetTone::Success);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+
+	Assert::contains('<div class="card fa-widgets-card fa-widgets-callout fa-widgets-tone-warning">', $html);
+	Assert::contains('<div class="card fa-widgets-card fa-widgets-callout fa-widgets-tone-success">', $html);
+	Assert::contains('<div class="fa-widgets-callout-headline">Nabírá dost, ale málo rezervuje</div><p class="fa-widgets-callout-text">Nejslabší přechod: nábory → rezervace.</p>', $html);
+	Assert::contains('<div class="fa-widgets-callout-items-title">Nejvíce se to týká poboček</div>', $html);
+	Assert::contains('<li class="fa-widgets-callout-item fa-widgets-tone-danger fa-widgets-callout-item-linked"><a href="/admin/branch/1" class="fa-widgets-callout-item-text stretched-link">Brno</a><span class="fa-widgets-callout-item-value">42 %</span><i', $html);
+	Assert::contains('<span class="fa-widgets-callout-item-text">Plzeň</span>', $html);
+	Assert::contains('[fcadmin.widgets.empty]', $html);
+});
+
+test('hlavni sekce, sablona bez karty a udaj s proklikem; bez voleb beze zmeny', function () {
+	$file = tempnam(sys_get_temp_dir(), 'dashboard') . '.latte';
+	file_put_contents($file, '<p class="custom">{$label}</p>');
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addSection('major', 'Výkonnost')->setSubtitle('realizované provize')->setMajor();
+	$widgetGrid->addSection('minor', 'Seřazeno podle poboček');
+	$widgetGrid->addTemplate('plain', null, $file, ['label' => 'Přepínač'])->setPlain();
+	$widgetGrid->addTemplate('carded', 'V kartě', $file, ['label' => 'Karta']);
+	$widgetGrid->addFigures('figures', 'Ekonomika', fn() => [
+		new WidgetFigure('Realizované provize', 956, link: '/admin/turnover'),
+		new WidgetFigure('Aktivní makléři', 17),
+	])->setCards();
+
+	try {
+		$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	} finally {
+		unlink($file);
+	}
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 700);
+
+	Assert::contains('<div class="fa-widgets-section fa-widgets-section-major">', $part('major'));
+	Assert::contains('<div class="fa-widgets-section">', $part('minor'));
+	Assert::notContains('card', substr($part('plain'), 0, strpos($part('plain'), 'Přepínač')));
+	Assert::contains('card fa-widgets-card', $part('carded'));
+	Assert::contains('<div class="fa-widgets-figure card fa-widgets-card fa-widgets-figure-linked"><div class="fa-widgets-figure-label">Realizované provize<i class="fa-solid fa-chevron-right fa-widgets-link-arrow" aria-hidden="true"></i></div>', $part('figures'));
+	Assert::contains('<a href="/admin/turnover" class="stretched-link" aria-label="Realizované provize"></a>', $part('figures'));
+	Assert::contains('<div class="fa-widgets-figure card fa-widgets-card"><div class="fa-widgets-figure-label">Aktivní makléři</div>', $part('figures'));
 });

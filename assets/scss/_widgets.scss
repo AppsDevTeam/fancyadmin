@@ -508,6 +508,8 @@
 .fa-widget-kpi,
 .fa-widget-figures,
 .fa-widget-alerts,
+.fa-widget-funnel,
+.fa-widget-callout,
 .fa-widgets-collapsible {
 	.fa-widget-heading {
 		gap: 4px 6px;
@@ -529,6 +531,8 @@
 .fa-widget-kpi .fa-widget-title,
 .fa-widget-figures .fa-widget-title,
 .fa-widget-alerts .fa-widget-title,
+.fa-widget-funnel .fa-widget-title,
+.fa-widget-callout .fa-widget-title,
 .fa-widgets-collapsible .fa-widget-title {
 	font-size: .75rem;
 	font-weight: 600;
@@ -1089,6 +1093,31 @@
 	}
 }
 
+// Hlavní sekce (SectionWidget::setMajor): větší nadpis podtržený primární barvou, dovětek vedle
+.fa-widget-section:has(.fa-widgets-section-major) {
+	margin-top: 18px;
+}
+
+.fa-widgets-section-major {
+	padding-bottom: 8px;
+	border-bottom: 2px solid var(--primaryColor);
+
+	.fa-widgets-section-heading {
+		align-items: baseline;
+		gap: 4px 12px;
+	}
+
+	.fa-widgets-section-title {
+		font-size: 1rem;
+		letter-spacing: .06em;
+	}
+
+	.fa-widgets-section-subtitle {
+		font-size: .78125rem;
+		letter-spacing: 0;
+	}
+}
+
 .fa-widgets-section-text {
 	margin: 6px 0 0;
 	font-size: .78125rem;
@@ -1415,4 +1444,143 @@
 .fa-widgets-table td.fa-widgets-wrap {
 	white-space: normal;
 	overflow-wrap: anywhere;
+}
+
+// Trychtýř (FunnelWidget): kroky v rámečcích, mezi nimi šipka s přechodem v barvě tónu
+.fa-widgets-funnel {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 8px 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fa-widgets-funnel-item {
+	display: flex;
+	align-items: stretch;
+}
+
+.fa-widgets-funnel-step {
+	display: flex;
+	flex-direction: column;
+	min-width: 112px;
+	padding: 12px 14px;
+	border: 1px solid color-mix(in srgb, var(--primaryColor) 10%, var(--fa-border));
+	background-color: color-mix(in srgb, var(--primaryColor) 4%, var(--fa-surface));
+}
+
+.fa-widgets-funnel-label {
+	font-size: .6875rem;
+	font-weight: 500;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-funnel-value {
+	margin-top: 4px;
+	font-size: 1.5rem;
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+.fa-widgets-funnel-arrow {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-width: 76px;
+	padding: 0 10px;
+	color: var(--fa-widgets-tone);
+}
+
+.fa-widgets-funnel-conversion {
+	font-size: .875rem;
+	font-weight: 500;
+}
+
+.fa-widgets-funnel-note {
+	font-size: .6875rem;
+	color: var(--fa-text-muted);
+}
+
+// Zvýrazněná karta (CalloutWidget): podbarvená tónem, nadpis v barvě tónu
+.card.fa-widgets-callout {
+	border-color: color-mix(in srgb, var(--fa-widgets-tone) 25%, var(--fa-border));
+	background-color: color-mix(in srgb, var(--fa-widgets-tone) 9%, var(--fa-surface));
+
+	.fa-widget-title {
+		color: var(--fa-widgets-tone);
+	}
+}
+
+.fa-widgets-callout-headline {
+	font-size: 1.0625rem;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+.fa-widgets-callout-text {
+	margin: 6px 0 0;
+	font-size: .8125rem;
+	color: var(--fa-text);
+}
+
+.fa-widgets-callout-items-title {
+	margin-top: 14px;
+	font-size: .6875rem;
+	font-weight: 500;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-callout-items {
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fa-widgets-callout-item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 0;
+	border-bottom: 1px solid color-mix(in srgb, var(--fa-text) 10%, transparent);
+	font-size: .8125rem;
+
+	.fa-widgets-alert-arrow {
+		font-size: .625rem;
+		color: var(--primaryColor);
+	}
+}
+
+.fa-widgets-callout-item-text {
+	font-weight: 500;
+	color: inherit;
+	text-decoration: none;
+}
+
+.fa-widgets-callout-item-value {
+	margin-left: auto;
+	font-weight: 500;
+	color: var(--fa-widgets-tone);
+}
+
+// Údaj s proklikem (WidgetFigure link): šipka u popisku, odkazem je celý údaj / dlaždice
+.fa-widgets-figure-linked {
+	position: relative;
+
+	.fa-widgets-figure-label {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+	}
+
+	&.card:hover {
+		border-color: color-mix(in srgb, var(--primaryColor) 35%, var(--fa-border));
+	}
 }
