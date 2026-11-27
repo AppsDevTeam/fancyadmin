@@ -1,0 +1,12 @@
+{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl $widgetGrid}
+{default $class = 'fa-widgets-page-period'}
+
+{* Společné období mřížky - v pásu hlavičky (fa-widgets-header-period), nebo samostatně v hlavičce stránky
+   (renderPeriod(), fa-widgets-page-period). Změna odešle formulář (widgets.js), bez JS tlačítko v <noscript>. *}
+<form class="fa-widgets-period {$class}" method="get" action="{$presenter->getHttpRequest()->getUrl()->getPath()}">
+	<input n:foreach="ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetControl::queryFields($presenter->getHttpRequest()->getUrl()->getQuery(), $widgetGrid->getPeriodParameterName()) as $_name => $_value" type="hidden" name="{$_name}" value="{$_value}">
+	<select name="{$widgetGrid->getPeriodParameterName()}" class="form-select form-select-sm" aria-label="{_fcadmin.widgets.period.label}" data-widget-grid-period>
+		<option n:foreach="$widgetGrid->getPeriodOptions() as $_period" value="{$_period->value}" n:attr="selected: $_period === $widgetGrid->getPeriod()">{_$_period->getTranslationKey()}</option>
+	</select>
+	<noscript><button type="submit" class="btn btn-sm btn-light">{_fcadmin.widgets.period.submit}</button></noscript>
+</form>

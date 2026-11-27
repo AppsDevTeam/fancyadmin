@@ -917,6 +917,11 @@ může injectnout služby — přihlášeného uživatele, překladač… Factor
 stejně jako dřív přes `new`. Projekt, jehož presentery neleží v namespace `…\Presenters\…`,
 přepíše `getMenuFactoryNamespace()` (vrací namespace, ve kterém factory leží).
 
+V rozbaleném bočním menu se položka s podmenu i skupina s nadpisem (`isToggleable()`) rozbalují
+kliknutím a stav si pamatuje `localStorage` (`assets/js/sideMenu.js`). Rozbalené podmenu, které
+zasahuje pod spodní okraj menu (nízké okno), se po animaci samo doroluje do pohledu; když je
+delší než menu, zastaví se s nadpisem nahoře.
+
 Hlavička uživatelského menu ukazuje vedle avataru jméno a e-mail uživatele. Projekt ji může
 nahradit vlastními řádky přes `UserMenu::setHeaderLines()`: první řádek je zvýrazněný titulek,
 ostatní jsou pod ním. Texty se vypisují tak, jak jsou — překlad udělá factory. `null` (výchozí)
@@ -950,10 +955,12 @@ class UserMenuFactory implements \ADT\FancyAdmin\Model\Menu\UserMenuFactory
 ```
 
 Pod položky menu (nad přepínač tmavého režimu) jde přidat výběr - `UserMenu::addSelect()`
-s `UserMenuSelect`. Vykreslí se jako select (Tom Select) v menu bočního panelu i v menu rychlé
-lišty na mobilu; změna otevře ajaxem odkaz vybrané volby, typicky signál, který hodnotu uloží
-a přesměruje (`userMenuSelect.js`, projekt s vlastním výběrem modulů JS ho importuje jako
-`@fancyadmin/js/userMenuSelect`). Popisek prochází překladačem, popisky voleb ne (názvy záznamů).
+s `UserMenuSelect`. V menu u uživatele (boční panel) je to řádek s popiskem a vybranou volbou,
+po najetí myší vedle vyjede seznam voleb (aktuální s fajfkou, na dotykovém zařízení ho otevře klik);
+volba je odkaz, typicky signál, který hodnotu uloží a přesměruje. V menu rychlé lišty na mobilu je
+to select, jehož změna otevře ajaxem odkaz vybrané volby (`userMenuSelect.js`, projekt s vlastním
+výběrem modulů JS ho importuje jako `@fancyadmin/js/userMenuSelect`). Popisek prochází překladačem,
+popisky voleb ne (názvy záznamů).
 Parametr signálu se nesmí jmenovat jako parametr routy (`id`), odkaz by vedl na jinou stránku.
 
 ```php
@@ -966,6 +973,9 @@ $userMenu->addSelect((new UserMenuSelect())
 	->setPrompt('- vyberte -')
 	->setLink('selectBranch!', 'selectedBranchId'));
 ```
+
+Krátký údaj u uživatele dole v menu (např. aktuální pobočka) nastaví `UserMenu::setButtonNote()` -
+v rozbaleném menu je pod jménem a rolí, ve sbaleném pod avatarem jako popisky položek menu.
 
 `SecurityUser::canSelectAccount()` říká, jestli uživatel vidí v layoutu výběr účtu: v multi-tenant
 projektu, když má víc účtů (včetně podúčtů) nebo smí do všech účtů (plná data, backoffice).
@@ -3148,6 +3158,14 @@ prohlížeče): z posledního prvku skočí na první, Shift+TAB obráceně (`ke
 Neviditelné prvky v pořadí nejsou, křížek pro vymazání Tom Selectu vyřazuje adt-js-components
 (≥ 3.5.1).
 
+Esc v poli formuláře (`input`, `select`, `textarea`, editor) panel ani modal nezavře, jen dá
+fokus na samotný panel nebo modal (`leaveFieldOnEscape()`), takže další TAB začne zase uvnitř.
+Až další Esc zavře horní panel (u rozepsaného formuláře s potvrzením jako křížek) nebo modal.
+Esc, který si vezme jiný prvek a zavolá `preventDefault()` (rozbalený Tom Select, kalendář
+flatpickru, rozbalovací menu, okno rychlé lišty), formulář nechá být; vlastní prvek s Esc
+v panelu dělá totéž. Panel poslouchá na `window`, modal na `.modal-dialog` (Bootstrap zavírá
+modal posluchačem přímo na `.modal`). Panel s otevřeným modalem na Esc nereaguje.
+
 ---
 
 ## 27. Single-tenant režim (volitelné)
@@ -3336,6 +3354,9 @@ metoda se bere jako prázdný výsledek.
 **Notifikace** — položka z `notifications.list()` s `href` je odkaz: klik ji označí jako přečtenou
 (`read(id)`), naviguje (ajaxem) a lištu zavře; bez `href` ji klik jen přečte.
 
+**Úkoly** — úkol z `todos.list()` s `href` má název jako odkaz na detail (naviguje a lištu zavře),
+hotový ho označí jen zaškrtávátko (`setDone(id, done)`); bez `href` zaškrtne úkol klik kamkoli na řádek.
+
 **Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější
 zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Řádek bere `preview`, `time`
 a `kind` (`colleague` / `group` = barva avataru) z `chats.list()`; položka s `contact: true` (kolega bez
@@ -3376,6 +3397,18 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
   (`id` kanálu = `id` konverzace v `chats.list()`). Šipka zpět a Esc vrací do seznamu.
 - `chats.messages()` může vrátit i `pinned: [{ id, text, author?, time? }]` - sbalený pruh *Připnuté (n)* nad
   zprávami, rozbalená položka zprávu posune do středu a krátce zvýrazní.
+- `chats.messages()` může vrátit i `members: [{ id, name, initials?, me? }]` - u konverzace s `kind` `channel`
+  nebo `group` je v hlavičce pod názvem počet členů (*Kanál · 6 členů*), klik pod hlavičkou rozbalí jejich
+  seznam s avatary (`me` = za jménem *(vy)*). U přímé konverzace dvou lidí se nic neukazuje.
+- Správa členů: `chats.messages()` vrátí `canManageMembers: true` a zdroj má `addMembers(chatId)`
+  a `removeMember(chatId, memberId)`. V rozbaleném seznamu je pak nahoře *Přidat člena* (výběr kolegů si zdroj
+  udělá sám, např. přes `pickInQuickbar()`) a u ostatních členů (ne u `me`) křížek *Odebrat z konverzace*,
+  který se nejdřív zeptá (*Odebrat* / *Zrušit*). `memberId` dostane zdroj ve stejném typu, v jakém ho poslal.
+  Po akci (i po chybě, hlášku dává zdroj) lišta načte zprávy znovu. Kdo smí členy měnit, rozhoduje zdroj
+  (a server), bez `canManageMembers` je seznam jen pro čtení.
+- Konverzace z `chats.list()` s `muted: true` je ztlumená: za názvem má přeškrtnutý zvonek (v seznamu i v hlavičce)
+  a počet nepřečtených šedě místo červeně. `chats.messages()` může vrátit `muted` (boolean), který přepíše
+  položku seznamu, takže hlavička změnu ukáže hned. Ztlumit a zrušit ztlumení dává zdroj do `chats.menu()`.
 - Zpráva může mít `author` (jméno nad bublinou cizí zprávy), `system: true` (šedý text uprostřed, bez akcí),
   `attachments: [{ name, url, size?, image? }]` (obrázek jako náhled, jinak soubor s velikostí - `size`
   v bajtech, nebo hotový text; obojí otevírá nová záložka) a `pinned` (špendlík u času).
@@ -3424,6 +3457,9 @@ menu (podmenu se rozbaluje, otevřené je jen jedno) a pod čarou uživatele s M
 V liště 46 px vysoké je šest ikonových tlačítek 52 × 36 px bez rámečků (Menu, Hledat, AI, Notifikace, Úkoly, Chat), otevřené má podbarvení;
 pod 400 px je lišta přes celou šířku a tlačítka se dělí rovným dílem. Hledání lištu roztáhne na pole, okna jsou 16 px
 od krajů, AI na celou plochu na mobilu není.
+
+**Místo pod lištou** - `.container-main` má dole rezervu, aby lišta nepřekryla konec stránky; flash zprávy jsou nad lištou,
+vodorovná lišta gridu (`.table-bottom-scroll`) pod ní u spodní hrany okna. Sticky `bottom` se měří od rezervy, proto ji odečítá.
 
 **Linky panelů** pod hlavičkou a nad patičkou se ukážou, jen když je obsah posunutý pod hlavičku
 nebo pod patičkou ještě pokračuje (třídy `quickbar-panel--scrolled` / `--more`, jako boční panel).

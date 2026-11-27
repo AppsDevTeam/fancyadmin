@@ -171,7 +171,7 @@
 		</div>
 
 		<div class="side-panel-template-backdrop"></div>
-		<div class="side-panel-template-container">
+		<div class="side-panel-template-container" tabindex="-1">
 			<div class="side-panel-template-header">
 				<span class="side-panel-template-avatar" hidden></span>
 				<div class="side-panel-template-heading">
@@ -183,7 +183,7 @@
 			{snippet sidePanel}{/snippet}
 		</div>
 		<div class="side-panel-template-backdrop side-panel-template-backdrop--stacked"></div>
-		<div class="side-panel-template-container side-panel-template-container--stacked">
+		<div class="side-panel-template-container side-panel-template-container--stacked" tabindex="-1">
 			<div class="side-panel-template-header">
 				<span class="side-panel-template-avatar" hidden></span>
 				<div class="side-panel-template-heading">
@@ -231,7 +231,7 @@
 
 	{* Jen data pro flashes.js, ten z nich udělá zprávy v .flash-stack *}
 	<div n:snippet="flashes" class="flash-source" hidden>
-		<div n:foreach="$flashes as $flash" class="flash-source-item" data-type={$flash->type} data-close-duration={$flash->closeDuration}>{$flash->message|noescape}</div>
+		{include '@flashSource.latte'}
 	</div>
 </div>
 {* Rychlá lišta mimo snippet body - ajaxový přechod na jinou stránku ji nepřekreslí, takže

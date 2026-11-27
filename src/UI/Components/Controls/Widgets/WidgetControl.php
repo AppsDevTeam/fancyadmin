@@ -16,6 +16,10 @@ final class WidgetControl extends Control
 	#[Persistent]
 	public ?string $period = null;
 
+	/** @var array<string, string> volby přepínačů widgetu (Widget::addSwitch) */
+	#[Persistent]
+	public array $switch = [];
+
 	public function __construct(
 		private readonly Widget $widget,
 	) {
@@ -32,6 +36,7 @@ final class WidgetControl extends Control
 		parent::loadState($params);
 
 		$this->widget->selectPeriod($this->period);
+		$this->widget->selectSwitches($this->switch);
 
 		if (!empty($params['redraw']) && $this->getPresenter()->isAjax()) {
 			$this->redrawControl('body');
@@ -42,9 +47,13 @@ final class WidgetControl extends Control
 	public function saveState(array &$params): void
 	{
 		if (!array_key_exists('period', $params)) {
-			// Výchozí nebo neplatné období do odkazů nepatří
-			$period = $this->widget->getPeriod();
+			// Výchozí nebo neplatné období do odkazů nepatří; widget bez vlastního výběru má období mřížky
+			$period = $this->widget->hasPeriods() ? $this->widget->getPeriod() : null;
 			$params['period'] = $period !== $this->widget->getDefaultPeriod() ? $period?->value : null;
+		}
+		if (!array_key_exists('switch', $params)) {
+			// jen nevýchozí volby, prázdné pole do odkazu nejde
+			$params['switch'] = $this->widget->getSwitchState() ?: null;
 		}
 		parent::saveState($params);
 	}
@@ -69,17 +78,45 @@ final class WidgetControl extends Control
 	 */
 	public function getPeriodFormFields(): array
 	{
+		return self::queryFields($this->getPresenter()->getHttpRequest()->getUrl()->getQuery(), $this->getPeriodParameterName());
+	}
+
+	/**
+	 * Parametry adresy kromě pole období a příznaků překreslení - skrytá pole GET formuláře období.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function queryFields(string $query, string $periodParameter): array
+	{
 		$fields = [];
-		foreach (explode('&', $this->getPresenter()->getHttpRequest()->getUrl()->getQuery()) as $_pair) {
+		foreach (explode('&', $query) as $_pair) {
 			if ($_pair === '') {
 				continue;
 			}
 			[$_name, $_value] = array_map('urldecode', explode('=', $_pair, 2) + [1 => '']);
-			if ($_name !== $this->getPeriodParameterName() && !str_ends_with($_name, '-redraw')) {
+			if ($_name !== $periodParameter && !str_ends_with($_name, '-redraw')) {
 				$fields[$_name] = $_value;
 			}
 		}
 		return $fields;
+	}
+
+	/**
+	 * Odkaz na stránku s jinou volbou přepínače (ostatní volby a období widgetu zůstanou).
+	 */
+	public function getSwitchLink(string $name, string $value): string
+	{
+		$state = $this->widget->getSwitchState();
+		$state[$name] = $value;
+		$switches = $this->widget->getSwitches();
+		$state = array_filter($state, fn(string $option, string $key) => $option !== $switches[$key]['default'], ARRAY_FILTER_USE_BOTH);
+		return $this->link('this', ['switch' => $state ?: null]);
+	}
+
+	/** Jméno pole přepínače v URL (`dashboard-trend-switch[unit]`) - JS z něj skládá adresu s novou volbou. */
+	public function getSwitchParameterName(string $name): string
+	{
+		return $this->getParameterId('switch') . '[' . $name . ']';
 	}
 
 	public function getPeriodFormAction(): string

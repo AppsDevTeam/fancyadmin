@@ -10,7 +10,7 @@
 // Historie: do adresního řádku se zapisuje odkaz a formulář odeslaný přes GET. Formulář
 // odeslaný přes POST a požadavek z kódu (naja.makeRequest) adresu nemění, kromě přesměrování.
 // Adresa bez signálu (signalCsrf.js ho z ní maže), která se rovná současné, nový záznam
-// historie nepřidává.
+// historie nepřidává. Bez signálu se ukládá i do stavu historie, ze kterého čte tlačítko Zpět.
 
 import $ from 'jquery';
 import naja from 'naja';
@@ -87,6 +87,13 @@ naja.addEventListener('before', (e) => {
 			options.history = 'replace';
 		}
 	}
+});
+
+// Zpět v prohlížeči zopakuje adresu ze stavu historie. Se signálem by po odkazu, který
+// otevřel boční panel, jen znovu otevřel panel nad stránkou, na kterou se mezitím odešlo.
+naja.historyHandler.addEventListener('buildState', (e) => {
+	const { state } = e.detail;
+	state.href = cleanUrl(state.href) ?? state.href;
 });
 
 naja.redirectHandler.addEventListener('redirect', (e) => {

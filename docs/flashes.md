@@ -30,6 +30,10 @@ pište jako krátké shrnutí a za ním, co dělat dál. Zpráva s HTML se nedě
 - Hlášku z AJAX požadavku, který překreslí jen část stránky (grid po smazání řádku, signál
   komponenty), ukáže presenter sám: `afterRender()` při AJAXu s hláškami překreslí snippet `flashes`.
   Ruční `redrawControl('flashes')` není potřeba.
+- Totéž platí pro odpověď poslanou rovnou přes `sendPayload()` bez vykreslení šablony (formulář
+  v bočním panelu, který ho po uložení zavře sám, `redrawSidePanel()`): `BasePresenterTrait::sendPayload()`
+  hlášky vykreslí do snippetu `flashes` (`@flashSource.latte`, totéž co v layoutu). Odpověď
+  s přesměrováním je nenese, ukáže je až následující požadavek.
 
 ## Uložení v bočním panelu
 

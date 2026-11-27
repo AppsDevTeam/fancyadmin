@@ -92,6 +92,25 @@ function enableMenuAnimation() {
 	$('.side-panel-wide').addClass('menu-animate');
 }
 
+// Rozbalené podmenu u spodního okraje (malý notebook) se doroluje do pohledu, nadpis ale nahoru neodjede.
+// Výška je známá až po animaci rozbalení, proto až po transitionend (s pojistkou, kdyby neproběhla).
+function revealInMenu(el) {
+	const menuBody = el.closest('.menu-body');
+	if (!menuBody) return;
+	let timer = null;
+	const reveal = (e) => {
+		if (e && e.target !== el) return;
+		el.removeEventListener('transitionend', reveal);
+		clearTimeout(timer);
+		const box = el.getBoundingClientRect();
+		const view = menuBody.getBoundingClientRect();
+		const by = Math.min(box.bottom - view.bottom, box.top - view.top);
+		if (by > 0) menuBody.scrollBy({ top: by, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+	};
+	el.addEventListener('transitionend', reveal);
+	timer = setTimeout(reveal, 300);
+}
+
 $(document).on('click', '.side-panel-wide .group.toggleable .group-heading', function () {
 	enableMenuAnimation();
 	const key = $(this).closest('.group').data('heading');
@@ -106,6 +125,9 @@ $(document).on('click', '.side-panel-wide .group.toggleable .group-heading', fun
 	state.collapsedHeadings = collapsed;
 	writeState(state);
 	applyState();
+	if (idx !== -1 && !$('body').hasClass('menu-collapsed')) {
+		revealInMenu(this.closest('.group'));
+	}
 });
 
 // Klik na header má-submenu itemu = toggle open/closed. Persistuje se do dvou seznamů
@@ -133,6 +155,9 @@ $(document).on('click', '.side-panel-wide .item.has-submenu > .item-header', fun
 	}
 	writeState(state);
 	applyState();
+	if (!isCurrentlyOpen) {
+		revealInMenu($item.get(0));
+	}
 });
 
 // Popover sbaleného menu otevírá JS, ne :hover: myš jedoucí šikmo do otevřeného popoveru přejede

@@ -2,57 +2,81 @@
 import clamp from 'clamp-js';
 import { onContentLoaded } from './naja';
 
-onContentLoaded(function (el) {
-	$('.table-responsive').map((i, el) => {
-		$(el).on('scroll', (e) => {
-			const scrollEl = $(e.currentTarget).get(0);
-			const scrollWidth = scrollEl.scrollWidth;
-			const clientWidth = scrollEl.clientWidth;
-			const scrollLeft = scrollEl.scrollLeft;
+// Klon přilepené hlavičky (datagridInfiniteScroll.js) je taky .table-responsive, stíny mu nastavuje tabulka
+const TABLE_SELECTOR = '.table-responsive:not(.datagrid-sticky-thead__inner)';
+const FIRST_COLUMN_SELECTOR = '.table-responsive tr > td:first-child > div:not(.item-detail-content)';
 
-			const fromRight = scrollWidth - clientWidth - scrollLeft;
-			const showRightShadow = fromRight > 1;
-			const showLeftShadow = scrollLeft > 1;
+onContentLoaded(function ($el) {
+	// Snippet bývá i řádek tabulky; nativní querySelectorAll najde prvky i podle předka mimo snippet (jQuery find ne)
+	const find = (selector) => $el.get().flatMap((root) => [
+		...(root.matches?.(selector) ? [root] : []),
+		...root.querySelectorAll(selector),
+	]);
 
-			$(el).find('> table, > .datagrid-tree').css({
-				'--actionShadowWidthRight': showRightShadow ? '30px' : '0px',
-				'--actionShadowWidthLeft': showLeftShadow ? '30px' : '0px',
-				// Šířka rozbaleného detailu řádku, který s tabulkou neroluje (_datagridDetail.scss)
-				'--datagridViewportWidth': clientWidth + 'px'
-			});
-		}).trigger('scroll');
+	find(TABLE_SELECTOR).forEach(bindShadows);
+	find('.table-responsive-wrapper').forEach(bindBottomScroll);
 
-		// Šířka se mění i bez resize okna (boční menu, panel)
-		if (!el.dataset.shadowObserved) {
-			el.dataset.shadowObserved = '1';
-			new ResizeObserver(() => $(el).trigger('scroll')).observe(el);
-		}
-	});
-
-	$(window).on('resize', () => {
-		$('.table-responsive tr > td:first-child > div:not(.item-detail-content)').map((i, el) => {
-			clamp(el, {
-				clamp: 2,
-			});
-		});
-	}).trigger('resize');
-
-	$(el).find('.table-responsive-wrapper').map((i, _el) => {
-		const $tableOuter = $(_el);
-		$(window).on('resize', () => {
-			//$tableOuter.find('.table-bottom-scroll').css({width: $tableOuter.width()});
-			$tableOuter.find('.table-bottom-scroll-inner').css({width: $tableOuter.find('table, .datagrid-tree').first().width() - 20});
-
-			const responsive = $tableOuter.find('.table-responsive').get(0);
-			$tableOuter.find('.table-bottom-scroll').toggleClass('d-none', !responsive || responsive.scrollWidth <= responsive.clientWidth + 1);
-		}).trigger('resize');
-
-		$tableOuter.find('.table-responsive').on('scroll', function() {
-			$tableOuter.find('.table-bottom-scroll').scrollLeft($(this).scrollLeft());
-		});
-
-		$tableOuter.find('.table-bottom-scroll').on('scroll', function() {
-			$tableOuter.find('.table-responsive').scrollLeft($(this).scrollLeft());
-		});
-	})
+	// Nativní clamp jen nastaví styly, stačí jednou na nový obsah
+	find(FIRST_COLUMN_SELECTOR).forEach((div) => clamp(div, { clamp: 2 }));
 });
+
+function bindShadows(responsive) {
+	if (responsive.dataset.shadowBound) {
+		return;
+	}
+	responsive.dataset.shadowBound = '1';
+
+	const update = () => {
+		const fromRight = responsive.scrollWidth - responsive.clientWidth - responsive.scrollLeft;
+		const vars = {
+			'--actionShadowWidthRight': fromRight > 1 ? '30px' : '0px',
+			'--actionShadowWidthLeft': responsive.scrollLeft > 1 ? '30px' : '0px',
+			// Šířka rozbaleného detailu řádku, který s tabulkou neroluje (_datagridDetail.scss)
+			'--datagridViewportWidth': responsive.clientWidth + 'px',
+		};
+		const tables = [
+			...responsive.querySelectorAll(':scope > table, :scope > .datagrid-tree'),
+			...(responsive.parentElement?.querySelectorAll(':scope > .datagrid-sticky-thead table') ?? []),
+		];
+		tables.forEach((table) => Object.entries(vars).forEach(([name, value]) => table.style.setProperty(name, value)));
+	};
+
+	responsive.addEventListener('scroll', update, { passive: true });
+
+	// Šířka tabulky se mění i bez resize okna (boční menu, panel, donačtené řádky)
+	const observer = new ResizeObserver(update);
+	observer.observe(responsive);
+	Array.from(responsive.children).forEach((child) => observer.observe(child));
+}
+
+function bindBottomScroll(wrapper) {
+	// Jen přímý potomek: první .table-responsive ve wrapperu je klon přilepené hlavičky (datagridInfiniteScroll.js)
+	const responsive = wrapper.querySelector(':scope > .table-responsive');
+	const bar = wrapper.querySelector(':scope > .table-bottom-scroll');
+	if (!responsive || !bar || wrapper.dataset.bottomScrollBound) {
+		return;
+	}
+	wrapper.dataset.bottomScrollBound = '1';
+
+	const update = () => {
+		const overflow = responsive.scrollWidth - responsive.clientWidth;
+		bar.classList.toggle('d-none', overflow <= 1);
+		if (overflow > 1) {
+			bar.querySelector('.table-bottom-scroll-inner').style.width = bar.clientWidth + overflow + 'px';
+			bar.scrollLeft = responsive.scrollLeft;
+		}
+	};
+
+	// Šířka tabulky se mění i bez resize okna (boční menu, donačtené řádky, písmo)
+	const observer = new ResizeObserver(update);
+	observer.observe(responsive);
+	Array.from(responsive.children).forEach((child) => observer.observe(child));
+
+	responsive.addEventListener('scroll', () => {
+		bar.scrollLeft = responsive.scrollLeft;
+	}, { passive: true });
+
+	bar.addEventListener('scroll', () => {
+		responsive.scrollLeft = bar.scrollLeft;
+	}, { passive: true });
+}

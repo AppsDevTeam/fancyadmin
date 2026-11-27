@@ -35,6 +35,16 @@ export function focusFirstField(root) {
 	if (picker) picker.close();
 }
 
+// Esc v poli jen vezme fokus (na kontejner, ať další Esc i TAB zůstanou uvnitř), zavírá až další Esc
+export function leaveFieldOnEscape(e, container) {
+	const field = e.target;
+	if (e.key !== 'Escape' || e.defaultPrevented || !(field instanceof Element) || field === container || !container.contains(field)) return false;
+	if (!field.matches('input, select, textarea') && !field.isContentEditable) return false;
+	e.preventDefault();
+	container.focus({ preventScroll: true });
+	return true;
+}
+
 // TAB z posledního prvku na první (Shift+TAB obráceně), aby fokus nevyšel z panelu nebo modalu
 export function keepTabInside(e, container) {
 	if (e.key !== 'Tab') return;

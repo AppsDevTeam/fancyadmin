@@ -283,6 +283,18 @@ trait BasePresenterTrait
 		return $flash;
 	}
 
+	// Odpověď poslaná rovnou (formulář v bočním panelu, redrawSidePanel()) šablonu nevykreslí, a tak ani snippet flashes
+	public function sendPayload(): void
+	{
+		$payload = $this->getPayload();
+		if ($this->isAjax() && !$this->snippetMode && !isset($payload->redirect) && !empty($this->getTemplate()->flashes)) {
+			$template = $this->getTemplateFactory()->createTemplate($this);
+			$template->flashes = $this->getTemplate()->flashes;
+			$payload->snippets[$this->getSnippetId('flashes')] ??= $template->renderToString(__DIR__ . '/@flashSource.latte');
+		}
+		parent::sendPayload();
+	}
+
 	public function afterRender(): void
 	{
 		if (!$this->isControlInvalid()) {

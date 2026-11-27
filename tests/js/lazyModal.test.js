@@ -1,5 +1,5 @@
 // Modal nahrazený překreslením snippetu (formulář v něm se uložil) nesmí nechat backdrop a zámek stránky
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let naja;
 
@@ -15,6 +15,8 @@ function openModal(modal) {
 }
 
 beforeAll(async () => {
+	// formFocus.js čte při načtení matchMedia, jsdom ho nemá
+	window.matchMedia = vi.fn((query) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
 	await import('../../assets/js/_jquery-global.js');
 	({ default: naja } = await import('../../assets/js/naja.js'));
 	await import('../../assets/js/lazyModal.js');

@@ -1,6 +1,6 @@
-import naja, { onContentLoaded } from './naja';
+import naja from './naja';
 
-// Výběr v uživatelském menu (UserMenuSelect, @userButton.latte / @quickbarMenu.latte):
+// Výběr v menu rychlé lišty na telefonu (UserMenuSelect, @quickbarMenu.latte):
 // změna otevře ajaxem odkaz vybrané volby (signál hodnotu uloží a přesměruje) - jako klik
 // na odkaz, takže se adresa zapíše do historie.
 document.addEventListener('change', (e) => {
@@ -14,16 +14,14 @@ document.addEventListener('change', (e) => {
 	naja.uiHandler.clickElement(link).catch(() => {});
 });
 
-// Tom Select je z divů a klik do něj by Bootstrap bral jako klik do menu a dropdown
-// zavřel (výjimku mají jen nativní pole). Bootstrap poslouchá na document - klik se
-// zastaví na obalu výběru, až ho Tom Select uvnitř zpracuje. Menu se překresluje
-// ajaxem (snippet body), proto se váže při každém načtení obsahu.
-onContentLoaded(() => {
-	document.querySelectorAll('.user-dropdown [data-fancyadmin-user-menu-select]').forEach((wrapper) => {
-		if (wrapper.dataset.userMenuSelectBound) {
-			return;
-		}
-		wrapper.dataset.userMenuSelectBound = '1';
-		wrapper.addEventListener('click', (e) => e.stopPropagation());
-	});
-});
+// Výběr v menu u uživatele (@userButton.latte) je řádek se seznamem voleb, který vyjede
+// po najetí myší. Na dotykovém zařízení najetí není - klik na řádek seznam otevře a zavře.
+// Klik na řádek nesmí zavřít celé menu (Bootstrap poslouchá na document), volba je odkaz.
+document.addEventListener('click', (e) => {
+	const row = e.target.closest?.('[data-fancyadmin-user-menu-submenu]');
+	if (!row || e.target.closest('.user-menu-submenu-list a')) {
+		return;
+	}
+	e.stopPropagation();
+	row.classList.toggle('open');
+}, true);

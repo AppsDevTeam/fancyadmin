@@ -1,5 +1,5 @@
 // Chat v rychlé liště - téma konverzace, nabídka plusu, výběr zpráv, výběr položky s hledáním,
-// kanály, vlákna, připnuté zprávy, připomenutí a přílohy
+// kanály, vlákna, připnuté zprávy, připomenutí, přílohy a ztlumení
 // (assets/js/quickbar.js, README sekce 29). Co zdroj neumí, lišta neukáže.
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,19 +20,22 @@ function quickbarHtml() {
 		<section class="quickbar-panel quickbar-panel--chat" data-quickbar-panel="chat" hidden>
 			<div class="quickbar-chat-current" data-quickbar-chat-current data-back="Zpět" data-colleague="Kolega" data-group="Skupina"
 				data-channel="Kanál" data-private-channel="Soukromý kanál" data-thread="Vlákno" data-thread-back="Zpět do konverzace"
-				data-follow="Sledovat" data-unfollow="Přestat sledovat"></div>
+				data-follow="Sledovat" data-unfollow="Přestat sledovat"
+				data-members-one="%count% člen" data-members-few="%count% členové" data-members-many="%count% členů" data-muted="Ztlumeno"></div>
 			<div class="quickbar-chat-list">
 				<input type="text" data-quickbar-chat-query>
 				<div data-quickbar-chat-tools data-new="Nový kanál" data-browse="Procházet kanály" hidden></div>
 				<div class="quickbar-panel-body quickbar-chats" data-quickbar-chats data-empty="Nic" data-no-results="Nic pro %query%"
 					data-threads="Vlákna" data-threads-hint="Odpovědi ve vláknech, která sledujete"
-					data-reminders="Připomenout později" data-reminders-hint="Zprávy, ke kterým se máte vrátit"></div>
+					data-reminders="Připomenout později" data-reminders-hint="Zprávy, ke kterým se máte vrátit" data-muted="Ztlumeno"></div>
 				<div data-quickbar-channels data-new="Nový kanál" data-browse="Procházet kanály" data-back="Zpět" data-name="Název" data-private="Soukromý"
 					data-members="Členové" data-members-search="Hledat kolegu" data-create="Vytvořit kanál" data-colleagues-empty="Nikdo" data-empty="Žádné kanály"
 					data-members-count="Členů: %count%" data-join="Připojit" data-open="Otevřít"
 					data-threads="Vlákna" data-threads-empty="Zatím nesledujete žádné vlákno s odpověďmi."
 					data-reminders="Připomenout později" data-reminders-empty="Nemáte žádné připomínky." data-reminder-done="Hotovo" hidden></div>
 			</div>
+			<div class="quickbar-chat-members" id="quickbar-chat-members" data-quickbar-chat-members aria-label="Členové konverzace" data-you="(vy)"
+				data-add="Přidat člena" data-remove="Odebrat z konverzace" data-remove-confirm="Odebrat" data-remove-cancel="Zrušit" hidden></div>
 			<div data-quickbar-chat-pinned data-label="Připnuté (%count%)" hidden></div>
 			<div data-quickbar-chat-news data-one="Nové odpovědi ve vlákně" data-few="Nové odpovědi ve %count% vláknech"
 				data-many="Nové odpovědi v %count% vláknech" data-open="Zobrazit" hidden></div>
@@ -681,6 +684,205 @@ describe('kanály, vlákna, připnuté zprávy, připomenutí a přílohy', () =
 		await settle();
 
 		expect(calls).toContainEqual(['thread', 7, 1]);
+	});
+
+	describe('členové kanálu v hlavičce', () => {
+		const MEMBERS = [
+			{ id: 1, name: 'Eva Recepční', initials: 'ER' },
+			{ id: 2, name: 'Jan Novák', me: true },
+			{ id: 3, name: 'Petra Malá' },
+		];
+
+		beforeEach(() => {
+			const messagesOf = source.chats.messages;
+			source.chats.list = () => [
+				{ id: 7, name: 'Eva Recepční', unread: 0 },
+				{ id: 20, name: 'vedení', kind: 'channel', private: true, unread: 0 },
+			];
+			source.chats.messages = (chatId) => ({ ...messagesOf(chatId), members: MEMBERS });
+		});
+
+		async function openChat(id) {
+			await openChatPanel();
+			click(`[data-quickbar-chat="${id}"]`);
+			await settle();
+		}
+
+		it('kanál má v hlavičce počet členů a seznam je sbalený', async () => {
+			await openChat(20);
+
+			const toggle = $('[data-quickbar-members-toggle]');
+			expect(toggle.textContent).toContain('Soukromý kanál · 3 členové');
+			expect(toggle.getAttribute('aria-expanded')).toBe('false');
+			expect(toggle.getAttribute('aria-controls')).toBe('quickbar-chat-members');
+			expect($('[data-quickbar-chat-members]').hidden).toBe(true);
+		});
+
+		it('klik seznam rozbalí se jmény a (vy), další klik ho sbalí', async () => {
+			await openChat(20);
+			click('[data-quickbar-members-toggle]');
+
+			const $members = $('[data-quickbar-chat-members]');
+			expect($members.hidden).toBe(false);
+			expect($$('.quickbar-chat-member-name').map((el) => el.textContent)).toEqual(['Eva Recepční', 'Jan Novák', 'Petra Malá']);
+			expect($$('.quickbar-chat-member-me').map((el) => el.textContent)).toEqual(['(vy)']);
+			expect($('[data-quickbar-members-toggle]').getAttribute('aria-expanded')).toBe('true');
+
+			click('[data-quickbar-members-toggle]');
+			expect($members.hidden).toBe(true);
+			expect($('[data-quickbar-members-toggle]').getAttribute('aria-expanded')).toBe('false');
+		});
+
+		it('přímá konverzace počet členů nemá', async () => {
+			await openChat(7);
+
+			expect($('[data-quickbar-members-toggle]')).toBeNull();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-current-sub').textContent).toBe('Kolega');
+		});
+
+		it('vlákno odpovědí seznam schová', async () => {
+			await openChat(20);
+			click('[data-quickbar-members-toggle]');
+			expect($('[data-quickbar-chat-members]').hidden).toBe(false);
+
+			click('[data-quickbar-replies="1"]');
+			await settle();
+			expect($('[data-quickbar-chat-members]').hidden).toBe(true);
+		});
+
+		it('bez canManageMembers seznam nenabízí přidání ani odebrání', async () => {
+			source.chats.addMembers = () => calls.push(['addMembers']);
+			source.chats.removeMember = () => calls.push(['removeMember']);
+			await openChat(20);
+			click('[data-quickbar-members-toggle]');
+
+			expect($('[data-quickbar-member-add]')).toBeNull();
+			expect($$('[data-quickbar-member-remove]')).toHaveLength(0);
+		});
+
+		describe('správa členů', () => {
+			let members;
+
+			beforeEach(() => {
+				members = [...MEMBERS];
+				const messagesOf = source.chats.messages;
+				source.chats.messages = (chatId) => ({ ...messagesOf(chatId), members, canManageMembers: true });
+				source.chats.addMembers = (chatId) => {
+					calls.push(['addMembers', chatId]);
+					members = [...members, { id: 4, name: 'Karel Nový' }];
+				};
+				source.chats.removeMember = (chatId, memberId) => {
+					calls.push(['removeMember', chatId, memberId]);
+					members = members.filter((m) => m.id !== memberId);
+				};
+			});
+
+			it('Přidat člena zavolá zdroj a seznam načte znovu', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+				expect($('[data-quickbar-member-add]').textContent).toContain('Přidat člena');
+
+				click('[data-quickbar-member-add]');
+				await settle();
+
+				expect(calls).toContainEqual(['addMembers', 20]);
+				expect($$('.quickbar-chat-member-name').map((el) => el.textContent)).toContain('Karel Nový');
+				expect($('[data-quickbar-members-toggle]').textContent).toContain('4 členové');
+			});
+
+			it('křížek je u ostatních členů, ne u sebe', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+
+				expect($$('[data-quickbar-member-remove]').map((el) => el.dataset.quickbarMemberRemove)).toEqual(['1', '3']);
+				expect($('[data-quickbar-member-remove="3"]').getAttribute('aria-label')).toBe('Odebrat z konverzace: Petra Malá');
+			});
+
+			it('odebrání se nejdřív zeptá, Zrušit nic neodebere', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+				click('[data-quickbar-member-remove="3"]');
+
+				const confirm = $('[data-quickbar-member-remove-confirm="3"]');
+				expect(confirm.textContent).toBe('Odebrat');
+				expect(document.activeElement).toBe(confirm);
+				expect($('[data-quickbar-member-remove="3"]')).toBeNull();
+
+				click('[data-quickbar-member-remove-cancel="3"]');
+				expect(calls.filter((c) => c[0] === 'removeMember')).toHaveLength(0);
+				expect(document.activeElement).toBe($('[data-quickbar-member-remove="3"]'));
+			});
+
+			it('potvrzené odebrání pošle id ve stejném typu a člen zmizí', async () => {
+				await openChat(20);
+				click('[data-quickbar-members-toggle]');
+				click('[data-quickbar-member-remove="3"]');
+				click('[data-quickbar-member-remove-confirm="3"]');
+				await settle();
+
+				expect(calls).toContainEqual(['removeMember', 20, 3]);
+				expect($$('.quickbar-chat-member-name').map((el) => el.textContent)).toEqual(['Eva Recepční', 'Jan Novák']);
+				expect($('[data-quickbar-members-toggle]').textContent).toContain('2 členové');
+			});
+		});
+	});
+
+	describe('ztlumená konverzace', () => {
+		let muted;
+
+		beforeEach(() => {
+			muted = true;
+			const messagesOf = source.chats.messages;
+			source.chats.list = () => [
+				{ id: 7, name: 'Eva Recepční', unread: 2 },
+				{ id: 20, name: 'recepce', kind: 'channel', unread: 3, muted: true },
+			];
+			source.chats.messages = (chatId) => ({ ...messagesOf(chatId), muted: chatId === 20 && muted });
+			source.chats.menu = () => [{ id: 'mute', label: muted ? 'Zrušit ztlumení' : 'Ztlumit' }];
+			source.chats.menuAction = () => {
+				muted = !muted;
+			};
+		});
+
+		it('v seznamu má zvonek a nepřečtené šedě', async () => {
+			await openChatPanel();
+
+			const $muted = $('[data-quickbar-chat="20"]');
+			expect($muted.querySelector('.quickbar-chat-name .quickbar-chat-muted')).not.toBeNull();
+			expect($muted.querySelector('.quickbar-chat-name .visually-hidden').textContent).toBe(' Ztlumeno');
+			expect($muted.querySelector('.badge').classList.contains('bg-secondary')).toBe(true);
+
+			const $other = $('[data-quickbar-chat="7"]');
+			expect($other.querySelector('.quickbar-chat-muted')).toBeNull();
+			expect($other.querySelector('.badge').classList.contains('bg-danger')).toBe(true);
+		});
+
+		it('hlavička ukáže zvonek a změnu z nabídky hned', async () => {
+			await openChatPanel();
+			click('[data-quickbar-chat="20"]');
+			await settle();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-current-name .quickbar-chat-muted')).not.toBeNull();
+
+			click('[data-quickbar-chat-plus]');
+			await settle();
+			click('[data-quickbar-chat-menu-item="mute"]');
+			await settle();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-muted')).toBeNull();
+
+			click('[data-quickbar-chat-plus]');
+			await settle();
+			click('[data-quickbar-chat-menu-item="mute"]');
+			await settle();
+			expect($('[data-quickbar-chat-current] .quickbar-chat-muted')).not.toBeNull();
+		});
+
+		it('přímá konverzace bez muted zvonek nemá', async () => {
+			await openChatPanel();
+			click('[data-quickbar-chat="7"]');
+			await settle();
+
+			expect($('[data-quickbar-chat-current] .quickbar-chat-muted')).toBeNull();
+		});
 	});
 });
 

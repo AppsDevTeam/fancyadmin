@@ -7,8 +7,10 @@ namespace ADT\FancyAdmin\Model\Tablet;
 use ADT\BiometricSignature\Clock\SystemClock;
 use ADT\BiometricSignature\Evidence\Evidence;
 use ADT\BiometricSignature\Exception\SignatureStampException;
+use ADT\BiometricSignature\Pdf\SignatureStamp;
 use ADT\BiometricSignature\Pdf\SignatureStamper;
 use ADT\BiometricSignature\SignatureCapture;
+use ADT\BiometricSignature\SignatureId;
 use ADT\FancyAdmin\Model\Entities\DocumentSignature;
 use ADT\FancyAdmin\Model\Entities\SignedDocument;
 use ADT\FancyAdmin\Model\Entities\TabletSignRequest;
@@ -217,6 +219,11 @@ class TabletSigning
 	{
 		$handler = $this->getHandler();
 
+		// ID obálky spojuje žádost, podepsané dokumenty a auditní stopu
+		if ($request->getEnvelopeId() === null) {
+			$request->setEnvelopeId(SignatureId::generate($request->getCreatedAt()));
+		}
+
 		// převzít jde jen vlastní podpis - podpis jednoho podepisujícího nesmí být v místě jiného
 		$signers = [];
 		foreach ($places as [$place, $signatureId]) {
@@ -247,8 +254,19 @@ class TabletSigning
 		/** @var array<string, DocumentSignature> $signatures */
 		$signatures = [];
 		$placements = [];
+		// každé podepsané místo má vlastní ID a čas - tisknou se pod podpis do PDF a stojí v auditní stopě
+		/** @var array<string, SignatureStamp> $stamps ID místa => podpis s popiskem */
+		$stamps = [];
 		foreach ($places as [$place, $signatureId]) {
-			$placements[$signatureId][] = ['document' => $place->document, 'box' => $place->box];
+			$signedAt = $this->getPlacedAt($request, $submission, $place, $now);
+			$placementId = SignatureId::generate($signedAt);
+			$placements[$signatureId][] = [
+				'document' => $place->document,
+				'box' => $place->box,
+				'id' => $placementId,
+				'signedAt' => $signedAt->format(DATE_ATOM),
+			];
+			$stamps[$place->getId()] = new SignatureStamp($submission->signatures[$signatureId]->imageDataUri, $placementId, $signedAt);
 			$signatures[$signatureId] ??= $this->documentSignatureClass::createForRequest($request, $submission->signatures[$signatureId], $now)
 				->setRequestContext($ipAddress, $userAgent);
 		}
@@ -272,7 +290,7 @@ class TabletSigning
 
 				$documentSignatures[$signatureId] = $signatures[$signatureId];
 				if ($place->box !== null) {
-					$images[$place->box] = $signatures[$signatureId]->getImageDataUri();
+					$images[$place->box] = $stamps[$place->getId()];
 				}
 			}
 
@@ -284,6 +302,13 @@ class TabletSigning
 				$signedDocuments[$key]->recordPdf($signedPdf->content);
 			}
 		}
+
+		$pageCounts = [];
+		foreach ($documents as $key => $document) {
+			$pageCounts[(string) $key] = $this->countPages($document->getPdf());
+		}
+
+		$request->recordAuditLog(TabletSignAuditLog::build($request, $documents, $signedDocuments, $signatures, $signers, $submission->viewed, $pageCounts, $now)->toJson());
 
 		$this->tabletService->finish($request, $now); // flush
 
@@ -312,12 +337,20 @@ class TabletSigning
 				'data' => $document->getData(),
 				'pdfSha256' => $document->getOriginalPdfHash(),
 				'boxes' => [],
+				'signatures' => [],
 			];
 			$placed[$placement['document']]['boxes'][] = $placement['box'];
+			// ID a čas místa, jak stojí pod podpisem v PDF a v auditní stopě
+			$placed[$placement['document']]['signatures'][] = [
+				'id' => $placement['id'] ?? null,
+				'box' => $placement['box'],
+				'signedAt' => $placement['signedAt'] ?? null,
+			];
 		}
 
 		return [
 			'signerName' => $signerName,
+			'envelopeId' => $request?->getEnvelopeId(),
 			'documents' => array_values($placed),
 			'tablet' => $request === null ? null : [
 				'name' => $request->getTabletName(),
@@ -327,6 +360,36 @@ class TabletSigning
 			],
 			'subject' => $this->getHandler()->getEvidenceSubject($signature),
 		];
+	}
+
+	/**
+	 * Kdy se podepisující do místa podepsal: stránka pošle, před kolika ms od odeslání to bylo
+	 * (TabletSignSubmission::$placedAgo), a čas se dopočítá od času serveru. Nejdřív v okamžiku,
+	 * kdy tablet žádost otevřel - údaj ze stránky se dá podvrhnout.
+	 */
+	private function getPlacedAt(TabletSignRequest $request, TabletSignSubmission $submission, TabletSignPlace $place, \DateTimeImmutable $now): \DateTimeImmutable
+	{
+		$opened = $request->getOpenedAt() ?? $request->getCreatedAt();
+		$longest = max(0, ($now->getTimestamp() - $opened->getTimestamp()) * 1000);
+		$ago = min($submission->placedAgo[$place->getId()] ?? 0, $longest);
+
+		return $ago === 0 ? $now : $now->modify(sprintf('-%d milliseconds', $ago));
+	}
+
+	/** Počet stran PDF do auditní stopy, null = bez PDF, bez setasign/fpdi, nebo PDF nejde přečíst */
+	private function countPages(?string $pdf): ?int
+	{
+		if ($pdf === null || !class_exists(\setasign\Fpdi\PdfParser\PdfParser::class)) {
+			return null;
+		}
+
+		try {
+			$reader = new \setasign\Fpdi\PdfReader\PdfReader(new \setasign\Fpdi\PdfParser\PdfParser(\setasign\Fpdi\PdfParser\StreamReader::createByString($pdf)));
+
+			return $reader->getPageCount() ?: null;
+		} catch (\Throwable) {
+			return null;
+		}
 	}
 
 	/** @return list<TabletSignPlace> */

@@ -34,7 +34,7 @@
 							<i class="fa-solid fa-chevron-down quickbar-menu-chevron"></i>
 						</button>
 						<div class="quickbar-menu-sub" hidden>
-							{foreach $menuItem->getSubmenu()->getSubMenuItems() as $subMenuItem}
+							{foreach $menuItem->getSubmenu()->getVisibleSubMenuItems($user, $presenter) as $subMenuItem}
 								{if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
 									<div class="quickbar-menu-sub-heading">{_$subMenuItem->getLabel()}</div>
 								{elseif $subMenuItem->isVisible($user, $presenter)}

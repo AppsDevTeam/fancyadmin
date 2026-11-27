@@ -1,9 +1,25 @@
 {varType ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl $widgetGrid}
 
+{* Hlavička mřížky: nadpis, text a společné období (setHeader(), setPeriods()). Změna období načte stránku
+   znovu (widgets.js), bez JS odešle formulář tlačítko v <noscript>. *}
+{* Obrázek hlavičky je vrstva pod pásem i první řadou widgetů - kontext vrstvení drží .fa-widgets-board *}
+<div class="fa-widgets-board">
+<div n:if="$widgetGrid->hasHeader()" n:class="fa-widgets-header, $widgetGrid->getHeaderImage() !== null ? fa-widgets-header-image, $widgetGrid->isHeaderFullWidth() ? fa-widgets-header-full"
+	n:attr="style: $widgetGrid->getHeaderImage() !== null ? '--fa-widgets-header-image: url(\'' . $widgetGrid->getHeaderImage() . '\')'">
+	<div class="fa-widgets-header-text">
+		<h1 n:ifcontent class="fa-widgets-header-title">{$widgetGrid->getHeaderTitle()}</h1>
+		<div n:ifcontent class="fa-widgets-header-note">{$widgetGrid->getHeaderText()}</div>
+	</div>
+	{if $widgetGrid->hasPeriods() && !$widgetGrid->isPeriodRendered()}
+		{include 'WidgetGridPeriod.latte', class: 'fa-widgets-header-period'}
+	{/if}
+</div>
 <div class="fa-widgets fa-widgets-cols-{$widgetGrid->getColumns()}">
 	{foreach $widgetGrid->getWidgets() as $widget}
-		<section class="fa-widget fa-widget-{$widget->getType()} fa-widgets-span-{$widgetGrid->getSpan($widget)}" data-widget="{$widget->getName()}">
+		{* Panel (setPanel) je skrytý, dokud ho neotevře odkaz jiné karty (setToggle, widgets.js) *}
+		<section class="fa-widget fa-widget-{$widget->getType()} fa-widgets-span-{$widgetGrid->getSpan($widget)}" data-widget="{$widget->getName()}" n:attr="data-widget-panel: $widget->getPanelGroup(), hidden: $widget->getPanelGroup() !== null">
 			{control $widget->getName()}
 		</section>
 	{/foreach}
+</div>
 </div>

@@ -115,7 +115,16 @@ modal:
   close: Zavrieť
 
 widgets:
+  unavailable: Dáta zatiaľ nie sú k dispozícii.
+  alerts:
+    empty: Nič na riešenie.
+    more: 'Zobraziť všetkých %count%'
+    less: Zobraziť menej
+  detail: Zobraziť podrobnosti
   empty: Za zvolené obdobie nie sú žiadne údaje.
+  breadcrumbs: Navigačná cesta
+  panel:
+    close: Zavrieť zoznam
   period:
     label: Obdobie
     submit: Zobraziť
@@ -127,6 +136,7 @@ widgets:
     lastMonth: Minulý mesiac
     thisQuarter: Tento štvrťrok
     thisYear: Tento rok
+    last12Months: Posledných 12 mesiacov
 
 layout:
   sideMenu:
@@ -226,6 +236,16 @@ layout:
       channelCreate: Vytvoriť kanál
       channelsEmpty: Zatiaľ žiadne kanály.
       channelMembersCount: 'Členov: %count%'
+      membersOne: '%count% člen'
+      membersFew: '%count% členovia'
+      membersMany: '%count% členov'
+      membersList: Členovia konverzácie
+      memberYou: (vy)
+      memberAdd: Pridať člena
+      memberRemove: Odobrať z konverzácie
+      memberRemoveConfirm: Odobrať
+      memberRemoveCancel: Zrušiť
+      muted: Stlmené
       channelJoin: Pripojiť
       channelOpen: Otvoriť
       thread: Vlákno
@@ -955,6 +975,35 @@ tablets:
     done: Podpísané
     doneThanks: Ďakujeme. Tablet prosím vráťte obsluhe.
     doneBack: Späť na čakaciu stránku
+  audit:
+    title: Auditná stopa podpisu
+    intro: Dokumenty v tejto obálke boli podpísané vlastnoručným podpisom na dotykovom zariadení. Záznam vznikol pri dokončení podpisu a nesie rovnaké ID a časy, aké sú pod podpismi v dokumentoch.
+    envelope: Obálka
+    envelopeId: ID obálky
+    envelopeTitle: Názov obálky
+    sender: Odosielateľ
+    tablet: Zariadenie
+    content: Obsah obálky
+    contentSummary: 'Dokumentov: %documents%, strán celkom: %pages%'
+    originalHash: 'Pôvodný odtlačok (SHA256): %hash%'
+    finalHash: 'Finálny odtlačok (SHA256): %hash%'
+    fileType: 'Typ súboru: %type%'
+    pages: 'Počet strán: %pages%'
+    signersCount: Podpisujúcich osôb
+    timezone: Časové pásmo
+    state: Stav
+    completed: 'DOKONČENÉ %date%'
+    signers: Podpisujúce osoby
+    unnamedSigner: Podpisujúci
+    signed: PODPÍSANÉ
+    sent: 'Dokumenty na podpis poslal(a) %sender% na zariadenie %tablet% v čase %date%.'
+    opened: 'Zariadenie dokumenty otvorilo v čase %date%.'
+    identityOnSite: 'Totožnosť podpisujúceho overil(a) na mieste %name%.'
+    signature: 'Podpis ID %id% na dokumente #%document% vykonaný vlastnoručným podpisom na dotykovom zariadení, IP adresa %ip%, prehliadač %browser%, dátum a čas %date%.'
+    displayed: 'Počas podpisovania boli zobrazené dokumenty: %documents%'
+    displayedNone: Stránka podpisu nenahlásila žiadny zobrazený dokument.
+    hash: 'Odtlačok auditnej stopy (SHA256): %hash%'
+    unknown: neuvedené
 modules:
   web:
     navbar:

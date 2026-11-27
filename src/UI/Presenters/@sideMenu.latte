@@ -19,7 +19,7 @@
             {if $menuItem->getSubmenu()}
                 {var ADT\FancyAdmin\Model\Menu\NavbarSubmenu $subMenu = $menuItem->getSubmenu()}
                 <div class="submenu">
-                    {foreach $subMenu->getSubMenuItems() as $subMenuItem}
+                    {foreach $subMenu->getVisibleSubMenuItems($user, $presenter) as $subMenuItem}
                         {if $subMenuItem instanceof ADT\FancyAdmin\Model\Menu\NavbarSubmenuHeading}
                             <div class="submenu-heading">{_$subMenuItem->getLabel()}</div>
                         {else}

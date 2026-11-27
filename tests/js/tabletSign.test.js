@@ -24,10 +24,37 @@ describe('createSignState', () => {
 		state.sign('consent:-', SECOND);
 
 		expect(state.isComplete()).toBe(true);
-		expect(state.toJSON()).toEqual({
+		expect(state.toJSON()).toMatchObject({
 			signatures: { s1: FIRST, s2: SECOND },
 			placements: { 'contract:0': 's1', 'contract:2': 's1', 'consent:-': 's2' },
 		});
+	});
+
+	it('pošle, před jak dlouhou dobou se do kterého místa podepsal, a které dokumenty viděl', () => {
+		// hodiny zařízení: podpisy v 1 000, 5 000 a 9 000 ms, odeslání v 12 000 ms
+		let clock = 0;
+		const state = createSignState(PLACES, () => clock);
+		state.markViewed('contract');
+
+		clock = 1000;
+		state.sign('contract:0', FIRST);
+		clock = 5000;
+		state.reuse('contract:2');
+		clock = 9000;
+		state.sign('consent:-', SECOND);
+		// znovu podepsané místo má čas posledního podpisu
+		clock = 10000;
+		state.sign('contract:0', SECOND);
+
+		clock = 12000;
+		const sent = state.toJSON();
+		expect(sent.placedAgo).toEqual({ 'contract:0': 2000, 'contract:2': 7000, 'consent:-': 3000 });
+		// dokument consent stránka nezobrazila (místo pod náhledem se podepsalo bez přepnutí)
+		expect(sent.viewed).toEqual(['contract']);
+
+		state.markViewed('consent');
+		state.markViewed('contract');
+		expect(state.toJSON().viewed).toEqual(['contract', 'consent']);
 	});
 
 	it('nový podpis platí jen pro své místo, přepsaný podpis se neodesílá', () => {

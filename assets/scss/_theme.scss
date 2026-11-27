@@ -1969,8 +1969,9 @@ body:not(:fullscreen) {
 	height: 44px;
 }
 
-// Výběr v uživatelském menu (UserMenuSelect) - popisek nad selectem; řádek není odkaz,
-// takže se při najetí nezvýrazňuje
+// Výběr v uživatelském menu (UserMenuSelect) - na telefonu v menu rychlé lišty select
+// s popiskem, v menu u uživatele řádek s vybranou volbou a seznamem voleb vedle (najetí myší,
+// na dotyk klik - userMenuSelect.js)
 .user-menu-select-field {
 	display: flex;
 	flex: 1;
@@ -1985,13 +1986,82 @@ body:not(:fullscreen) {
 	color: var(--fa-text-muted);
 }
 
-.user-dropdown .user-menu-select {
-	cursor: default;
+// Seznam voleb vyjíždí vedle menu - .dropdown-menu by ho ořízl (overflow: hidden kvůli zaobleným rohům)
+.user-dropdown:has(.user-menu-submenu) {
+	overflow: visible;
+}
 
-	&:hover,
-	&:active {
-		background-color: transparent;
+.user-dropdown .user-menu-submenu {
+	position: relative;
+	cursor: pointer;
+
+	> div {
+		align-items: center;
 	}
+
+	.user-menu-submenu-text {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.user-menu-submenu-value {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.user-menu-submenu-arrow {
+		margin-left: auto;
+		font-size: 11px;
+		color: var(--fa-text-muted);
+	}
+
+	.user-menu-submenu-list {
+		display: none;
+		position: absolute;
+		left: 100%;
+		bottom: 0;
+		z-index: 1;
+		min-width: 200px;
+		max-height: 60vh;
+		// Bez mezery - přejezd myší z řádku na seznam nesmí opustit řádek, jinak seznam zmizí
+		margin: 0;
+		padding: 6px;
+		overflow-y: auto;
+		list-style: none;
+		background-color: var(--menu-wide-popover-bg, #{$tertiary});
+		border: 1px solid var(--menu-wide-popover-border, transparent);
+		border-radius: var(--menu-wide-popover-radius, #{$border-radius});
+		box-shadow: var(--menu-wide-popover-shadow, 0 4px 4px 0 rgba(0, 0, 0, 0.15));
+
+		// Odkazy uvnitř položek uživatelského menu mají pointer-events: none (položka je odkazem
+		// sama) - volby seznamu jsou ale odkazy uvnitř položky Pobočka
+		.dropdown-item {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			white-space: nowrap;
+			pointer-events: auto;
+
+			> i {
+				font-size: 12px;
+			}
+		}
+	}
+
+	&:hover > .user-menu-submenu-list,
+	&:focus-within > .user-menu-submenu-list,
+	&.open > .user-menu-submenu-list {
+		display: block;
+	}
+}
+
+// Údaj u uživatele dole v menu (UserMenu::setButtonNote, např. pobočka) - ve sbaleném menu
+// pod avatarem jako popisky položek, v rozbaleném pod jménem a rolí
+.user-button-note--collapsed {
+	display: none;
 }
 
 // Přepínač tmavého režimu v uživatelském menu (@userButton.latte) - <button>

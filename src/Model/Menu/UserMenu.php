@@ -16,6 +16,8 @@ class UserMenu
 	/** @var string[]|null */
 	protected ?array $headerLines = null;
 
+	protected ?string $buttonNote = null;
+
 	/** @var UserMenuItem[] */
 	protected array $menuItems = [];
 
@@ -42,6 +44,21 @@ class UserMenu
 	public function getHeaderLines(): ?array
 	{
 		return $this->headerLines;
+	}
+
+	/**
+	 * Krátký údaj u uživatele dole v menu (např. aktuální pobočka) - v rozbaleném menu pod
+	 * jménem a rolí, ve sbaleném pod avatarem. Vypisuje se tak, jak je (bez překladu).
+	 */
+	public function setButtonNote(?string $buttonNote): self
+	{
+		$this->buttonNote = $buttonNote;
+		return $this;
+	}
+
+	public function getButtonNote(): ?string
+	{
+		return $this->buttonNote;
 	}
 
 	public function addMenuItem(UserMenuItem $menuItem): self

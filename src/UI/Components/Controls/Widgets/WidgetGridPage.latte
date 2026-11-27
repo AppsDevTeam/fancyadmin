@@ -1,0 +1,20 @@
+{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetGridControl $widgetGrid}
+
+{* Hlavička podstránky dashboardu (setPage): drobečky a vpravo období, pod nimi nadpis a podtitul *}
+<div class="fa-widgets-page-header">
+	<div class="fa-widgets-page-top">
+		<nav n:if="$widgetGrid->getBreadcrumbs()" aria-label="{_fcadmin.widgets.breadcrumbs}">
+			<ol class="fa-widgets-breadcrumbs">
+				<li n:foreach="$widgetGrid->getBreadcrumbs() as $_crumb" n:attr="aria-current: $iterator->isLast() ? 'page'">{if $_crumb['link'] !== null && !$iterator->isLast()}<a href="{$_crumb['link']}">{$_crumb['label']}</a>{else}{$_crumb['label']}{/if}</li>
+			</ol>
+		</nav>
+		{if $widgetGrid->hasPeriods()}
+			{include 'WidgetGridPeriod.latte'}
+		{/if}
+	</div>
+	<div n:if="$widgetGrid->getPageTitle() !== null" class="fa-widgets-page-heading">
+		<h1 class="fa-widgets-page-title">{$widgetGrid->getPageTitle()}</h1>
+		<span n:ifcontent class="fa-widgets-page-subtitle">{$widgetGrid->getPageSubtitle()}</span>
+		<span n:foreach="$widgetGrid->getPageBadges() as $_badge" class="fa-widgets-badge fa-widgets-tone-{$_badge->tone->value} fa-widgets-page-badge" n:attr="title: $_badge->title">{$_badge->text}</span>
+	</div>
+</div>
