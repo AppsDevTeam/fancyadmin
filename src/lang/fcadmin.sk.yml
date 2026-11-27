@@ -149,6 +149,9 @@ layout:
       memberRemove: Odobrať z konverzácie
       memberRemoveConfirm: Odobrať
       memberRemoveCancel: Zrušiť
+      memberLeave: Opustiť kanál
+      memberLeaveConfirm: Opustiť
+      memberAdmin: správca
       muted: Stlmené
       channelJoin: Pripojiť
       channelOpen: Otvoriť

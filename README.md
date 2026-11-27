@@ -3261,8 +3261,8 @@ vědomě vést jako odchylku:
 Plovoucí lišta dole uprostřed backoffice: hledání (Ctrl/⌘ K, „/") a ikony AI asistent, Notifikace,
 Úkoly, Chat, každá otevírá panel. Od šířky `md` je panel **sloupec vpravo** přes celou výšku
 (`--quickbar-column-width`, 440 px) a stránka se o něj zúží - `.container-main`, lišta i otevřený
-boční panel záznamu se posunou, nic se nepřekrývá a se stránkou jde dál pracovat (klik vedle
-panel nezavře, zavírá křížek, Esc a tlačítko v liště). Třídu `body.quickbar-column-open` přepíná
+boční panel záznamu se posunou, nic se nepřekrývá a se stránkou jde dál pracovat (zavírá křížek,
+Esc, tlačítko v liště a u nepřipnutého panelu i klik na stránku vedle něj). Třídu `body.quickbar-column-open` přepíná
 `quickbar.js` a po animaci pošle `resize` (kalendář, grafy). Šířku sloupce mění táhlo na jeho levém
 okraji (`[data-quickbar-resizer]`): tažení myší, šipky ←/→ na zaměřeném táhle, dvojklik vrátí 440 px.
 Šířka je jedna pro všechny panely a pamatuje si ji `localStorage` prohlížeče
@@ -3274,8 +3274,9 @@ Otevřený panel (kromě hledání) zůstane otevřený i na další stránce (i
 AI i s otevřenou konverzací a režimem celé plochy, bez přesunu kurzoru do panelu. Stav drží
 `sessionStorage` záložky (ukládá se při `pagehide`), zavřený panel zůstane zavřený.
 **Připnutí** - připínáček v hlavičce panelu (`[data-quickbar-column-pin]`, jen od `md`, kde je panel sloupec)
-nechá sloupec otevřený i po kliku na odkaz v panelu: výsledek hledání, notifikaci nebo odkaz ve
-zprávě chatu. Hledání tak zůstane i s dotazem a výsledky a dá se procházet výsledek po výsledku
+nechá sloupec otevřený i po kliku na stránku vedle něj a po kliku na odkaz v panelu: výsledek hledání,
+notifikaci nebo odkaz ve zprávě chatu. Nepřipnutý panel klik na stránku zavře; klik do lišty, na hlášku,
+do modalu nebo do rozbaleného seznamu či kalendáře vloženého do `body` (Tom Select, flatpickr) ne. Hledání tak zůstane i s dotazem a výsledky a dá se procházet výsledek po výsledku
 (šipky a Enter). Připnutí platí pro všechny panely a pamatuje si ho `localStorage`
 (`fancyadmin-quickbar-pinned`); připnuté hledání se obnoví i na stránce bez ajaxu a po F5. Křížek,
 Esc a tlačítko v liště zavřou i připnutý panel.
@@ -3359,6 +3360,11 @@ setQuickbarSource({
 Zdroj se netýká AI, to má vlastní backend. Tvar dat je popsaný v hlavičce `quickbar.js`. Metody můžou vracet hodnotu i Promise, chybějící
 metoda se bere jako prázdný výsledek.
 
+**Položky menu v hledání** — nad výsledky zdroje lišta sama přidá skupinu *Menu*: položky a podpoložky
+bočního menu (`@sideMenu.latte`, jen ty, které se uživateli vykreslily) podle názvu, bez ohledu na velikost
+písmen a diakritiku; podpoložka se najde i podle nadřazené položky, ta je u ní jako `meta` a dává jí ikonu.
+Nejvýš 6 položek, první je vybraná, takže Enter rovnou přejde na stránku. Projekt nic nenastavuje.
+
 **Notifikace** — položka z `notifications.list()` s `href` je odkaz: klik ji označí jako přečtenou
 (`read(id)`), naviguje (ajaxem) a lištu zavře; bez `href` ji klik jen přečte.
 
@@ -3366,7 +3372,8 @@ metoda se bere jako prázdný výsledek.
 hotový ho označí jen zaškrtávátko (`setDone(id, done)`); bez `href` zaškrtne úkol klik kamkoli na řádek.
 
 **Chat** — panel otevře seznam konverzací (nepřečtené nahoře, jinak pořadí zdroje = od nejnovější
-zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Řádek bere `preview`, `time`
+zprávy), klik otevře vlákno, šipka zpět nebo Esc vrací do seznamu. Nadpis *Chat* s připínáčkem
+a křížkem zůstává i v otevřené konverzaci, pod ním je její hlavička (šipka zpět, protějšek, plus). Řádek bere `preview`, `time`
 a `kind` (`colleague` / `group` = barva avataru) z `chats.list()`; položka s `contact: true` (kolega bez
 konverzace) se ukáže jen při hledání. Zpráva z `chats.messages()` může mít `link: { text, href }`:
 první výskyt `text` ve zprávě je odkaz (např. jméno pacienta na jeho kartu), klik naviguje a lištu zavře.
@@ -3380,8 +3387,8 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
   je tlačítko *Ukončit*. Zpráva navíc nese `id` a `tag: { text, href? }` - souvislá řada zpráv se
   stejným štítkem je jeden blok (linka vlevo, podbarvení, štítek nahoře), takže je vidět, kde téma
   začíná a končí; štítek s `href` je odkaz (na mobilu lištu zavře).
-- `chats.menu(chatId) → [{ id, icon, label, meta? }]` ukáže plus vlevo od pole zprávy, klik otevře
-  nabídku (šipky, Esc). Položka volá `chats.menuAction(chatId, id)`, po jejím dokončení lišta
+- `chats.menu(chatId) → [{ id, icon, label, meta? }]` ukáže svislé tři tečky vpravo v hlavičce konverzace
+  (u protějšku), klik pod nimi otevře nabídku (šipky, Esc). Položka volá `chats.menuAction(chatId, id)`, po jejím dokončení lišta
   zprávy načte znovu (téma se mohlo změnit).
 - `chats.selectionActions(chatId) → [{ id, icon?, label }]` přidá do nabídky *Vybrat zprávy*: zprávy
   s `id` jdou klikem (i mezerou) vybrat, místo pole zprávy je lišta s počtem, akcemi (první je
@@ -3405,22 +3412,24 @@ obnoví projekt voláním `refreshQuickbarChat()` (polling, push); zavřený cha
   (`id` kanálu = `id` konverzace v `chats.list()`). Šipka zpět a Esc vrací do seznamu.
 - `chats.messages()` může vrátit i `pinned: [{ id, text, author?, time? }]` - sbalený pruh *Připnuté (n)* nad
   zprávami, rozbalená položka zprávu posune do středu a krátce zvýrazní.
-- `chats.messages()` může vrátit i `members: [{ id, name, initials?, me? }]` - u konverzace s `kind` `channel`
+- `chats.messages()` může vrátit i `members: [{ id, name, initials?, me?, admin? }]` - u konverzace s `kind` `channel`
   nebo `group` je v hlavičce pod názvem počet členů (*Kanál · 6 členů*), klik pod hlavičkou rozbalí jejich
-  seznam s avatary (`me` = za jménem *(vy)*). U přímé konverzace dvou lidí se nic neukazuje.
+  seznam s avatary (`me` = za jménem *(vy)*, `admin` = štítek *správce*). U přímé konverzace dvou lidí se nic neukazuje.
 - Správa členů: `chats.messages()` vrátí `canManageMembers: true` a zdroj má `addMembers(chatId)`
   a `removeMember(chatId, memberId)`. V rozbaleném seznamu je pak nahoře *Přidat člena* (výběr kolegů si zdroj
   udělá sám, např. přes `pickInQuickbar()`) a u ostatních členů (ne u `me`) křížek *Odebrat z konverzace*,
   který se nejdřív zeptá (*Odebrat* / *Zrušit*). `memberId` dostane zdroj ve stejném typu, v jakém ho poslal.
   Po akci (i po chybě, hlášku dává zdroj) lišta načte zprávy znovu. Kdo smí členy měnit, rozhoduje zdroj
   (a server), bez `canManageMembers` je seznam jen pro čtení.
+- Odchod: zdroj s `leave(chatId)` dá křížek i k `me` (bez ohledu na `canManageMembers`), s popiskem *Opustit kanál*
+  a potvrzením *Opustit* / *Zrušit*. Po odchodu se lišta vrátí do seznamu konverzací; po chybě načte zprávy znovu.
 - Konverzace z `chats.list()` s `muted: true` je ztlumená: za názvem má přeškrtnutý zvonek (v seznamu i v hlavičce)
   a počet nepřečtených šedě místo červeně. `chats.messages()` může vrátit `muted` (boolean), který přepíše
   položku seznamu, takže hlavička změnu ukáže hned. Ztlumit a zrušit ztlumení dává zdroj do `chats.menu()`.
 - Zpráva může mít `author` (jméno nad bublinou cizí zprávy), `system: true` (šedý text uprostřed, bez akcí),
   `attachments: [{ name, url, size?, image? }]` (obrázek jako náhled, jinak soubor s velikostí - `size`
   v bajtech, nebo hotový text; obojí otevírá nová záložka) a `pinned` (špendlík u času).
-- Akce zprávy (zpráva s `id`) jsou pod třemi tečkami vedle bubliny, které se ukážou po najetí (u spodních zpráv se nabídka otevře nahoru): *Odpovědět ve vlákně* se `chats.thread`, *Připnout* /
+- Akce zprávy (zpráva s `id`) jsou pod třemi tečkami vedle bubliny (svisle na jejím středu, ne u jména a času), které se ukážou po najetí (u spodních zpráv se nabídka otevře nahoru): *Odpovědět ve vlákně* se `chats.thread`, *Připnout* /
   *Odepnout* se `chats.pin` u zprávy s `canPin` (`pin(chatId, messageId, pinned)`, pak lišta zprávy načte znovu)
   a *Připomenout později* se `chats.remind(chatId, messageId, when) → { label }`; `when` je `'20m'`, `'1h'`,
   `'tomorrow'` nebo vlastní čas v ISO 8601 (UTC, `toISOString()`), `label` se u zprávy na 4 s ukáže jako potvrzení.

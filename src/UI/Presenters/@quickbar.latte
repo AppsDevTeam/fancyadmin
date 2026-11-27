@@ -18,7 +18,7 @@
 		</div>
 	</header>
 	{* Výsledky vybírají šipky z pole hledání (quickbar.js), kurzor v poli zůstává *}
-	<div class="quickbar-panel-body" role="listbox" aria-label="{_fcadmin.layout.quickbar.search.title}" data-quickbar-results data-empty="{_fcadmin.layout.quickbar.search.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}"></div>
+	<div class="quickbar-panel-body" role="listbox" aria-label="{_fcadmin.layout.quickbar.search.title}" data-quickbar-results data-empty="{_fcadmin.layout.quickbar.search.empty}" data-no-results="{_fcadmin.layout.quickbar.search.noResults}" data-menu="{_fcadmin.layout.quickbar.menu.title}"></div>
 	<footer class="quickbar-panel-hint">
 		<span><kbd class="quickbar-key">↑↓</kbd>{_fcadmin.layout.quickbar.search.select}</span>
 		<span><kbd class="quickbar-key">↵</kbd>{_fcadmin.layout.quickbar.search.open}</span>
@@ -31,14 +31,6 @@
 		<header class="quickbar-panel-header">
 			<div class="quickbar-panel-heading">
 				<h2 class="quickbar-panel-title" data-quickbar-title="{_'fcadmin.layout.quickbar.' . $item->value . '.title'}">{_'fcadmin.layout.quickbar.' . $item->value . '.title'}</h2>
-				{* Ve vlákně chatu místo nadpisu šipka zpět a protějšek, vykresluje quickbar.js *}
-				<div n:if="$item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat" class="quickbar-chat-current" data-quickbar-chat-current
-					data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"
-					data-channel="{_fcadmin.layout.quickbar.chat.channel}" data-private-channel="{_fcadmin.layout.quickbar.chat.privateChannel}"
-					data-thread="{_fcadmin.layout.quickbar.chat.thread}" data-thread-back="{_fcadmin.layout.quickbar.chat.threadBack}"
-					data-follow="{_fcadmin.layout.quickbar.chat.follow}" data-unfollow="{_fcadmin.layout.quickbar.chat.unfollow}"
-					data-members-one="{_fcadmin.layout.quickbar.chat.membersOne}" data-members-few="{_fcadmin.layout.quickbar.chat.membersFew}" data-members-many="{_fcadmin.layout.quickbar.chat.membersMany}"
-					data-muted="{_fcadmin.layout.quickbar.chat.muted}"></div>
 			</div>
 			<div class="quickbar-panel-actions">
 				{if $item === ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Ai}
@@ -103,6 +95,19 @@
 					<button type="submit" class="btn btn-sm btn-primary">{_fcadmin.global.buttons.add}</button>
 				</form>
 			{case ADT\FancyAdmin\Model\Quickbar\QuickbarItem::Chat}
+				{* Otevřená konverzace pod nadpisem Chat: šipka zpět, protějšek a tři tečky s nabídkou konverzace, vykresluje quickbar.js *}
+				<div class="quickbar-chat-head">
+					<div class="quickbar-chat-current" data-quickbar-chat-current
+						data-back="{_fcadmin.layout.quickbar.chat.back}" data-colleague="{_fcadmin.layout.quickbar.chat.colleague}" data-group="{_fcadmin.layout.quickbar.chat.group}"
+						data-channel="{_fcadmin.layout.quickbar.chat.channel}" data-private-channel="{_fcadmin.layout.quickbar.chat.privateChannel}"
+						data-thread="{_fcadmin.layout.quickbar.chat.thread}" data-thread-back="{_fcadmin.layout.quickbar.chat.threadBack}"
+						data-follow="{_fcadmin.layout.quickbar.chat.follow}" data-unfollow="{_fcadmin.layout.quickbar.chat.unfollow}"
+						data-members-one="{_fcadmin.layout.quickbar.chat.membersOne}" data-members-few="{_fcadmin.layout.quickbar.chat.membersFew}" data-members-many="{_fcadmin.layout.quickbar.chat.membersMany}"
+						data-muted="{_fcadmin.layout.quickbar.chat.muted}"></div>
+					<button type="button" class="btn btn-icon btn-sm btn-ghost quickbar-chat-plus" title="{_fcadmin.layout.quickbar.chat.more}" aria-label="{_fcadmin.layout.quickbar.chat.more}"
+						aria-haspopup="menu" aria-expanded="false" data-quickbar-chat-plus hidden><i class="fa-solid fa-ellipsis-vertical"></i></button>
+					<div class="quickbar-chat-menu" data-quickbar-chat-menu data-select="{_fcadmin.layout.quickbar.chat.select}" role="menu" hidden></div>
+				</div>
 				<div class="quickbar-chat-list">
 					<div class="quickbar-chat-search">
 						<div class="quickbar-search-field">
@@ -128,7 +133,8 @@
 				</div>
 				<div class="quickbar-chat-members" id="quickbar-chat-members" data-quickbar-chat-members aria-label="{_fcadmin.layout.quickbar.chat.membersList}"
 					data-you="{_fcadmin.layout.quickbar.chat.memberYou}" data-add="{_fcadmin.layout.quickbar.chat.memberAdd}"
-					data-remove="{_fcadmin.layout.quickbar.chat.memberRemove}" data-remove-confirm="{_fcadmin.layout.quickbar.chat.memberRemoveConfirm}" data-remove-cancel="{_fcadmin.layout.quickbar.chat.memberRemoveCancel}" hidden></div>
+					data-remove="{_fcadmin.layout.quickbar.chat.memberRemove}" data-remove-confirm="{_fcadmin.layout.quickbar.chat.memberRemoveConfirm}" data-remove-cancel="{_fcadmin.layout.quickbar.chat.memberRemoveCancel}"
+					data-leave="{_fcadmin.layout.quickbar.chat.memberLeave}" data-leave-confirm="{_fcadmin.layout.quickbar.chat.memberLeaveConfirm}" data-admin="{_fcadmin.layout.quickbar.chat.memberAdmin}" hidden></div>
 				<div class="quickbar-chat-pinned" data-quickbar-chat-pinned data-label="{_fcadmin.layout.quickbar.chat.pinned}" hidden></div>
 				<div class="quickbar-chat-news" data-quickbar-chat-news data-one="{_fcadmin.layout.quickbar.chat.threadNewsOne}" data-few="{_fcadmin.layout.quickbar.chat.threadNewsFew}"
 					data-many="{_fcadmin.layout.quickbar.chat.threadNewsMany}" data-open="{_fcadmin.layout.quickbar.chat.threadNewsOpen}" hidden></div>
@@ -139,18 +145,15 @@
 					data-remind="{_fcadmin.layout.quickbar.chat.remind}" data-remind-minutes="{_fcadmin.layout.quickbar.chat.remindMinutes}" data-remind-hour="{_fcadmin.layout.quickbar.chat.remindHour}"
 					data-remind-tomorrow="{_fcadmin.layout.quickbar.chat.remindTomorrow}" data-remind-custom="{_fcadmin.layout.quickbar.chat.remindCustom}" data-remind-set="{_fcadmin.layout.quickbar.chat.remindSet}"
 					data-new-replies-one="{_fcadmin.layout.quickbar.chat.newRepliesOne}" data-new-replies-few="{_fcadmin.layout.quickbar.chat.newRepliesFew}" data-new-replies-many="{_fcadmin.layout.quickbar.chat.newRepliesMany}"></div>
-				{* Téma konverzace, výběr zpráv, nabídka plusu a výběr položky vykresluje quickbar.js *}
+				{* Téma konverzace, výběr zpráv a výběr položky vykresluje quickbar.js *}
 				<div class="quickbar-chat-topic" data-quickbar-chat-topic data-label="{_fcadmin.layout.quickbar.chat.topic}" data-clear="{_fcadmin.layout.quickbar.chat.topicClear}" hidden></div>
 				<div class="quickbar-chat-selection" data-quickbar-chat-selection
 					data-count="{_fcadmin.layout.quickbar.chat.selected}" data-cancel="{_fcadmin.layout.quickbar.chat.selectCancel}" data-hint="{_fcadmin.layout.quickbar.chat.selectHint}" hidden></div>
-				<div class="quickbar-chat-menu" data-quickbar-chat-menu data-select="{_fcadmin.layout.quickbar.chat.select}" role="menu" hidden></div>
 				<div class="quickbar-picker" data-quickbar-picker
 					data-close="{_fcadmin.layout.quickbar.picker.close}" data-empty="{_fcadmin.layout.quickbar.picker.empty}"
 					data-short="{_fcadmin.layout.quickbar.picker.short}" data-suggestions="{_fcadmin.layout.quickbar.picker.suggestions}" hidden></div>
 				<div class="quickbar-chat-files" data-quickbar-chat-files data-remove="{_fcadmin.layout.quickbar.chat.removeFile}" hidden></div>
 				<form class="quickbar-panel-form quickbar-chat-form noajax" data-quickbar-form="chat">
-					<button type="button" class="btn btn-icon btn-sm btn-ghost quickbar-chat-plus" title="{_fcadmin.layout.quickbar.chat.more}" aria-label="{_fcadmin.layout.quickbar.chat.more}"
-						aria-haspopup="menu" aria-expanded="false" data-quickbar-chat-plus hidden><i class="fa-regular fa-plus"></i></button>
 					<button type="button" class="btn btn-icon btn-sm btn-ghost" title="{_fcadmin.layout.quickbar.chat.attach}" aria-label="{_fcadmin.layout.quickbar.chat.attach}" data-quickbar-chat-attach hidden><i class="fa-solid fa-paperclip"></i></button>
 					<input type="text" class="form-control form-control-sm" placeholder="{_fcadmin.layout.quickbar.chat.placeholder}" aria-label="{_fcadmin.layout.quickbar.chat.placeholder}">
 					<input type="file" multiple hidden data-quickbar-chat-file>

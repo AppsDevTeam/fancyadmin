@@ -553,8 +553,9 @@ body {
 		border-bottom-color: var(--quickbar-line);
 	}
 
-	// Seznam chatu zajíždí pod vyhledávací pole, obsah AI na celé ploše odděluje bublina
-	:is(.quickbar-panel--chat:not(.quickbar-panel--chat-thread), .quickbar-panel--full) & {
+	// Seznam chatu zajíždí pod vyhledávací pole, konverzaci odděluje její hlavička (.quickbar-chat-head),
+	// obsah AI na celé ploše bublina
+	:is(.quickbar-panel--chat, .quickbar-panel--full) & {
 		border-bottom-color: transparent;
 	}
 }
@@ -1141,24 +1142,37 @@ body {
 	}
 }
 
-// Hlavička vlákna: šipka zpět, protějšek a jestli je to kolega nebo skupina
-.quickbar-chat-current {
-	min-width: 0;
+// Hlavička otevřené konverzace pod nadpisem Chat: vlevo šipka zpět, protějšek a jestli je to kolega
+// nebo skupina, vpravo plus s nabídkou konverzace (rozbalí se pod ním)
+.quickbar-chat-head {
+	position: relative;
+	flex: none;
 	display: none;
 	align-items: center;
 	gap: 8px;
-
-	.btn {
-		margin-left: -6px;
-	}
+	padding: 0 12px 10px 16px;
+	border-bottom: 1px solid transparent;
+	transition: border-color .15s;
 
 	.quickbar-panel--chat-thread & {
 		display: flex;
 	}
+
+	.quickbar-panel--scrolled & {
+		border-bottom-color: var(--quickbar-line);
+	}
 }
 
-.quickbar-panel--chat-thread .quickbar-panel-title {
-	display: none;
+.quickbar-chat-current {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	> .btn:first-child {
+		margin-left: -6px;
+	}
 }
 
 .quickbar-chat-current-text {
@@ -1246,6 +1260,17 @@ body {
 .quickbar-chat-member-me {
 	flex: none;
 	color: var(--quickbar-muted);
+}
+
+// Správce kanálu (member.admin) - jen on přidává a odebírá členy
+.quickbar-chat-member-admin {
+	flex: none;
+	padding: 1px 7px;
+	border-radius: 999px;
+	background: var(--quickbar-tint);
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--quickbar-primary);
 }
 
 // Správa členů (zdroj s canManageMembers): řádek Přidat člena, křížek u člena a potvrzení odebrání
@@ -1363,6 +1388,16 @@ body {
 	.quickbar-bubble {
 		max-width: 100%;
 	}
+}
+
+// Bublina s přílohami - tři tečky akcí se svisle vystředí k ní, ne k celé zprávě se jménem a časem
+.quickbar-message-main {
+	position: relative;
+	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: inherit;
+	gap: 2px;
 }
 
 // Řada zpráv se stejným štítkem (např. řešený pacient) - blok s linkou vlevo a štítkem nahoře,
@@ -1534,8 +1569,11 @@ body {
 // Akce zprávy (vlákno, připnout, připomenout) - tři tečky vedle bubliny po najetí, nabídka pod nimi
 .quickbar-message-actions {
 	position: absolute;
-	top: 5px;
+	// Svisle na střed bubliny bez transformu - ten by fixní nabídce (.quickbar-remind-menu) vzal pozici
+	top: 0;
+	bottom: 0;
 	left: calc(100% + 4px);
+	align-items: center;
 	z-index: 1;
 	display: none;
 
@@ -2004,22 +2042,17 @@ body {
 	color: var(--quickbar-text);
 }
 
-// Plus vlevo od pole zprávy - otevřený se otočí na křížek
-.quickbar-chat-plus {
-	> i {
-		transition: transform .2s ease;
-	}
-
-	&.active > i {
-		transform: rotate(45deg);
-	}
+// Tři tečky v hlavičce konverzace - s otevřenou nabídkou zvýrazněné
+.quickbar-chat-plus.active {
+	background: var(--quickbar-tint);
+	color: var(--quickbar-text-strong);
 }
 
-// Nabídka plusu - nad polem zprávy u levého okraje panelu
+// Nabídka tří teček - pod hlavičkou konverzace u pravého okraje panelu
 .quickbar-chat-menu {
 	position: absolute;
-	left: 10px;
-	bottom: 58px;
+	top: calc(100% - 4px);
+	right: 10px;
 	z-index: 2;
 	display: flex;
 	flex-direction: column;
@@ -2032,7 +2065,7 @@ body {
 	background: var(--quickbar-surface);
 	box-shadow: 0 12px 32px -12px var(--fa-shadow-color, rgba(0, 0, 0, .25)), 0 2px 6px -2px var(--fa-shadow-color, rgba(0, 0, 0, .2));
 	animation: quickbar-pop .14s ease-out;
-	transform-origin: bottom left;
+	transform-origin: top right;
 
 	&[hidden] {
 		display: none;

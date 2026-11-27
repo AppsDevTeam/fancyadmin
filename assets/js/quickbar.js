@@ -10,10 +10,10 @@
 //            contact = kolega bez konverzace, v seznamu jen při hledání),
 //            messages(chatId) → [{ mine, text, time, link?: { text, href } }], send(chatId, text) → message, read(chatId) }
 //            link = část textu zprávy jako odkaz (např. jméno pacienta na jeho kartu)
-//            Volitelně (bez nich lišta plus ani výběr zpráv neukáže):
+//            Volitelně (bez nich lišta tři tečky ani výběr zpráv neukáže):
 //            messages(chatId) → { messages, topic?: { label, href? } } - téma konverzace v pruhu nad polem zprávy,
 //              zpráva navíc s id a tag?: { text, href? } (řada zpráv se stejným štítkem je jeden blok se štítkem nahoře),
-//            menu(chatId) → [{ id, icon, label, meta? }] - nabídka pod plusem vlevo od pole zprávy,
+//            menu(chatId) → [{ id, icon, label, meta? }] - nabídka pod třemi tečkami v hlavičce konverzace,
 //            menuAction(chatId, id) - po dokončení lišta zprávy načte znovu (téma se mohlo změnit),
 //            clearTopic(chatId) - tlačítko Ukončit v pruhu tématu,
 //            selectionActions(chatId) → [{ id, icon?, label }] - v nabídce přibude „Vybrat zprávy“,
@@ -23,15 +23,17 @@
 //            list() položka může mít kind: 'channel' (avatar „#“) a private: true (zámek),
 //            list() položka i messages(chatId) → { …, muted?: boolean } - ztlumená konverzace: přeškrtnutý zvonek
 //              v seznamu i v hlavičce, nepřečtené šedě; muted ze zpráv přepíše položku seznamu (ztlumení z nabídky
-//              plusu je v hlavičce vidět hned), ovládání si zdroj dá do menu(chatId),
+//              tří teček je v hlavičce vidět hned), ovládání si zdroj dá do menu(chatId),
 //            browseChannels() → [{ id, name, private, members, joined }] - tlačítko Procházet kanály (id = id konverzace),
 //            joinChannel(id) → chat, createChannel({ name, private, memberIds }) → chat - tlačítko Nový kanál,
 //            colleagues() → [{ id, name, initials? }] - výběr členů nového kanálu (memberIds = jejich id),
 //            messages(chatId) → { messages, topic?, pinned?: [{ id, text, author?, time? }] } - pruh Připnuté nad zprávami,
-//              members?: [{ id, name, initials?, me? }] - u kanálu a skupiny počet členů v hlavičce, klik rozbalí jejich seznam,
+//              members?: [{ id, name, initials?, me?, admin? }] - u kanálu a skupiny počet členů v hlavičce, klik rozbalí jejich seznam
+//              (admin = štítek správce),
 //              canManageMembers?: true - v seznamu členů tlačítko Přidat člena (addMembers(chatId), výběr si zdroj udělá sám,
 //              např. přes pickInQuickbar()) a u ostatních členů křížek Odebrat s potvrzením (removeMember(chatId, memberId));
 //              po obojím lišta načte zprávy znovu (počet a seznam členů),
+//            leave(chatId) - křížek i u sebe (me) = odchod z kanálu s potvrzením, lišta se pak vrátí do seznamu,
 //            zpráva navíc s author?, system?, pinned?, canPin?, replyCount?, replyAuthors?: [iniciály], lastReplyTime?,
 //              attachments?: [{ name, url, size? (bajty nebo text), image? }],
 //            thread(chatId, messageId) → { parent, replies } - vlákno odpovědí na zprávu,
@@ -243,6 +245,16 @@ function closeUnlessPinned() {
 	if (!columnPinned()) {
 		close();
 	}
+}
+
+// Prvky mimo panel, které k němu patří (seznamy a kalendáře vložené do body, hlášky, modaly)
+const COLUMN_AREA = '[data-quickbar], .quickbar-panel, .quickbar-column-resizer, .flash-stack, .modal, .modal-backdrop, .flatpickr-calendar, .ts-dropdown, .tooltip, .popover';
+
+// Nepřipnutý sloupec zavře klik na stránku vedle něj; prvek, který mezitím zmizel
+// z DOM (překreslený panel), nerozhoduje
+function closesUnpinnedColumn(target) {
+	return state.open !== null && !state.columnPinned && columnQuery.matches
+		&& target.isConnected && !target.closest(COLUMN_AREA);
 }
 
 function loadColumnPinned() {
@@ -506,7 +518,8 @@ function search(query) {
 	searchTimer = setTimeout(() => {
 		call('search', query.trim()).then((groups) => {
 			if (request === state.searchRequest && state.open === 'search') {
-				renderResults(groups || [], query.trim());
+				const menu = menuResults(query.trim());
+				renderResults([...(menu ? [menu] : []), ...(groups || [])], query.trim());
 				state.searchShown = request;
 				if (state.enterRequest === request) {
 					openSelectedResult();
@@ -517,6 +530,33 @@ function search(query) {
 }
 
 let resultItems = [];
+
+const MENU_RESULTS_LIMIT = 6;
+
+// Položky bočního menu (i podpoložky) podle názvu - menu je dlouhé a hledat v něm očima chvíli trvá.
+// Bere je z vykresleného menu (@sideMenu.latte), takže jsou jen ty, na které má uživatel právo.
+function menuResults(query) {
+	const term = normalize(query);
+	const $results = document.querySelector('[data-quickbar-results]');
+	if (!term || !$results) {
+		return null;
+	}
+	const items = [];
+	const seen = new Set();
+	document.querySelectorAll('.side-panel .menu-body a.item[href]').forEach((link) => {
+		const label = (link.querySelector('.title, .item-title')?.textContent ?? '').trim();
+		const parent = link.closest('[data-submenu-parent]');
+		const parentLabel = parent ? (parent.querySelector('.item-header .title')?.textContent ?? '').trim() : '';
+		const href = link.getAttribute('href');
+		if (!label || seen.has(href) || !normalize(`${parentLabel} ${label}`).includes(term)) {
+			return;
+		}
+		seen.add(href);
+		const icon = (parent ?? link).querySelector('.icon i')?.className;
+		items.push({ label, meta: parentLabel || undefined, href, icon: icon || 'fa-solid fa-bars' });
+	});
+	return items.length ? { label: $results.dataset.menu ?? '', items: items.slice(0, MENU_RESULTS_LIMIT) } : null;
+}
 
 function renderResults(groups, query) {
 	const $results = document.querySelector('[data-quickbar-results]');
@@ -769,14 +809,16 @@ function messageRowHtml(m, inReplies = false) {
 			${selectable ? '<span class="quickbar-message-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>' : ''}
 			<div class="quickbar-message-content">
 				${m.author && !m.mine && !m.system ? `<div class="quickbar-message-author">${esc(m.author)}</div>` : ''}
-				${hasText || !m.attachments?.length ? `<div class="quickbar-bubble">${messageHtml(m)}</div>` : ''}
-				${attachmentsHtml(m.attachments)}
+				<div class="quickbar-message-main">
+					${hasText || !m.attachments?.length ? `<div class="quickbar-bubble">${messageHtml(m)}</div>` : ''}
+					${attachmentsHtml(m.attachments)}
+					${messageActionsHtml(m, inReplies)}
+				</div>
 				<div class="quickbar-message-time">${m.pinned ? '<i class="fa-solid fa-thumbtack quickbar-message-pin" aria-hidden="true"></i>' : ''}${esc(m.time)}</div>
 				${inReplies ? '' : replySummaryHtml(m)}
 				${state.chatNotice && m.id != null && state.chatNotice.id === String(m.id)
 					? `<div class="quickbar-message-notice" role="status"><i class="fa-solid fa-clock"></i>${esc(state.chatNotice.text)}</div>`
 					: ''}
-				${messageActionsHtml(m, inReplies)}
 			</div>
 		</div>`;
 }
@@ -824,7 +866,7 @@ function replySummaryHtml(m) {
 		: `<button type="button" class="${classes}" data-quickbar-replies="${esc(m.id)}">${inner}</button>`;
 }
 
-// Akce zprávy jsou pod třemi tečkami vedle bubliny (jako na Facebooku), tlačítko se ukáže po najetí
+// Akce zprávy jsou pod třemi tečkami vedle bubliny (jako na Facebooku) a na její výšce, tlačítko se ukáže po najetí
 // (fokusu) - jen u zprávy s id, ne u systémové a ne při výběru zpráv
 function messageActionsHtml(m, inReplies) {
 	if (m.id == null || m.system || state.chatSelecting) {
@@ -911,8 +953,8 @@ function renderChatSelection() {
 	}
 	$selection.hidden = !state.chatSelecting;
 	$form.hidden = state.chatSelecting;
-	const $plus = $form.querySelector('[data-quickbar-chat-plus]');
-	$plus.hidden = state.chatReplies !== null || (!chatSourceHas('menu') && !chatSourceHas('selectionActions'));
+	const $plus = panel('chat').querySelector('[data-quickbar-chat-plus]');
+	$plus.hidden = state.chatReplies !== null || state.chatSelecting || (!chatSourceHas('menu') && !chatSourceHas('selectionActions'));
 	$plus.setAttribute('aria-expanded', state.chatMenu ? 'true' : 'false');
 	$plus.classList.toggle('active', state.chatMenu !== null);
 	if (!state.chatSelecting) {
@@ -1365,6 +1407,8 @@ function renderChatMembers() {
 	}
 	const canAdd = state.chatMembersEditable && chatSourceHas('addMembers');
 	const canRemove = state.chatMembersEditable && chatSourceHas('removeMember');
+	// Křížek u sebe = odchod z kanálu, smí každý člen (bez správy členů)
+	const canLeave = chatSourceHas('leave');
 	const add = canAdd
 		? `<button type="button" class="quickbar-chat-member quickbar-chat-member-add" data-quickbar-member-add>
 			<span class="quickbar-chat-avatar quickbar-chat-avatar--sm quickbar-chat-member-add-icon"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></span>
@@ -1373,14 +1417,16 @@ function renderChatMembers() {
 		: '';
 	setHtml($members, add + members.map((member) => {
 		const id = String(member.id);
-		const confirming = canRemove && !member.me && state.chatMemberConfirm === id;
-		const remove = canRemove && !member.me && !confirming
-			? `<button type="button" class="btn btn-icon btn-sm btn-ghost quickbar-chat-member-remove" title="${esc($members.dataset.remove ?? '')}"
-				aria-label="${esc(($members.dataset.remove ?? '') + ': ' + member.name)}" data-quickbar-member-remove="${esc(id)}"><i class="fa-solid fa-xmark"></i></button>`
+		const removable = member.me ? canLeave : canRemove;
+		const confirming = removable && state.chatMemberConfirm === id;
+		const removeLabel = member.me ? $members.dataset.leave : $members.dataset.remove;
+		const remove = removable && !confirming
+			? `<button type="button" class="btn btn-icon btn-sm btn-ghost quickbar-chat-member-remove" title="${esc(removeLabel ?? '')}"
+				aria-label="${esc(member.me ? (removeLabel ?? '') : (removeLabel ?? '') + ': ' + member.name)}" data-quickbar-member-remove="${esc(id)}"><i class="fa-solid fa-xmark"></i></button>`
 			: '';
 		const confirm = confirming
 			? `<span class="quickbar-chat-member-confirm">
-				<button type="button" class="btn btn-sm btn-danger" data-quickbar-member-remove-confirm="${esc(id)}">${esc($members.dataset.removeConfirm ?? '')}</button>
+				<button type="button" class="btn btn-sm btn-danger" data-quickbar-member-remove-confirm="${esc(id)}">${esc((member.me ? $members.dataset.leaveConfirm : $members.dataset.removeConfirm) ?? '')}</button>
 				<button type="button" class="btn btn-sm btn-ghost" data-quickbar-member-remove-cancel="${esc(id)}">${esc($members.dataset.removeCancel ?? '')}</button>
 			</span>`
 			: '';
@@ -1389,6 +1435,7 @@ function renderChatMembers() {
 			${chatAvatar({ name: member.name, initials: member.initials }, true)}
 			<span class="quickbar-chat-member-name">${esc(member.name)}</span>
 			${member.me ? `<span class="quickbar-chat-member-me">${esc($members.dataset.you ?? '')}</span>` : ''}
+			${member.admin ? `<span class="quickbar-chat-member-admin">${esc($members.dataset.admin ?? '')}</span>` : ''}
 			${remove}${confirm}
 		</div>`;
 	}).join(''));
@@ -1437,6 +1484,15 @@ function removeChatMember(id) {
 			loadMessages(chatId);
 		}
 	};
+	if (member.me) {
+		// Po odchodu konverzaci už nevidí - zpátky do seznamu (ten ji už neukáže)
+		call('chats.leave', chatId).then(() => {
+			if (state.activeChat === chatId) {
+				backToChatList();
+			}
+		}, reload);
+		return;
+	}
 	call('chats.removeMember', chatId, member.id).then(reload, reload);
 }
 
@@ -2841,7 +2897,7 @@ document.addEventListener('click', (e) => {
 	}
 	const target = e.target;
 
-	if (target.closest('[data-quickbar-close]')) {
+	if (closesUnpinnedColumn(target) || target.closest('[data-quickbar-close]')) {
 		close();
 		return;
 	}

@@ -25,9 +25,19 @@ function searchSource(query) {
 // Minimální výřez z @quickbar.latte
 function quickbarHtml() {
 	return `
+		<div class="side-panel"><div class="menu"><div class="menu-body">
+			<a class="item" href="/reception"><div class="icon"><i class="fa-solid fa-gauge"></i></div><div class="title">Recepce</div></a>
+			<span class="item has-submenu" data-submenu-parent>
+				<span class="item-header"><div class="icon"><i class="fa-solid fa-gear"></i></div><div class="title">Správa</div></span>
+				<div class="submenu">
+					<a class="item" href="/price-list"><div class="item-title">Ceníky</div></a>
+					<a class="item" href="/shortcuts"><div class="item-title">Zkratky</div></a>
+				</div>
+			</span>
+		</div></div></div>
 		<div class="quickbar-overlay" hidden></div>
 		<section class="quickbar-panel quickbar-panel--search" id="quickbar-panel-search" data-quickbar-panel="search" hidden>
-			<div class="quickbar-panel-body" role="listbox" data-quickbar-results data-empty="Začněte psát." data-no-results="Nic pro „%query%“."></div>
+			<div class="quickbar-panel-body" role="listbox" data-quickbar-results data-empty="Začněte psát." data-no-results="Nic pro „%query%“." data-menu="Menu"></div>
 		</section>
 		<section class="quickbar-panel" data-quickbar-panel="todo" hidden>
 			<form class="quickbar-panel-form" data-quickbar-form="todo"><input type="text"></form>
@@ -256,5 +266,34 @@ describe('výběr výsledků hledání', () => {
 
 		expect(input().hasAttribute('aria-activedescendant')).toBe(false);
 		expect(input().getAttribute('aria-expanded')).toBe('false');
+	});
+});
+
+describe('položky menu', () => {
+	it('najde položku i podpoložku menu bez diakritiky, s nadřazenou položkou a nad výsledky zdroje', async () => {
+		await search('ceniky');
+
+		const titles = [...document.querySelectorAll('.quickbar-group-title')].map((el) => el.textContent);
+		expect(titles[0]).toBe('Menu');
+		const first = document.querySelector('[data-quickbar-result="0"]');
+		expect(first.getAttribute('href')).toBe('/price-list');
+		expect(first.textContent).toContain('Ceníky');
+		expect(first.textContent).toContain('Správa');
+		expect(first.querySelector('.fa-gear')).not.toBeNull();
+	});
+
+	it('podle nadřazené položky najde všechny její podpoložky a Enter otevře první', async () => {
+		await search('sprava');
+
+		const menu = [...document.querySelectorAll('[data-quickbar-result]')].map((el) => el.getAttribute('href')).slice(0, 2);
+		expect(menu).toEqual(['/price-list', '/shortcuts']);
+		key('Enter');
+		expect(clicked).toEqual(['/price-list']);
+	});
+
+	it('dotaz, který v menu nic nenajde, skupinu Menu neukáže', async () => {
+		await search('jan');
+
+		expect([...document.querySelectorAll('.quickbar-group-title')].map((el) => el.textContent)).not.toContain('Menu');
 	});
 });
