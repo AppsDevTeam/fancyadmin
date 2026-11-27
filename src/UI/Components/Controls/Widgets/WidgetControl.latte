@@ -7,7 +7,8 @@
 {* Řada údajů jako samostatné dlaždice (FiguresWidget::setCards) nemá společnou kartu ani nadpis *}
 {var $_figureCards = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget && $widget->isCards() && !$widget->isUnavailable()}
 {var $_plain = ($widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\TemplateWidget && $widget->isPlain())
-	|| ($widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\AlertsWidget && $widget->isCards() && !$widget->isUnavailable() && $widget->getAlerts())}
+	|| ($widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\AlertsWidget && $widget->isCards() && !$widget->isUnavailable() && $widget->getAlerts())
+	|| ($widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\ScoreWidget && !$widget->isUnavailable())}
 {var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section' && !$_figureCards && !$_plain}
 {var $_accent = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget && $widget->isAccent() ? 'fa-widgets-accent fa-widgets-tone-' . $widget->getTone()->value : null}
 {var $_callout = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\CalloutWidget ? 'fa-widgets-callout fa-widgets-tone-' . $widget->getTone()->value : null}
@@ -276,6 +277,47 @@
 	{else}
 		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
 	{/if}
+{/define}
+
+{* Hodnocení (ScoreWidget): karta s popisem, stavem a skóre v kruhu, pod ní karta se složkami *}
+{define widget-score}
+	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\ScoreWidget $widget}
+	{var $_score = $widget->getScore()}
+	{var $_circumference = 2 * M_PI * 54}
+	<div class="fa-widgets-score">
+		<div class="card fa-widgets-card fa-widgets-score-head">
+			<div n:if="$_score->meta !== null || $_score->status" class="fa-widgets-score-info">
+				<div n:if="$_score->meta !== null" class="fa-widgets-score-meta">{$_score->meta}</div>
+				<span n:if="$_score->status" class="fa-widgets-score-status fa-widgets-tone-{$_score->status->tone->value}" n:attr="title: $_score->status->title">{$_score->status->text}</span>
+			</div>
+			<div class="fa-widgets-score-main">
+				<div class="fa-widgets-score-caption">
+					<h2 class="fa-widgets-score-title"{if $widget->getDescription()} tabindex="0" data-bs-toggle="tooltip" data-bs-title="{=htmlspecialchars($widget->getDescription())}"{/if}>{$widget->getTitle()}</h2>
+					<div n:if="$_score->change !== null" class="fa-widgets-score-change">{$_score->change}</div>
+				</div>
+				<div class="fa-widgets-score-ring fa-widgets-tone-{$_score->tone->value}">
+					<svg viewBox="0 0 128 128" aria-hidden="true">
+						<circle cx="64" cy="64" r="54" class="fa-widgets-score-ring-track"></circle>
+						<circle n:if="$_score->value !== null" cx="64" cy="64" r="54" class="fa-widgets-score-ring-value" stroke-dasharray="{=round($_score->getRatio() * $_circumference, 1)} {=round($_circumference, 1)}" transform="rotate(-90 64 64)"></circle>
+					</svg>
+					<span class="fa-widgets-score-value">
+						<span class="fa-widgets-score-number">{if $_score->value !== null}{$format::value($_score->value)}{else}–{/if}</span>
+						<span class="fa-widgets-score-max">/ {$format::value($_score->max)}</span>
+					</span>
+				</div>
+			</div>
+		</div>
+		<div n:if="$_score->components" class="card fa-widgets-card fa-widgets-score-components">
+			<div n:if="$_score->componentsTitle !== null" class="fa-widgets-score-components-title">{$_score->componentsTitle}</div>
+			<ul class="fa-widgets-score-component-list">
+				<li n:foreach="$_score->components as $_component" class="fa-widgets-score-component fa-widgets-tone-{$_component->tone->value}">
+					<span class="fa-widgets-score-component-label">{$_component->label}</span>
+					<span class="fa-widgets-score-component-value">{if $_component->value !== null}{$format::value($_component->value)}{else}–{/if}</span>
+					<span class="fa-widgets-score-component-bar"><span style="width: {=round($_component->getRatio() * 100, 1)}%"></span></span>
+				</li>
+			</ul>
+		</div>
+	</div>
 {/define}
 
 {* Upozornění jako samostatné podbarvené karty (AlertsWidget::setCards): ikona, text se štítky, poznámka,
