@@ -733,6 +733,18 @@ form:has(> .fa-filters-bar) {
 	cursor: pointer;
 }
 
+// Další filtry - tlačítko v liště [data-part="more-filters"] s počtem aktivních
+.fa-filters-more-toggle.is-active {
+	border-color: var(--primaryColor);
+	color: var(--primaryColor);
+}
+
+.fa-filters-more-count {
+	background: var(--primaryColor);
+	color: var(--bs-white);
+	font-size: .6875rem;
+}
+
 // „výchozí“ pod volbou v panelu výchozího filtru
 .fa-filters-default-note {
 	display: block;

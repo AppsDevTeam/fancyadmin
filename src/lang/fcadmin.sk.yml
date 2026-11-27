@@ -42,6 +42,8 @@ datagrid:
     searchPlaceholder: Hľadať vo viditeľných stĺpcoch
     restoreDefault: Vrátiť predvolený
     moreActions: Ďalšie akcie
+    moreFilters: Ďalšie filtre
+    moreFiltersActive: aktívne
     editColumns: Upraviť stĺpce
     columns: Stĺpce
     columnWidth: 'Šírka stĺpca %column%'

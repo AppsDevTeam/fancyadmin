@@ -40,6 +40,9 @@ trait ColumnFiltersTrait
 	/** Hledání ve viditelných sloupcích (pole v liště). */
 	public const string FULLTEXT_FILTER = 'fulltext';
 
+	/** Panel Další filtry v liště: filtry bez sloupce, které nemají kam jinam. Klíč místo sloupce v `data-fa-filters-column`. */
+	public const string MORE_FILTERS = '_more';
+
 	/** Kratší dotaz by vrátil skoro všechno. */
 	public const int FULLTEXT_MIN_LENGTH = 2;
 
@@ -871,6 +874,30 @@ trait ColumnFiltersTrait
 		return null;
 	}
 
+	/**
+	 * Filtry bez sloupce (ani stejný klíč, ani `getColumn()`): jejich pole jsou v panelu Další filtry v liště.
+	 *
+	 * @param array<string, Filter> $panelFilters
+	 * @return array<string, Filter>
+	 */
+	public function getMoreFilters(array $panelFilters): array
+	{
+		return array_filter($panelFilters, fn(Filter $filter): bool => $this->getFilterColumn($filter) === null);
+	}
+
+	/**
+	 * Počet filtrů s hodnotou, která není výchozí - číslo na tlačítku Další filtry.
+	 *
+	 * @param array<string, Filter> $filters
+	 */
+	public function countActiveFilters(array $filters): int
+	{
+		return count(array_filter(
+			array_keys($filters),
+			fn(string|int $key): bool => $this->hasFilterValue((string) $key) && !$this->isDefaultFilterValue((string) $key) && !$this->isDefaultFilterAll((string) $key),
+		));
+	}
+
 	/** Filtr, jehož panel je v hlavičce viditelného sloupce. */
 	public function getColumnFilter(string $columnKey, array $panelFilters): ?Filter
 	{
@@ -1199,6 +1226,24 @@ trait ColumnFiltersTrait
 	{
 		$filter = parent::addFilterDate($key, $name, $column);
 		self::useFlatpickr($filter);
+
+		return $filter;
+	}
+
+	/**
+	 * Volba s prázdnou hodnotou („Vše“) je v Tom Selectu placeholder a výběr jde zrušit křížkem.
+	 *
+	 * @param array<int|string, mixed> $options
+	 */
+	public function addFilterSelect(string $key, string $name, array $options, ?string $column = null): FilterSelect
+	{
+		$filter = parent::addFilterSelect($key, $name, $options, $column);
+		if (isset($options[''])) {
+			$filter->setAttribute('data-adt-select', Json::encode([
+				'placeholder' => $this->getOptionLabel($options['']),
+				'allowClear' => true,
+			]));
+		}
 
 		return $filter;
 	}
