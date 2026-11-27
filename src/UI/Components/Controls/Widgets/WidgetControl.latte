@@ -353,7 +353,7 @@
 						<tr n:class="$_rowLink !== null ? fa-widgets-row-linked, $_children ? fa-widgets-row-parent" n:attr="data-widget-row: $_children ? $_rowIndex">
 							{foreach $widget->getColumns() as $key => $column}
 								{var $_value = $row[$key] ?? null}
-								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst() && $_children}<button type="button" class="fa-widgets-row-toggle" aria-expanded="false" data-widget-row-toggle="{$_rowIndex}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>{/if}{if $iterator->isFirst() && $_rowLink !== null}<a href="{$_rowLink}" class="stretched-link">{/if}{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}{if $iterator->isFirst() && $_rowLink !== null}</a>{/if}</td>
+								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst() && $_children}<button type="button" class="fa-widgets-row-toggle" aria-expanded="false" data-widget-row-toggle="{$_rowIndex}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>{/if}<a n:tag-if="$iterator->isFirst() && $_rowLink !== null" href="{$_rowLink}" class="stretched-link">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</a></td>
 							{/foreach}
 							<td n:if="$_linked" class="fa-widgets-table-arrow">{if $_rowLink !== null}<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>{/if}</td>
 						</tr>
@@ -361,7 +361,7 @@
 							{var $_childLink = $widget->getRowLink($_child)}
 							{foreach $widget->getColumns() as $key => $column}
 								{var $_value = $_child[$key] ?? null}
-								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst()}<span class="fa-widgets-row-dot" aria-hidden="true"></span>{/if}{if $iterator->isFirst() && $_childLink !== null}<a href="{$_childLink}">{/if}{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}{if $iterator->isFirst() && $_childLink !== null}</a>{/if}</td>
+								<td n:class="$column->numeric ? 'text-end text-nowrap', $column->wrap ? fa-widgets-wrap">{if $iterator->isFirst()}<span class="fa-widgets-row-dot" aria-hidden="true"></span>{/if}<a n:tag-if="$iterator->isFirst() && $_childLink !== null" href="{$_childLink}">{if $_value instanceof Nette\HtmlStringable}{$_value}{else}{$format::value($_value)}{/if}</a></td>
 							{/foreach}
 							<td n:if="$_linked" class="fa-widgets-table-arrow"></td>
 						</tr>
