@@ -12,6 +12,8 @@
 	border-radius: var(--datagridRadius, var(--bs-border-radius));
 	background-color: $background;
 	position: relative;
+	// Mez prvního sloupce se počítá z viditelné šířky gridu (cqi), ne z okna
+	container-type: inline-size;
 
 	&::-webkit-scrollbar-track {
 		border-radius: var(--bs-border-radius-pill);
@@ -85,12 +87,11 @@
 		{
 			position: sticky;
 			left: 0;
-			// Šířka podle obsahu, volné místo tabulky dostanou ostatní sloupce
-			width: 1%;
 
+			// Volné místo dostane jako ostatní; mez obsahu platí, když se tabulka nevejde a roluje
 			> div:not(.item-detail-content) {
 				width: max-content;
-				max-width: min(30vw, 300px);
+				max-width: 40cqi;
 				white-space: normal;
 				overflow: hidden;
 				line-height: 18px;
@@ -118,6 +119,31 @@
 				box-shadow: inset 1px 0 0 var(--fa-scroll-edge), inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) var(--fa-scroll-shadow-extra), inset calc(var(--actionShadowWidthLeft) * 1) 0 calc(var(--actionShadowWidthLeft) * 0.5) calc(var(--actionShadowWidthLeft) * -1) var(--fa-scroll-shadow);
 				pointer-events: none;
 			}
+		}
+
+		// Jednořádková buňka se zúží nejvýš na menší z: vlastní text, 20rem; delší text končí třemi tečkami, pak se grid roluje
+		// calc-size() zatím umí jen Chromium, jinde zůstane celý text na jednom řádku
+		@supports (min-width: calc-size(max-content, size)) {
+			tbody > tr > td:where(:not(:first-child, .col-action)) > div:where(:not(:has(div, p, br))) {
+				display: -webkit-box;
+				-webkit-box-orient: vertical;
+				-webkit-line-clamp: 1;
+				white-space: normal;
+				overflow: hidden;
+				min-width: #{'calc-size(max-content, min(size, 20rem))'};
+			}
+		}
+
+		// Úzký sloupec z dialogu Sloupce (sloupcové filtry) má šířku na buňce, tečky proto musí dostat i vnořený obsah;
+		// !important přebíjí inline display: -webkit-box z clamp-js v prvním sloupci, s ním by Firefox tečky nedal
+		tbody > tr > td.fa-filters-col-narrow > div:not(.item-detail-content) {
+			display: block !important;
+			width: auto;
+			min-width: 0;
+			max-width: 100%;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
 		td {

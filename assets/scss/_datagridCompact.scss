@@ -75,12 +75,16 @@
 	.table-responsive table {
 		th,
 		td {
+			// Malý grid text zalamuje, zkrácení na jeden řádek z _datagrid.scss tu neplatí
 			> div {
+				display: block;
+				-webkit-line-clamp: none;
 				white-space: normal;
+				min-width: 0;
 			}
 		}
 
-		// Lepený první sloupec o šířce 300 px je pro celostránkový grid
+		// Lepený první sloupec s mezí šířky je pro celostránkový grid
 		tbody > tr > td:first-child,
 		thead > tr > th:first-child {
 			position: static;
