@@ -27,6 +27,16 @@ class WidgetGridControl extends Control
 
 	private ?WidgetPeriod $defaultPeriod = null;
 
+	/** Klíč zapamatovaného období (setPeriodRemembered), null = nepamatuje se. */
+	private ?string $rememberKey = null;
+
+	private ?WidgetPeriodStorage $periodStorage = null;
+
+	/** Období přišlo v adrese (výběr uživatele nebo odkaz s obdobím) - pak se uloží, jinak se použije uložené. */
+	private bool $periodFromRequest = false;
+
+	private bool $rememberedResolved = false;
+
 	/** @var list<WidgetPeriod> */
 	private array $periodOptions = [];
 
@@ -93,14 +103,66 @@ class WidgetGridControl extends Control
 		return $this->periodOptions;
 	}
 
+	/**
+	 * Pamatovat si zvolené období mřížky (výchozí v relaci uživatele): období z adresy se uloží, stránka bez
+	 * období v adrese (příchod z menu, drobečků, odkazu bez období) použije uložené. Mřížky se stejným klíčem
+	 * na různých stránkách sdílí jedno období - přehled a jeho podstránky. Období v adrese má vždy přednost,
+	 * takže sdílený odkaz otevře období, které je v něm. Uložené, které stránka nenabízí, se nepoužije.
+	 */
+	public function setPeriodRemembered(string $key = 'default', ?WidgetPeriodStorage $storage = null): static
+	{
+		$this->rememberKey = $key;
+		$this->periodStorage = $storage;
+		$this->rememberedResolved = false;
+		return $this;
+	}
+
+	/** @param array<string, mixed> $params */
+	public function loadState(array $params): void
+	{
+		parent::loadState($params);
+		$this->periodFromRequest = isset($params['period']) && $params['period'] !== '';
+		$this->rememberedResolved = false;
+	}
+
 	/** Zvolené období mřížky; neznámé nebo nenabízené znamená výchozí, bez setPeriods() null. */
 	public function getPeriod(): ?WidgetPeriod
 	{
 		if ($this->defaultPeriod === null) {
 			return null;
 		}
+		$this->resolveRememberedPeriod();
 		$period = WidgetPeriod::fromUrl($this->period, $this->defaultPeriod);
 		return in_array($period, $this->periodOptions, true) ? $period : $this->defaultPeriod;
+	}
+
+	/**
+	 * Uloží období z adresy, nebo bez něj vezme uložené - až při prvním čtení období, protože setPeriods()
+	 * a setPeriodRemembered() mohou přijít i po načtení stavu.
+	 */
+	private function resolveRememberedPeriod(): void
+	{
+		if ($this->rememberKey === null || $this->rememberedResolved) {
+			return;
+		}
+		if ($this->periodStorage === null) {
+			try {
+				$session = $this->getPresenterIfExists()?->getSession();
+			} catch (\Nette\InvalidStateException) {
+				$session = null; // presenter bez relace (testy) - období se nepamatuje
+			}
+			$this->periodStorage = $session ? new SessionWidgetPeriodStorage($session) : null;
+		}
+		$storage = $this->periodStorage;
+		$this->rememberedResolved = true;
+		if ($storage === null) {
+			return;
+		}
+		if ($this->periodFromRequest && $this->period !== null) {
+			$storage->set($this->rememberKey, $this->period);
+		} elseif ($this->period === null) {
+			$this->period = $storage->get($this->rememberKey);
+		}
 	}
 
 	/** @param array<string, mixed> $params */

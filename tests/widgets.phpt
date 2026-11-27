@@ -1187,3 +1187,51 @@ test('upozorneni v karte: vedlejsi akce za hlavnim proklikem, bez akci beze zmen
 	Assert::contains('<a href="/admin/user/2" class="btn btn-primary btn-sm">Detail</a></div>', $html);
 	Assert::same(2, substr_count($html, 'fa-widgets-alert-action'));
 });
+
+test('zapamatovane obdobi mrizky: z adresy se ulozi, bez nej se pouzije ulozene, nenabizene ne; bez volby nic', function () {
+	$storage = new class implements ADT\FancyAdmin\UI\Components\Controls\Widgets\WidgetPeriodStorage {
+		/** @var array<string, string> */
+		public array $values = [];
+
+		public function get(string $key): ?string
+		{
+			return $this->values[$key] ?? null;
+		}
+
+		public function set(string $key, string $period): void
+		{
+			$this->values[$key] = $period;
+		}
+	};
+	$grid = function (array $params, array $options = [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_QUARTER, WidgetPeriod::THIS_YEAR]) use ($storage): WidgetGridControl {
+		$widgetGrid = widgetGrid();
+		$widgetGrid->setPeriods(WidgetPeriod::THIS_MONTH, $options)->setPeriodRemembered('dashboard', $storage);
+		$widgetGrid->loadState($params);
+		return $widgetGrid;
+	};
+
+	// výběr v adrese se uloží
+	Assert::same(WidgetPeriod::THIS_QUARTER, $grid(['period' => 'thisQuarter'])->getPeriod());
+	Assert::same(['dashboard' => 'thisQuarter'], $storage->values);
+	// jiná stránka bez období v adrese (menu, drobečky) vezme uložené a dá ho i do odkazů
+	$other = $grid([]);
+	Assert::same(WidgetPeriod::THIS_QUARTER, $other->getPeriod());
+	$params = [];
+	$other->saveState($params);
+	Assert::same('thisQuarter', $params['period']);
+	// výslovný návrat na výchozí se taky uloží
+	Assert::same(WidgetPeriod::THIS_MONTH, $grid(['period' => 'thisMonth'])->getPeriod());
+	Assert::same('thisMonth', $storage->values['dashboard']);
+	// uložené, které stránka nenabízí, se nepoužije
+	$storage->values['dashboard'] = 'thisYear';
+	Assert::same(WidgetPeriod::THIS_MONTH, $grid([], [WidgetPeriod::THIS_MONTH, WidgetPeriod::THIS_QUARTER])->getPeriod());
+
+	// bez volby se nic neukládá ani nečte
+	$plain = widgetGrid()->setPeriods(WidgetPeriod::THIS_MONTH);
+	$plain->loadState([]);
+	Assert::same(WidgetPeriod::THIS_MONTH, $plain->getPeriod());
+	// presenter bez relace (testy) - volba bez úložiště nic nedělá, nepadá
+	$noSession = widgetGrid()->setPeriods(WidgetPeriod::THIS_MONTH)->setPeriodRemembered('dashboard');
+	$noSession->loadState(['period' => 'thisYear']);
+	Assert::same(WidgetPeriod::THIS_YEAR, $noSession->getPeriod());
+});
