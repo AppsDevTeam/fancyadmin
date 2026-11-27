@@ -49,6 +49,8 @@ fancyadmin:
 		columnSettingEntity: App\Model\Entities\GridColumnSetting # implements GridColumnSetting, use GridColumnSettingTrait
 ```
 
+- **Zrušení sestavy** (křížek na štítku) vrátí sloupce a filtry, které uživatel měl před první vybranou sestavou -
+  záloha je v nastavení sloupců pod klíčem `beforePreset`, přepnutí na další sestavu ji nemění.
 - **Sestavy** leží v tabulce uložených filtrů (`grid_filter`) vedle pokročilých filtrů datagrid-components, odliší je
   sloupec `type` (`GridFilterType::Preset` / `Advanced`). `GridFilterQueryTrait` bez `byType()` vrací jen pokročilé,
   jinak by je pokročilé hledání vypsalo mezi své. Autor je `createdBy`, sdílenou (`shared`) vidí celý tým, měnit

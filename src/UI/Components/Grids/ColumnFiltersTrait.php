@@ -56,6 +56,12 @@ trait ColumnFiltersTrait
 	/** Klíče skrytých sloupců knihovny, které trait drží v nastavení sloupců místo session. */
 	private const array HIDDEN_COLUMNS_KEYS = ['_grid_hidden_columns', '_grid_hidden_columns_manipulated'];
 
+	/** Klíče nastavení sloupců, které nese sestava */
+	private const array PRESET_COLUMN_KEYS = ['order', 'widths', ...self::HIDDEN_COLUMNS_KEYS];
+
+	/** Stav gridu před první vybranou sestavou (sloupce a filtry), zrušení sestavy ho vrátí */
+	private const string PRESET_BACKUP_KEY = 'beforePreset';
+
 	private const string COLUMN_SETTINGS_STATE_KEY = '_grid_column_settings';
 
 	/** Víc hodnot výběru čip vypíše jen do tohoto počtu, zbytek jako „+N“. */
@@ -585,30 +591,59 @@ trait ColumnFiltersTrait
 		}
 
 		return $this->canHideColumns()
-			? array_intersect_key($this->getColumnSettings(), array_flip(['order', 'widths', ...self::HIDDEN_COLUMNS_KEYS]))
+			? array_intersect_key($this->getColumnSettings(), array_flip(self::PRESET_COLUMN_KEYS))
 			: [];
 	}
 
+	/**
+	 * Vybraná sestava přepíše sloupce i filtry uživatele. Co měl před první sestavou, si nastavení sloupců
+	 * pamatuje, přepnutí na další sestavu zálohu nemění.
+	 */
 	public function handleApplyPreset(int $id): void
 	{
 		$preset = $this->presetStorage?->find($this->presetKey, $id) ?? $this->getPresenter()->error();
 
-		$this->setFilter($preset->filters);
-		if ($preset->columns !== [] && $this->canHideColumns()) {
-			$this->saveColumnSettings($preset->columns + $this->getColumnSettings());
+		$settings = $this->getColumnSettings();
+		if ($this->preset === null) {
+			$settings[self::PRESET_BACKUP_KEY] = ['columns' => $this->getPresetColumns(), 'filters' => $this->getPresetFilters()];
 		}
+		if ($preset->columns !== [] && $this->canHideColumns()) {
+			$settings = array_intersect_key($preset->columns, array_flip(self::PRESET_COLUMN_KEYS)) + array_diff_key($settings, array_flip(self::PRESET_COLUMN_KEYS));
+		}
+		$this->saveColumnSettings($settings);
+
+		$this->setFilter($preset->filters);
 		$this->preset = $preset->id;
 		$this->page = 1;
 
 		$this->reloadTheWholeGrid();
 	}
 
-	/** Křížek na štítku sestavy: grid se vrátí do výchozího stavu (výchozí filtry), sloupce zůstanou. */
+	/** Křížek na štítku sestavy: sloupce a filtry jako před první sestavou, bez zálohy výchozí filtry. */
 	public function handleClearPreset(): void
 	{
 		$this->preset = null;
 
-		$this->handleResetFilter();
+		$settings = $this->getColumnSettings();
+		$backup = $settings[self::PRESET_BACKUP_KEY] ?? null;
+		if (!is_array($backup)) {
+			$this->handleResetFilter();
+			return;
+		}
+
+		unset($settings[self::PRESET_BACKUP_KEY]);
+		$columns = array_intersect_key((array) ($backup['columns'] ?? []), array_flip(self::PRESET_COLUMN_KEYS));
+		$this->saveColumnSettings($columns + array_diff_key($settings, array_flip(self::PRESET_COLUMN_KEYS)));
+
+		$filters = (array) ($backup['filters'] ?? []);
+		if ($filters === []) {
+			$this->handleResetFilter();
+			return;
+		}
+
+		$this->setFilter($filters);
+		$this->page = 1;
+		$this->reloadTheWholeGrid();
 	}
 
 	/**
