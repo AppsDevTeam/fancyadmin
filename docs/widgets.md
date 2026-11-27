@@ -145,7 +145,10 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
   natažená na výšku souseda v řadě má hlášku uprostřed.
 - `addSection($name, $title)` - nadpis sekce bez karty přes celou šířku; `setSuffix()` dovětek ve stylu nadpisu,
   `setText()` vysvětlivka, `setMajor()` = hlavní sekce dlouhé stránky (větší nadpis podtržený primární barvou,
-  `setSubtitle()` šedě vedle).
+  `setSubtitle()` šedě vedle), `setTone(WidgetTone)` = nadpis v barvě tónu (tmavší text tónu, např. oranžové
+  „OTEVŘENÉ REZERVACE · ZATÍM NENÍ TRŽBA“); bez tónu primární barva.
+- `setEmptyText($text)` - vlastní text widgetu bez dat místo „Za zvolené období nejsou žádná data.“ (např. tabulka
+  se stavem k dnešku: „Makléř nemá žádnou otevřenou rezervaci.“).
 - `setCollapsible()` - sbalitelná karta (`<details>`): vidět je nadpis, obsah po kliknutí; sbalitelné widgety
   se otevírají a zavírají každý zvlášť a rozbalený nenatahuje sousedy v řadě.
 - `addSwitch($name, [hodnota => popisek], ?$default)` - přepínač v hlavičce (skupina tlačítek vpravo, např.

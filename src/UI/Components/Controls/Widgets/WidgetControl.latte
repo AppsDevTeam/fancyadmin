@@ -115,7 +115,7 @@
 
 {define widget-section}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\SectionWidget $widget}
-	<div n:class="fa-widgets-section, $widget->isMajor() ? fa-widgets-section-major">
+	<div n:class="fa-widgets-section, $widget->isMajor() ? fa-widgets-section-major, $widget->getTone() ? 'fa-widgets-section-toned fa-widgets-tone-' . $widget->getTone()->value">
 		<div class="fa-widgets-section-heading">
 			<h2 class="fa-widgets-section-title">{$widget->getTitle()}{if $widget->getSuffix() !== null} · {$widget->getSuffix()}{/if}</h2>
 			<span n:ifcontent class="fa-widgets-section-subtitle">{$widget->getSubtitle()}</span>
@@ -195,7 +195,7 @@
 			</div>
 		</div>
 	{else}
-		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
 	{/if}
 {/define}
 
@@ -256,7 +256,7 @@
 			</li>
 		</ol>
 	{else}
-		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
 	{/if}
 {/define}
 
@@ -275,7 +275,7 @@
 			</li>
 		</ul>
 	{else}
-		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
 	{/if}
 {/define}
 
@@ -283,7 +283,7 @@
 {define widget-score}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\ScoreWidget $widget}
 	{var $_score = $widget->getScore()}
-	{var $_circumference = 2 * M_PI * 54}
+	{var $_circumference = 2 * \M_PI * 54}
 	<div class="fa-widgets-score">
 		<div class="card fa-widgets-card fa-widgets-score-head">
 			<div n:if="$_score->meta !== null || $_score->status" class="fa-widgets-score-info">
@@ -424,14 +424,14 @@
 			</table>
 		</div>
 	{else}
-		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
 	{/if}
 {/define}
 
 {define widget-chart}
 	{var $_chart = $widget->getChart()}
 	{if $_chart->isEmpty()}
-		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
+		<p class="fa-widgets-empty">{if $widget->getEmptyText() !== null}{$widget->getEmptyText()}{else}{_fcadmin.widgets.empty}{/if}</p>
 	{else}
 		<div n:class="'fa-widgets-chart', $_chart->indexAxis === 'y' ? 'fa-widgets-chart-tall'">
 			{* JSON explicitně: pole v atributu převádí na JSON až Latte 3.1, starší vypíše „Array“ *}
