@@ -8,7 +8,7 @@ import naja from 'naja';
 
 import { onContentLoaded } from './naja';
 
-const TOGGLE = '[data-part="toggle"], [data-part="more-filters"], .fa-filters-chip.dropdown > .fa-filters-chip-edit';
+const TOGGLE = '[data-part="toggle"], .fa-filters-chip.dropdown > .fa-filters-chip-edit';
 const PANEL = '[data-fa-filters-panel]';
 
 // panel, jehož Použít právě odeslal formulář - po překreslení se fokus vrátí na jeho hlavičku
@@ -336,6 +336,33 @@ document.addEventListener('change', (e) => {
 		panel.querySelector('[data-fa-filters-export-email]').focus();
 	}
 });
+
+// Rozbalený Tom Select se při stisku tlačítka v patičce zavře (ztratí fokus) a panel se zkrátí: tlačítko ujede nahoru
+// dřív, než se myš uvolní, klik skončí mimo panel a ten se zavře bez odeslání. Použít i Zrušit filtr proto běží už
+// na stisk, ve fázi capture - dřív, než Tom Select zareaguje.
+let pressedFooterButton = null;
+document.addEventListener('mousedown', (e) => {
+	const button = e.button === 0 && e.target.closest(`${PANEL} [data-part="apply"], ${PANEL} [data-fa-filters-clear]`);
+	if (!button) {
+		return;
+	}
+	e.preventDefault();
+	pressedFooterButton = button;
+	const panel = button.closest(PANEL);
+	if (button.matches('[data-fa-filters-clear]')) {
+		clear(panel);
+	}
+	submit(panel);
+}, true);
+
+// Klik, který po stisku přijde na totéž tlačítko, už nic neodesílá
+document.addEventListener('click', (e) => {
+	if (pressedFooterButton && e.target.closest('[data-part="apply"], [data-fa-filters-clear]') === pressedFooterButton) {
+		e.preventDefault();
+		e.stopImmediatePropagation();
+	}
+	pressedFooterButton = null;
+}, true);
 
 // Výběr více hodnot se skupinami: klik na nadpis skupiny vybere celou skupinu, u vybrané ji odznačí
 document.addEventListener('mousedown', (e) => {

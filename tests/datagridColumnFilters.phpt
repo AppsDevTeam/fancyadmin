@@ -81,10 +81,6 @@ test('panel filtru patří sloupci se stejným klíčem, jinak sloupci, nad kter
 	Assert::same('name', $grid->getFilterColumn($filters['name']));
 	Assert::same('isActive', $grid->getFilterColumn($filters['active']));
 	Assert::null($grid->getFilterColumn($filters['tags']));
-	Assert::same(['tags'], array_keys($grid->getFiltersWithoutColumn($filters)), 'neaktivní filtr bez sloupce je v Další filtry');
-
-	$grid->setFilter(['tags' => ['a']]);
-	Assert::same([], $grid->getFiltersWithoutColumn($filters), 'aktivní filtr bez sloupce má panel v čipu');
 });
 
 test('typy polí panelu', function () {

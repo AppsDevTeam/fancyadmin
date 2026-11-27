@@ -1,7 +1,7 @@
 {**
  * Filtr v hlavičce sloupce (ColumnFiltersTrait, docs/datagrid-column-filters.md): lišta nad gridem, pruh aktivních
  * filtrů s čipy, klikací hlavičky s panelem filtru a prázdný výsledek. Každé pole filtru je v DOM jen jednou:
- * v hlavičce viditelného sloupce, v čipu aktivního filtru skrytého sloupce, nebo v nabídce Další filtry.
+ * v hlavičce viditelného sloupce, nebo v čipu aktivního filtru skrytého sloupce. Filtr bez sloupce grid mít nemá.
  *
  * @param Datagrid $control
  *}
@@ -78,7 +78,6 @@
 		<div n:snippet="columnFilters" class="fa-filters-contents" n:attr="data-fa-filters-revealed => $control->getRevealedColumn()">
 		{* Snippet je samostatný blok, proměnné mimo něj by při překreslení neviděl *}
 		{var $_panelFilters = $control->getPanelFilters($switcherValues, $periodFilters)}
-		{var $_withoutColumn = $control->getFiltersWithoutColumn($_panelFilters)}
 		{var $_form = $control['filter']}
 		{foreach $control->getDefaultFilterToggles() as $_key => $_toggleLabel}
 			{var $_on = $control->isDefaultFilterValue($_key)}
@@ -92,21 +91,6 @@
 		{/foreach}
 		<div class="fa-filters-bulk d-flex flex-wrap align-items-center gap-2" data-part="bulk">{include toolbar}</div>
 		<div class="fa-filters-bar-actions d-flex flex-wrap align-items-center gap-2 ms-auto" data-part="bar-actions">
-			<div n:if="$_withoutColumn" class="dropdown">
-				<button type="button" class="btn btn-outline-secondary rounded-pill" data-part="more-filters"
-					data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8"
-					aria-expanded="false" aria-haspopup="dialog" aria-controls="{$control->getFullName()}-filters-more"
-				>
-					<i class="fa-solid fa-filter" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.more}
-				</button>
-				{include filter-panel,
-					id => $control->getFullName() . '-filters-more',
-					title => ('fcadmin.datagrid.columnFilters.more'|translate),
-					panelFilters => $_withoutColumn,
-					form => $_form,
-					class => 'dropdown-menu-end'
-				}
-			</div>
 			{foreach $periodFilters as $_periodFilter}
 				{include $_periodFilter->getTemplate(), filter => $_periodFilter, input => $_form['filter'][$_periodFilter->getKey()], outer => TRUE}
 			{/foreach}

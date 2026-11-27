@@ -94,8 +94,8 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
 - **Kde je pole filtru.** Každé pole je v DOM jen jednou, formulář tak nemá duplicitní `name`:
   - v hlavičce viditelného sloupce se stejným klíčem (nebo sloupce, nad kterým filtr hledá, `OneColumnFilter::getColumn()`);
   - u aktivního filtru skrytého sloupce v jeho čipu, s upozorněním a odkazem „Zobrazit sloupec“;
-  - neaktivní filtr bez sloupce v gridu v nabídce **Další filtry** v liště;
-  - neaktivní filtr skrytého sloupce nikde, nastaví se po zobrazení sloupce.
+  - neaktivní filtr skrytého sloupce nikde, nastaví se po zobrazení sloupce;
+  - filtr bez sloupce v gridu nikde - grid ho mít nemá (pole by nebylo kde otevřít).
 - **Kdy se filtruje.** Až tlačítkem **Použít** (nebo Enter v textovém poli). Trait vypíná autosubmit knihovny.
   Zavření panelu bez Použít (Esc, klik mimo) vrátí pole na hodnoty ze serveru.
 - **Zrušit filtr** v panelu vyprázdní jeho pole a odešle formulář, křížek u čipu volá `resetColumnFilter!`,

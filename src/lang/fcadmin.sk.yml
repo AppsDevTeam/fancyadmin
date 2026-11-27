@@ -23,7 +23,6 @@ datagrid:
     count: '{0}%formatted% záznamov|{1}%formatted% záznam|[2,4]%formatted% záznamy|[5,+Inf[%formatted% záznamov'
     of: z
     wholeGroup: '%group% (všetko)'
-    more: Ďalšie filtre
     activeFilters: Aktívne filtre
     chipEdit: 'Upraviť filter %label%: %value%'
     chipRemove: 'Odobrať filter %label%'

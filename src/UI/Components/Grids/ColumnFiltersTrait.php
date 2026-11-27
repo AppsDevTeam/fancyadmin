@@ -820,18 +820,6 @@ trait ColumnFiltersTrait
 	}
 
 	/**
-	 * Neaktivní filtry bez sloupce v gridu - nemají hlavičku, kterou by šly otevřít, nabídne je tlačítko Další filtry.
-	 * Neaktivní filtr skrytého sloupce se nenabízí, nastaví se až po zobrazení sloupce.
-	 *
-	 * @param array<string, Filter> $panelFilters
-	 * @return array<string, Filter>
-	 */
-	public function getFiltersWithoutColumn(array $panelFilters): array
-	{
-		return array_filter($panelFilters, fn(Filter $filter): bool => $this->getFilterColumn($filter) === null && !$this->hasFilterValue($filter->getKey()));
-	}
-
-	/**
 	 * Čipy filtrů s hodnotou v pořadí sloupců gridu, filtry bez sloupce na konci. Výchozí filtr ve výchozí
 	 * hodnotě čip nemá.
 	 *
