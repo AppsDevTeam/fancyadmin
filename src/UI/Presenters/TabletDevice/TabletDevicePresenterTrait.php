@@ -6,6 +6,7 @@ namespace ADT\FancyAdmin\UI\Presenters\TabletDevice;
 
 use ADT\BiometricSignature\Exception\InvalidSignatureException;
 use ADT\BiometricSignature\SignatureCapture;
+use ADT\FancyAdmin\DI\Injects\FancyAdminInject;
 use ADT\FancyAdmin\DI\Injects\TabletServiceInject;
 use ADT\FancyAdmin\DI\Injects\TabletSigningInject;
 use ADT\FancyAdmin\DI\Injects\WebPushSenderInject;
@@ -46,6 +47,7 @@ use Tracy\ILogger;
  */
 trait TabletDevicePresenterTrait
 {
+	use FancyAdminInject;
 	use TabletServiceInject;
 	use TabletSigningInject;
 	use WebPushSenderInject;
@@ -124,10 +126,10 @@ trait TabletDevicePresenterTrait
 		return 'cs';
 	}
 
-	/** Režim zaoblení stránek tabletu, obvykle fancyadmin.radius projektu (FancyAdmin::getRadius()) */
+	/** Režim zaoblení stránek tabletu, výchozí fancyadmin.radius projektu */
 	protected function getTabletRadius(): string
 	{
-		return 'default';
+		return $this->_fancyAdmin->getRadius();
 	}
 
 	/** Překlad textu, který se nevypisuje v šabloně (formulář podpisu, název aplikace) */

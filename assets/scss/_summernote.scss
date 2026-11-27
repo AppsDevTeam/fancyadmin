@@ -20,3 +20,16 @@
 		border-radius: calc(var(--bs-border-radius-xxs) + 1px);
 	}
 }
+
+// Šipka Bootstrapu sedí na účaří textu, vedle ikony lišty vyjede nahoru a nalepí se na ni
+:root .note-toolbar .note-btn.dropdown-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+
+	&::after {
+		margin-left: 0;
+		vertical-align: 0;
+	}
+}
