@@ -79,6 +79,24 @@ final class AlertsWidget extends Widget
 		return $this->cards;
 	}
 
+	private bool $agenda = false;
+
+	/**
+	 * Agenda dne („Co mám dnes udělat“): každá položka v rámečku - vlevo čas (`value`, např. „9:00“), text,
+	 * pod ním poznámka a vpravo tlačítko odkazu s popiskem `linkLabel`. Tón `Warning` / `Danger` = zvýrazněná
+	 * položka (podbarvená, poznámka v barvě tónu, plné tlačítko), ostatní šedé s bílým tlačítkem.
+	 */
+	public function setAgenda(bool $agenda = true): static
+	{
+		$this->agenda = $agenda;
+		return $this;
+	}
+
+	public function isAgenda(): bool
+	{
+		return $this->agenda;
+	}
+
 	public function isCompact(): bool
 	{
 		return $this->compact;
