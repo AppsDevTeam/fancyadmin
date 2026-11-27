@@ -1172,3 +1172,18 @@ test('sedy doplnek vpravo v hlavicce: text nebo Closure s obdobim, bez volby nic
 	Assert::notContains('fa-widget-aside', $part('plain'));
 	Assert::notContains('skryto', $part('off'));
 });
+
+test('upozorneni v karte: vedlejsi akce za hlavnim proklikem, bez akci beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addAlerts('list', 'Upozornění', fn() => [
+		new WidgetAlert('Novák: 40 dní bez náboru', link: '/admin/user/1', linkLabel: 'Detail', aside: 'hranice 30 dní',
+			actions: ['Odložit 7 dní' => '/admin/alerts?do=snooze', 'Vyřešeno' => '/admin/alerts?do=resolve']),
+		new WidgetAlert('Bez akcí', link: '/admin/user/2', linkLabel: 'Detail'),
+	])->setCards();
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+
+	Assert::contains('<a href="/admin/user/1" class="btn btn-primary btn-sm">Detail</a><a href="/admin/alerts?do=snooze" class="btn btn-sm fa-widgets-alert-action">Odložit 7 dní</a><a href="/admin/alerts?do=resolve" class="btn btn-sm fa-widgets-alert-action">Vyřešeno</a><span class="fa-widgets-alert-aside">hranice 30 dní</span>', $html);
+	Assert::contains('<a href="/admin/user/2" class="btn btn-primary btn-sm">Detail</a></div>', $html);
+	Assert::same(2, substr_count($html, 'fa-widgets-alert-action'));
+});

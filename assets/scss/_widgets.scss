@@ -1688,3 +1688,16 @@
 	color: var(--fa-text-muted);
 	white-space: nowrap;
 }
+
+// Vedlejší akce upozornění v kartě (WidgetAlert actions): bílé tlačítko s okrajem vedle hlavního prokliku
+.fa-widgets-alert-card-foot .fa-widgets-alert-action {
+	border: 1px solid color-mix(in srgb, var(--primaryColor) 15%, var(--fa-border));
+	background-color: var(--fa-surface);
+	color: var(--fa-text);
+
+	&:hover,
+	&:focus-visible {
+		border-color: var(--primaryColor);
+		color: var(--primaryColor);
+	}
+}
