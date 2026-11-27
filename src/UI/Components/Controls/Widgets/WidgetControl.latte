@@ -6,7 +6,8 @@
    <summary>, otevřít i zavřít jde i klávesnicí; každý se otevírá a zavírá zvlášť. *}
 {* Řada údajů jako samostatné dlaždice (FiguresWidget::setCards) nemá společnou kartu ani nadpis *}
 {var $_figureCards = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget && $widget->isCards() && !$widget->isUnavailable()}
-{var $_plain = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\TemplateWidget && $widget->isPlain()}
+{var $_plain = ($widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\TemplateWidget && $widget->isPlain())
+	|| ($widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\AlertsWidget && $widget->isCards() && !$widget->isUnavailable() && $widget->getAlerts())}
 {var $_card = ($widget->getType() !== 'tiles' || $widget->isUnavailable()) && $widget->getType() !== 'section' && !$_figureCards && !$_plain}
 {var $_accent = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\KpiWidget && $widget->isAccent() ? 'fa-widgets-accent fa-widgets-tone-' . $widget->getTone()->value : null}
 {var $_callout = $widget instanceof ADT\FancyAdmin\UI\Components\Controls\Widgets\CalloutWidget ? 'fa-widgets-callout fa-widgets-tone-' . $widget->getTone()->value : null}
@@ -200,13 +201,16 @@
 	{if $widget->getAlerts()}
 		{* Kompaktní seznam (setCompact): tečka místo ikony, odkazem je celý řádek; nad limitem (setLimit) skryté
 		   položky ukáže tlačítko „Zobrazit všech N“ *}
+		{if $widget->isCards()}
+			{include alert-cards}
+		{else}
 		{var $_compact = $widget->isCompact()}
 		{var $_limit = $widget->getLimit()}
 		{var $_more = $_limit !== null && count($widget->getAlerts()) > $_limit}
 		<ul n:class="fa-widgets-alerts, $_compact ? fa-widgets-alerts-compact">
 			<li n:foreach="$widget->getAlerts() as $_i => $_alert" n:class="fa-widgets-alert, 'fa-widgets-tone-' . $_alert->tone->value, $_more && $_i >= $_limit ? fa-widgets-alert-extra, $_compact && $_alert->link !== null ? fa-widgets-alert-linked" n:attr="hidden: $_more && $_i >= $_limit">
 				{if $_compact}
-					<span class="fa-widgets-alert-dot" aria-hidden="true"></span>
+					<span n:if="$widget->hasDots()" class="fa-widgets-alert-dot" aria-hidden="true"></span>
 				{else}
 					<i n:class="'fa-solid', $_alert->tone->value === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation', fa-widgets-alert-icon" aria-hidden="true"></i>
 				{/if}
@@ -218,12 +222,14 @@
 					{/if}
 					<div n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</div>
 				</div>
+				<span n:if="$_alert->badges" class="fa-widgets-alert-badges">{include badges, badges: $_alert->badges}</span>
 				<span n:if="$_alert->value !== null" class="fa-widgets-alert-value">{$format::value($_alert->value)}</span>
 				<i n:if="$_compact && $_alert->link !== null" class="fa-solid fa-chevron-right fa-widgets-alert-arrow" aria-hidden="true"></i>
 				<a n:if="$_alert->link !== null && !$_compact" href="{$_alert->link}" class="fa-widgets-alert-link">{if $_alert->linkLabel !== null}{$_alert->linkLabel}{else}{_fcadmin.widgets.detail}{/if} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
 			</li>
 		</ul>
 		<button n:if="$_more" type="button" class="fa-widgets-more" data-widget-more aria-expanded="false" data-open-label="{_fcadmin.widgets.alerts.more, ['count' => count($widget->getAlerts())]}" data-close-label="{_fcadmin.widgets.alerts.less}">{_fcadmin.widgets.alerts.more, ['count' => count($widget->getAlerts())]}</button>
+		{/if}
 	{else}
 		<p class="fa-widgets-empty">{_fcadmin.widgets.alerts.empty}</p>
 	{/if}
@@ -268,6 +274,28 @@
 	{else}
 		<p class="fa-widgets-empty">{_fcadmin.widgets.empty}</p>
 	{/if}
+{/define}
+
+{* Upozornění jako samostatné podbarvené karty (AlertsWidget::setCards): ikona, text se štítky, poznámka,
+   proklik jako tlačítko a šedý doplněk vpravo *}
+{define alert-cards}
+	<ul class="fa-widgets-alert-cards">
+		<li n:foreach="$widget->getAlerts() as $_alert" class="fa-widgets-alert-card fa-widgets-tone-{$_alert->tone->value}">
+			<span class="fa-widgets-alert-card-icon"><i n:class="'fa-solid', $_alert->tone->value === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation'" aria-hidden="true"></i></span>
+			<div class="fa-widgets-alert-card-body">
+				<div class="fa-widgets-alert-card-head">
+					<span class="fa-widgets-alert-text">{$_alert->text}</span>
+					{include badges, badges: $_alert->badges}
+					<span n:if="$_alert->value !== null" class="fa-widgets-alert-value">{$format::value($_alert->value)}</span>
+				</div>
+				<div n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</div>
+				<div n:if="$_alert->link !== null || $_alert->aside !== null" class="fa-widgets-alert-card-foot">
+					<a n:if="$_alert->link !== null" href="{$_alert->link}" class="btn btn-primary btn-sm">{if $_alert->linkLabel !== null}{$_alert->linkLabel}{else}{_fcadmin.widgets.detail}{/if}</a>
+					<span n:if="$_alert->aside !== null" class="fa-widgets-alert-aside">{$_alert->aside}</span>
+				</div>
+			</div>
+		</li>
+	</ul>
 {/define}
 
 {define widget-tiles}
