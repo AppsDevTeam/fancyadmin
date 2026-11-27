@@ -192,7 +192,15 @@
 
 {define widget-figures}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\FiguresWidget $widget}
-	{if $widget->getFigures()}
+	{if $widget->getFigures() && $widget->isList()}
+		{* Údaje jako řádky seznamu (setList) *}
+		<ul class="fa-widgets-figure-list">
+			<li n:foreach="$widget->getFigures() as $_figure" class="fa-widgets-figure-list-row">
+				<span class="fa-widgets-figure-list-text"><span class="fa-widgets-figure-list-label" n:attr="title: $_figure->title">{$_figure->label}</span><span n:if="$_figure->note !== null" class="fa-widgets-figure-note">{$_figure->note}</span></span>
+				<span class="fa-widgets-figure-list-value fa-widgets-value-tone-{$_figure->tone->value}">{$format::value($_figure->value ?? '–')}<span n:if="$_figure->unit !== null" class="fa-widgets-unit">{$_figure->unit}</span></span>
+			</li>
+		</ul>
+	{elseif $widget->getFigures()}
 		<div n:class="fa-widgets-figures, $widget->isCards() ? fa-widgets-figures-cards">
 			<div n:foreach="$widget->getFigures() as $_figure" n:class="fa-widgets-figure, $widget->isCards() ? 'card fa-widgets-card', $_figure->link !== null ? fa-widgets-figure-linked">
 				<div class="fa-widgets-figure-label" n:attr="title: $_figure->title">{$_figure->label}<i n:if="$_figure->link !== null" class="fa-solid fa-chevron-right fa-widgets-link-arrow" aria-hidden="true"></i></div>
@@ -221,6 +229,8 @@
 		   položky ukáže tlačítko „Zobrazit všech N“ *}
 		{if $widget->isCards()}
 			{include alert-cards}
+		{elseif $widget->isAgenda()}
+			{include alert-agenda}
 		{else}
 		{var $_compact = $widget->isCompact()}
 		{var $_limit = $widget->getLimit()}
@@ -263,7 +273,20 @@
 
 {define widget-funnel}
 	{varType ADT\FancyAdmin\UI\Components\Controls\Widgets\FunnelWidget $widget}
-	{if $widget->getSteps()}
+	{if $widget->getSteps() && $widget->isBars()}
+		{* Kroky jako pruhy (setBars): popisek, pruh, hodnota, přechod a poznámka v barvě tónu *}
+		{var $_max = $widget->getMaxValue()}
+		<ol class="fa-widgets-funnel-bars">
+			<li n:foreach="$widget->getSteps() as $_i => $_step" class="fa-widgets-funnel-bar-row fa-widgets-tone-{$_step->tone->value}">
+				<span class="fa-widgets-funnel-label">{$_step->label}</span>
+				<span class="fa-widgets-funnel-bar"><span n:class="fa-widgets-funnel-bar-fill, $_step->tone->value === 'danger' ? fa-widgets-funnel-bar-danger" style="width: {$_max > 0 && is_numeric($_step->value) ? (int) round($_step->value / $_max * 100) : 0}%"></span></span>
+				<span class="fa-widgets-funnel-value">{$format::value($_step->value ?? '–')}</span>
+				<span class="fa-widgets-funnel-conversion">{if $_i > 0}{$_step->conversion ?? '–'}{if $_step->note !== null} · {$_step->note}{/if}{/if}</span>
+			</li>
+		</ol>
+		{var $_insight = $widget->getInsight()}
+		<div n:if="$_insight" class="fa-widgets-funnel-insight"><strong>{$_insight->headline}:</strong> {$_insight->text}</div>
+	{elseif $widget->getSteps()}
 		{* Krok s přechodem z předchozího: šipka s procentem a poznámkou, pak rámeček kroku *}
 		<ol class="fa-widgets-funnel">
 			<li n:foreach="$widget->getSteps() as $_i => $_step" class="fa-widgets-funnel-item">
@@ -345,6 +368,20 @@
 
 {* Upozornění jako samostatné podbarvené karty (AlertsWidget::setCards): ikona, text se štítky, poznámka,
    proklik jako tlačítko a šedý doplněk vpravo *}
+{* Agenda dne (AlertsWidget::setAgenda): čas vlevo, text a poznámka, tlačítko vpravo *}
+{define alert-agenda}
+	<ul class="fa-widgets-agenda">
+		<li n:foreach="$widget->getAlerts() as $_alert" n:class="fa-widgets-agenda-item, 'fa-widgets-tone-' . $_alert->tone->value, in_array($_alert->tone->value, ['warning', 'danger'], true) ? fa-widgets-agenda-urgent">
+			<span n:if="$_alert->value !== null" class="fa-widgets-agenda-time">{$format::value($_alert->value)}</span>
+			<div class="fa-widgets-agenda-body">
+				<div class="fa-widgets-agenda-text">{$_alert->text}</div>
+				<div n:if="$_alert->note !== null" class="fa-widgets-agenda-note">{$_alert->note}</div>
+			</div>
+			<a n:if="$_alert->link !== null" href="{$_alert->link}" n:class="btn, btn-sm, in_array($_alert->tone->value, ['warning', 'danger'], true) ? btn-primary : fa-widgets-alert-action">{if $_alert->linkLabel !== null}{$_alert->linkLabel}{else}{_fcadmin.widgets.detail}{/if}</a>
+		</li>
+	</ul>
+{/define}
+
 {define alert-cards}
 	<ul class="fa-widgets-alert-cards">
 		<li n:foreach="$widget->getAlerts() as $_alert" class="fa-widgets-alert-card fa-widgets-tone-{$_alert->tone->value}">

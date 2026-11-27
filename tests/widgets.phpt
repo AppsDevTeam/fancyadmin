@@ -1143,6 +1143,39 @@ test('rada hodnot KPI, plny pruh, poznamky na radku, odkaz v hlavicce, pruhovana
 	Assert::contains('<span class="btn" aria-current="true">30d</span><a href="/?pipeline=60" class="btn">60d</a>', $part('cards'));
 });
 
+test('agenda, trychtyr jako pruhy s pruhem ztraty a udaje jako seznam; bez voleb beze zmeny', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addAlerts('agenda', 'Co mám dnes udělat', fn() => [
+		new WidgetAlert('Prohlídka – RD Beroun', WidgetTone::Primary, note: 'sraz na místě', value: '9:00', link: '/a', linkLabel: 'Detail'),
+		new WidgetAlert('Zavolat lead', WidgetTone::Warning, note: 'bez reakce', link: '/l', linkLabel: 'Volat'),
+	])->setAgenda();
+	$widgetGrid->addFunnel('bars', 'Aktivita', fn() => [
+		new WidgetFunnelStep('Kontakty', 58),
+		new WidgetFunnelStep('Nábory', 4, conversion: '31 %', tone: WidgetTone::Danger, note: 'síť 40 %'),
+	])->setBars()->setInsight(fn() => new WidgetCallout('Kde ztrácím', 'schůzky → nábory 31 %'));
+	$widgetGrid->addFunnel('steps', 'Trychtýř', fn() => [new WidgetFunnelStep('Leady', 5)]);
+	$widgetGrid->addFigures('money', 'Moje peníze', fn() => [new WidgetFigure('Realizované provize', '186 000 Kč', note: 'tento měsíc', tone: WidgetTone::Success)])->setList();
+	$widgetGrid->addFigures('row', 'Řada', fn() => [new WidgetFigure('Obrat', 5)]);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = function (string $name) use ($html): string {
+		$start = strpos($html, 'data-widget="' . $name . '"');
+		$next = strpos($html, 'data-widget="', $start + 1);
+		return substr($html, $start, $next === false ? null : $next - $start);
+	};
+
+	Assert::contains('<li class="fa-widgets-agenda-item fa-widgets-tone-primary"><span class="fa-widgets-agenda-time">9:00</span><div class="fa-widgets-agenda-body"><div class="fa-widgets-agenda-text">Prohlídka – RD Beroun</div><div class="fa-widgets-agenda-note">sraz na místě</div></div><a href="/a" class="btn btn-sm fa-widgets-alert-action">Detail</a></li>', $part('agenda'));
+	Assert::contains('<li class="fa-widgets-agenda-item fa-widgets-tone-warning fa-widgets-agenda-urgent"><div class="fa-widgets-agenda-body">', $part('agenda'));
+	Assert::contains('<a href="/l" class="btn btn-sm btn-primary">Volat</a>', $part('agenda'));
+	Assert::contains('<span class="fa-widgets-funnel-bar-fill" style="width: 100%"></span>', $part('bars'));
+	Assert::contains('<span class="fa-widgets-funnel-bar-fill fa-widgets-funnel-bar-danger" style="width: 7%"></span>', $part('bars'));
+	Assert::contains('<span class="fa-widgets-funnel-conversion">31 % · síť 40 %</span>', $part('bars'));
+	Assert::contains('<div class="fa-widgets-funnel-insight"><strong>Kde ztrácím:</strong> schůzky → nábory 31 %</div>', $part('bars'));
+	Assert::contains('<ol class="fa-widgets-funnel">', $part('steps'));
+	Assert::contains('<span class="fa-widgets-figure-list-value fa-widgets-value-tone-success">186 000 Kč</span>', $part('money'));
+	Assert::contains('<div class="fa-widgets-figures">', $part('row'));
+});
+
 test('nadpis sekce v barve tonu a vlastni text prazdneho widgetu; bez voleb beze zmeny', function () {
 	$widgetGrid = widgetGrid();
 	$widgetGrid->addSection('toned', 'Otevřené rezervace')->setTone(WidgetTone::Warning);

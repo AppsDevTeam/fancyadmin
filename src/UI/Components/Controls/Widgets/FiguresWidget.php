@@ -58,4 +58,18 @@ final class FiguresWidget extends Widget
 	{
 		return $this->cards;
 	}
+
+	private bool $list = false;
+
+	/** Údaje jako řádky seznamu v kartě („Moje peníze“): popisek vlevo, hodnota s jednotkou vpravo v barvě tónu, poznámka šedě pod popiskem. */
+	public function setList(bool $list = true): static
+	{
+		$this->list = $list;
+		return $this;
+	}
+
+	public function isList(): bool
+	{
+		return $this->list;
+	}
 }
