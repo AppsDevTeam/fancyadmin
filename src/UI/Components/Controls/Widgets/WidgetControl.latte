@@ -291,8 +291,9 @@
 					<span n:if="$_alert->value !== null" class="fa-widgets-alert-value">{$format::value($_alert->value)}</span>
 				</div>
 				<div n:if="$_alert->note !== null" class="fa-widgets-alert-note">{$_alert->note}</div>
-				<div n:if="$_alert->link !== null || $_alert->aside !== null" class="fa-widgets-alert-card-foot">
+				<div n:if="$_alert->link !== null || $_alert->aside !== null || $_alert->actions" class="fa-widgets-alert-card-foot">
 					<a n:if="$_alert->link !== null" href="{$_alert->link}" class="btn btn-primary btn-sm">{if $_alert->linkLabel !== null}{$_alert->linkLabel}{else}{_fcadmin.widgets.detail}{/if}</a>
+					<a n:foreach="$_alert->actions as $_actionLabel => $_actionLink" href="{$_actionLink}" class="btn btn-sm fa-widgets-alert-action">{$_actionLabel}</a>
 					<span n:if="$_alert->aside !== null" class="fa-widgets-alert-aside">{$_alert->aside}</span>
 				</div>
 			</div>
