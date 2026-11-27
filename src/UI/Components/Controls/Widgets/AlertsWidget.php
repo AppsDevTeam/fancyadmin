@@ -20,6 +20,10 @@ final class AlertsWidget extends Widget
 
 	private bool $compact = false;
 
+	private bool $dots = true;
+
+	private bool $cards = false;
+
 	private ?int $limit = null;
 
 	/** @param callable(?WidgetPeriod): iterable<WidgetAlert> $alerts */
@@ -38,10 +42,32 @@ final class AlertsWidget extends Widget
 	 * Kompaktní seznam: místo ikony a podbarvení řádku barevná tečka, položky ve dvou sloupcích oddělené linkou,
 	 * hodnota vpravo v barvě tónu. Odkaz položky je celý řádek (bez popisku „Zobrazit podrobnosti“).
 	 */
-	public function setCompact(bool $compact = true): static
+	public function setCompact(bool $compact = true, bool $dots = true): static
 	{
 		$this->compact = $compact;
+		$this->dots = $dots;
 		return $this;
+	}
+
+	/** Kompaktní seznam bez teček (např. přehled podle typu s počtem vpravo). */
+	public function hasDots(): bool
+	{
+		return $this->dots;
+	}
+
+	/**
+	 * Každé upozornění jako samostatná podbarvená karta (bez společné karty widgetu): ikona, text se štítky,
+	 * poznámka, pod nimi proklik jako tlačítko (popisek `linkLabel`) a vpravo šedý doplněk `aside`.
+	 */
+	public function setCards(bool $cards = true): static
+	{
+		$this->cards = $cards;
+		return $this;
+	}
+
+	public function isCards(): bool
+	{
+		return $this->cards;
 	}
 
 	public function isCompact(): bool

@@ -1132,3 +1132,29 @@ test('hlavni sekce, sablona bez karty a udaj s proklikem; bez voleb beze zmeny',
 	Assert::contains('<a href="/admin/turnover" class="stretched-link" aria-label="Realizované provize"></a>', $part('figures'));
 	Assert::contains('<div class="fa-widgets-figure card fa-widgets-card"><div class="fa-widgets-figure-label">Aktivní makléři</div>', $part('figures'));
 });
+
+test('upozorneni jako karty: bez spolecne karty, stitky za textem, tlacitko a doplnek; prazdne v karte; kompaktni bez tecek se stitky', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addAlerts('list', 'Upozornění', fn() => [
+		new WidgetAlert('Novák: 332 dní bez realizace', WidgetTone::Danger, note: 'Plzeň · makléř', link: '/admin/user/1', linkLabel: 'Detail',
+			badges: [new WidgetBadge('tržby', WidgetTone::Neutral)], aside: 'hranice 60 dní'),
+		new WidgetAlert('Bez odkazu'),
+	])->setCards();
+	$widgetGrid->addAlerts('empty', 'Prázdné', fn() => [])->setCards();
+	$widgetGrid->addAlerts('branches', 'Pobočky', fn() => [
+		new WidgetAlert('Brno', WidgetTone::Neutral, link: '/admin/branch/1', badges: [new WidgetBadge('5 krit.', WidgetTone::Danger), new WidgetBadge('17 sled.', WidgetTone::Warning)]),
+	])->setCompact(dots: false);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 1500);
+
+	Assert::contains('data-widget="list"><div><div id="snippet-dashboard-list-body"><ul class="fa-widgets-alert-cards"><li class="fa-widgets-alert-card fa-widgets-tone-danger">', $html);
+	Assert::contains('<span class="fa-widgets-alert-text">Novák: 332 dní bez realizace</span><span class="fa-widgets-badge fa-widgets-tone-neutral">tržby</span>', $part('list'));
+	Assert::contains('<div class="fa-widgets-alert-note">Plzeň · makléř</div><div class="fa-widgets-alert-card-foot"><a href="/admin/user/1" class="btn btn-primary btn-sm">Detail</a><span class="fa-widgets-alert-aside">hranice 60 dní</span></div>', $part('list'));
+	Assert::same(1, substr_count($part('list'), 'fa-widgets-alert-card-foot'));
+	Assert::contains('card fa-widgets-card', $part('empty'));
+	Assert::contains('[fcadmin.widgets.alerts.empty]', $part('empty'));
+	Assert::notContains('fa-widgets-alert-dot', $part('branches'));
+	Assert::contains('<span class="fa-widgets-alert-badges"><span class="fa-widgets-badge fa-widgets-tone-danger">5 krit.</span><span class="fa-widgets-badge fa-widgets-tone-warning">17 sled.</span></span>', $part('branches'));
+	Assert::exception(fn() => new WidgetAlert('x', badges: ['text']), InvalidArgumentException::class);
+});
