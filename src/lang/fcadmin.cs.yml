@@ -145,6 +145,10 @@ layout:
       membersMany: '%count% členů'
       membersList: Členové konverzace
       memberYou: (vy)
+      memberAdd: Přidat člena
+      memberRemove: Odebrat z konverzace
+      memberRemoveConfirm: Odebrat
+      memberRemoveCancel: Zrušit
       muted: Ztlumeno
       channelJoin: Připojit
       channelOpen: Otevřít
