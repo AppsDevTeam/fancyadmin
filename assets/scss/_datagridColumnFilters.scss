@@ -1,0 +1,925 @@
+// Filtr v hlavičce sloupce (ColumnFiltersTrait, docs/datagrid-column-filters.md): lišta, pruh aktivních filtrů
+// s čipy, klikací hlavička s panelem filtru a prázdný výsledek. Barvy jen z proměnných fancyadminu a --fa-filters-*.
+
+// Proměnné filtrů pro světlý a tmavý režim, barvy odvozené z --primaryColor
+:root {
+	--fa-filters-accent-soft: color-mix(in srgb, var(--primaryColor) 9%, var(--fa-surface));
+	--fa-filters-accent-line: color-mix(in srgb, var(--primaryColor) 32%, var(--fa-surface));
+	--fa-filters-accent-text: color-mix(in srgb, var(--primaryColor) 85%, #000);
+	--fa-filters-search-bg: var(--fa-surface-active);
+	--fa-filters-shadow: 0 12px 32px rgb(20 24 30 / 16%), 0 2px 6px rgb(20 24 30 / 8%);
+	--fa-filters-underline: var(--fa-text-faint);
+	--fa-filters-panel-width: 22.5rem;
+	--fa-filters-panel-radius: 1.125rem;
+	--fa-filters-strip-radius: 1.25rem;
+	--fa-filters-search-height: 2.75rem;
+	--fa-filters-chip-height: 1.875rem;
+	--fa-filters-scrim: rgb(16 19 24 / 42%);
+	--fa-filters-bulkbar-shadow: 0 12px 32px rgb(0 0 0 / 28%);
+}
+
+:root[data-bs-theme='dark'] {
+	--fa-filters-accent-soft: color-mix(in srgb, var(--primaryColor) 18%, var(--fa-surface));
+	--fa-filters-accent-line: color-mix(in srgb, var(--primaryColor) 48%, var(--fa-surface));
+	--fa-filters-accent-text: color-mix(in srgb, var(--primaryColor) 50%, #fff);
+	--fa-filters-shadow: 0 14px 36px rgb(0 0 0 / 60%);
+	--fa-filters-scrim: rgb(0 0 0 / 60%);
+	--fa-filters-bulkbar-shadow: 0 12px 32px rgb(0 0 0 / 70%);
+}
+
+// Hromadné akce [data-part="bulk-bar"]: plovoucí lišta po výběru řádků, na místě rychlé lišty (ta se zatím schová)
+.datagrid:has([data-part='bulk-bar']) table > tbody > tr.table-active > td {
+	background-color: var(--fa-filters-accent-soft);
+}
+
+.fa-filters-bulkbar {
+	position: fixed;
+	bottom: var(--quickbar-bottom, 1.25rem);
+	left: 50%;
+	// Pod zatmavením okna (1050), nad přilepenou hlavičkou tabulky
+	z-index: 1045;
+	display: flex;
+	align-items: center;
+	gap: .375rem;
+	width: max-content;
+	max-width: calc(100% - 2rem);
+	padding: .375rem;
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-text);
+	color: var(--fa-surface);
+	box-shadow: var(--fa-filters-bulkbar-shadow);
+	transform: translateX(-50%);
+	animation: fa-filters-bulk-in .16s ease-out;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+@keyframes fa-filters-bulk-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 1rem);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fa-filters-bulkbar {
+		animation: none;
+	}
+}
+
+.fa-bulk-active .quickbar,
+.fa-bulk-active .quickbar-overlay,
+.fa-filters-sheet-open .fa-filters-bulkbar {
+	visibility: hidden;
+}
+
+// Zprávy nad lištou a konec stránky (Načíst další) nad ní, jinak je překryje
+.fa-bulk-active .flash-stack {
+	bottom: calc(var(--quickbar-bottom, 1.25rem) + 4.25rem);
+}
+
+.fa-bulk-active .container-main {
+	padding-bottom: 5.5rem;
+}
+
+.fa-filters-bulkbar-count {
+	padding-right: .5rem;
+	font-size: .9375rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.fa-filters-bulkbar-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+	min-height: 2.5rem;
+	padding: 0 1rem;
+	border: 1px solid color-mix(in srgb, var(--fa-surface) 30%, transparent);
+	border-radius: var(--bs-border-radius-pill);
+	background: none;
+	color: inherit;
+	font-size: .875rem;
+	font-weight: 500;
+	white-space: nowrap;
+
+	&.is-icon {
+		justify-content: center;
+		width: 2.5rem;
+		padding: 0;
+		border: 0;
+	}
+
+	&:hover,
+	&[aria-expanded='true'] {
+		background: color-mix(in srgb, var(--fa-surface) 14%, transparent);
+		color: inherit;
+	}
+
+	&:focus-visible {
+		outline: 0;
+		box-shadow: 0 0 0 .1875rem color-mix(in srgb, var(--fa-surface) 55%, transparent);
+	}
+}
+
+@media (max-width: 575.98px) {
+	.fa-filters-bulkbar {
+		right: .75rem;
+		bottom: .75rem;
+		left: .75rem;
+		width: auto;
+		max-width: none;
+		transform: none;
+		animation-name: fa-filters-bulk-in-phone;
+	}
+
+	@keyframes fa-filters-bulk-in-phone {
+		from {
+			opacity: 0;
+			transform: translateY(1rem);
+		}
+	}
+}
+
+// Lišta nad gridem [data-part="bar"]
+.fa-filters-bar {
+	row-gap: .625rem;
+}
+
+// Lišta, pruh filtrů a tabulka těsně pod sebou; prázdný snippet pruhu by jinak přidal další mezeru
+form:has(> .fa-filters-bar) {
+	gap: 5px;
+
+	> [id$='-columnFiltersActive']:not(:has(*)) {
+		display: none;
+	}
+}
+
+.fa-filters-count {
+	color: var(--fa-text-muted);
+	font-size: .875rem;
+	white-space: nowrap;
+}
+
+.fa-filters-count strong {
+	color: var(--fa-text);
+	font-weight: 600;
+}
+
+// Vyhledávací pole [data-part="search"]
+.fa-filters-search {
+	position: relative;
+	display: flex;
+	flex: 1 1 26rem;
+	align-items: center;
+	gap: .25rem;
+	min-width: 16rem;
+	max-width: 48rem;
+	min-height: var(--fa-filters-search-height);
+	padding: 0 .3125rem 0 1rem;
+	border: 1px solid transparent;
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-filters-search-bg);
+}
+
+.fa-filters-search:focus-within {
+	border-color: var(--fa-input-focus);
+	background: var(--fa-surface);
+}
+
+.fa-filters-search-icon {
+	color: var(--fa-text-muted);
+}
+
+// :not(:disabled) přebije obecný styl polí fancyadminu (.form-control:not(:disabled))
+.fa-filters-search .form-control,
+.fa-filters-search .form-control:not(:disabled) {
+	flex: 1 1 auto;
+	min-width: 4rem;
+	height: calc(var(--fa-filters-search-height) - 2px);
+	padding: 0 .5rem;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.fa-filters-search .form-control:focus,
+.fa-filters-search .form-control:not(:disabled):focus {
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+// Kulaté ikonové tlačítko (křížek čipu)
+.fa-filters-icon-btn {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: none;
+	color: var(--fa-text);
+}
+
+.fa-filters-icon-btn:hover {
+	background: var(--fa-surface-hover);
+}
+
+.fa-filters-icon-btn.is-active {
+	background: var(--primaryColor);
+	color: var(--bs-white);
+}
+
+.fa-filters-icon-btn.is-small {
+	width: 1.75rem;
+	height: 1.75rem;
+	color: var(--fa-filters-accent-text);
+}
+
+.fa-filters-icon-btn.is-small:hover {
+	background: var(--fa-filters-accent-line);
+}
+
+// Pruh aktivních filtrů [data-part="active"]
+.fa-filters-active {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .5rem;
+	padding: .5rem .5rem .5rem 1rem;
+	border: 1px solid var(--fa-border);
+	border-radius: var(--fa-filters-strip-radius);
+	background: var(--fa-surface);
+}
+
+// Čip [data-part="chip"]
+.fa-filters-chip {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	min-height: var(--fa-filters-chip-height);
+	border: 1px solid var(--fa-filters-accent-line);
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-filters-accent-soft);
+}
+
+.fa-filters-chip-edit {
+	display: inline-flex;
+	align-items: center;
+	gap: .375rem;
+	min-width: 0;
+	min-height: calc(var(--fa-filters-chip-height) - 2px);
+	padding: 0 .25rem 0 .75rem;
+	border: 0;
+	border-radius: var(--bs-border-radius-pill) 0 0 var(--bs-border-radius-pill);
+	background: none;
+	color: var(--fa-text);
+	font-size: .8125rem;
+}
+
+.fa-filters-chip-label {
+	color: var(--fa-filters-accent-text);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.fa-filters-chip-value {
+	overflow: hidden;
+	max-width: 16.25rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// Odkaz „Zrušit filtry“ v pruhu [data-part="clear-all"]
+.fa-filters-link {
+	padding: .25rem .625rem;
+	border: 0;
+	border-radius: var(--bs-border-radius-pill);
+	background: none;
+	color: var(--fa-filters-accent-text);
+	font-size: .875rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.fa-filters-link:hover {
+	background: var(--fa-filters-accent-soft);
+	color: var(--fa-filters-accent-text);
+}
+
+.fa-filters-link:disabled {
+	color: var(--fa-text-faint);
+	background: none;
+}
+
+// Klikací hlavička sloupce [data-part="toggle"]
+// Aktivní filtr hlavička neznačí, je vidět jen v pruhu.
+.fa-filters-toggle {
+	display: inline-flex;
+	align-items: center;
+	margin: -.375rem -.625rem;
+	padding: .375rem .625rem;
+	border: 0;
+	border-radius: .75rem;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-weight: inherit;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.fa-filters-toggle-text {
+	text-decoration: underline dotted var(--fa-filters-underline);
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: .3125rem;
+}
+
+.fa-filters-toggle:hover,
+.fa-filters-toggle[aria-expanded='true'] {
+	background: var(--fa-surface-hover);
+}
+
+.fa-filters-toggle:hover .fa-filters-toggle-text,
+.fa-filters-toggle[aria-expanded='true'] .fa-filters-toggle-text {
+	text-decoration-style: solid;
+	text-decoration-color: var(--primaryColor);
+}
+
+.fa-filters-toggle:focus-visible,
+.fa-filters-chip-edit:focus-visible,
+.fa-filters-icon-btn:focus-visible,
+.fa-filters-link:focus-visible {
+	outline: 0;
+	box-shadow: 0 0 0 .25rem var(--bs-focus-ring-color);
+}
+
+// Panel filtru (Bootstrap .dropdown-menu) [data-part="panel"]
+.fa-filters-panel {
+	--bs-dropdown-padding-y: 0;
+	--bs-dropdown-min-width: 0;
+	--bs-dropdown-bg: var(--fa-surface);
+	--bs-dropdown-border-color: var(--fa-border);
+	--bs-dropdown-border-radius: var(--fa-filters-panel-radius);
+	--bs-dropdown-color: var(--fa-text);
+	--bs-dropdown-box-shadow: var(--fa-filters-shadow);
+	width: min(var(--fa-filters-panel-width), calc(100vw - 1rem));
+	max-height: calc(100vh - 2rem);
+	overflow-y: auto;
+	box-shadow: var(--bs-dropdown-box-shadow);
+	font-size: .9375rem;
+	font-weight: 400;
+	text-align: left;
+	white-space: normal;
+}
+
+.fa-filters-panel.show {
+	animation: fa-filters-fade .12s ease-out;
+}
+
+@keyframes fa-filters-fade {
+	from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fa-filters-panel.show { animation: none; }
+}
+
+.fa-filters-panel-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: .5rem;
+	padding: 1rem .75rem .25rem 1.125rem;
+}
+
+.fa-filters-panel-title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.fa-filters-panel-body {
+	display: flex;
+	flex-direction: column;
+	gap: .75rem;
+	padding: .5rem 1.125rem 1rem;
+}
+
+.fa-filters-panel-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: .5rem;
+	padding: .75rem .75rem .875rem 1.125rem;
+	border-top: 1px solid var(--fa-line);
+}
+
+// Pole filtru [data-part="field"]
+.fa-filters-field-label {
+	margin-bottom: .25rem;
+	color: var(--fa-text-muted);
+	font-size: .8125rem;
+	font-weight: 500;
+}
+
+// Upozornění „sloupec je skrytý“
+.fa-filters-panel-note {
+	padding: .625rem .875rem;
+	border: 1px solid var(--fa-filters-accent-line);
+	border-radius: .875rem;
+	background: var(--fa-filters-accent-soft);
+	font-size: .8125rem;
+}
+
+// Rychlé volby data
+.fa-filters-presets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .375rem;
+}
+
+.fa-filters-preset.active,
+.fa-filters-preset:active {
+	border-color: var(--fa-filters-accent-line);
+	background: var(--fa-filters-accent-soft);
+	color: var(--fa-filters-accent-text);
+	font-weight: 600;
+}
+
+// Tom Select uvnitř panelu: nabídka je v toku panelu (rozšíří panel, nepřekrývá patičku)
+.fa-filters-panel .ts-dropdown {
+	position: static;
+	margin-top: .375rem;
+	border-color: var(--fa-border);
+	border-radius: .75rem;
+	background: var(--fa-surface);
+	box-shadow: none;
+	color: var(--fa-text);
+}
+
+.fa-filters-panel .ts-dropdown .ts-dropdown-content {
+	max-height: 16rem;
+}
+
+.fa-filters-panel .ts-dropdown .active {
+	background: var(--fa-surface-hover);
+	color: var(--fa-text);
+}
+
+.fa-filters-panel .ts-wrapper.multi + .ts-dropdown .optgroup-header {
+	cursor: pointer;
+}
+
+.fa-filters-panel .ts-dropdown .optgroup-header {
+	background: var(--fa-surface);
+	color: var(--fa-text-muted);
+	font-size: .75rem;
+	font-weight: 700;
+	letter-spacing: .04em;
+	cursor: pointer;
+}
+
+.fa-filters-panel .ts-wrapper .ts-control {
+	border-color: var(--fa-border);
+	background: var(--fa-surface);
+	color: var(--fa-text);
+}
+
+.fa-filters-panel .ts-wrapper.multi .ts-control > .item {
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-filters-accent-soft);
+	color: var(--fa-text);
+}
+
+// flatpickr uvnitř panelu: kalendář v toku, barvy z proměnných
+.fa-filters-panel .flatpickr-calendar.inline {
+	width: 100%;
+	margin-top: .25rem;
+	border: 1px solid var(--fa-border);
+	border-radius: .75rem;
+	background: var(--fa-surface);
+	box-shadow: none;
+}
+
+.fa-filters-panel .flatpickr-days,
+.fa-filters-panel .dayContainer {
+	width: 100%;
+	min-width: 0;
+	max-width: none;
+}
+
+.fa-filters-panel .flatpickr-day {
+	max-width: none;
+	color: var(--fa-text);
+}
+
+.fa-filters-panel .flatpickr-day.prevMonthDay,
+.fa-filters-panel .flatpickr-day.nextMonthDay {
+	color: var(--fa-text-faint);
+}
+
+.fa-filters-panel .flatpickr-day.inRange {
+	border-color: var(--fa-filters-accent-soft);
+	background: var(--fa-filters-accent-soft);
+	box-shadow: -5px 0 0 var(--fa-filters-accent-soft), 5px 0 0 var(--fa-filters-accent-soft);
+}
+
+.fa-filters-panel .flatpickr-day.startRange,
+.fa-filters-panel .flatpickr-day.endRange,
+.fa-filters-panel .flatpickr-day.selected {
+	border-color: var(--primaryColor);
+	background: var(--primaryColor);
+	color: var(--bs-white);
+}
+
+.fa-filters-panel .flatpickr-months .flatpickr-month,
+.fa-filters-panel .flatpickr-current-month,
+.fa-filters-panel span.flatpickr-weekday,
+.fa-filters-panel .flatpickr-months .flatpickr-prev-month,
+.fa-filters-panel .flatpickr-months .flatpickr-next-month {
+	background: transparent;
+	color: var(--fa-text);
+	fill: var(--fa-text);
+}
+
+// Prázdný výsledek [data-part="empty-state"]
+.fa-filters-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: .75rem;
+	padding: 3rem 1.5rem 3.5rem;
+	text-align: center;
+}
+
+.fa-filters-empty-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.5rem;
+	height: 3.5rem;
+	border-radius: 50%;
+	background: var(--fa-filters-accent-soft);
+	color: var(--fa-filters-accent-text);
+	font-size: 1.375rem;
+}
+
+.fa-filters-empty-title {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+// Uložené sestavy: štítek vybrané sestavy ve vyhledávání a seznam sestav [data-part="set-token"], [data-part="sets"]
+.fa-filters-token {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	min-width: 0;
+	max-width: 16rem;
+	height: 2rem;
+	padding-left: .625rem;
+	border: 1px solid var(--fa-filters-accent-line);
+	border-radius: var(--bs-border-radius-pill);
+	background: var(--fa-surface);
+	color: var(--fa-filters-accent-text);
+	font-size: .8125rem;
+	font-weight: 600;
+}
+
+.fa-filters-token-edit {
+	display: inline-flex;
+	align-items: center;
+	gap: .375rem;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+}
+
+.fa-filters-token-text {
+	overflow: hidden;
+	max-width: 11rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fa-filters-token-state {
+	color: var(--fa-text-muted);
+	font-weight: 400;
+	white-space: nowrap;
+}
+
+.fa-filters-set {
+	display: flex;
+	align-items: center;
+	gap: .25rem;
+	border-radius: .75rem;
+}
+
+.fa-filters-set:hover {
+	background: var(--fa-surface-hover);
+}
+
+.fa-filters-set-pick {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: .625rem;
+	min-width: 0;
+	min-height: 2.75rem;
+	padding: .375rem .625rem;
+	border: 0;
+	background: none;
+	color: var(--fa-text);
+	text-align: left;
+}
+
+.fa-filters-set-check {
+	width: 1rem;
+	color: var(--fa-filters-accent-text);
+}
+
+.fa-filters-set-name {
+	display: block;
+	font-weight: 600;
+}
+
+.fa-filters-set-meta {
+	display: block;
+	color: var(--fa-text-muted);
+	font-size: .8125rem;
+}
+
+.fa-filters-section {
+	margin: .25rem 0 0;
+	color: var(--fa-text-muted);
+	font-size: .75rem;
+	font-weight: 700;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+}
+
+.fa-filters-set-pick,
+.fa-filters-set-pick:hover {
+	color: var(--fa-text);
+	text-decoration: none;
+}
+
+.fa-filters-set-edit {
+	display: flex;
+	flex: 1 0 100%;
+	flex-direction: column;
+	gap: .5rem;
+	padding: .25rem .625rem .75rem;
+}
+
+.fa-filters-set {
+	flex-wrap: wrap;
+}
+
+.fa-filters-token-edit:focus-visible {
+	outline: 0;
+	box-shadow: 0 0 0 .25rem var(--bs-focus-ring-color);
+}
+
+// Snippet uvnitř lišty, jeho obsah jsou přímo položky lišty
+.fa-filters-contents {
+	display: contents;
+}
+
+// Hromadné akce v liště - projekt je dodá blokem toolbar, bez nich obal nezabírá místo
+.fa-filters-bulk:not(:has(> *)) {
+	display: none;
+}
+
+// Výchozí filtr - přepínač v liště [data-part="default-toggle"], popisek podle výchozí hodnoty
+.fa-filters-default {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+	min-height: 2.5rem;
+	margin: 0;
+	padding: 0 .5rem;
+	white-space: nowrap;
+}
+
+.fa-filters-default .form-check-input {
+	float: none;
+	width: 2.5em;
+	height: 1.375em;
+	margin: 0;
+	cursor: pointer;
+}
+
+.fa-filters-default .form-check-input:checked {
+	border-color: var(--primaryColor);
+	background-color: var(--primaryColor);
+}
+
+.fa-filters-default .form-check-label {
+	color: var(--fa-text);
+	font-size: .9375rem;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+// „výchozí“ pod volbou v panelu výchozího filtru
+.fa-filters-default-note {
+	display: block;
+	font-size: .6875rem;
+	font-weight: 500;
+	opacity: .8;
+}
+
+// Sloupec, který se objevil vypnutím výchozího filtru - krátké podbarvení
+.fa-filters-col-new {
+	animation: fa-filters-flash 1.8s ease-out;
+}
+
+@keyframes fa-filters-flash {
+	0%,
+	60% {
+		background: var(--fa-filters-accent-soft);
+	}
+
+	100% {
+		background: transparent;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fa-filters-col-new {
+		animation: none;
+	}
+}
+
+// Položky nabídky ⋯ na telefonu [data-part="more-menu"]
+.fa-filters-more-item {
+	display: flex;
+	align-items: center;
+	gap: .75rem;
+	min-height: 3rem;
+	padding: .375rem 1.125rem;
+	color: var(--fa-text);
+	font-size: .9375rem;
+}
+
+.fa-filters-more-item .fa-fw,
+.fa-filters-more-item i {
+	color: var(--fa-text-muted);
+}
+
+.fa-filters-more-item:hover,
+.fa-filters-more-item:focus {
+	background: var(--fa-surface-hover);
+	color: var(--fa-text);
+}
+
+// Ozubené kolo knihovny pod tabulkou nahrazuje tlačítko Sloupce v liště
+.datagrid form:has([data-part='columns']) > .datagrid-settings {
+	display: none !important;
+}
+
+// Dialog Sloupce [data-part="columns-dialog"]
+.fa-filters-columns {
+	display: flex;
+	flex-direction: column;
+	gap: .25rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fa-filters-column {
+	display: flex;
+	align-items: center;
+	gap: .625rem;
+	min-height: 3.125rem;
+	padding: .25rem .5rem .25rem .875rem;
+	border: 1px solid var(--fa-border);
+	border-radius: .875rem;
+	background: var(--fa-surface);
+}
+
+.fa-filters-column.is-hidden {
+	background: var(--fa-surface-hover);
+	color: var(--fa-text-muted);
+}
+
+.fa-filters-column .form-check {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+}
+
+.fa-filters-column .form-check-label {
+	font-weight: 600;
+}
+
+.fa-filters-column .fa-filters-icon-btn:disabled {
+	opacity: .35;
+	pointer-events: none;
+}
+
+// Šířka sloupce z dialogu Sloupce, na hlavičce i buňkách
+.fa-filters-col-narrow {
+	overflow: hidden;
+	width: 130px;
+	max-width: 130px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fa-filters-col-wide {
+	min-width: 340px;
+}
+
+// Telefon: tabulka se posouvá do strany, panely vyjíždějí zespodu, akce lišty jsou v nabídce ⋯
+@media (max-width: 575.98px) {
+	.fa-filters-search {
+		flex: 1 1 calc(100% - 3.5rem);
+		min-width: 0;
+		max-width: none;
+	}
+
+	.fa-filters-token {
+		flex: 0 1 auto;
+		max-width: 55%;
+	}
+
+	.fa-filters-token-text {
+		min-width: 3rem;
+		max-width: 7rem;
+	}
+
+	// „· upraveno“ se zkrátí na tečku
+	.fa-filters-token-state {
+		overflow: hidden;
+		width: .75rem;
+		white-space: nowrap;
+	}
+
+	.fa-filters-bar-actions {
+		order: 1;
+	}
+
+	.fa-filters-default {
+		order: 2;
+		width: 100%;
+	}
+
+	.fa-filters-bulk {
+		order: 3;
+	}
+
+	.fa-filters-chips {
+		flex: 1 1 100%;
+		flex-wrap: nowrap !important;
+		min-width: 0;
+		overflow-x: auto;
+	}
+
+	.fa-filters-active .fa-filters-chip {
+		flex: 0 0 auto;
+	}
+
+	// Popper nastavuje pozici inline, spodní panel ji přebíjí
+	.fa-filters-panel.show {
+		position: fixed !important;
+		inset: auto 0 0 0 !important;
+		width: auto;
+		max-height: 85vh;
+		margin: 0 !important;
+		overflow-y: auto;
+		border-radius: 1.375rem 1.375rem 0 0;
+		transform: none !important;
+		z-index: 1055;
+		box-shadow: 0 0 0 100vmax var(--fa-filters-scrim);
+	}
+
+	// Lišta s menu administrace by spodní list překryla
+	.fa-filters-sheet-open .quickbar-overlay,
+	.fa-filters-sheet-open .quickbar {
+		visibility: hidden;
+	}
+
+	.fa-filters-panel.show::before {
+		content: "";
+		display: block;
+		width: 2.5rem;
+		height: .3125rem;
+		margin: .5rem auto 0;
+		border-radius: var(--bs-border-radius-pill);
+		background: var(--fa-border);
+	}
+}

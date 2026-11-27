@@ -130,3 +130,8 @@ Inicializace v `onContentLoaded()` odpadá: builtin hlídá i prvky přidané po
   boční panel) ho to ořízne - takové pole potřebuje `data-adt-select='{"dropdownParent": "body"}'`. Seznam
   zavěšený do `body` přebírá výšku a písmo pole přes `@fancyadmin/js/tomSelectDropdownSize` (součást `app.js`).
 - Filtr nad Tom Selectem (`.select-filter`) popisuje [tabs.md](tabs.md), selecty kalendáře [flatpickr.md](flatpickr.md).
+
+## Kopírování do schránky
+
+`import '@fancyadmin/js/copyText'` - tlačítko s `data-adt-copy-text="<text>"` zkopíruje text do schránky a ukáže
+flash zprávu (`data-adt-copy-text-message`, výchozí „Zkopírováno do schránky“).

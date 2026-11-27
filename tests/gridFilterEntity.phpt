@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use ADT\FancyAdmin\Model\Entities\Enums\GridFilterType;
+use ADT\FancyAdmin\Model\Entities\GridFilterPresetTrait;
+use ADT\FancyAdmin\Model\Entities\GridFilterTrait;
 use ADT\FancyAdmin\Tests\Fixtures\TestAccount;
 use ADT\FancyAdmin\Tests\Fixtures\TestGridFilter;
 use Tester\Assert;
@@ -50,4 +53,26 @@ test('filtr si pamatuje, kdo a kdy ho zalozil', function () {
 
 	Assert::null($filter->getCreatedBy());
 	Assert::same($createdAt, $filter->setCreatedAt($createdAt)->getCreatedAt());
+});
+
+
+test('pokrocily filtr bez sestav nema sloupce sestavy - projekt bez nich nepotrebuje migraci', function () {
+	Assert::false(property_exists(TestGridFilter::class, 'type'));
+	Assert::false(property_exists(TestGridFilter::class, 'shared'));
+	Assert::false(property_exists(TestGridFilter::class, 'columns'));
+});
+
+
+test('sestava: typ, sdileni a sloupce z GridFilterPresetTrait', function () {
+	$preset = new class {
+		use GridFilterTrait;
+		use GridFilterPresetTrait;
+	};
+
+	Assert::same(GridFilterType::Advanced, $preset->getType());
+	Assert::true($preset->isShared());
+	Assert::null($preset->getColumns());
+	Assert::same(GridFilterType::Preset, $preset->setType(GridFilterType::Preset)->getType());
+	Assert::same(['order' => ['a']], $preset->setShared(false)->setColumns(['order' => ['a']])->getColumns());
+	Assert::false($preset->isShared());
 });

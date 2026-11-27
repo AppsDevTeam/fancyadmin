@@ -13,7 +13,113 @@ accordion:
   inactive: Neaktivní
 
 datagrid:
+  a11y:
+    filter: 'Filtrovat podle sloupce %column%'
+    filterFrom: 'Filtrovat podle sloupce %column% - od'
+    filterTo: 'Filtrovat podle sloupce %column% - do'
+    perPage: Počet položek na stránku
   filters: Filtry
+  bulk:
+    label: Hromadné akce
+    clear: Zrušit výběr
+    more: Další
+    actions: Akce
+    execute: Provést
+    selected:
+      one: '%count% vybraná položka'
+      few: '%count% vybrané položky'
+      many: '%count% vybraných položek'
+  columnFilters:
+    count: '{0}%formatted% záznamů|{1}%formatted% záznam|[2,4]%formatted% záznamy|[5,+Inf[%formatted% záznamů'
+    of: z
+    wholeGroup: '%group% (vše)'
+    activeFilters: Aktivní filtry
+    chipEdit: 'Upravit filtr %label%: %value%'
+    chipRemove: 'Odebrat filtr %label%'
+    default: výchozí
+    clearAll: Zrušit filtry
+    search: Hledat
+    searchPlaceholder: Hledat ve viditelných sloupcích
+    restoreDefault: Vrátit výchozí
+    moreActions: Další akce
+    editColumns: Upravit sloupce
+    columns: Sloupce
+    columnWidth: 'Šířka sloupce %column%'
+    width:
+      narrow: Úzký
+      auto: Auto
+      wide: Široký
+    moveUp: 'Posunout %column% výš'
+    moveDown: 'Posunout %column% níž'
+    showAll: Zobrazit vše
+    cancel: Zrušit
+    close: Zavřít
+    clear: Zrušit filtr
+    apply: Použít
+    clearAllFilters: Zrušit všechny filtry
+    emptyTitle: Žádný záznam neodpovídá filtrům
+    hiddenColumn: 'Sloupec %column% je skrytý, filtr na něm ale platí.'
+    showColumn: Zobrazit sloupec
+    filterValue: 'filtr: %value%'
+    contains: Obsahuje
+    all: Vše
+    yes: Ano
+    no: Ne
+    from: od
+    to: do
+    period: Období
+    periodPlaceholder: od - do
+    presetsLabel: Rychlá volba období
+    export:
+      button: Export
+      title: Export
+      format: Formát
+      visibleOnly: Jen sloupce zobrazené v tabulce
+      byEmail: Poslat na e-mail
+      email: E-mail
+      download: Stáhnout
+      send: Odeslat
+      invalidEmail: Zadejte platný e-mail.
+      sent: 'Export odejde na %email%.'
+      subject: 'Export: %name%'
+      body: 'V příloze je export „%name%“ (%count% záznamů) podle filtrů v administraci.'
+      link: 'Soubor si můžete stáhnout i po přihlášení do administrace: %link%'
+      purged: 'Soubor exportu už byl smazán, vyexportujte data znovu.'
+    presets:
+      title: Uložené sestavy
+      mine: Moje sestavy
+      shared: Sdílené sestavy
+      empty: Zatím tu nejsou žádné sestavy. Nastavte filtry a sloupce a uložte je tlačítkem Uložit sestavu.
+      private: Jen pro mě
+      sharedOwn: Sdílená s týmem
+      sharedBy: 'Sdílená · %author%'
+      teamShared: Sdílená s týmem
+      token: 'Sestava %name% - změnit'
+      tokenModified: 'Sestava %name%, upraveno - změnit'
+      modified: '· upraveno'
+      clear: Zrušit sestavu
+      edit: 'Upravit sestavu %name%'
+      delete: Smazat sestavu
+      deleteConfirm: 'Opravdu smazat sestavu %name%?'
+      saveButton: Uložit sestavu
+      saveChanges: 'Uložit změny do „%name%“'
+      saveAsNew: Nebo jako novou sestavu
+      name: Název sestavy
+      namePlaceholder: např. K expedici
+      visibility: Viditelnost
+      save: Uložit
+      saved: Sestava je uložená.
+      deleted: Sestava je smazaná.
+      nameRequired: Vyplňte název sestavy.
+      nameTaken: Sestavu s tímto názvem už máte.
+    preset:
+      today: Dnes
+      yesterday: Včera
+      last7: Posledních 7 dní
+      last30: Posledních 30 dní
+      thisMonth: Tento měsíc
+      lastMonth: Minulý měsíc
+      thisYear: Letos
 
 modal:
   close: Zavřít
