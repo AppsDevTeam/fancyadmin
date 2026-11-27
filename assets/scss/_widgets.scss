@@ -84,6 +84,18 @@
 	}
 }
 
+// Přepínače v hlavičce (Widget::addSwitch) - skupiny tlačítek vpravo
+.fa-widgets-switches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-left: auto;
+
+	.btn {
+		font-weight: 500;
+	}
+}
+
 .fa-widget-title {
 	margin: 0;
 	font-size: 1rem;
@@ -720,6 +732,68 @@
 	color: var(--fa-widgets-tone);
 }
 
+// Kompaktní seznam upozornění (AlertsWidget::setCompact): dva sloupce řádků oddělených linkou, tečka v barvě tónu
+.fa-widgets-alerts-compact {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+	gap: 0 28px;
+
+	.fa-widgets-alert {
+		position: relative;
+		gap: 10px;
+		min-width: 0;
+		padding: 7px 0;
+		border-bottom: 1px solid var(--fa-line);
+		background-color: transparent;
+		font-size: .8125rem;
+	}
+
+	.fa-widgets-alert[hidden] {
+		display: none;
+	}
+
+	.fa-widgets-alert-linked:hover {
+		background-color: var(--fa-surface-hover);
+	}
+
+	.fa-widgets-alert-text {
+		display: block;
+		font-size: .8125rem;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.fa-widgets-alert-value {
+		margin-left: auto;
+	}
+
+	.fa-widgets-alert-arrow {
+		font-size: .625rem;
+		color: var(--primaryColor);
+	}
+}
+
+.fa-widgets-alert-dot {
+	flex-shrink: 0;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background-color: var(--fa-widgets-tone);
+}
+
+.fa-widgets-more {
+	margin-top: 10px;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: .8125rem;
+	color: var(--primaryColor);
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
 // Widget bez dat
 // Karta bez dat natažená na výšku souseda v řadě (Hodnocení poboček vedle Upozornění) nemá hlášku
 // nahoře a pod ní prázdnou plochu - hláška je uprostřed jako prázdný stav
@@ -1306,6 +1380,10 @@
 .fa-widgets-page-subtitle {
 	font-size: .875rem;
 	color: var(--fa-text-muted);
+}
+
+.fa-widgets-page-badge {
+	align-self: center;
 }
 
 // Výběr období v hlavičce stránky (renderPeriod): tónované tlačítko v primární barvě

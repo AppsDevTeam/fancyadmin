@@ -144,6 +144,12 @@ tedy nic nezahodí. Šablona mřížky dostane proměnnou `$widgetGrid`.
   natažená na výšku souseda v řadě má hlášku uprostřed.
 - `setCollapsible()` - sbalitelná karta (`<details>`): vidět je nadpis, obsah po kliknutí; sbalitelné widgety
   se otevírají a zavírají každý zvlášť a rozbalený nenatahuje sousedy v řadě.
+- `addSwitch($name, [hodnota => popisek], ?$default)` - přepínač v hlavičce (skupina tlačítek vpravo, např.
+  jednotka „ks / Kč“ nebo rozsah „12 měsíců / 3 roky / Vše“), víc přepínačů vedle sebe. Data si volbu přečtou
+  přes `getSwitch($name)` (closure dostane widget referencí: `$chart = $grid->addChart('trend', 'Vývoj',
+  function ($period) use (&$chart) { … $chart->getSwitch('unit') … })->addSwitch(…)`). Volba je v URL
+  (`dashboard-trend-switch[unit]=kc`, výchozí se nepíše, neznámá = výchozí); odkazy fungují i bez JS,
+  s JS (`widgets.js`) se překreslí jen widget jako u období a tlačítko se označí.
 
 ## Hlavička a společné období mřížky
 
@@ -157,7 +163,8 @@ selectu odešle formulář a stránka se načte znovu (`widgets.js`) - mění se
 Podstránka dashboardu (detail, na který se z karty proklikne) má hlavičku `setPage($title, $subtitle,
 $breadcrumbs)` + `{control dashboard:page}` (`renderPage()`): drobečková navigace (`['Dashboard' => odkaz, …,
 'Aktuální' => null]`, poslední položka bez odkazu), ve stejném řádku vpravo výběr období, pod ní nadpis
-a šedý podtitul (text nebo `Closure` s obdobím). Přepínač nebo záložky pod hlavičkou dejte do
+a šedý podtitul (text nebo `Closure` s obdobím). Za podtitulem mohou být štítky `setPageBadges([WidgetBadge…])`
+(pole nebo `Closure` s obdobím, např. „zatím není tržba“). Přepínač nebo záložky pod hlavičkou dejte do
 `<div class="fa-widgets-page-toolbar">` (stejná šířka jako mřížka). Samotný výběr období bez hlavičky:
 `{control dashboard:period}` (`renderPeriod()`) ho vykreslí samostatně jako tónované tlačítko a mřížka
 vykreslená potom ho už nemá; bez `setHeader()` pak nemá ani pás hlavičky. Stejné jméno komponenty
@@ -171,10 +178,10 @@ Vzhled mřížky jde projektu nastavit CSS proměnnými (výchozí = vzhled admi
 | metoda | widget |
 |---|---|
 | `addStat($name, $title, fn() => int\|float\|string)` | velké číslo; `setNote()` (text nebo callable), `setIcon()`, `setLink()` (celá karta je odkaz), `setTone()` |
-| `addKpi($name, $title, fn() => int\|float\|string\|null)` | KPI karta: hodnota, `setUnit()` (text nebo `Closure` - jednotka podle velikosti čísla), `setSparkline(fn() => list<number\|null>)` (křivka 72 × 28 v SVG), `setBadges()` pod hodnotou, `setNote()`, `setTone()` (barva hodnoty a křivky); `null` = „–“ |
+| `addKpi($name, $title, fn() => int\|float\|string\|null)` | KPI karta: hodnota, `setUnit()` (text nebo `Closure` - jednotka podle velikosti čísla), `setSparkline(fn() => list<number\|null>)` (křivka 72 × 28 v SVG), `setBadges()` pod hodnotou, `setNote()`, `setTone()` (barva hodnoty a křivky), `setSplit([WidgetSplit…])` (pruh poměru s legendou; s `note` / `extra` řádková legenda, `extra` v barvě tónu nebo `extraTone`); `null` = „–“ |
 | `addKpiParts($name, $title, fn() => WidgetFigure[])` | dělená KPI karta - části vedle sebe oddělené linkou (popisek, hodnota, jednotka, štítky, poznámka) |
 | `addFigures($name, $title, fn() => WidgetFigure[])` | řada údajů v jedné kartě oddělených linkou; `WidgetFigure`: label, value, unit, note (šedý doplněk), tone, title (bublina popisku), badges |
-| `addAlerts($name, $title, fn() => WidgetAlert[])` | upozornění k řešení: text, tón (`Warning` / `Danger` - ikona a podbarvení), poznámka, hodnota, odkaz s popiskem (výchozí `fcadmin.widgets.detail`); prázdné `fcadmin.widgets.alerts.empty` |
+| `addAlerts($name, $title, fn() => WidgetAlert[])` | upozornění k řešení: text, tón (`Warning` / `Danger` - ikona a podbarvení), poznámka, hodnota, odkaz s popiskem (výchozí `fcadmin.widgets.detail`); prázdné `fcadmin.widgets.alerts.empty`. `setCompact()` = kompaktní seznam ve sloupcích (tečka v barvě tónu místo ikony, bez podbarvení, odkazem je celý řádek se šipkou, popisek odkazu jen jako `title`), `setLimit(n)` = vidět prvních n, zbytek pod „Zobrazit všech N“ (`fcadmin.widgets.alerts.more` / `.less`) |
 | `addTiles($name, fn() => WidgetTile[], ?$title)` | řada dlaždic bez společné karty (KPI); `WidgetTile`: label, value, note, icon, link, tone |
 | `addTable($name, $title, $columns, fn() => iterable<array>)` | tabulka; sloupec je popisek nebo `WidgetTableColumn($label, numeric: true)` (formát a zarovnání doprava; `wrap: true` zalomí dlouhý text, jinak je řádek jako v gridu na jednom řádku), hodnota `Nette\Utils\Html` se neescapuje; prázdná tabulka ukáže `fcadmin.widgets.empty`. Volitelně `WidgetTableColumn(group: '…')` (nadpis skupiny nad sousedními sloupci), `setTotal(řádek|fn)` (řádek Celkem v patičce) a `setRowLink(fn(array $row): ?string)` (proklik řádku - odkazem je první buňka a celý řádek) |
 | `addChart($name, $title, fn() => WidgetChart)` | graf Chart.js přes builtin `Chart` z adt-js-components, viz *Grafy* |

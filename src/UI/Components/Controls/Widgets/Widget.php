@@ -47,6 +47,12 @@ abstract class Widget
 
 	private ?string $titleStyle = null;
 
+	/** @var array<string, array{options: array<string, string>, default: string}> */
+	private array $switches = [];
+
+	/** @var array<string, string> volby z URL */
+	private array $requestedSwitches = [];
+
 	public function __construct(
 		private readonly string $name,
 		private ?string $title = null,
@@ -303,5 +309,64 @@ abstract class Widget
 	public function getTitleStyle(): ?string
 	{
 		return $this->titleStyle;
+	}
+
+	/**
+	 * Přepínač v hlavičce widgetu (skupina tlačítek, např. jednotka „ks / Kč“ nebo rozsah „12 měsíců / 3 roky /
+	 * Vše“). Zvolená hodnota je v URL (`<mřížka>-<widget>-switch[<jméno>]`, výchozí se nepíše), přepnutí
+	 * překreslí jen widget; data si ji přečtou přes getSwitch().
+	 *
+	 * @param array<string, string> $options hodnota => popisek
+	 */
+	public function addSwitch(string $name, array $options, ?string $default = null): static
+	{
+		if (!$options) {
+			throw new InvalidArgumentException("Přepínač '$name' widgetu '{$this->name}' nemá žádnou volbu.");
+		}
+		$default ??= (string) array_key_first($options);
+		if (!array_key_exists($default, $options)) {
+			throw new InvalidArgumentException("Výchozí volba '$default' přepínače '$name' widgetu '{$this->name}' není mezi volbami.");
+		}
+		$this->switches[$name] = ['options' => array_map('strval', $options), 'default' => $default];
+		return $this;
+	}
+
+	/** Zvolená hodnota přepínače; neznámá nebo chybějící znamená výchozí. */
+	public function getSwitch(string $name): string
+	{
+		if (!isset($this->switches[$name])) {
+			throw new InvalidArgumentException("Widget '{$this->name}' nemá přepínač '$name'.");
+		}
+		$value = $this->requestedSwitches[$name] ?? null;
+		return $value !== null && array_key_exists($value, $this->switches[$name]['options']) ? $value : $this->switches[$name]['default'];
+	}
+
+	/** @return array<string, array{options: array<string, string>, default: string}> */
+	public function getSwitches(): array
+	{
+		return $this->switches;
+	}
+
+	/**
+	 * Volby z URL. Vyhodnotí se až v getSwitch() - přepínač může přibýt i po načtení stavu.
+	 *
+	 * @param array<mixed> $values
+	 */
+	public function selectSwitches(array $values): static
+	{
+		$this->requestedSwitches = array_map('strval', array_filter($values, 'is_scalar'));
+		return $this;
+	}
+
+	/** @return array<string, string> zvolené hodnoty, které nejsou výchozí (do odkazů) */
+	public function getSwitchState(): array
+	{
+		$state = [];
+		foreach ($this->switches as $name => $switch) {
+			if (($value = $this->getSwitch($name)) !== $switch['default']) {
+				$state[$name] = $value;
+			}
+		}
+		return $state;
 	}
 }

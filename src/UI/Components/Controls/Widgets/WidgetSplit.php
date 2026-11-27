@@ -8,7 +8,8 @@ namespace ADT\FancyAdmin\UI\Components\Controls\Widgets;
  * Část pruhu poměru v KPI dlaždici (KpiWidget::setSplit) - např. prodej / pronájem, exkluzivní /
  * neexkluzivní. Šířka v pruhu podle `value`, v legendě tečka, popisek, `display` (formátovaná hodnota,
  * jinak `value`) a podíl. S `note` / `extra` je legenda řádková: popisek a hodnota, poznámka, doplněk vpravo
- * v barvě tónu (např. „29 % vůči novým náborům“, „3,11 mil. Kč“).
+ * v barvě tónu (např. „29 % vůči novým náborům“, „3,11 mil. Kč“), případně v barvě `extraTone` (zelený pruh,
+ * ale oranžová částka provize v rezervacích).
  */
 final class WidgetSplit
 {
@@ -19,6 +20,7 @@ final class WidgetSplit
 		public readonly WidgetTone $tone = WidgetTone::Primary,
 		public readonly ?string $note = null,
 		public readonly ?string $extra = null,
+		public readonly ?WidgetTone $extraTone = null,
 	) {
 	}
 }

@@ -45,6 +45,9 @@ class WidgetGridControl extends Control
 	/** @var string|(\Closure(?WidgetPeriod): ?string)|null */
 	private string|\Closure|null $pageSubtitle = null;
 
+	/** @var list<WidgetBadge>|(\Closure(?WidgetPeriod): list<WidgetBadge>) */
+	private array|\Closure $pageBadges = [];
+
 	/** @var list<array{label: string, link: ?string}> */
 	private array $breadcrumbs = [];
 
@@ -309,6 +312,23 @@ class WidgetGridControl extends Control
 			$this->breadcrumbs[] = ['label' => (string) $label, 'link' => $link];
 		}
 		return $this;
+	}
+
+	/**
+	 * Štítky za podtitulem hlavičky podstránky („zatím není tržba“), pole `WidgetBadge` nebo `Closure` s obdobím.
+	 *
+	 * @param list<WidgetBadge>|(\Closure(?WidgetPeriod): list<WidgetBadge>) $badges
+	 */
+	public function setPageBadges(array|\Closure $badges): static
+	{
+		$this->pageBadges = $badges;
+		return $this;
+	}
+
+	/** @return list<WidgetBadge> */
+	public function getPageBadges(): array
+	{
+		return $this->pageBadges instanceof \Closure ? ($this->pageBadges)($this->getPeriod()) : $this->pageBadges;
 	}
 
 	public function getPageTitle(): ?string

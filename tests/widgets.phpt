@@ -949,3 +949,115 @@ test('sekce, dlazdice s pruhem a panel otevirany odkazem jine karty', function (
 	Assert::contains('data-widget="list" data-widget-panel="aging" hidden>', $html);
 	Assert::contains('<button type="button" class="fa-widgets-panel-close" data-widget-toggle="list">[fcadmin.widgets.panel.close]</button>', $html);
 });
+
+test('kompaktni upozorneni: tecka misto ikony, odkazem je radek se sipkou, nad limitem skryte polozky a tlacitko', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->addAlerts('stagnation', 'Stagnace', fn() => [
+		new WidgetAlert('Novák Jan', WidgetTone::Danger, note: 'pobočka Plzeň', value: '91 dní', link: '/admin/user/1', linkLabel: 'Rezervace makléře'),
+		new WidgetAlert('Dvořák Petr', note: 'pobočka Brno', value: '64 dní'),
+		new WidgetAlert('Malá Eva', value: '61 dní'),
+	])->setCompact()->setLimit(2);
+	$widgetGrid->addAlerts('short', 'Do limitu', fn() => [new WidgetAlert('Jediné')])->setCompact()->setLimit(2);
+
+	$html = preg_replace('~>\s+<~', '><', renderWidgetGrid($widgetGrid));
+	$part = fn(string $name) => substr($html, strpos($html, 'data-widget="' . $name . '"'), 3000);
+
+	Assert::contains('<ul class="fa-widgets-alerts fa-widgets-alerts-compact">', $part('stagnation'));
+	Assert::contains('<li class="fa-widgets-alert fa-widgets-tone-danger fa-widgets-alert-linked"><span class="fa-widgets-alert-dot" aria-hidden="true"></span>', $part('stagnation'));
+	Assert::contains('<a href="/admin/user/1" class="fa-widgets-alert-text stretched-link" title="Rezervace makléře">Novák Jan</a>', $part('stagnation'));
+	Assert::contains('<i class="fa-solid fa-chevron-right fa-widgets-alert-arrow" aria-hidden="true"></i>', $part('stagnation'));
+	// v kompaktním seznamu je odkazem řádek, popisek „Zobrazit podrobnosti“ ani ikona tam nejsou
+	Assert::notContains('class="fa-widgets-alert-link"', $part('stagnation'));
+	Assert::notContains('fa-circle-exclamation', $part('stagnation'));
+	Assert::contains('<div class="fa-widgets-alert-text">Dvořák Petr</div>', $part('stagnation'));
+	Assert::contains('<li class="fa-widgets-alert fa-widgets-tone-warning fa-widgets-alert-extra" hidden>', $part('stagnation'));
+	Assert::same(1, substr_count($part('stagnation'), ' hidden>'));
+	Assert::contains('<button type="button" class="fa-widgets-more" data-widget-more aria-expanded="false" data-open-label="[fcadmin.widgets.alerts.more]" data-close-label="[fcadmin.widgets.alerts.less]">[fcadmin.widgets.alerts.more]</button>', $part('stagnation'));
+	Assert::notContains('fa-widgets-more', $part('short'));
+	Assert::notContains(' hidden>', $part('short'));
+});
+
+/** Presenter s routerem - odkazy na sebe sama (přepínače widgetu) */
+function linkingPresenter(string $query = ''): DashboardTestPresenter
+{
+	$factory = new class implements Nette\Application\IPresenterFactory {
+		public function getPresenterClass(string &$name): string
+		{
+			return DashboardTestPresenter::class;
+		}
+
+		public function createPresenter(string $name): Nette\Application\IPresenter
+		{
+			throw new LogicException();
+		}
+	};
+	$presenter = new DashboardTestPresenter();
+	$presenter->injectPrimary(new Request(new UrlScript('https://admin.test/admin/?' . $query)), new Response(), $factory, new Nette\Application\Routers\SimpleRouter(), templateFactory: new TemplateFactory(new DashboardLatteFactory()));
+	parse_str($query, $params);
+	Closure::bind(function () use ($params) {
+		$this->setParent(null, 'Test');
+		$this->request = new Nette\Application\Request('Test', 'GET', $params + ['action' => 'default']);
+		$this->initGlobalParameters();
+	}, $presenter, Presenter::class)();
+
+	return $presenter;
+}
+
+test('prepinac widgetu: volba z URL, neznama znamena vychozi, do odkazu jen nevychozi', function () {
+	$received = [];
+	$widgetGrid = widgetGrid(linkingPresenter());
+	$chart = null;
+	$chart = $widgetGrid->addTable('trend', 'Vývoj', ['a' => 'A'], function () use (&$chart, &$received) {
+		$received = [$chart->getSwitch('unit'), $chart->getSwitch('range')];
+		return [['a' => 1]];
+	})
+		->addSwitch('unit', ['ks' => 'ks', 'kc' => 'Kč'])
+		->addSwitch('range', ['12' => '12 měsíců', '36' => '3 roky', 'all' => 'Vše'], '12');
+
+	$widgetGrid['trend']->loadState(['switch' => ['unit' => 'kc', 'range' => 'nesmysl']]);
+	$html = renderWidgetGrid($widgetGrid);
+	Assert::same(['kc', '12'], $received);
+	Assert::contains('<div class="fa-widgets-switches"><div class="btn-group btn-group-sm fa-widgets-switch" role="group">', preg_replace('~>\s+<~', '><', $html));
+	// zvolená volba je zvýrazněná; odkaz drží ostatní volby, výchozí do adresy nejde
+	Assert::match('%A%<a href="%a%" class="btn noajax btn-primary" aria-current="true"%A%data-widget-switch="dashboard-trend-switch[unit]" data-widget-value="kc" data-widget-default="ks"%A%data-widget-redraw="dashboard-trend-redraw">Kč</a>%A%', $html);
+	Assert::match('%A%<a href="/admin/?%a%" class="btn noajax btn-outline-primary"%A%data-widget-value="36"%A%>3 roky</a>%A%', $html);
+	preg_match('~<a href="([^"]+)"[^>]*data-widget-value="36"~', $html, $link);
+	Assert::contains(urlencode('dashboard-trend-switch[unit]') . '=kc', html_entity_decode($link[1]));
+	Assert::contains(urlencode('dashboard-trend-switch[range]') . '=36', html_entity_decode($link[1]));
+	preg_match('~<a href="([^"]+)"[^>]*data-widget-value="ks"~', $html, $link);
+	Assert::notContains('switch', html_entity_decode($link[1]));
+
+	$params = [];
+	$widgetGrid['trend']->saveState($params);
+	Assert::same(['unit' => 'kc'], $params['switch']);
+	Assert::same(['unit' => 'kc'], $chart->getSwitchState());
+	Assert::same('dashboard-trend-switch[unit]', $widgetGrid['trend']->getSwitchParameterName('unit'));
+
+	$widgetGrid['trend']->loadState(['switch' => []]);
+	$params = [];
+	$widgetGrid['trend']->saveState($params);
+	Assert::null($params['switch'] ?? null);
+
+	Assert::exception(fn() => $chart->getSwitch('neni'), InvalidArgumentException::class, "%a%'neni'%a%");
+	Assert::exception(fn() => $chart->addSwitch('x', []), InvalidArgumentException::class, '%a%žádnou volbu%a%');
+	Assert::exception(fn() => $chart->addSwitch('x', ['a' => 'A'], 'b'), InvalidArgumentException::class, "%a%'b'%a%");
+});
+
+test('stitky hlavicky podstranky a doplnek rozdeleni ve vlastnim tonu', function () {
+	$widgetGrid = widgetGrid();
+	$widgetGrid->setPage('Rezervace', 'stav k 1. 11. 2026')
+		->setPageBadges([new WidgetBadge('zatím není tržba', WidgetTone::Warning, 'Provize nejsou tržbou')]);
+	$widgetGrid->addKpi('sale', 'Prodej', fn() => 1)->setSplit([
+		new WidgetSplit('Exkluzivní', 2, tone: WidgetTone::Success, note: 'Ø 120 tis. Kč', extra: '14 mil. Kč', extraTone: WidgetTone::Warning),
+		new WidgetSplit('Neexkluzivní', 1, tone: WidgetTone::Success, note: 'Ø 110 tis. Kč', extra: '8 mil. Kč'),
+	]);
+
+	ob_start();
+	$widgetGrid->renderPage();
+	$page = ob_get_clean();
+	$html = renderWidgetGrid($widgetGrid);
+
+	Assert::contains('<span class="fa-widgets-badge fa-widgets-tone-warning fa-widgets-page-badge" title="Provize nejsou tržbou">zatím není tržba</span>', $page);
+	Assert::contains('<span class="fa-widgets-split-extra"><span class="fa-widgets-value-tone-warning">14 mil. Kč</span></span>', $html);
+	Assert::contains('<span class="fa-widgets-split-extra">8 mil. Kč</span>', $html);
+});
