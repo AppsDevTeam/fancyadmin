@@ -9,6 +9,7 @@ use Latte\Engine;
 use Latte\Essential\TranslatorExtension;
 use Nette\Bridges\ApplicationLatte\UIExtension;
 use Nette\Bridges\FormsLatte\FormsExtension;
+use Nette\Utils\ArrayHash;
 use Nette\Utils\Html;
 use Tester\Assert;
 
@@ -133,6 +134,19 @@ test('výchozí filtr ve výchozí hodnotě čip nemá a aktivní není, změně
 	$grid->setFilter(['state' => 'gate']);
 	Assert::same(['state' => 'Brána'], chipValues($grid->getFilterChips($grid->getPanelFilters([], []))));
 	Assert::true($grid->isFilterActive());
+});
+
+test('rozsah z odeslaného formuláře (ArrayHash) se počítá jako pole z URL', function () {
+	$grid = columnFiltersGrid();
+	$grid->setFilter(['orderDate' => ArrayHash::from(['from' => '2026-10-01', 'to' => ''])]);
+
+	Assert::same(['orderDate' => ['from' => '2026-10-01']], $grid->getPresetFilters());
+	Assert::true($grid->hasFilterValue('orderDate'));
+
+	$grid->setFilter(['orderDate' => ArrayHash::from(['from' => '', 'to' => ''])]);
+	Assert::same([], $grid->getPresetFilters());
+	Assert::false($grid->hasFilterValue('orderDate'));
+	Assert::false($grid->isFilterActive());
 });
 
 test('hodnota 0 je aktivní filtr', function () {

@@ -22,6 +22,7 @@ use Nette\Forms\Container;
 use Nette\Forms\Controls\BaseControl;
 use Nette\Utils\Json;
 use Nette\Utils\Validators;
+use Traversable;
 
 /**
  * Filtr v hlavičce sloupce (docs/datagrid-column-filters.md): klik na název sloupce otevře panel s polem filtru,
@@ -733,6 +734,7 @@ trait ColumnFiltersTrait
 	{
 		$normalized = [];
 		foreach ($filters as $key => $value) {
+			$value = self::toArray($value);
 			if ($key === self::FULLTEXT_FILTER || !self::isFilled($value)) {
 				continue;
 			}
@@ -998,7 +1000,7 @@ trait ColumnFiltersTrait
 	/** Na rozdíl od knihovny přehlíží prázdné hodnoty, které formulář filtru posílá i nevyplněné. */
 	public function isFilterDefault(): bool
 	{
-		$filled = static fn(array $filter): array => array_filter($filter, self::isFilled(...));
+		$filled = static fn(array $filter): array => array_filter(array_map(self::toArray(...), $filter), self::isFilled(...));
 
 		return $this->defaultFilter !== [] && $filled($this->filter) == $filled($this->defaultFilter);
 	}
@@ -1068,8 +1070,15 @@ trait ColumnFiltersTrait
 		return trim((string) preg_replace('~[\s\x{00A0}]+~u', ' ', $text));
 	}
 
+	/** Odeslaný formulář filtrů předá hodnotu kontejneru (rozsah od-do) jako ArrayHash, z URL přijde pole. */
+	private static function toArray(mixed $value): mixed
+	{
+		return $value instanceof Traversable ? iterator_to_array($value) : $value;
+	}
+
 	private static function isFilled(mixed $value): bool
 	{
+		$value = self::toArray($value);
 		if (is_array($value)) {
 			return array_filter($value, self::isFilled(...)) !== [];
 		}
@@ -1079,6 +1088,8 @@ trait ColumnFiltersTrait
 
 	private static function normalize(mixed $value): mixed
 	{
+		$value = self::toArray($value);
+
 		return is_array($value) ? array_filter(array_map('strval', $value), static fn(string $item): bool => $item !== '') : (string) $value;
 	}
 
