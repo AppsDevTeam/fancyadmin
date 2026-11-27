@@ -20,6 +20,9 @@ modal:
 
 widgets:
   unavailable: Data zatím nejsou k dispozici.
+  checklist:
+    progress: Kompletace
+    missing: chybí
   alerts:
     empty: Nic k řešení.
     more: 'Zobrazit všech %count%'

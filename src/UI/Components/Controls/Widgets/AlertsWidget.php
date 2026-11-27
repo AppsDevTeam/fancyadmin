@@ -81,6 +81,23 @@ final class AlertsWidget extends Widget
 
 	private bool $agenda = false;
 
+	private bool $tasks = false;
+
+	/**
+	 * Seznam úkolů s akcemi („Potřebuje pozornost“): ikona v kroužku podle tónu (Danger ✗, Warning !, Success ✓,
+	 * jinak šedá), text, poznámka šedě za ním a vpravo bílé tlačítko odkazu s popiskem `linkLabel`.
+	 */
+	public function setTasks(bool $tasks = true): static
+	{
+		$this->tasks = $tasks;
+		return $this;
+	}
+
+	public function isTasks(): bool
+	{
+		return $this->tasks;
+	}
+
 	/**
 	 * Agenda dne („Co mám dnes udělat“): každá položka v rámečku - vlevo čas (`value`, např. „9:00“), text,
 	 * pod ním poznámka a vpravo tlačítko odkazu s popiskem `linkLabel`. Tón `Warning` / `Danger` = zvýrazněná

@@ -305,6 +305,12 @@ class WidgetGridControl extends Control
 		return $this->addWidget(new CalloutWidget($name, $title, $callout));
 	}
 
+	/** @param callable(?WidgetPeriod): iterable<WidgetChecklist> $items */
+	public function addChecklist(string $name, string $title, callable $items): ChecklistWidget
+	{
+		return $this->addWidget(new ChecklistWidget($name, $title, $items));
+	}
+
 	/** @param callable(?WidgetPeriod): WidgetScore $score */
 	public function addScore(string $name, string $title, callable $score): ScoreWidget
 	{
