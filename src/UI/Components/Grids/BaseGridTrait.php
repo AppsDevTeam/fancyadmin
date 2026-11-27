@@ -3,12 +3,16 @@
 namespace ADT\FancyAdmin\UI\Components\Grids;
 
 use ADT\Datagrid\Component\BaseGridDependencies;
+use ADT\Datagrid\Component\DataGrid;
 use ADT\Datagrid\Filter\FilterText;
 use ADT\Datagrid\Model\Queries\GridFilterQueryFactory;
 use ADT\DoctrineComponents\EntityManager;
 use ADT\DoctrineComponents\QueryObject\QueryObjectByMode;
 use ADT\DoctrineComponents\QueryObject\QueryObjectInterface;
 use ADT\DoctrineForms\BaseFormInterface;
+use ADT\Exporter\Model\Service\Exporter;
+use ADT\Exporter\Model\Service\ExportRequest;
+use ADT\Exporter\Model\Service\ExportSection;
 use ADT\FancyAdmin\DI\Injects\EntityManagerInject;
 use ADT\FancyAdmin\DI\Injects\ContainerInject;
 use ADT\FancyAdmin\DI\Injects\GridFilterFormFactoryInject;
@@ -16,10 +20,16 @@ use ADT\FancyAdmin\DI\Injects\GridFilterQueryFactoryInject;
 use ADT\FancyAdmin\DI\Injects\QueryObjectDataSourceInject;
 use ADT\FancyAdmin\DI\Injects\SecurityUserInject;
 use ADT\FancyAdmin\DI\Injects\TranslatorInject;
+use ADT\FancyAdmin\Model\Grid\Export\GridExport;
+use ADT\FancyAdmin\Model\Grid\Export\GridExportCsvGenerator;
+use ADT\FancyAdmin\Model\Grid\Export\GridExportGenerator;
+use ADT\FancyAdmin\Model\Grid\Export\GridExportXlsxGenerator;
 use ADT\FancyAdmin\UI\Components\ControlTrait;
 use ADT\FancyAdmin\UI\Presenters\SidePanel;
 use ADT\QueryObjectDataSource\IQueryObjectDataSourceFactory;
+use LogicException;
 use Nette\Application\AbortException;
+use Nette\Application\Responses\FileResponse;
 use Nette\Application\UI\Presenter;
 use Nette\Security\User;
 
@@ -93,6 +103,53 @@ trait BaseGridTrait
 				}
 			}
 		});
+	}
+
+	/**
+	 * Panel Export (docs/datagrid-export.md): XLSX nebo CSV podle filtrů a hledání, se zobrazenými nebo všemi
+	 * sloupci. Soubor vyrábí adt/exporter - ke stažení hned, na e-mail vždy na pozadí (stejně tak stažení nad
+	 * `syncRowLimit`, to jde na e-mail přihlášeného). Volá se z `initGrid()`.
+	 */
+	protected function addExportPanel(DataGrid $grid, GridExport $export): void
+	{
+		if (!method_exists($grid, 'setExportPanel')) {
+			throw new LogicException('Panel Export potřebuje grid s ColumnFiltersTrait.');
+		}
+
+		$exporter = $this->_container->getByType(Exporter::class);
+		$ownEmail = $this->_securityUser->isLoggedIn() ? $this->getEmail() : null;
+
+		$grid->setExportPanel(function (string $format, bool $visibleOnly, ?string $email) use ($grid, $export, $exporter, $ownEmail): void {
+			if (!$visibleOnly && $export->getFullHeader() !== null) {
+				$section = new ExportSection(GridExportGenerator::SECTION_FULL, $grid->getFilteredQueryObject(), []);
+			} else {
+				$columns = [];
+				foreach (array_keys($visibleOnly ? $grid->getColumns() : $grid->getOrderedColumns()) as $key) {
+					$columns[$key] = $grid->getColumnTitle((string) $key);
+				}
+				$section = new ExportSection(GridExportGenerator::SECTION_COLUMNS, $grid->getFilteredQueryObject(), $columns);
+			}
+
+			$record = $exporter->export(new ExportRequest(
+				identifier: $export->getName(),
+				sections: $section,
+				generator: $this->_container->getByType($format === GridExportCsvGenerator::FORMAT ? GridExportCsvGenerator::class : GridExportXlsxGenerator::class),
+				email: $email ?? $ownEmail,
+				forceBackground: $email !== null,
+			));
+
+			$presenter = $this->getPresenter();
+			if ($record->isInBackground()) {
+				$presenter->flashMessageSuccess($this->getTranslator()->translate('fcadmin.datagrid.columnFilters.export.sent', ['email' => $record->getEmail()]));
+				if (!$presenter->isAjax()) {
+					$presenter->redirect('this');
+				}
+
+				return;
+			}
+
+			$presenter->sendResponse(new FileResponse((string) $exporter->getFilePath($record), (string) $record->getFileName()));
+		}, $ownEmail);
 	}
 
 	public function getGridFilterQueryFactory(): GridFilterQueryFactory

@@ -32,6 +32,7 @@ use ADT\DoctrineAnonymization\PersonalDataColumns;
 use ADT\DoctrineAnonymization\ReadOnlyConnectionOptions;
 use ADT\DoctrineAnonymization\ReadOnlyQueryExecutor;
 use ADT\DoctrineAnonymization\SchemaDescriber;
+use ADT\Exporter\Model\Service\Exporter;
 use ADT\FancyAdmin\Console\CreateIdentityCommand;
 use ADT\FancyAdmin\Console\GenerateMissingAclResourcesCommand;
 use ADT\FancyAdmin\Console\ProvisionAiAgentCommand;
@@ -45,6 +46,11 @@ use ADT\FancyAdmin\Model\AiChat\AiMcpEndpoint;
 use ADT\FancyAdmin\Model\AiChat\AiMcpTokenPolicy;
 use ADT\FancyAdmin\Model\Grid\DoctrineGridColumnSettingsStorage;
 use ADT\FancyAdmin\Model\Grid\DoctrineGridPresetStorage;
+use ADT\FancyAdmin\Model\Grid\Export\GridExport;
+use ADT\FancyAdmin\Model\Grid\Export\GridExportCsvGenerator;
+use ADT\FancyAdmin\Model\Grid\Export\GridExportOwner;
+use ADT\FancyAdmin\Model\Grid\Export\GridExports;
+use ADT\FancyAdmin\Model\Grid\Export\GridExportXlsxGenerator;
 use ADT\FancyAdmin\Model\Tablet\DoctrineTabletSignRequests;
 use ADT\FancyAdmin\Model\Tablet\TabletService;
 use ADT\FancyAdmin\Model\Tablet\TabletSigning;
@@ -469,6 +475,18 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				->setFactory(DoctrineGridColumnSettingsStorage::class, ['entityClass' => $this->config->datagrid->columnSettingEntity]);
 		}
 
+		// Export z panelu gridu přes adt/exporter (docs/datagrid-export.md). Generátory musí existovat dřív, než si je
+		// exporter v beforeCompile() posbírá.
+		$builder->addDefinition($this->prefix('gridExports'))
+			->setFactory(GridExports::class);
+		$tempDir = $builder->parameters['tempDir'] ?? sys_get_temp_dir();
+		$builder->addDefinition($this->prefix('gridExportXlsxGenerator'))
+			->setFactory(GridExportXlsxGenerator::class, ['tempDir' => $tempDir]);
+		$builder->addDefinition($this->prefix('gridExportCsvGenerator'))
+			->setFactory(GridExportCsvGenerator::class, ['tempDir' => $tempDir]);
+		$builder->addDefinition($this->prefix('gridExportOwner'))
+			->setFactory(GridExportOwner::class);
+
 		// Potřebuje projektovou entitu Tablet a TabletQueryFactory, proto jen na požádání
 		if ($this->config->tablet->enabled) {
 			if ($this->config->tablet->signRequestEntity === null) {
@@ -875,6 +893,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		$builder = $this->getContainerBuilder();
 
 		$this->checkSignalCsrfRouter();
+
+		$builder->getDefinition($this->prefix('gridExports'))
+			->setArguments([array_map(static fn(string $name): string => '@' . $name, array_keys($builder->findByType(GridExport::class)))]);
+		foreach ($builder->findByType(Exporter::class) as $exporter) {
+			$exporter->addSetup('$onExport[]', [[$builder->getDefinition($this->prefix('gridExportOwner')), 'stamp']]);
+		}
 
 		// Push do stránek (docs/push.md): bez hubu prázdná implementace, stránky pollují
 		if ($builder->getByType(Push::class) === null) {

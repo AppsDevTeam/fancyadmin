@@ -54,6 +54,7 @@ datagrid:
     contains: Obsahuje
     all: Všetko
     yes: Áno
+    no: Nie
     from: od
     to: do
     period: Obdobie
@@ -73,6 +74,7 @@ datagrid:
       subject: 'Export: %name%'
       body: 'V prílohe je export „%name%“ (%count% záznamov) podľa filtrov v administrácii.'
       link: 'Súbor si môžete stiahnuť aj po prihlásení do administrácie: %link%'
+      purged: 'Súbor exportu už bol zmazaný, vyexportujte dáta znova.'
     presets:
       title: Uložené zostavy
       mine: Moje zostavy
