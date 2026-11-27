@@ -1570,6 +1570,203 @@
 	color: var(--fa-widgets-tone);
 }
 
+// Hodnocení (ScoreWidget): karta s popisem a stavem vlevo, skóre v kruhu vpravo; pod ní složky s pruhy
+.fa-widgets-score {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	> .fa-widgets-card {
+		flex: none;
+	}
+}
+
+.fa-widgets-score-head {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px 28px;
+	padding: 20px 24px;
+}
+
+.fa-widgets-score-info {
+	min-width: 0;
+}
+
+.fa-widgets-score-meta {
+	font-size: .84375rem;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-score-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	margin-top: 10px;
+	padding: 5px 12px;
+	border-radius: 2px;
+	font-size: .78125rem;
+	font-weight: 500;
+	color: var(--fa-widgets-tone-text);
+	background-color: var(--fa-widgets-tone-bg);
+
+	&::before {
+		content: "";
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: var(--fa-widgets-tone);
+	}
+
+	&.fa-widgets-tone-neutral {
+		color: var(--fa-text-muted);
+		background-color: var(--fa-surface-hover);
+
+		&::before {
+			background-color: var(--fa-text-muted);
+		}
+	}
+}
+
+.fa-widgets-score-main {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	margin-left: auto;
+}
+
+.fa-widgets-score-caption {
+	text-align: right;
+}
+
+.fa-widgets-score-title {
+	margin: 0;
+	font-size: .71875rem;
+	font-weight: 500;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-score-change {
+	margin-top: 3px;
+	font-size: .8125rem;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-score-ring {
+	position: relative;
+	flex: 0 0 104px;
+	width: 104px;
+	height: 104px;
+
+	svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	circle {
+		fill: none;
+		stroke-width: 11;
+	}
+}
+
+.fa-widgets-score-ring-track {
+	stroke: color-mix(in srgb, var(--primaryColor) 8%, var(--fa-surface));
+}
+
+.fa-widgets-score-ring-value {
+	stroke: var(--fa-widgets-tone);
+	stroke-linecap: round;
+}
+
+.fa-widgets-score-value {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+
+.fa-widgets-score-number {
+	font-size: 1.75rem;
+	font-weight: 500;
+	color: var(--fa-heading, var(--fa-text));
+}
+
+.fa-widgets-score-max {
+	margin-top: 3px;
+	font-size: .625rem;
+	font-weight: 500;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-score-components {
+	padding: 18px 20px;
+}
+
+.fa-widgets-score-components-title {
+	margin-bottom: 12px;
+	font-size: .78125rem;
+	font-weight: 500;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+}
+
+.fa-widgets-score-component-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 14px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fa-widgets-score-component {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: baseline;
+	gap: 8px 6px;
+	padding: 12px 14px;
+	border: 1px solid var(--fa-border);
+	border-radius: var(--fa-widgets-radius, var(--bs-border-radius));
+	background-color: color-mix(in srgb, var(--fa-text) 2%, var(--fa-surface));
+}
+
+.fa-widgets-score-component-label {
+	font-size: .78125rem;
+	font-weight: 500;
+	color: var(--fa-text-muted);
+}
+
+.fa-widgets-score-component-value {
+	font-size: 1.0625rem;
+	font-weight: 700;
+	color: var(--fa-widgets-tone);
+
+	.fa-widgets-tone-neutral > & {
+		color: var(--fa-text-muted);
+	}
+}
+
+.fa-widgets-score-component-bar {
+	grid-column: 1 / -1;
+	position: relative;
+	height: 6px;
+	overflow: hidden;
+	background-color: color-mix(in srgb, var(--primaryColor) 8%, var(--fa-surface));
+
+	> span {
+		position: absolute;
+		inset: 0 auto 0 0;
+		background-color: var(--fa-widgets-tone);
+	}
+}
+
 // Údaj s proklikem (WidgetFigure link): šipka u popisku, odkazem je celý údaj / dlaždice
 .fa-widgets-figure-linked {
 	position: relative;

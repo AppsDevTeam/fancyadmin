@@ -305,6 +305,12 @@ class WidgetGridControl extends Control
 		return $this->addWidget(new CalloutWidget($name, $title, $callout));
 	}
 
+	/** @param callable(?WidgetPeriod): WidgetScore $score */
+	public function addScore(string $name, string $title, callable $score): ScoreWidget
+	{
+		return $this->addWidget(new ScoreWidget($name, $title, $score));
+	}
+
 	/** @param callable(?WidgetPeriod): WidgetChart $chart */
 	public function addChart(string $name, string $title, callable $chart): ChartWidget
 	{
