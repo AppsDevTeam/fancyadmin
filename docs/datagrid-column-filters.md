@@ -98,7 +98,9 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
   - v hlavičce viditelného sloupce se stejným klíčem (nebo sloupce, nad kterým filtr hledá, `OneColumnFilter::getColumn()`);
   - u aktivního filtru skrytého sloupce v jeho čipu, s upozorněním a odkazem „Zobrazit sloupec“;
   - neaktivní filtr skrytého sloupce nikde, nastaví se po zobrazení sloupce;
-  - filtr bez sloupce v gridu nikde - grid ho mít nemá (pole by nebylo kde otevřít).
+  - filtr bez sloupce (ani stejný klíč, ani `getColumn()`) v panelu **Další filtry** v liště
+    (`getMoreFilters()`). Tlačítko ukáže počet aktivních, čip takového filtru otevře tenhle panel. Projekt, který
+    filtr bez sloupce mít nechce, si to hlídá sám (testem nad gridy).
 - **Kdy se filtruje.** Až tlačítkem **Použít** (nebo Enter v textovém poli). Trait vypíná autosubmit knihovny.
   Zavření panelu bez Použít (Esc, klik mimo) vrátí pole na hodnoty ze serveru.
 - **Zrušit filtr** v panelu vyprázdní jeho pole a odešle formulář, křížek u čipu volá `resetColumnFilter!`,
@@ -156,6 +158,10 @@ configureColumnFilters({ locale: Czech }); // jazyk kalendáře období
 - **Fokus po překreslení:** po Použít na hlavičku, po přepínači na přepínač, po odebrání čipu na další čip
   (bez něj na Zrušit filtry, bez pruhu do lišty).
 - **Hlavička aktivní filtr neznačí**, je vidět jen v pruhu. Čtečka ho přečte ze skrytého textu v hlavičce.
+- **Výběr s volbou Vše:** volba s prázdnou hodnotou (`['' => 'Vše', …]`) je v Tom Selectu placeholder
+  a výběr jde zrušit křížkem (`addFilterSelect()` traitu, atribut `data-adt-select`).
+- **Malý grid v panelu** (`CompactDataGridTrait`, [datagrid-compact.md](datagrid-compact.md)) má vlastní šablonu,
+  `ColumnFiltersTrait` se s ním nekombinuje - grid v panelu dědí ze třídy projektu bez traitu.
 - **Pole podle typu filtru:** text (Obsahuje), výběr a výběr více hodnot (Tom Select, nabídka je v toku panelu),
   výběr s volbami jen 1 a 0 jako přepínač Vše / Ano / Ne, datum, období (rychlé volby + flatpickr `range`
   vložený do panelu, hodnoty do skrytých polí od/do filtru knihovny), rozsah čísel a zaškrtávátko.

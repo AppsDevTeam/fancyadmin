@@ -16,9 +16,9 @@ final class FilterChip
 	) {
 	}
 
-	/** Filtr na skrytém sloupci nebo bez sloupce: jeho panel se vykreslí v čipu, hlavička ho nemá. */
+	/** Filtr na skrytém sloupci: jeho panel se vykreslí v čipu, hlavička ho nemá. Filtr bez sloupce je v Další filtry. */
 	public function hasOwnPanel(): bool
 	{
-		return !$this->columnVisible;
+		return $this->column !== null && !$this->columnVisible;
 	}
 }

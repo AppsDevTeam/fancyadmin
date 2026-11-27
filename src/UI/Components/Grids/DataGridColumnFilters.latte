@@ -1,7 +1,7 @@
 {**
  * Filtr v hlavičce sloupce (ColumnFiltersTrait, docs/datagrid-column-filters.md): lišta nad gridem, pruh aktivních
  * filtrů s čipy, klikací hlavičky s panelem filtru a prázdný výsledek. Každé pole filtru je v DOM jen jednou:
- * v hlavičce viditelného sloupce, nebo v čipu aktivního filtru skrytého sloupce. Filtr bez sloupce grid mít nemá.
+ * v hlavičce viditelného sloupce, v čipu aktivního filtru skrytého sloupce, nebo v panelu Další filtry (bez sloupce).
  *
  * @param Datagrid $control
  *}
@@ -89,6 +89,7 @@
 				<label class="form-check-label" for="{$_toggleId}">{_$_toggleLabel}</label>
 			</div>
 		{/foreach}
+		{include more-filters, moreFilters => $control->getMoreFilters($_panelFilters), form => $_form}
 		<div class="fa-filters-bulk d-flex flex-wrap align-items-center gap-2" data-part="bulk">{include toolbar}</div>
 		<div class="fa-filters-bar-actions d-flex flex-wrap align-items-center gap-2 ms-auto" data-part="bar-actions">
 			{foreach $periodFilters as $_periodFilter}
@@ -119,7 +120,7 @@
 			<li n:foreach="$_chips as $_chip" n:class="fa-filters-chip, $_chip->hasOwnPanel() ? dropdown" data-part="chip" data-filter-key="{$_chip->key}">
 				<button type="button" class="fa-filters-chip-edit" aria-haspopup="dialog"
 					aria-label="{_fcadmin.datagrid.columnFilters.chipEdit, [label => $_chip->label, value => $_chip->value]}"
-					{if $_chip->hasOwnPanel()}data-bs-toggle="dropdown" aria-expanded="false"{else}data-fa-filters-open="{$_chip->column}"{/if}
+					{if $_chip->hasOwnPanel()}data-bs-toggle="dropdown" aria-expanded="false"{else}data-fa-filters-open="{$_chip->column ?? $control::MORE_FILTERS}"{/if}
 				>
 					<span class="fa-filters-chip-label">{$_chip->label}:</span>
 					<span class="fa-filters-chip-value" title="{$_chip->value}">{$_chip->value}</span>
@@ -144,6 +145,32 @@
 	</div>
 
 	{if $hasGroupActions}{include bulk-bar}{/if}
+{/define}
+
+{* Další filtry: filtry bez sloupce (ColumnFiltersTrait::getMoreFilters) nemají hlavičku, jejich pole jsou v jednom
+   panelu v liště. Čip takového filtru otevře tenhle panel (data-fa-filters-open). *}
+{define more-filters}
+	{if $moreFilters}
+		{var $_panelId = $control->getFullName() . '-filter-' . $control::MORE_FILTERS}
+		{var $_active = $control->countActiveFilters($moreFilters)}
+		<div class="dropdown" data-part="more-filters">
+			<button type="button" n:class="btn, btn-outline-secondary, rounded-pill, d-inline-flex, align-items-center, gap-1, fa-filters-more-toggle, $_active ? is-active"
+				data-part="toggle" data-fa-filters-column="{$control::MORE_FILTERS}"
+				data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8"
+				aria-expanded="false" aria-haspopup="dialog" aria-controls="{$_panelId}"
+			>
+				<i class="fa-solid fa-filter" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.moreFilters}
+				<span n:if="$_active" class="badge rounded-pill fa-filters-more-count" data-part="more-filters-count">{$_active}<span class="visually-hidden"> {_fcadmin.datagrid.columnFilters.moreFiltersActive}</span></span>
+			</button>
+			{include filter-panel,
+				id => $_panelId,
+				title => ('fcadmin.datagrid.columnFilters.moreFilters'|translate),
+				panelFilters => $moreFilters,
+				form => $form,
+				class => ''
+			}
+		</div>
+	{/if}
 {/define}
 
 {* Plovoucí lišta hromadných akcí (datagridBulk.js) - ukáže se po výběru řádků místo rychlé lišty. Pole knihovny
@@ -463,7 +490,7 @@
 		</div>
 		<div class="fa-filters-panel-foot">
 			{var $_defaultKey = count($panelFilters) === 1 && $control->isDefaultFilterToggle(array_key_first($panelFilters)) ? array_key_first($panelFilters) : null}
-			<button type="button" class="fa-filters-link" data-part="field-clear" data-fa-filters-clear>{_($_defaultKey !== null ? 'fcadmin.datagrid.columnFilters.restoreDefault' : 'fcadmin.datagrid.columnFilters.clear')}</button>
+			<button type="button" class="fa-filters-link" data-part="field-clear" data-fa-filters-clear>{_($_defaultKey !== null ? 'fcadmin.datagrid.columnFilters.restoreDefault' : (count($panelFilters) > 1 ? 'fcadmin.datagrid.columnFilters.clearAll' : 'fcadmin.datagrid.columnFilters.clear'))}</button>
 			<button type="submit" class="btn btn-primary rounded-pill px-4" data-part="apply">{_fcadmin.datagrid.columnFilters.apply}</button>
 		</div>
 	</div>

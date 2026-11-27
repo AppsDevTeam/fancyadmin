@@ -42,6 +42,8 @@ datagrid:
     searchPlaceholder: Hledat ve viditelných sloupcích
     restoreDefault: Vrátit výchozí
     moreActions: Další akce
+    moreFilters: Další filtry
+    moreFiltersActive: aktivní
     editColumns: Upravit sloupce
     columns: Sloupce
     columnWidth: 'Šířka sloupce %column%'

@@ -203,7 +203,7 @@ test('nastavení sloupců: pořadí a šířka z úložiště, neznámé sloupce
 	Assert::notContains('fa-filters-col', (string) $grid->getColumns()['name']->getElementForRender('td', 'name'));
 });
 
-test('filtr skrytého sloupce má panel v čipu', function () {
+test('čip filtru viditelného sloupce ani filtru bez sloupce vlastní panel nemá', function () {
 	$grid = columnFiltersGrid();
 	$grid->setFilter(['name' => 'X', 'tags' => ['a']]);
 
@@ -212,5 +212,30 @@ test('filtr skrytého sloupce má panel v čipu', function () {
 		$chips[$chip->key] = $chip->hasOwnPanel();
 	}
 
-	Assert::same(['name' => false, 'tags' => true], $chips);
+	Assert::same(['name' => false, 'tags' => false], $chips);
+});
+
+test('filtr skrytého sloupce má panel v čipu', function () {
+	Assert::true((new FilterChip('name', 'Jméno', '„X“', 'name', false))->hasOwnPanel());
+	Assert::false((new FilterChip('tags', 'Štítky', 'A', null, false))->hasOwnPanel());
+});
+
+test('Další filtry: filtry bez sloupce a počet aktivních', function () {
+	$grid = columnFiltersGrid();
+	$grid->addFilterSelect('origin', 'Původ', ['' => 'Vše', 'web' => 'Web', 'phone' => 'Telefon']);
+	$panelFilters = $grid->getPanelFilters([], []);
+
+	Assert::same(['tags', 'origin'], array_keys($grid->getMoreFilters($panelFilters)));
+	Assert::same(0, $grid->countActiveFilters($grid->getMoreFilters($panelFilters)));
+
+	$grid->setFilter(['origin' => 'web', 'name' => 'X']);
+	Assert::same(1, $grid->countActiveFilters($grid->getMoreFilters($panelFilters)));
+});
+
+test('výběrový filtr s volbou Vše má v Tom Selectu placeholder a jde zrušit', function () {
+	$grid = columnFiltersGrid();
+	$filters = $grid->getPanelFilters([], []);
+
+	Assert::same(['{"placeholder":"Vše","allowClear":true}'], $filters['state']->getAttributes()['data-adt-select'] ?? null);
+	Assert::null($grid->addFilterSelect('kind', 'Druh', ['a' => 'A'])->getAttributes()['data-adt-select'] ?? null);
 });
