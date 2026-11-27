@@ -16,7 +16,7 @@
 {define toolbar-settings}
 	{if $control->canHideColumns()}
 		{var $_dialogId = $control->getFullName() . '-columns'}
-		<button type="button" class="btn btn-outline-secondary rounded-pill d-none d-sm-inline-flex align-items-center gap-1" data-part="columns"
+		<button type="button" class="btn btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1" data-part="columns"
 			data-bs-toggle="modal" data-bs-target="#{$_dialogId}"
 		><i class="fa-solid fa-table-columns" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.columns}</button>
 		<div class="modal fade" id="{$_dialogId}" tabindex="-1" aria-labelledby="{$_dialogId}-title" aria-hidden="true" data-part="columns-dialog"
@@ -56,8 +56,8 @@
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="fa-filters-link me-auto" data-fa-filters-columns-all>{_fcadmin.datagrid.columnFilters.showAll}</button>
-						<button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">{_fcadmin.datagrid.columnFilters.cancel}</button>
-						<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-filters-columns-apply>{_fcadmin.datagrid.columnFilters.apply}</button>
+						<button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">{_fcadmin.datagrid.columnFilters.cancel}</button>
+						<button type="button" class="btn btn-primary px-4" data-fa-filters-columns-apply>{_fcadmin.datagrid.columnFilters.apply}</button>
 					</div>
 				</div>
 			</div>
@@ -154,7 +154,7 @@
 		{var $_panelId = $control->getFullName() . '-filter-' . $control::MORE_FILTERS}
 		{var $_active = $control->countActiveFilters($moreFilters)}
 		<div class="dropdown" data-part="more-filters">
-			<button type="button" n:class="btn, btn-outline-secondary, rounded-pill, d-inline-flex, align-items-center, gap-1, fa-filters-more-toggle, $_active ? is-active"
+			<button type="button" n:class="btn, btn-outline-secondary, d-inline-flex, align-items-center, gap-1, fa-filters-more-toggle, $_active ? is-active"
 				data-part="toggle" data-fa-filters-column="{$control::MORE_FILTERS}"
 				data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8"
 				aria-expanded="false" aria-haspopup="dialog" aria-controls="{$_panelId}"
@@ -230,8 +230,8 @@
 							{input $_group[$_action['id']], form => $_formId}
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">{_fcadmin.datagrid.columnFilters.cancel}</button>
-							<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-bulk-submit="{$_action['id']}" data-fa-bulk-grid="{$control->getFullName()}">{_fcadmin.datagrid.bulk.execute}</button>
+							<button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">{_fcadmin.datagrid.columnFilters.cancel}</button>
+							<button type="button" class="btn btn-primary px-4" data-fa-bulk-submit="{$_action['id']}" data-fa-bulk-grid="{$control->getFullName()}">{_fcadmin.datagrid.bulk.execute}</button>
 						</div>
 					</div>
 				</div>
@@ -323,7 +323,7 @@
 						><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
 						<div n:if="$_preset->editable" class="fa-filters-set-edit" hidden data-fa-filters-preset-form data-url="{link updatePreset!}" data-id="{$_preset->id}">
 							<label class="fa-filters-field-label" for="{$setsId}-{$_preset->id}-name">{_fcadmin.datagrid.columnFilters.presets.name}</label>
-							<input class="form-control rounded-pill" id="{$setsId}-{$_preset->id}-name" type="text" maxlength="100" value="{$_preset->name}" data-fa-filters-preset-name>
+							<input class="form-control" id="{$setsId}-{$_preset->id}-name" type="text" maxlength="100" value="{$_preset->name}" data-fa-filters-preset-name>
 							<div class="invalid-feedback" data-fa-filters-preset-error></div>
 							<div class="form-check form-switch">
 								<input class="form-check-input" type="checkbox" role="switch" id="{$setsId}-{$_preset->id}-shared" n:attr="checked => $_preset->shared" data-fa-filters-preset-shared>
@@ -331,7 +331,7 @@
 							</div>
 							<div class="d-flex align-items-center gap-2">
 								<a n:href="deletePreset!, id => $_preset->id" class="ajax fa-filters-link me-auto" data-fa-filters-confirm="{_fcadmin.datagrid.columnFilters.presets.deleteConfirm, [name => $_preset->name]}">{_fcadmin.datagrid.columnFilters.presets.delete}</a>
-								<button type="button" class="btn btn-primary btn-sm rounded-pill px-3" data-fa-filters-preset-save>{_fcadmin.datagrid.columnFilters.presets.save}</button>
+								<button type="button" class="btn btn-primary btn-sm px-3" data-fa-filters-preset-save>{_fcadmin.datagrid.columnFilters.presets.save}</button>
 							</div>
 						</div>
 					</li>
@@ -346,7 +346,7 @@
 {define export-panel}
 	{var $_exportId = $control->getFullName() . '-export'}
 	<div class="dropdown">
-		<button type="button" class="btn btn-outline-secondary rounded-pill d-none d-sm-inline-flex align-items-center gap-1" id="{$_exportId}-toggle" data-part="export"
+		<button type="button" class="btn btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1" id="{$_exportId}-toggle" data-part="export"
 			data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8" aria-expanded="false" aria-haspopup="dialog" aria-controls="{$_exportId}"
 		><i class="fa-solid fa-download" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.export.button}</button>
 		<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$_exportId}" role="dialog" aria-labelledby="{$_exportId}-title" data-part="export-panel" data-fa-filters-panel
@@ -373,13 +373,13 @@
 				</div>
 				<div hidden data-fa-filters-export-mail-field>
 					<label class="fa-filters-field-label" for="{$_exportId}-email">{_fcadmin.datagrid.columnFilters.export.email}</label>
-					<input class="form-control rounded-pill" id="{$_exportId}-email" type="email" value="{$control->getExportEmail()}" data-fa-filters-export-email>
+					<input class="form-control" id="{$_exportId}-email" type="email" value="{$control->getExportEmail()}" data-fa-filters-export-email>
 					<div class="invalid-feedback" data-fa-filters-export-error></div>
 				</div>
 			</div>
 			<div class="fa-filters-panel-foot">
 				<span></span>
-				<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-filters-export-submit
+				<button type="button" class="btn btn-primary px-4" data-fa-filters-export-submit
 					data-label-download="{_fcadmin.datagrid.columnFilters.export.download}" data-label-send="{_fcadmin.datagrid.columnFilters.export.send}"
 				>{_fcadmin.datagrid.columnFilters.export.download}</button>
 			</div>
@@ -392,19 +392,19 @@
 	{var $_active = $control->getActivePreset()}
 	{var $_saveId = $control->getFullName() . '-save'}
 	<div class="dropdown" data-part="set-save-wrap">
-		<button type="button" class="btn btn-outline-secondary rounded-pill d-none d-sm-inline-flex align-items-center gap-1" id="{$_saveId}-toggle" data-part="set-save-toggle"
+		<button type="button" class="btn btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1" id="{$_saveId}-toggle" data-part="set-save-toggle"
 			data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,8" aria-expanded="false" aria-haspopup="dialog" aria-controls="{$_saveId}"
 		><i class="fa-regular fa-bookmark" aria-hidden="true"></i> {_fcadmin.datagrid.columnFilters.presets.saveButton}</button>
 		<div class="dropdown-menu dropdown-menu-end fa-filters-panel" id="{$_saveId}" role="dialog" aria-labelledby="{$_saveId}-title" data-part="set-save" data-fa-filters-panel data-fa-filters-preset-save-form data-url="{link savePreset!}">
 			<div class="fa-filters-panel-head"><p class="fa-filters-panel-title" id="{$_saveId}-title">{_fcadmin.datagrid.columnFilters.presets.saveButton}</p></div>
 			<div class="fa-filters-panel-body">
 				{if $_active && $_active->editable && $control->isActivePresetModified()}
-					<button type="button" class="btn btn-outline-secondary rounded-pill text-start" data-part="set-overwrite" data-fa-filters-preset-overwrite="{$_active->id}">{_fcadmin.datagrid.columnFilters.presets.saveChanges, [name => $_active->name]}</button>
+					<button type="button" class="btn btn-outline-secondary text-start" data-part="set-overwrite" data-fa-filters-preset-overwrite="{$_active->id}">{_fcadmin.datagrid.columnFilters.presets.saveChanges, [name => $_active->name]}</button>
 					<p class="fa-filters-section">{_fcadmin.datagrid.columnFilters.presets.saveAsNew}</p>
 				{/if}
 				<div>
 					<label class="fa-filters-field-label" for="{$_saveId}-name">{_fcadmin.datagrid.columnFilters.presets.name}</label>
-					<input class="form-control rounded-pill" id="{$_saveId}-name" type="text" maxlength="100" placeholder="{_fcadmin.datagrid.columnFilters.presets.namePlaceholder}" data-fa-filters-preset-name>
+					<input class="form-control" id="{$_saveId}-name" type="text" maxlength="100" placeholder="{_fcadmin.datagrid.columnFilters.presets.namePlaceholder}" data-fa-filters-preset-name>
 					<div class="invalid-feedback" data-fa-filters-preset-error></div>
 				</div>
 				<fieldset>
@@ -421,7 +421,7 @@
 			</div>
 			<div class="fa-filters-panel-foot">
 				<button type="button" class="fa-filters-link" data-fa-filters-preset-cancel>{_fcadmin.datagrid.columnFilters.cancel}</button>
-				<button type="button" class="btn btn-primary rounded-pill px-4" data-fa-filters-preset-save>{_fcadmin.datagrid.columnFilters.presets.save}</button>
+				<button type="button" class="btn btn-primary px-4" data-fa-filters-preset-save>{_fcadmin.datagrid.columnFilters.presets.save}</button>
 			</div>
 		</div>
 	</div>
@@ -491,7 +491,7 @@
 		<div class="fa-filters-panel-foot">
 			{var $_defaultKey = count($panelFilters) === 1 && $control->isDefaultFilterToggle(array_key_first($panelFilters)) ? array_key_first($panelFilters) : null}
 			<button type="button" class="fa-filters-link" data-part="field-clear" data-fa-filters-clear>{_($_defaultKey !== null ? 'fcadmin.datagrid.columnFilters.restoreDefault' : (count($panelFilters) > 1 ? 'fcadmin.datagrid.columnFilters.clearAll' : 'fcadmin.datagrid.columnFilters.clear'))}</button>
-			<button type="submit" class="btn btn-primary rounded-pill px-4" data-part="apply">{_fcadmin.datagrid.columnFilters.apply}</button>
+			<button type="submit" class="btn btn-primary px-4" data-part="apply">{_fcadmin.datagrid.columnFilters.apply}</button>
 		</div>
 	</div>
 {/define}
@@ -502,7 +502,7 @@
 	<div class="fa-filters-field" data-part="field" data-type="{$_type}">
 		{if $_type === 'text'}
 			<label class="fa-filters-field-label" for="{$input->getHtmlId()}" data-part="field-label">{if $showLabel}{$_label} - {/if}{_fcadmin.datagrid.columnFilters.contains}</label>
-			{input $input, class => 'form-control rounded-pill', type => search, data-part => field-control, data-autosubmit => null, data-autosubmit-change => null}
+			{input $input, class => 'form-control', type => search, data-part => field-control, data-autosubmit => null, data-autosubmit-change => null}
 		{elseif $_type === 'select' || $_type === 'multiselect'}
 			<label n:class="fa-filters-field-label, !$showLabel ? visually-hidden" for="{$input->getHtmlId()}" data-part="field-label">{$_label}</label>
 			{input $input, class => 'form-select', data-part => field-control, data-autosubmit => null, data-autosubmit-change => null}
@@ -536,11 +536,11 @@
 			{var $_to = $input['to']}
 			<div class="fa-filters-presets" role="group" aria-label="{_fcadmin.datagrid.columnFilters.presetsLabel}">
 				<button n:foreach="['today', 'yesterday', 'last7', 'last30', 'thisMonth', 'lastMonth', 'thisYear'] as $_preset" type="button"
-					class="btn btn-sm btn-outline-secondary rounded-pill fa-filters-preset" aria-pressed="false" data-fa-filters-preset="{$_preset}"
+					class="btn btn-sm btn-outline-secondary fa-filters-preset" aria-pressed="false" data-fa-filters-preset="{$_preset}"
 				>{_'fcadmin.datagrid.columnFilters.preset.' . $_preset}</button>
 			</div>
 			<label class="fa-filters-field-label" for="{$_from->getHtmlId()}-range" data-part="field-label">{if $showLabel}{$_label} - {/if}{_fcadmin.datagrid.columnFilters.period}</label>
-			<input type="text" class="form-control rounded-pill" id="{$_from->getHtmlId()}-range" placeholder="{_fcadmin.datagrid.columnFilters.periodPlaceholder}"
+			<input type="text" class="form-control" id="{$_from->getHtmlId()}-range" placeholder="{_fcadmin.datagrid.columnFilters.periodPlaceholder}"
 				data-part="field-control" data-fa-filters-range data-from="{$_from->getHtmlId()}" data-to="{$_to->getHtmlId()}" data-format="{$filter->getPhpFormat()}" readonly
 			>
 			{input $_from, type => hidden, data-flatpickr => null, class => null, data-autosubmit => null, data-autosubmit-change => null}
@@ -548,8 +548,8 @@
 		{elseif $_type === 'range'}
 			<span n:class="fa-filters-field-label, d-block" data-part="field-label">{$_label}</span>
 			<div class="d-flex gap-2" data-part="field-control">
-				{input $input['from'], class => 'form-control rounded-pill', aria-label => ('fcadmin.datagrid.columnFilters.from'|translate), data-autosubmit => null, data-autosubmit-change => null}
-				{input $input['to'], class => 'form-control rounded-pill', aria-label => ('fcadmin.datagrid.columnFilters.to'|translate), data-autosubmit => null, data-autosubmit-change => null}
+				{input $input['from'], class => 'form-control', aria-label => ('fcadmin.datagrid.columnFilters.from'|translate), data-autosubmit => null, data-autosubmit-change => null}
+				{input $input['to'], class => 'form-control', aria-label => ('fcadmin.datagrid.columnFilters.to'|translate), data-autosubmit => null, data-autosubmit-change => null}
 			</div>
 		{elseif $_type === 'checkbox'}
 			<div class="form-check" data-part="field-control">
@@ -558,7 +558,7 @@
 			</div>
 		{else}
 			<label class="fa-filters-field-label" for="{$input->getHtmlId()}" data-part="field-label">{$_label}</label>
-			{input $input, class => 'form-control rounded-pill', data-part => field-control, data-autosubmit => null, data-autosubmit-change => null}
+			{input $input, class => 'form-control', data-part => field-control, data-autosubmit => null, data-autosubmit-change => null}
 		{/if}
 	</div>
 {/define}
@@ -624,7 +624,7 @@
 				<div class="fa-filters-empty" data-part="empty-state">
 					<span class="fa-filters-empty-icon"><i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i></span>
 					<p class="fa-filters-empty-title">{_fcadmin.datagrid.columnFilters.emptyTitle}</p>
-					<a n:href="resetFilter!" class="ajax btn btn-outline-secondary rounded-pill px-4" data-part="reset">{_fcadmin.datagrid.columnFilters.clearAllFilters}</a>
+					<a n:href="resetFilter!" class="ajax btn btn-outline-secondary px-4" data-part="reset">{_fcadmin.datagrid.columnFilters.clearAllFilters}</a>
 				</div>
 			{else}
 				{ifset $customNoItemFoundMessage}
