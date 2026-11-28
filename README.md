@@ -407,6 +407,14 @@ public function actionExport(): void {}
 
 ## 5. Query třídy
 
+> **Výchozí query (bez kódu v projektu).** Pro každou query z tabulky `FancyAdminExtension::DEFAULT_QUERIES`
+> zaregistruje rozšíření výchozí třídu z `ADT\FancyAdmin\Model\Queries\Defaults` (i s továrnou), když projekt
+> vlastní továrnu nemá a v `%appDir%/Model/Entities` má právě jednu entitu s odpovídajícím rozhraním. Projekt tak
+> píše jen query, které opravdu mění (filtr podle uživatele nebo účtu, výchozí řazení, vlastní metody) - třída
+> a továrna podle příkladů níže, vlastní továrna (`search` v neonu) má vždy přednost. Výchozí query mají prázdný
+> filtr podle uživatele i účtu (kromě těch, kde ho definuje trait, např. `AclRoleQueryTrait`). Dvě entity se
+> stejným rozhraním jsou chyba při kompilaci kontejneru - pak je potřeba vlastní query.
+
 Fancyadmin vyžaduje QueryObject pattern z `adt/doctrine-components`. Každý query objekt:
 - dědí z BaseQuery (rozšiřuje `ADT\DoctrineComponents\QueryObject\QueryObject`)
 - implementuje interface z fancyadmin

@@ -64,7 +64,11 @@ use ADT\FancyAdmin\Model\Audit\ChangeLogAuditSubscriber;
 use ADT\FancyAdmin\Model\Entities\Enums\AclResourceNameEnum;
 use ADT\FancyAdmin\Model\Entities\Identity;
 use ADT\FancyAdmin\Model\Entities\Traits\HasPasskeys;
+use ADT\FancyAdmin\Model\Entities;
 use ADT\FancyAdmin\Model\FancyAdmin;
+use ADT\FancyAdmin\Model\Queries\Defaults;
+use ADT\FancyAdmin\Model\Queries\Defaults\DefaultBaseQuery;
+use ADT\FancyAdmin\Model\Queries\Factories;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Quickbar\QuickbarSettings;
 use ADT\FancyAdmin\Model\Security\Authenticator;
@@ -90,6 +94,7 @@ use ADT\LogSanitizer\SensitiveDataSanitizer;
 use Contributte\Translation\DI\TranslationProviderInterface;
 use Doctrine\Migrations\DependencyFactory;
 use Nette\DI\CompilerExtension;
+use Nette\DI\ContainerBuilder;
 use Nette\DI\Config\Loader;
 use Nette\DI\Definitions\Statement;
 use Nette\Loaders\RobotLoader;
@@ -140,6 +145,28 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		'ADT\\DoctrineAuthenticator\\OTP\\OnetimeToken',
 		'ADT\\DoctrineAuthenticator\\AuthLog',
 		'ADT\\DoctrineAuthenticator\\LoginAttempt',
+	];
+
+	/**
+	 * Výchozí query balíčku: továrna => [výchozí třída, rozhraní entity]. Zaregistrují se jen tam,
+	 * kde projekt vlastní továrnu nemá, a jen když v projektu existuje právě jedna entita s tím
+	 * rozhraním (projekt bez entity danou funkci nepoužívá). null = entitu určuje trait query.
+	 */
+	public const array DEFAULT_QUERIES = [
+		Factories\AccountQueryFactory::class => [Defaults\AccountQuery::class, Entities\Account::class],
+		Factories\AclRoleQueryFactory::class => [Defaults\AclRoleQuery::class, Entities\AclRole::class],
+		Factories\AiConversationQueryFactory::class => [Defaults\AiConversationQuery::class, Entities\AiConversation::class],
+		Factories\AiMcpTokenQueryFactory::class => [Defaults\AiMcpTokenQuery::class, Entities\AiMcpToken::class],
+		Factories\ApiKeyQueryFactory::class => [Defaults\ApiKeyQuery::class, Entities\ApiKey::class],
+		Factories\AuthLogQueryFactory::class => [Defaults\AuthLogQuery::class, null],
+		Factories\ChangeLogQueryFactory::class => [Defaults\ChangeLogQuery::class, null],
+		Factories\ConfigurationQueryFactory::class => [Defaults\ConfigurationQuery::class, Entities\Configuration::class],
+		\ADT\Datagrid\Model\Queries\GridFilterQueryFactory::class => [Defaults\GridFilterQuery::class, Entities\GridFilter::class],
+		Factories\IdentityQueryFactory::class => [Defaults\IdentityQuery::class, Entities\Identity::class],
+		Factories\PasskeyQueryFactory::class => [Defaults\PasskeyQuery::class, Entities\Passkey::class],
+		Factories\ProfileQueryFactory::class => [Defaults\ProfileQuery::class, Entities\Profile::class],
+		Factories\SsoQueryFactory::class => [Defaults\SsoQuery::class, Entities\Sso::class],
+		Factories\TabletQueryFactory::class => [Defaults\TabletQuery::class, Entities\Tablet::class],
 	];
 
 	/**
@@ -900,6 +927,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	{
 		$builder = $this->getContainerBuilder();
 
+		$this->registerDefaultQueries();
 		$this->checkSignalCsrfRouter();
 
 		$builder->getDefinition($this->prefix('gridExports'))
@@ -992,6 +1020,71 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			)) !== null
 		) {
 			throw new RuntimeException('fancyadmin: passkeyEnabled je zapnuté, ale ' . $invalidIdentity . ' neimplementuje ' . HasPasskeys::class . '. Přidejte entitě `use IdentityPasskeysTrait` a `implements HasPasskeys` podle README (sekce 19), nebo passkeys vypněte.');
+		}
+	}
+
+	/**
+	 * Výchozí query (DEFAULT_QUERIES) tam, kde projekt vlastní továrnu nemá - projekt pak píše
+	 * jen query, které opravdu mění. Vlastní továrna projektu (search v neonu) má vždy přednost.
+	 */
+	private function registerDefaultQueries(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$appDir = $builder->parameters['appDir'] ?? null;
+		$plan = self::planDefaultQueries(
+			static fn(string $factory): bool => $builder->findByType($factory) !== [],
+			static fn(string $interface): array => self::findProjectEntityClasses(is_string($appDir) ? $appDir : null, $interface),
+		);
+		self::addDefaultQueryDefinitions($builder, $this->prefix('defaultQuery'), $plan);
+	}
+
+	/**
+	 * Které výchozí query zaregistrovat: jen bez továrny projektu a s právě jednou entitou projektu.
+	 *
+	 * @param callable(class-string): bool $hasFactory má projekt vlastní továrnu
+	 * @param callable(class-string): class-string[] $findEntities entity projektu s daným rozhraním
+	 * @return array<class-string, array{class-string, class-string|null}> továrna => [query, entita]
+	 */
+	public static function planDefaultQueries(callable $hasFactory, callable $findEntities): array
+	{
+		$plan = [];
+		foreach (self::DEFAULT_QUERIES as $factory => [$query, $entityInterface]) {
+			if ($hasFactory($factory)) {
+				continue;
+			}
+
+			$entityClass = null;
+			if ($entityInterface !== null) {
+				$entityClasses = $findEntities($entityInterface);
+				if (count($entityClasses) > 1) {
+					throw new RuntimeException('fancyadmin: výchozí ' . $query . ' neví, kterou entitu použít - ' . $entityInterface . ' implementují ' . implode(', ', $entityClasses) . '. Vytvořte vlastní query a ' . $factory . ' podle README (sekce 5 a 6).');
+				}
+				if ($entityClasses === []) {
+					continue;
+				}
+				$entityClass = $entityClasses[0];
+			}
+
+			$plan[$factory] = [$query, $entityClass];
+		}
+
+		return $plan;
+	}
+
+	/**
+	 * @param array<class-string, array{class-string, class-string|null}> $plan viz planDefaultQueries()
+	 */
+	public static function addDefaultQueryDefinitions(ContainerBuilder $builder, string $prefix, array $plan): void
+	{
+		foreach ($plan as $factory => [$query, $entityClass]) {
+			$result = $builder->addFactoryDefinition($prefix . '.' . lcfirst(substr(strrchr($query, '\\'), 1)))
+				->setImplement($factory)
+				->getResultDefinition()
+				->setFactory($query, $entityClass !== null ? ['entityClass' => $entityClass] : []);
+
+			if (is_a($query, DefaultBaseQuery::class, true)) {
+				$result->addSetup('setSecurityUser');
+			}
 		}
 	}
 
