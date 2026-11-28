@@ -71,6 +71,8 @@ use ADT\FancyAdmin\Model\Queries\Defaults\DefaultBaseQuery;
 use ADT\FancyAdmin\Model\Queries\Factories;
 use ADT\FancyAdmin\UI\Components\Forms\Defaults as DefaultForms;
 use ADT\FancyAdmin\UI\Components\Grids\Defaults as DefaultGrids;
+use ADT\FancyAdmin\UI\Presenters\Defaults as DefaultPresenters;
+use ADT\FancyAdmin\Core\FancyAdminPresenterFactory;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Quickbar\QuickbarSettings;
 use ADT\FancyAdmin\Model\Security\Authenticator;
@@ -209,6 +211,33 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		\ADT\FancyAdmin\UI\Components\Grids\Session\SessionGridFactory::class => [DefaultGrids\SessionGrid::class, null],
 		\ADT\FancyAdmin\UI\Components\Grids\Sso\SsoGridFactory::class => [DefaultGrids\SsoGrid::class, Entities\Sso::class],
 		\ADT\FancyAdmin\UI\Components\Grids\Tablet\TabletGridFactory::class => [DefaultGrids\TabletGrid::class, Entities\Tablet::class],
+	];
+
+	/**
+	 * Výchozí presentery podle role modulu (portal = Portal, backoffice a customer = moduly
+	 * z defaultBackofficeRoute a defaultCustomerRoute). Použijí se, jen když projekt presenter
+	 * stejného jména nemá (FancyAdminPresenterFactory).
+	 */
+	public const array DEFAULT_PRESENTERS = [
+		'portal' => [
+			'Sign' => DefaultPresenters\Portal\SignPresenter::class,
+		],
+		'backoffice' => [
+			'Home' => DefaultPresenters\Backoffice\HomePresenter::class,
+			'Accounts' => DefaultPresenters\Backoffice\AccountsPresenter::class,
+			'Acl' => DefaultPresenters\Backoffice\AclPresenter::class,
+			'AclRoles' => DefaultPresenters\Backoffice\AclRolesPresenter::class,
+			'ChangeLogs' => DefaultPresenters\Backoffice\ChangeLogsPresenter::class,
+			'Identities' => DefaultPresenters\Backoffice\IdentitiesPresenter::class,
+			'Profile' => DefaultPresenters\Backoffice\ProfilePresenter::class,
+			'Sso' => DefaultPresenters\Backoffice\SsoPresenter::class,
+		],
+		'customer' => [
+			'Home' => DefaultPresenters\Customer\HomePresenter::class,
+			'Account' => DefaultPresenters\Customer\AccountPresenter::class,
+			'Profile' => DefaultPresenters\Customer\ProfilePresenter::class,
+			'Profiles' => DefaultPresenters\Customer\ProfilesPresenter::class,
+		],
 	];
 
 	/**
@@ -1084,6 +1113,50 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			static fn(string $factory): bool => $builder->findByType($factory) !== [],
 			$findEntities,
 		));
+
+		$this->registerDefaultPresenters();
+	}
+
+	/**
+	 * Výchozí presentery přes FancyAdminPresenterFactory místo PresenterFactory z Nette. Projekt
+	 * s vlastní továrnou presenterů (jiná třída) je bez výchozích presenterů - stejně jako dřív.
+	 */
+	private function registerDefaultPresenters(): void
+	{
+		$builder = $this->getContainerBuilder();
+		$name = $builder->getByType(\Nette\Application\IPresenterFactory::class);
+		if ($name === null) {
+			return;
+		}
+		$definition = $builder->getDefinition($name);
+		if (!$definition instanceof \Nette\DI\Definitions\ServiceDefinition
+			|| !in_array($definition->getCreator()->getEntity(), [\Nette\Application\PresenterFactory::class, FancyAdminPresenterFactory::class], true)
+		) {
+			return;
+		}
+
+		$definition->setCreator(FancyAdminPresenterFactory::class, $definition->getCreator()->arguments)
+			->setType(FancyAdminPresenterFactory::class)
+			->addSetup('setDefaultPresenters', [self::defaultPresenterMap($this->config->defaultBackofficeRoute, $this->config->defaultCustomerRoute)]);
+	}
+
+	/**
+	 * @return array<string, class-string> 'PortalBackoffice:Accounts' => třída
+	 */
+	public static function defaultPresenterMap(string $backofficeRoute, string $customerRoute): array
+	{
+		$modules = [
+			'portal' => 'Portal',
+			'backoffice' => explode(':', ltrim($backofficeRoute, ':'))[0],
+			'customer' => explode(':', ltrim($customerRoute, ':'))[0],
+		];
+		$map = [];
+		foreach (self::DEFAULT_PRESENTERS as $role => $presenters) {
+			foreach ($presenters as $presenter => $class) {
+				$map[$modules[$role] . ':' . $presenter] = $class;
+			}
+		}
+		return $map;
 	}
 
 	/**

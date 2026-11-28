@@ -771,6 +771,33 @@ class RouterFactory
 
 ## 14. Portal Presentery
 
+> **Výchozí presentery.** Rozšíření vymění továrnu presenterů za `FancyAdminPresenterFactory`: presenter
+> projektu podle mapování (`application: mapping`) má přednost, a když neexistuje, použije se výchozí presenter
+> z `ADT\FancyAdmin\UI\Presenters\Defaults` (`FancyAdminExtension::DEFAULT_PRESENTERS`): v `Portal` `Sign`,
+> v modulu z `defaultBackofficeRoute` `Home`, `Accounts`, `Acl`, `AclRoles`, `ChangeLogs`, `Identities`,
+> `Profile`, `Sso`, v modulu z `defaultCustomerRoute` `Home`, `Account`, `Profile`, `Profiles`. Ostatní presentery
+> (API klíče, AI, Keycloak, tablety, konfigurace, exporty, error presenter) píše projekt jako dosud. Vlastní
+> továrna presenterů projektu (jiná třída) výchozí presentery vypne.
+>
+> Vlastní presenter projektu může dědit z `Defaults\AuthPresenter`, resp. `Defaults\BasePresenter` místo
+> vlastních základů. **Menu** (`NavbarMenuFactory`, `UserMenuFactory`) se u výchozích presenterů hledá nejdřív
+> v namespace presenterů projektu podle mapování (`App\UI\Portal\Backoffice\Presenters\NavbarMenuFactory`),
+> pak se použije výchozí menu balíčku (`Defaults\Backoffice`, `Defaults\Customer`). Projekt s vlastním menu musí
+> mít vedle něj i `UserMenuFactory`.
+>
+> **Úprava celé vrstvy** bez vlastních základních tříd: výchozí formuláře a gridy vznikají v DI, takže na ně
+> platí `decorator:` podle jejich základu, např.
+>
+> ```neon
+> decorator:
+> 	ADT\FancyAdmin\UI\Components\Forms\Defaults\DefaultBaseForm:
+> 		setup:
+> 			- setSomething(...)
+> ```
+>
+> Kdo chce změnit všechny formuláře, gridy nebo presentery víc, napíše vlastní základ a vlastní třídy jako dosud.
+
+
 Fancyadmin poskytuje presenter traity pro portálovou část (admin):
 
 ### BasePresenter

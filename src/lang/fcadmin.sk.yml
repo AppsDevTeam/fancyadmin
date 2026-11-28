@@ -1046,3 +1046,10 @@ modules:
 biometricSignature:
   clear: "Vymazať podpis"
   invalid: "Podpis sa nepodarilo zachytiť. Vymažte ho, prosím, a podpíšte sa znova."
+
+# Výchozí presentery a menu balíčku (UI/Presenters/Defaults)
+defaults:
+  menu:
+    administration: Správa
+  home:
+    title: Prehľad
