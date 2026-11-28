@@ -69,6 +69,8 @@ use ADT\FancyAdmin\Model\FancyAdmin;
 use ADT\FancyAdmin\Model\Queries\Defaults;
 use ADT\FancyAdmin\Model\Queries\Defaults\DefaultBaseQuery;
 use ADT\FancyAdmin\Model\Queries\Factories;
+use ADT\FancyAdmin\UI\Components\Forms\Defaults as DefaultForms;
+use ADT\FancyAdmin\UI\Components\Grids\Defaults as DefaultGrids;
 use ADT\FancyAdmin\Model\Queries\Factories\PasskeyQueryFactory;
 use ADT\FancyAdmin\Model\Quickbar\QuickbarSettings;
 use ADT\FancyAdmin\Model\Security\Authenticator;
@@ -95,6 +97,7 @@ use Contributte\Translation\DI\TranslationProviderInterface;
 use Doctrine\Migrations\DependencyFactory;
 use Nette\DI\CompilerExtension;
 use Nette\DI\ContainerBuilder;
+use Nette\DI\Extensions\InjectExtension;
 use Nette\DI\Config\Loader;
 use Nette\DI\Definitions\Statement;
 use Nette\Loaders\RobotLoader;
@@ -167,6 +170,45 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 		Factories\ProfileQueryFactory::class => [Defaults\ProfileQuery::class, Entities\Profile::class],
 		Factories\SsoQueryFactory::class => [Defaults\SsoQuery::class, Entities\Sso::class],
 		Factories\TabletQueryFactory::class => [Defaults\TabletQuery::class, Entities\Tablet::class],
+	];
+
+	/**
+	 * Výchozí formuláře a gridy balíčku: továrna => [výchozí třída, rozhraní entity, bez které
+	 * je projekt nepoužívá]. Zaregistrují se jen tam, kde projekt vlastní továrnu nemá.
+	 */
+	public const array DEFAULT_COMPONENTS = [
+		\ADT\FancyAdmin\UI\Components\Forms\Account\AccountFormFactory::class => [DefaultForms\AccountForm::class, Entities\Account::class],
+		\ADT\FancyAdmin\UI\Components\Forms\AclRole\AclRoleFormFactory::class => [DefaultForms\AclRoleForm::class, Entities\AclRole::class],
+		\ADT\FancyAdmin\UI\Components\Forms\AiMcpToken\AiMcpTokenFormFactory::class => [DefaultForms\AiMcpTokenForm::class, Entities\AiMcpToken::class],
+		\ADT\FancyAdmin\UI\Components\Forms\ApiKey\ApiKeyFormFactory::class => [DefaultForms\ApiKeyForm::class, Entities\ApiKey::class],
+		\ADT\FancyAdmin\UI\Components\Forms\ChangePassword\ChangePasswordFormFactory::class => [DefaultForms\ChangePasswordForm::class, Entities\Identity::class],
+		\ADT\FancyAdmin\UI\Components\Forms\Configuration\ConfigurationFormFactory::class => [DefaultForms\ConfigurationForm::class, Entities\Configuration::class],
+		\ADT\FancyAdmin\UI\Components\Forms\Identity\IdentityFormFactory::class => [DefaultForms\IdentityForm::class, Entities\Identity::class],
+		\ADT\FancyAdmin\UI\Components\Forms\LostPassword\LostPasswordFormFactory::class => [DefaultForms\LostPasswordForm::class, Entities\Identity::class],
+		\ADT\FancyAdmin\UI\Components\Forms\NewPassword\NewPasswordFormFactory::class => [DefaultForms\NewPasswordForm::class, Entities\Identity::class],
+		\ADT\FancyAdmin\UI\Components\Forms\Passkey\PasskeyFormFactory::class => [DefaultForms\PasskeyForm::class, Entities\Passkey::class],
+		\ADT\FancyAdmin\UI\Components\Forms\PersonalData\PersonalDataFormFactory::class => [DefaultForms\PersonalDataForm::class, Entities\Profile::class],
+		\ADT\FancyAdmin\UI\Components\Forms\Profile\ProfileFormFactory::class => [DefaultForms\ProfileForm::class, Entities\Profile::class],
+		\ADT\FancyAdmin\UI\Components\Forms\SelectAccount\SelectAccountFormFactory::class => [DefaultForms\SelectAccountForm::class, Entities\Account::class],
+		\ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory::class => [DefaultForms\SignInForm::class, Entities\Identity::class],
+		\ADT\FancyAdmin\UI\Components\Forms\Sso\SsoFormFactory::class => [DefaultForms\SsoForm::class, Entities\Sso::class],
+		\ADT\FancyAdmin\UI\Components\Forms\Tablet\TabletFormFactory::class => [DefaultForms\TabletForm::class, Entities\Tablet::class],
+		\ADT\FancyAdmin\UI\Components\Forms\TwoFactor\TwoFactorFormFactory::class => [DefaultForms\TwoFactorForm::class, Entities\Identity::class],
+		\ADT\Datagrid\Component\GridFilter\GridFilterFormFactory::class => [DefaultForms\GridFilterForm::class, Entities\GridFilter::class],
+		\ADT\FancyAdmin\UI\Components\Grids\Account\AccountGridFactory::class => [DefaultGrids\AccountGrid::class, Entities\Account::class],
+		\ADT\FancyAdmin\UI\Components\Grids\AclRole\AclRoleGridFactory::class => [DefaultGrids\AclRoleGrid::class, Entities\AclRole::class],
+		\ADT\FancyAdmin\UI\Components\Grids\AiConversation\AiConversationGridFactory::class => [DefaultGrids\AiConversationGrid::class, Entities\AiConversation::class],
+		\ADT\FancyAdmin\UI\Components\Grids\AiMcpToken\AiMcpTokenGridFactory::class => [DefaultGrids\AiMcpTokenGrid::class, Entities\AiMcpToken::class],
+		\ADT\FancyAdmin\UI\Components\Grids\ApiKey\ApiKeyGridFactory::class => [DefaultGrids\ApiKeyGrid::class, Entities\ApiKey::class],
+		\ADT\FancyAdmin\UI\Components\Grids\AuthLog\AuthLogGridFactory::class => [DefaultGrids\AuthLogGrid::class, null],
+		\ADT\FancyAdmin\UI\Components\Grids\ChangeLog\ChangeLogGridFactory::class => [DefaultGrids\ChangeLogGrid::class, null],
+		\ADT\FancyAdmin\UI\Components\Grids\Configuration\ConfigurationGridFactory::class => [DefaultGrids\ConfigurationGrid::class, Entities\Configuration::class],
+		\ADT\FancyAdmin\UI\Components\Grids\Identity\IdentityGridFactory::class => [DefaultGrids\IdentityGrid::class, Entities\Identity::class],
+		\ADT\FancyAdmin\UI\Components\Grids\Passkey\PasskeyGridFactory::class => [DefaultGrids\PasskeyGrid::class, Entities\Passkey::class],
+		\ADT\FancyAdmin\UI\Components\Grids\Profile\ProfileGridFactory::class => [DefaultGrids\ProfileGrid::class, Entities\Profile::class],
+		\ADT\FancyAdmin\UI\Components\Grids\Session\SessionGridFactory::class => [DefaultGrids\SessionGrid::class, null],
+		\ADT\FancyAdmin\UI\Components\Grids\Sso\SsoGridFactory::class => [DefaultGrids\SsoGrid::class, Entities\Sso::class],
+		\ADT\FancyAdmin\UI\Components\Grids\Tablet\TabletGridFactory::class => [DefaultGrids\TabletGrid::class, Entities\Tablet::class],
 	];
 
 	/**
@@ -927,7 +969,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	{
 		$builder = $this->getContainerBuilder();
 
-		$this->registerDefaultQueries();
+		$this->registerDefaults();
 		$this->checkSignalCsrfRouter();
 
 		$builder->getDefinition($this->prefix('gridExports'))
@@ -1027,7 +1069,7 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	 * Výchozí query (DEFAULT_QUERIES) tam, kde projekt vlastní továrnu nemá - projekt pak píše
 	 * jen query, které opravdu mění. Vlastní továrna projektu (search v neonu) má vždy přednost.
 	 */
-	private function registerDefaultQueries(): void
+	private function registerDefaults(): void
 	{
 		$builder = $this->getContainerBuilder();
 		$appDir = $builder->parameters['appDir'] ?? null;
@@ -1036,6 +1078,12 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			static fn(string $interface): array => self::findProjectEntityClasses(is_string($appDir) ? $appDir : null, $interface),
 		);
 		self::addDefaultQueryDefinitions($builder, $this->prefix('defaultQuery'), $plan);
+
+		$findEntities = static fn(string $interface): array => self::findProjectEntityClasses(is_string($appDir) ? $appDir : null, $interface);
+		self::addDefaultComponentDefinitions($builder, $this->prefix('defaultComponent'), self::planDefaultComponents(
+			static fn(string $factory): bool => $builder->findByType($factory) !== [],
+			$findEntities,
+		));
 	}
 
 	/**
@@ -1047,8 +1095,30 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 	 */
 	public static function planDefaultQueries(callable $hasFactory, callable $findEntities): array
 	{
+		return self::planDefaults(self::DEFAULT_QUERIES, $hasFactory, $findEntities, true);
+	}
+
+	/**
+	 * Formuláře a gridy: bez továrny projektu a s aspoň jednou entitou projektu (třídu entity
+	 * si formulář zjistí sám přes EntityManager::findEntityClassByInterface()).
+	 *
+	 * @param callable(class-string): bool $hasFactory
+	 * @param callable(class-string): class-string[] $findEntities
+	 * @return array<class-string, array{class-string, class-string|null}>
+	 */
+	public static function planDefaultComponents(callable $hasFactory, callable $findEntities): array
+	{
+		return self::planDefaults(self::DEFAULT_COMPONENTS, $hasFactory, $findEntities, false);
+	}
+
+	/**
+	 * @param array<class-string, array{class-string, class-string|null}> $table
+	 * @return array<class-string, array{class-string, class-string|null}>
+	 */
+	private static function planDefaults(array $table, callable $hasFactory, callable $findEntities, bool $requireSingle): array
+	{
 		$plan = [];
-		foreach (self::DEFAULT_QUERIES as $factory => [$query, $entityInterface]) {
+		foreach ($table as $factory => [$class, $entityInterface]) {
 			if ($hasFactory($factory)) {
 				continue;
 			}
@@ -1056,8 +1126,8 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 			$entityClass = null;
 			if ($entityInterface !== null) {
 				$entityClasses = $findEntities($entityInterface);
-				if (count($entityClasses) > 1) {
-					throw new RuntimeException('fancyadmin: výchozí ' . $query . ' neví, kterou entitu použít - ' . $entityInterface . ' implementují ' . implode(', ', $entityClasses) . '. Vytvořte vlastní query a ' . $factory . ' podle README (sekce 5 a 6).');
+				if ($requireSingle && count($entityClasses) > 1) {
+					throw new RuntimeException('fancyadmin: výchozí ' . $class . ' neví, kterou entitu použít - ' . $entityInterface . ' implementují ' . implode(', ', $entityClasses) . '. Vytvořte vlastní třídu a ' . $factory . ' podle README.');
 				}
 				if ($entityClasses === []) {
 					continue;
@@ -1065,10 +1135,24 @@ class FancyAdminExtension extends CompilerExtension implements TranslationProvid
 				$entityClass = $entityClasses[0];
 			}
 
-			$plan[$factory] = [$query, $entityClass];
+			$plan[$factory] = [$class, $entityClass];
 		}
 
 		return $plan;
+	}
+
+	/**
+	 * @param array<class-string, array{class-string, class-string|null}> $plan viz planDefaultComponents()
+	 */
+	public static function addDefaultComponentDefinitions(ContainerBuilder $builder, string $prefix, array $plan): void
+	{
+		foreach ($plan as $factory => [$class]) {
+			$builder->addFactoryDefinition($prefix . '.' . lcfirst(substr(strrchr($class, '\\'), 1)))
+				->setImplement($factory)
+				->getResultDefinition()
+				->setFactory($class)
+				->addTag(InjectExtension::TagInject, true);
+		}
 	}
 
 	/**

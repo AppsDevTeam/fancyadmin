@@ -21,8 +21,8 @@ use Nette\DI\PhpGenerator;
 use Tester\Assert;
 
 /**
- * Výchozí query balíčku: projekt bez vlastní query a továrny dostane třídu z balíčku
- * napojenou na svou entitu, vlastní továrna projektu má přednost.
+ * Výchozí query, formuláře a gridy balíčku: projekt bez vlastní třídy a továrny dostane
+ * třídu z balíčku, vlastní továrna projektu má přednost.
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -91,6 +91,51 @@ test('kontejner: továrny vytvoří výchozí query s entitou projektu a uživat
 
 	$changeLog = $container->getByType(Factories\ChangeLogQueryFactory::class)->create();
 	Assert::same(\ADT\DoctrineLoggable\Entity\ChangeLog::class, $changeLog->getEntityClass());
+});
+
+
+test('každý výchozí formulář a grid implementuje rozhraní své továrny', function () {
+	foreach (FancyAdminExtension::DEFAULT_COMPONENTS as $factory => [$class]) {
+		$returnType = (string) new ReflectionMethod($factory, 'create')->getReturnType();
+		Assert::true(is_a($class, $returnType, true), "$class implementuje $returnType");
+	}
+});
+
+
+test('plán komponent: továrna projektu má přednost, bez entity se nic neregistruje', function () {
+	$plan = FancyAdminExtension::planDefaultComponents(
+		static fn(string $factory): bool => $factory === \ADT\FancyAdmin\UI\Components\Forms\Account\AccountFormFactory::class,
+		static fn(string $interface): array => match ($interface) {
+			Entities\Account::class, Entities\Identity::class => ['App\X', 'App\Y'],
+			default => [],
+		},
+	);
+
+	Assert::false(isset($plan[\ADT\FancyAdmin\UI\Components\Forms\Account\AccountFormFactory::class]));
+	// více entit u formuláře nevadí, třídu si zjistí EntityManager
+	Assert::same(\ADT\FancyAdmin\UI\Components\Forms\Defaults\SignInForm::class, $plan[\ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory::class][0]);
+	Assert::same(\ADT\FancyAdmin\UI\Components\Grids\Defaults\AccountGrid::class, $plan[\ADT\FancyAdmin\UI\Components\Grids\Account\AccountGridFactory::class][0]);
+	// grid nad logem nezávisí na entitách projektu
+	Assert::true(isset($plan[\ADT\FancyAdmin\UI\Components\Grids\ChangeLog\ChangeLogGridFactory::class]));
+	Assert::false(isset($plan[\ADT\FancyAdmin\UI\Components\Grids\Tablet\TabletGridFactory::class]));
+});
+
+
+test('kontejner: výchozí formulář a grid se vytvoří a dostanou injekci závislostí', function () {
+	$builder = new ContainerBuilder();
+	FancyAdminExtension::addDefaultComponentDefinitions($builder, 'fancyadmin.defaultComponent', [
+		\ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory::class => [\ADT\FancyAdmin\UI\Components\Forms\Defaults\SignInForm::class, null],
+		\ADT\FancyAdmin\UI\Components\Grids\ChangeLog\ChangeLogGridFactory::class => [\ADT\FancyAdmin\UI\Components\Grids\Defaults\ChangeLogGrid::class, null],
+	]);
+
+	foreach (['signInForm', 'changeLogGrid'] as $name) {
+		$definition = $builder->getDefinition('fancyadmin.defaultComponent.' . $name);
+		Assert::true($definition->getResultDefinition()->getTag(\Nette\DI\Extensions\InjectExtension::TagInject));
+	}
+
+	$container = compileContainer($builder);
+	Assert::type(\ADT\FancyAdmin\UI\Components\Forms\Defaults\SignInForm::class, $container->getByType(\ADT\FancyAdmin\UI\Components\Forms\SignIn\SignInFormFactory::class)->create());
+	Assert::type(\ADT\FancyAdmin\UI\Components\Grids\Defaults\ChangeLogGrid::class, $container->getByType(\ADT\FancyAdmin\UI\Components\Grids\ChangeLog\ChangeLogGridFactory::class)->create());
 });
 
 

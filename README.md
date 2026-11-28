@@ -763,6 +763,12 @@ class RouterFactory
 
 ---
 
+> **Výchozí formuláře a gridy.** Stejně jako query: pro továrny z `FancyAdminExtension::DEFAULT_COMPONENTS`
+> zaregistruje rozšíření výchozí třídu z `…\UI\Components\Forms\Defaults`, resp. `…\Grids\Defaults`, když projekt
+> vlastní továrnu nemá a má entitu, na které formulář nebo grid stojí. Výchozí formuláře mají renderer
+> s `data-adt-submit-form`, výchozí gridy berou hledaný výraz z adresy jako filtr `search`. Vlastní třída
+> projektu (a její továrna v `search` neonu) má přednost - píší se jen ty, které projekt mění.
+
 ## 14. Portal Presentery
 
 Fancyadmin poskytuje presenter traity pro portálovou část (admin):
